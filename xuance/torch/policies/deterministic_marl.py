@@ -917,6 +917,8 @@ class MFQnetwork(Module):
         self.representation_info_shape = {key: representation[key].output_shapes for key in self.model_keys}
         self.lstm = True if kwargs["rnn"] == "LSTM" else False
         self.use_rnn = True if kwargs["use_rnn"] else False
+        # The choice of policy: Boltzmann policy or greedy policy. (Default is 'greedy')
+        self.policy_type = kwargs.get('policy_type', 'greedy')
 
         self.representation = representation
         self.target_representation = deepcopy(self.representation)
@@ -925,12 +927,14 @@ class MFQnetwork(Module):
         self.eval_Qhead, self.target_Qhead = ModuleDict(), ModuleDict()
         for key in self.model_keys:
             self.dim_input_Q[key] = self.representation_info_shape[key]['state'][0] + self.n_actions_max
+            self.n_actions[key] = self.action_space[key].n
             if self.use_parameter_sharing:
-                self.n_actions[key] = self.action_space[key].n
                 self.dim_input_Q[key] += self.n_agents
             self.eval_Qhead[key] = BasicQhead(self.dim_input_Q[key], self.n_actions[key], hidden_size,
                                               normalize, initialize, activation, device)
             self.target_Qhead[key] = deepcopy(self.eval_Qhead[key])
+        self.softmax = torch.nn.Softmax(dim=-1)
+        self.temperature = kwargs['temperature']
 
         # Prepare DDP module.
         self.distributed_training = use_distributed_training
@@ -970,7 +974,7 @@ class MFQnetwork(Module):
             argmax_action (Dict[str, Tensor]): The actions output by the policies.
             evalQ (Dict[str, Tensor])： The evaluations of observation-action pairs.
         """
-        rnn_hidden_new, argmax_action, evalQ = {}, {}, {}
+        rnn_hidden_new, actions, evalQ = {}, {}, {}
         agent_list = self.model_keys if agent_key is None else [agent_key]
 
         actions_mean = {key: Tensor(actions_mean[key]).to(self.device) for key in agent_list}
@@ -992,27 +996,45 @@ class MFQnetwork(Module):
 
             evalQ[key] = self.eval_Qhead[key](q_inputs)
 
+            evalQ_detach = evalQ[key].clone().detach()
             if avail_actions is not None:
-                evalQ_detach = evalQ[key].clone().detach()
                 evalQ_detach[avail_actions[key] == 0] = -1e10
-                argmax_action[key] = evalQ_detach.argmax(dim=-1, keepdim=False)
+
+            if self.policy_type == "Boltzmann":
+                actions_prob = self.get_boltzmann_policy(evalQ_detach)
+                actions[key] = Categorical(probs=actions_prob).sample()
+            elif self.policy_type == "greedy":
+                actions[key] = evalQ_detach.argmax(dim=-1, keepdim=False)
             else:
-                argmax_action[key] = evalQ[key].argmax(dim=-1, keepdim=False)
+                raise NotImplementedError
 
-        return rnn_hidden_new, argmax_action, evalQ
+        return rnn_hidden_new, actions, evalQ
 
-    def sample_actions(self, logits: Tensor):
+    def get_boltzmann_policy(self, q):
+        actions_prob = self.softmax(q / self.temperature)
+        return actions_prob
+
+    def get_mean_actions(self, actions: Dict[str, Tensor],
+                         agent_mask_tensor: Tensor, batch_size: int):
         if self.use_parameter_sharing:
-            dist_a = Categorical(logits=logits[self.model_keys[0]])
-            sampled_actions = one_hot(dist_a.sample(), num_classes=self.n_actions_max)
+            actions_tensor = actions[self.model_keys[0]].reshape([-1, self.n_agents])
         else:
-            sampled_actions_list = []
-            for key in self.model_keys:
-                dist_a = Categorical(logits=logits[key])
-                sampled_actions_list.append(one_hot(dist_a.sample(), num_classes=self.n_actions_max))
-            sampled_actions = torch.stack(sampled_actions_list)
-        sampled_actions = sampled_actions.reshape([-1, self.n_agents, self.n_actions_max])
-        return sampled_actions
+            actions_tensor = torch.stack(itemgetter(*self.model_keys)(actions), dim=-1).reshape([-1, self.n_agents])
+        actions_onehot = one_hot(actions_tensor, num_classes=self.n_actions_max)
+
+        # count alive neighbors
+        _eyes = torch.eye(self.n_agents).unsqueeze(0).repeat(batch_size, 1, 1).to(self.device)
+        agent_mask_diagonal = agent_mask_tensor.unsqueeze(-1).repeat(1, 1, self.n_agents) * _eyes
+        agent_mask_neighbors = agent_mask_tensor.unsqueeze(-1).repeat(1, 1, self.n_agents) - agent_mask_diagonal
+        agent_alive_neighbors = agent_mask_neighbors.sum(dim=-1, keepdim=True)
+
+        # calculate mean actions of each agent's neighbors
+        agent_mask_repeat = agent_mask_tensor.unsqueeze(-1).repeat(1, 1, self.n_actions_max)
+        actions_onehot = actions_onehot * agent_mask_repeat
+        actions_sum = actions_onehot.sum(dim=-2, keepdim=True).repeat(1, self.n_agents, 1)
+        actions_neighbors_sum = actions_sum - actions_onehot  # Sum of other agents' actions.
+        actions_mean_masked = actions_neighbors_sum * agent_mask_repeat / agent_alive_neighbors
+        return actions_mean_masked
 
     def Qtarget(self, observation: Dict[str, Tensor], actions_mean: Dict[str, Tensor],
                 agent_ids: Dict[str, Tensor],

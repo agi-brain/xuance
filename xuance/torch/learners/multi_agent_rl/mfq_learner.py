@@ -31,12 +31,8 @@ class MFQ_Learner(LearnerMAS):
         self.gamma = config.gamma
         self.sync_frequency = config.sync_frequency
         self.n_actions = {k: self.policy.action_space[k].n for k in self.model_keys}
-        self.temperature = config.temperature
         self.mse_loss = nn.MSELoss()
-        self.softmax = torch.nn.Softmax(dim=-1)
-
-    def get_boltzmann_policy(self, q):
-        return self.softmax(q / self.temperature)
+        self.policy_type = self.policy.policy_type
 
     def build_actions_mean_input(self, sample: Optional[dict], use_parameter_sharing: Optional[bool] = False):
         batch_size = sample['batch_size']
@@ -101,49 +97,47 @@ class MFQ_Learner(LearnerMAS):
         for key in self.model_keys:
             mask_values = agent_mask[key]
             q_eval_a = q_eval[key].gather(-1, actions[key].long().unsqueeze(-1)).reshape(bs)
+            q_next_a = q_next[key]
 
             if self.use_actions_mask:
-                q_next[key][avail_actions_next[key] == 0] = -1e10
+                q_next_a[avail_actions_next[key] == 0] = -1e10
 
-            shape = q_next[key].shape
-            pi = self.get_boltzmann_policy(q_next[key])
-            v_mf = torch.bmm(q_next[key].reshape([-1, 1, shape[-1]])), pi.unsqueeze(-1).reshape([-1, shape[-1], 1])
-            v_mf = v_mf.reshape(*(list(shape[0:-1]) + [1]))
-            q_target = rewards + (1 - terminals) * self.args.gamma * v_mf
+            if self.policy_type == "Boltzmann":
+                pi_probs = self.policy.get_boltzmann_policy(q_next[key])
+                v_mf = (pi_probs * q_next_a).sum(-1).reshape(-1)
+                q_target = rewards[key] + (1 - terminals[key]) * self.gamma * v_mf
+            else:
+                _, actions_next_greedy, _ = self.policy(obs_next, IDs, actions_mean=act_mean_next, agent_key=key,
+                                                        avail_actions=avail_actions)
+                q_next_a = q_next[key].gather(-1, actions_next_greedy[key].unsqueeze(-1).long()).reshape(bs)
+                q_target = rewards[key] + (1 - terminals[key]) * self.gamma * q_next_a
 
+            # calculate the loss function
+            td_error = (q_eval_a - q_target.detach()) * mask_values
+            loss = (td_error ** 2).sum() / mask_values.sum()
+            self.optimizer[key].zero_grad()
+            loss.backward()
+            if self.use_grad_clip:
+                torch.nn.utils.clip_grad_norm_(self.policy.parameters_model[key], self.grad_clip_norm)
+            self.optimizer[key].step()
+            if self.scheduler[key] is not None:
+                self.scheduler[key].step()
 
+            lr = self.optimizer[key].state_dict()['param_groups'][0]['lr']
 
+            info.update({
+                f"{key}/learning_rate": lr,
+                f"{key}/loss_Q": loss.item(),
+                f"{key}/predictQ": q_eval_a.mean().item()
+            })
 
-
-
-
-        q_eval_a = q_eval.gather(-1, actions.long().reshape([self.args.batch_size, self.n_agents, 1]))
-        q_next = self.policy.target_Q(obs_next, act_mean_next, IDs)
-        shape = q_next.shape
-        pi = self.get_boltzmann_policy(q_next)
-        v_mf = torch.bmm(q_next.reshape(-1, 1, shape[-1]), pi.unsqueeze(-1).reshape(-1, shape[-1], 1))
-        v_mf = v_mf.reshape(*(list(shape[0:-1]) + [1]))
-        q_target = rewards + (1 - terminals) * self.args.gamma * v_mf
-
-        # calculate the loss function
-        td_error = (q_eval_a - q_target.detach()) * agent_mask
-        loss = (td_error ** 2).sum() / agent_mask.sum()
-        self.optimizer.zero_grad()
-        loss.backward()
-        self.optimizer.step()
-        if self.scheduler is not None:
-            self.scheduler.step()
+            info.update(self.callback.on_update_agent_wise(self.iterations, key, info=info, method="update",
+                                                           mask_values=mask_values, q_eval_a=q_eval_a,
+                                                           q_next_a=q_next_a, q_target=q_target,
+                                                           td_error=td_error, loss=loss))
 
         if self.iterations % self.sync_frequency == 0:
             self.policy.copy_target()
-
-        lr = self.optimizer.state_dict()['param_groups'][0]['lr']
-
-        info.update({
-            "learning_rate": lr,
-            "loss_Q": loss.item(),
-            "predictQ": q_eval_a.mean().item()
-        })
 
         info.update(self.callback.on_update_end(self.iterations, method="update", policy=self.policy, info=info))
 

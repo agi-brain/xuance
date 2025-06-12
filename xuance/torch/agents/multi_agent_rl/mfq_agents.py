@@ -85,7 +85,9 @@ class MFQ_Agents(OffPolicyMARLAgents):
                 normalize=normalize_fn, initialize=initializer, activation=activation, device=device,
                 use_distributed_training=self.distributed_training,
                 use_parameter_sharing=self.use_parameter_sharing, model_keys=self.model_keys,
-                use_rnn=self.use_rnn, rnn=self.config.rnn if self.use_rnn else None)
+                use_rnn=self.use_rnn, rnn=self.config.rnn if self.use_rnn else None,
+                temperature=self.config.temperature,
+                policy_choice="Boltzmann")  # "Boltzmann" or "greedy"
         else:
             raise AttributeError(f"MFQ currently does not support the policy named {self.config.policy}.")
 
@@ -149,7 +151,7 @@ class MFQ_Agents(OffPolicyMARLAgents):
         experience_data['actions_mean'] = {k: np.array([data[k] for data in kwargs['actions_mean']])
                                            for k in self.agent_keys}
         experience_data['actions_mean_next'] = {k: np.array([data[k] for data in kwargs['actions_mean_next']])
-                                           for k in self.agent_keys}
+                                                for k in self.agent_keys}
         self.memory.store(**experience_data)
 
     def action(self,
@@ -163,24 +165,14 @@ class MFQ_Agents(OffPolicyMARLAgents):
         mean_actions_input, agent_mask_array = self._build_inputs_mean_mask(agent_mask, act_mean_dict)
         obs_input, agents_id, avail_actions_input = self._build_inputs(obs_dict, avail_actions_dict)
         agent_mask_tensor = torch.tensor(agent_mask_array, dtype=torch.float32, device=self.device)
-        agent_mask_repeat = agent_mask_tensor.unsqueeze(-1).repeat(1, 1, self.n_actions_max)
 
         hidden_state, actions, q_output = self.policy(observation=obs_input,
                                                       agent_ids=agents_id,
                                                       actions_mean=mean_actions_input,
                                                       avail_actions=avail_actions_input,
                                                       rnn_hidden=rnn_hidden)
-
-        # count alive neighbors
-        _eyes = torch.eye(self.n_agents).unsqueeze(0).repeat(batch_size, 1, 1).to(self.device)
-        agent_mask_diagonal = agent_mask_tensor.unsqueeze(-1).repeat(1, 1, self.n_agents) * _eyes
-        agent_mask_neighbors = agent_mask_tensor.unsqueeze(-1).repeat(1, 1, self.n_agents) - agent_mask_diagonal
-        agent_alive_neighbors = agent_mask_neighbors.sum(dim=-1, keepdim=True)
-        # calculate mean actions of each agent's neighbors
-        actions_sample = self.policy.sample_actions(logits=q_output) * agent_mask_repeat
-        actions_sum = actions_sample.sum(dim=-2, keepdim=True).repeat(1, self.n_agents, 1)
-        actions_neighbors_sum = actions_sum - actions_sample
-        actions_mean_masked = actions_neighbors_sum * agent_mask_repeat / agent_alive_neighbors
+        actions_mean_masked = self.policy.get_mean_actions(actions=actions, agent_mask_tensor=agent_mask_tensor,
+                                                           batch_size=batch_size)
         actions_mean_masked = actions_mean_masked.cpu().detach().numpy()
         actions_mean_dict = [{k: actions_mean_masked[e, i] for i, k in enumerate(self.agent_keys)}
                              for e in range(batch_size)]
@@ -279,8 +271,7 @@ class MFQ_Agents(OffPolicyMARLAgents):
                     if self.use_actions_mask:
                         avail_actions[i] = info[i]["reset_avail_actions"]
                         self.envs.buf_avail_actions[i] = info[i]["reset_avail_actions"]
-                    self.envs.buf_info[i]["agent_mask"] = [{k: True for k in self.agent_keys}
-                                                           for _ in range(self.n_envs)]
+                    self.envs.buf_info[i]["agent_mask"] = {k: True for k in self.agent_keys}
                     agent_mask_dict[i] = {k: True for k in self.agent_keys}
                     actions_mean_dict[i] = {k: np.zeros(self.n_actions_max) for k in self.agent_keys}
                     self.current_episode[i] += 1
@@ -309,3 +300,154 @@ class MFQ_Agents(OffPolicyMARLAgents):
             self.callback.on_train_step_end(self.current_step, envs=self.envs, policy=self.policy,
                                             n_steps=n_steps, train_info=train_info)
         return train_info
+
+    def run_episodes(self, env_fn=None, n_episodes: int = 1, test_mode: bool = False):
+        """
+        Run some episodes when use RNN.
+
+        Parameters:
+            env_fn: The function that can make some testing environments.
+            n_episodes (int): Number of episodes.
+            test_mode (bool): Whether to test the model.
+
+        Returns:
+            Scores: The episode scores.
+        """
+        envs = self.envs if env_fn is None else env_fn()
+        num_envs = envs.num_envs
+        videos, episode_videos, images = [[] for _ in range(num_envs)], [], None
+        current_episode, current_step, scores, best_score = 0, 0, [], -np.inf
+        obs_dict, info = envs.reset()
+        agent_mask_dict = [data['agent_mask'] for data in info]
+        actions_mean_dict = [{k: np.zeros(self.n_actions_max) for k in self.agent_keys} for _ in range(num_envs)]
+        state = envs.buf_state.copy() if self.use_global_state else None
+        avail_actions = envs.buf_avail_actions if self.use_actions_mask else None
+        if test_mode:
+            if self.config.render_mode == "rgb_array" and self.render:
+                images = envs.render(self.config.render_mode)
+                for idx, img in enumerate(images):
+                    videos[idx].append(img)
+        else:
+            if self.use_rnn:
+                self.memory.clear_episodes()
+        rnn_hidden = self.init_rnn_hidden(num_envs)
+
+        while current_episode < n_episodes:
+            policy_out = self.action(obs_dict=obs_dict,
+                                     agent_mask=agent_mask_dict,
+                                     act_mean_dict=actions_mean_dict,
+                                     avail_actions_dict=avail_actions,
+                                     rnn_hidden=rnn_hidden,
+                                     test_mode=test_mode)
+            rnn_hidden, actions_dict = policy_out['hidden_state'], policy_out['actions']
+            actions_mean_next_dict = policy_out['actions_mean']
+            next_obs_dict, rewards_dict, terminated_dict, truncated, info = envs.step(actions_dict)
+            next_state = envs.buf_state.copy() if self.use_global_state else None
+            next_avail_actions = envs.buf_avail_actions if self.use_actions_mask else None
+            if test_mode:
+                if self.config.render_mode == "rgb_array" and self.render:
+                    images = envs.render(self.config.render_mode)
+                    for idx, img in enumerate(images):
+                        videos[idx].append(img)
+            else:
+                self.store_experience(obs_dict, avail_actions, actions_dict, next_obs_dict, next_avail_actions,
+                                      rewards_dict, terminated_dict, info,
+                                      **{'state': state, 'next_state': next_state, 'agent_mask': agent_mask_dict,
+                                         'actions_mean': actions_mean_dict,
+                                         'actions_mean_next': actions_mean_next_dict})
+
+            self.callback.on_test_step(envs=envs, policy=self.policy, images=images, test_mode=test_mode,
+                                       obs=obs_dict, policy_out=policy_out, acts=actions_dict,
+                                       actions_mean_dict=actions_mean_dict,
+                                       next_obs=next_obs_dict, rewards=rewards_dict,
+                                       terminals=terminated_dict, truncations=truncated, infos=info,
+                                       state=state, next_state=next_state,
+                                       current_train_step=self.current_step, n_episodes=n_episodes,
+                                       current_step=current_step, current_episode=current_episode)
+
+            obs_dict = deepcopy(next_obs_dict)
+            agent_mask_dict = [data['agent_mask'] for data in info]
+            actions_mean_dict = deepcopy(actions_mean_next_dict)
+            if self.use_global_state:
+                state = deepcopy(next_state)
+            if self.use_actions_mask:
+                avail_actions = deepcopy(next_avail_actions)
+
+            for i in range(num_envs):
+                if all(terminated_dict[i].values()) or truncated[i]:
+                    current_episode += 1
+                    obs_dict[i] = info[i]["reset_obs"]
+                    envs.buf_obs[i] = info[i]["reset_obs"]
+                    if self.use_global_state:
+                        state = info[i]["reset_state"]
+                        self.envs.buf_state[i] = info[i]["reset_state"]
+                    if self.use_actions_mask:
+                        avail_actions[i] = info[i]["reset_avail_actions"]
+                        envs.buf_avail_actions[i] = info[i]["reset_avail_actions"]
+                    agent_mask_dict[i] = {k: True for k in self.agent_keys}
+                    actions_mean_dict[i] = {k: np.zeros(self.n_actions_max) for k in self.agent_keys}
+                    if self.use_rnn:
+                        rnn_hidden = self.init_hidden_item(i_env=i, rnn_hidden=rnn_hidden)
+                        if not test_mode:
+                            terminal_data = {'obs': next_obs_dict[i],
+                                             'episode_step': info[i]['episode_step']}
+                            if self.use_global_state:
+                                terminal_data['state'] = next_state[i]
+                            if self.use_actions_mask:
+                                terminal_data['avail_actions'] = next_avail_actions[i]
+                            self.memory.finish_path(i, **terminal_data)
+                    episode_score = float(np.mean(itemgetter(*self.agent_keys)(info[i]["episode_score"])))
+                    scores.append(episode_score)
+                    if test_mode:
+                        if best_score < episode_score:
+                            best_score = episode_score
+                            episode_videos = videos[i].copy()
+                        if self.config.test_mode:
+                            print("Episode: %d, Score: %.2f" % (current_episode, episode_score))
+                    else:
+                        self.current_episode[i] += 1
+                        if self.use_wandb:
+                            episode_info = {
+                                "Train-Results/Episode-Steps/env-%d" % i: info[i]["episode_step"],
+                                "Train-Results/Episode-Rewards/env-%d" % i: info[i]["episode_score"]
+                            }
+                        else:
+                            episode_info = {
+                                "Train-Results/Episode-Steps": {"env-%d" % i: info[i]["episode_step"]},
+                                "Train-Results/Episode-Rewards": {
+                                    "env-%d" % i: np.mean(itemgetter(*self.agent_keys)(info[i]["episode_score"]))}
+                            }
+                        self.current_step += info[i]["episode_step"]
+                        self.log_infos(episode_info, self.current_step)
+                        self._update_explore_factor()
+                        self.callback.on_train_episode_info(envs=self.envs, policy=self.policy, env_id=i,
+                                                            infos=info, rank=self.rank, use_wandb=self.use_wandb,
+                                                            current_step=self.current_step,
+                                                            current_episode=self.current_episode,
+                                                            n_episodes=n_episodes)
+            current_step += num_envs
+
+        if test_mode:
+            if self.config.render_mode == "rgb_array" and self.render:
+                # time, height, width, channel -> time, channel, height, width
+                videos_info = {"Videos_Test": np.array([episode_videos], dtype=np.uint8).transpose((0, 1, 4, 2, 3))}
+                self.log_videos(info=videos_info, fps=self.fps, x_index=self.current_step)
+
+            if self.config.test_mode:
+                print("Best Score: %.2f" % best_score)
+
+            test_info = {
+                "Test-Results/Episode-Rewards": np.mean(scores),
+                "Test-Results/Episode-Rewards-Std": np.std(scores),
+            }
+
+            self.log_infos(test_info, self.current_step)
+
+            self.callback.on_test_end(envs=envs, policy=self.policy,
+                                      current_train_step=self.current_step,
+                                      current_step=current_step, current_episode=current_episode,
+                                      scores=scores, best_score=best_score)
+
+            if env_fn is not None:
+                envs.close()
+        return scores
