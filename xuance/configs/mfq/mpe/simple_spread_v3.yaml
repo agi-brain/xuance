@@ -26,6 +26,7 @@ buffer_size: 200000
 batch_size: 256
 learning_rate: 0.001
 gamma: 0.95  # discount factor
+policy_type: "greedy"  # choice of policy: Boltzmann policy or greedy policy. (Default is 'greedy')
 temperature: 0.1  # softmax for policy (be used for the exploration rate of Boltzmann policy.)
 
 start_greedy: 1.0
