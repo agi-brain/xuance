@@ -990,8 +990,45 @@ class MeanField_OffPolicyBuffer(MARL_OffPolicyBuffer):
                                                         n_envs, buffer_size, batch_size, **kwargs)
 
     def clear(self):
-        super(MeanField_OffPolicyBuffer, self).clear()
+        super().clear()
         self.data["actions_mean"] = {k: create_memory(space2shape(self.prob_space), self.n_envs, self.n_size)
                                      for k in self.agent_keys}
         self.data["actions_mean_next"] = {k: create_memory(space2shape(self.prob_space), self.n_envs, self.n_size)
                                           for k in self.agent_keys}
+
+
+class MeanField_OffPolicyBuffer_RNN(MARL_OffPolicyBuffer_RNN):
+    def __init__(self, *args, **kwargs) -> None:
+        self.n_actions_max = kwargs.get('n_actions_max')
+        self.prob_space = (self.n_actions_max,)
+        super(MeanField_OffPolicyBuffer_RNN, self).__init__(*args, **kwargs)
+
+    def clear(self):
+        super().clear()
+        self.data['actions_mean'] = {k: np.zeros((self.buffer_size, self.max_eps_len + 1) + self.prob_space,
+                                                 dtype=np.float32) for k in self.agent_keys}
+
+    def clear_episodes(self):
+        super().clear_episodes()
+        self.episode_data['actions_mean'] = {k: np.zeros((self.n_envs, self.max_eps_len + 1) + self.prob_space,
+                                                         dtype=np.float32) for k in self.agent_keys}
+
+    def finish_path(self, i_env, **terminal_data):
+        """
+        Address the terminal states, including store the terminal observations, avail_actions, and others.
+
+        Parameters:
+            i_env (int): The i-th environment.
+            terminal_data (dict): The terminal states.
+        """
+        env_step = terminal_data['episode_step']
+        # Store terminal data into self.episode_data.
+        if self.store_global_state:
+            self.episode_data['state'][i_env, env_step] = terminal_data['state']
+        for agt_key in self.agent_keys:
+            self.episode_data['obs'][agt_key][i_env, env_step] = terminal_data['obs'][agt_key]
+            self.episode_data['actions_mean'][agt_key][i_env, env_step] = terminal_data['actions_mean'][agt_key]
+            if self.use_actions_mask:
+                self.episode_data['avail_actions'][agt_key][i_env, env_step] = terminal_data['avail_actions'][agt_key]
+        # Store the episode data of ith env into self.data.
+        self.store_episodes(i_env)

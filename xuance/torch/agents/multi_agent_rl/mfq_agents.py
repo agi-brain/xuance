@@ -7,7 +7,7 @@ from sympy.physics.vector import express
 from torch.utils.collect_env import env_info_fmt
 from tqdm import tqdm
 from copy import deepcopy
-from xuance.common import List, Union, Optional, MeanField_OffPolicyBuffer
+from xuance.common import List, Union, Optional, MeanField_OffPolicyBuffer, MeanField_OffPolicyBuffer_RNN
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
 from xuance.torch import Module
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
@@ -49,7 +49,7 @@ class MFQ_Agents(OffPolicyMARLAgents):
             avail_actions_shape = {key: (self.action_space[key].n,) for key in self.agent_keys}
         else:
             avail_actions_shape = None
-        return MeanField_OffPolicyBuffer(agent_keys=self.agent_keys,
+        input_dict = dict(agent_keys=self.agent_keys,
                                          state_space=self.state_space if self.use_global_state else None,
                                          obs_space=self.observation_space,
                                          act_space=self.action_space,
@@ -60,6 +60,8 @@ class MFQ_Agents(OffPolicyMARLAgents):
                                          use_actions_mask=self.use_actions_mask,
                                          max_episode_steps=self.episode_length,
                                          n_actions_max=self.n_actions_max)
+        Buffer = MeanField_OffPolicyBuffer_RNN if self.use_rnn else MeanField_OffPolicyBuffer
+        return Buffer(**input_dict)
 
     def _build_policy(self) -> Module:
         """
@@ -391,6 +393,7 @@ class MFQ_Agents(OffPolicyMARLAgents):
                         rnn_hidden = self.init_hidden_item(i_env=i, rnn_hidden=rnn_hidden)
                         if not test_mode:
                             terminal_data = {'obs': next_obs_dict[i],
+                                             'actions_mean': actions_mean_next_dict[i],
                                              'episode_step': info[i]['episode_step']}
                             if self.use_global_state:
                                 terminal_data['state'] = next_state[i]
