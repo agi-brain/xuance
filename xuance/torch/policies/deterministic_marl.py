@@ -7,6 +7,7 @@ from copy import deepcopy
 from gymnasium.spaces import Discrete, Box
 from xuance.common import Sequence, Optional, Callable, Union, Dict, List
 from xuance.torch.policies import BasicQhead, ActorNet, CriticNet, VDN_mixer, QMIX_FF_mixer
+from xuance.torch.representations import Basic_MLP
 from xuance.torch.utils import ModuleType
 from xuance.torch import Tensor, Module, ModuleDict, DistributedDataParallel
 
@@ -770,6 +771,7 @@ class DCG_policy(Module):
         use_distributed_training (bool): Whether to use multi-GPU for distributed training.
         **kwargs: Other arguments.
     """
+
     def __init__(self,
                  action_space: Discrete,
                  n_agents: int,
@@ -788,7 +790,7 @@ class DCG_policy(Module):
         self.action_space = action_space
         self.n_agents = n_agents
         self.use_parameter_sharing = kwargs['use_parameter_sharing']
-        self.model_keys= kwargs['model_keys']
+        self.model_keys = kwargs['model_keys']
 
         self.representation_info_shape = {key: representation[key].output_shapes for key in self.model_keys}
         self.lstm = True if kwargs['rnn'] == "LSTM" else False
@@ -895,6 +897,7 @@ class MFQnetwork(Module):
         use_distributed_training (bool): Whether to use multi-GPU for distributed training.
         **kwargs: Other arguments.
     """
+
     def __init__(self,
                  action_space: Discrete,
                  n_agents: int,
@@ -923,15 +926,23 @@ class MFQnetwork(Module):
         self.representation = representation
         self.target_representation = deepcopy(self.representation)
 
-        self.dim_input_Q, self.n_actions = {}, {}
-        self.eval_Qhead, self.target_Qhead = ModuleDict(), ModuleDict()
+        self.dim_input_action_embedding, self.dim_input_Q, self.n_actions = {}, {}, {}
+        self.action_mean_embedding = ModuleDict()
+        self.eval_Qhead, self.target_Qhead, self.target_action_mean_embedding = ModuleDict(), ModuleDict(), ModuleDict()
         for key in self.model_keys:
-            self.dim_input_Q[key] = self.representation_info_shape[key]['state'][0] + self.n_actions_max
+            self.dim_input_action_embedding[key] = self.n_actions_max
+            self.dim_input_Q[key] = self.representation_info_shape[key]['state'][0] + \
+                                    kwargs['action_embedding_hidden_size'][-1]
             self.n_actions[key] = self.action_space[key].n
             if self.use_parameter_sharing:
+                self.dim_input_action_embedding[key] += self.n_agents
                 self.dim_input_Q[key] += self.n_agents
+            self.action_mean_embedding[key] = Basic_MLP((self.dim_input_action_embedding[key],),
+                                                        kwargs['action_embedding_hidden_size'],
+                                                        normalize, initialize, activation, device)
             self.eval_Qhead[key] = BasicQhead(self.dim_input_Q[key], self.n_actions[key], hidden_size,
                                               normalize, initialize, activation, device)
+            self.target_action_mean_embedding[key] = deepcopy(self.action_mean_embedding[key])
             self.target_Qhead[key] = deepcopy(self.eval_Qhead[key])
         self.softmax = torch.nn.Softmax(dim=-1)
         self.temperature = kwargs['temperature']
@@ -944,6 +955,8 @@ class MFQnetwork(Module):
                 if self.representation[key]._get_name() != "Basic_Identical":
                     self.representation[key] = DistributedDataParallel(module=self.representation[key],
                                                                        device_ids=[self.rank])
+                self.action_mean_embedding[key] = DistributedDataParallel(module=self.action_mean_embedding[key],
+                                                                          device_ids=[self.rank])
                 self.eval_Qhead[key] = DistributedDataParallel(module=self.eval_Qhead[key], device_ids=[self.rank])
 
     @property
@@ -951,7 +964,7 @@ class MFQnetwork(Module):
         parameters_model = {}
         for key in self.model_keys:
             parameters_model[key] = list(self.representation[key].parameters()) + list(
-                self.eval_Qhead[key].parameters())
+                self.action_mean_embedding[key].parameters()) + list(self.eval_Qhead[key].parameters())
         return parameters_model
 
     def forward(self, observation: Dict[str, Tensor], agent_ids: Tensor = None,
@@ -989,10 +1002,14 @@ class MFQnetwork(Module):
                 outputs = self.representation[key](observation[key])
                 rnn_hidden_new[key] = [None, None]
 
-            q_inputs = torch.cat([outputs['state'], actions_mean[key]], dim=-1)
-
+            # mean actions embedding
             if self.use_parameter_sharing:
-                q_inputs = torch.concat([q_inputs, agent_ids], dim=-1)
+                input_embedding = torch.cat([actions_mean[key], agent_ids], dim=-1)
+                act_embedding = self.action_mean_embedding[key](input_embedding)
+                q_inputs = torch.cat([outputs['state'], act_embedding['state'], agent_ids], dim=-1)
+            else:
+                act_embedding = self.action_mean_embedding[key](actions_mean[key])
+                q_inputs = torch.cat([outputs['state'], act_embedding['state']], dim=-1)
 
             evalQ[key] = self.eval_Qhead[key](q_inputs)
 
@@ -1065,15 +1082,22 @@ class MFQnetwork(Module):
                 outputs = self.target_representation[key](observation[key])
                 rnn_hidden_new[key] = None
 
-            q_inputs = torch.cat([outputs['state'], actions_mean[key]], dim=-1)
+            # mean actions embedding
             if self.use_parameter_sharing:
-                q_inputs = torch.concat([q_inputs, agent_ids], dim=-1)
+                input_embedding = torch.cat([actions_mean[key], agent_ids], dim=-1)
+                act_embedding = self.target_action_mean_embedding[key](input_embedding)
+                q_inputs = torch.cat([outputs['state'], act_embedding['state'], agent_ids], dim=-1)
+            else:
+                act_embedding = self.target_action_mean_embedding[key](actions_mean[key])
+                q_inputs = torch.cat([outputs['state'], act_embedding['state']], dim=-1)
 
             q_target[key] = self.target_Qhead[key](q_inputs)
         return rnn_hidden_new, q_target
 
     def copy_target(self):
         for ep, tp in zip(self.representation.parameters(), self.target_representation.parameters()):
+            tp.data.copy_(ep)
+        for ep, tp in zip(self.action_mean_embedding.parameters(), self.target_action_mean_embedding.parameters()):
             tp.data.copy_(ep)
         for ep, tp in zip(self.eval_Qhead.parameters(), self.target_Qhead.parameters()):
             tp.data.copy_(ep)
