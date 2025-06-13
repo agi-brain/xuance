@@ -921,7 +921,7 @@ class MFQnetwork(Module):
         self.lstm = True if kwargs["rnn"] == "LSTM" else False
         self.use_rnn = True if kwargs["use_rnn"] else False
         # The choice of policy: Boltzmann policy or greedy policy. (Default is 'greedy')
-        self.policy_type = kwargs.get('policy_type', 'greedy')
+        self.policy_type = kwargs['policy_type']
 
         self.representation = representation
         self.target_representation = deepcopy(self.representation)

@@ -89,7 +89,7 @@ class MFQ_Agents(OffPolicyMARLAgents):
                 use_parameter_sharing=self.use_parameter_sharing, model_keys=self.model_keys,
                 use_rnn=self.use_rnn, rnn=self.config.rnn if self.use_rnn else None,
                 temperature=self.config.temperature,
-                policy_choice="Boltzmann",  # "Boltzmann" or "greedy"
+                policy_type="Boltzmann",  # "Boltzmann" or "greedy"
                 action_embedding_hidden_size=self.config.action_embedding_hidden_size)
         else:
             raise AttributeError(f"MFQ currently does not support the policy named {self.config.policy}.")
