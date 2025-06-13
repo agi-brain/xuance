@@ -1,74 +1,75 @@
-import torch
 import numpy as np
-from tqdm import tqdm
-from copy import deepcopy
-from operator import itemgetter
+import torch
 from argparse import Namespace
-from xuance.common import List, Union
+from operator import itemgetter
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
+from xuance.common import List, Optional, Union
+from xuance.mindspore.agents.multi_agent_rl.iac_agents import IAC_Agents
+from xuance.torch import Module
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
-from xuance.torch.representations import REGISTRY_Representation
-from xuance.torch.policies import REGISTRY_Policy, QMIX_mixer
-from xuance.torch.learners import QMIX_Learner
-from xuance.torch.agents import MARLAgents
-from xuance.torch.agents.multi_agent_rl.iql_agents import IQL_Agents
-from xuance.common import MARL_OffPolicyBuffer, MARL_OffPolicyBuffer_RNN
+from xuance.torch.policies import REGISTRY_Policy
+from xuance.torch.agents import OnPolicyMARLAgents, BaseCallback
 
 
-class MFAC_Agents(MARLAgents):
-    """The implementation of Mean-Field AC agents.
+class MFAC_Agents(OnPolicyMARLAgents):
+    """The implementation of Mean Field Actor-Critic (MFAC) agents.
 
     Args:
         config: the Namespace variable that provides hyperparameters and other settings.
         envs: the vectorized environments.
-        device: the calculating device of the model, such as CPU or GPU.
+        callback: A user-defined callback function object to inject custom logic during training.
     """
     def __init__(self,
                  config: Namespace,
-                 envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv]):
-        self.gamma = config.gamma
-        self.n_envs = envs.num_envs
-        self.n_size = config.buffer_size
-        self.n_epochs = config.n_epochs
-        self.n_minibatch = config.n_minibatch
-        if config.state_space is not None:
-            config.dim_state, state_shape = config.state_space.shape, config.state_space.shape
-        else:
-            config.dim_state, state_shape = None, None
+                 envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv],
+                 callback: Optional[BaseCallback] = None):
+        super(MFAC_Agents, self).__init__(config, envs, callback)
+        self.policy = self._build_policy()  # build policy
+        self.memory = self._build_memory()  # build memory
+        self.learner = self._build_learner(self.config, self.model_keys, self.agent_keys, self.policy, self.callback)
 
-        input_representation = get_repre_in(config)
-        representation = REGISTRY_Representation[config.representation](*input_representation)
-        input_policy = get_policy_in_marl(config, representation)
-        policy = REGISTRY_Policy[config.policy](*input_policy, gain=config.gain)
-        optimizer = torch.optim.Adam(policy.parameters(), config.learning_rate, eps=1e-5)
-        scheduler = torch.optim.lr_scheduler.LinearLR(optimizer, start_factor=1.0, end_factor=self.end_factor_lr_decay,
-                                                      total_iters=get_total_iters(config.agent_name, config))
-        self.observation_space = envs.observation_space
-        self.action_space = envs.action_space
-        self.representation_info_shape = policy.representation.output_shapes
-        self.auxiliary_info_shape = {}
+    def _build_policy(self):
+        """
+        Build representation(s) and policy(ies) for agent(s)
 
-        if config.state_space is not None:
-            config.dim_state, state_shape = config.state_space.shape, config.state_space.shape
+        Returns:
+            policy (torch.nn.Module): A dict of policies.
+        """
+        normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None
+        initializer = torch.nn.init.orthogonal_
+        activation = ActivationFunctions[self.config.activation]
+        device = self.device
+        agent = self.config.agent
+
+        # build representations
+        A_representation = self._build_representation(self.config.representation, self.observation_space, self.config)
+        C_representation = self._build_representation(self.config.representation, self.observation_space, self.config)
+
+        # build policies
+        if self.config.policy == "Categorical_MAAC_Policy":
+            policy = REGISTRY_Policy["Categorical_MAAC_Policy"](
+                action_space=self.action_space, n_agents=self.n_agents,
+                representation_actor=A_representation, representation_critic=C_representation,
+                actor_hidden_size=self.config.actor_hidden_size, critic_hidden_size=self.config.critic_hidden_size,
+                normalize=normalize_fn, initialize=initializer, activation=activation,
+                device=device, use_distributed_training=self.distributed_training,
+                use_parameter_sharing=self.use_parameter_sharing, model_keys=self.model_keys,
+                use_rnn=self.use_rnn, rnn=self.config.rnn if self.use_rnn else None)
+            self.continuous_control = False
+        elif self.config.policy == "Gaussian_MAAC_Policy":
+            policy = REGISTRY_Policy["Gaussian_MAAC_Policy"](
+                action_space=self.action_space, n_agents=self.n_agents,
+                representation_actor=A_representation, representation_critic=C_representation,
+                actor_hidden_size=self.config.actor_hidden_size, critic_hidden_size=self.config.critic_hidden_size,
+                normalize=normalize_fn, initialize=initializer, activation=activation,
+                activation_action=ActivationFunctions[self.config.activation_action],
+                device=device, use_distributed_training=self.distributed_training,
+                use_parameter_sharing=self.use_parameter_sharing, model_keys=self.model_keys,
+                use_rnn=self.use_rnn, rnn=self.config.rnn if self.use_rnn else None)
+            self.continuous_control = True
         else:
-            config.dim_state, state_shape = None, None
-        memory = MeanField_OnPolicyBuffer(config.n_agents,
-                                          state_shape,
-                                          config.obs_shape,
-                                          config.act_shape,
-                                          config.rew_shape,
-                                          config.done_shape,
-                                          envs.num_envs,
-                                          config.buffer_size,
-                                          config.use_gae, config.use_advnorm, config.gamma, config.gae_lambda,
-                                          prob_space=config.act_prob_shape)
-        self.buffer_size = memory.buffer_size
-        self.batch_size = self.buffer_size // self.n_minibatch
-        learner = MFAC_Learner(config, policy, optimizer, scheduler,
-                               config.device, config.model_dir, config.gamma)
-        super(MFAC_Agents, self).__init__(config, envs, policy, memory, learner, device,
-                                          config.log_dir, config.model_dir)
-        self.on_policy = True
+            raise AttributeError(f"{agent} currently does not support the policy named {self.config.policy}.")
+        return policy
 
     def act(self, obs_n, test_mode, act_mean=None, agent_mask=None):
         batch_size = len(obs_n)
