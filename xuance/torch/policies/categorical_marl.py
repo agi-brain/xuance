@@ -1,14 +1,16 @@
 import os
 import torch
-import torch.nn as nn
 import numpy as np
+import torch.nn as nn
 from copy import deepcopy
 from operator import itemgetter
 from gymnasium.spaces import Discrete
+from torch.distributions import Categorical
 from xuance.common import Sequence, Optional, Callable, Union, Dict, List
 from xuance.torch.policies import CategoricalActorNet, ActorNet
 from xuance.torch.policies.core import CriticNet, BasicQhead
-from xuance.torch.utils import ModuleType, CategoricalDistribution
+from xuance.torch.utils import ModuleType
+from xuance.torch.representations import Basic_MLP
 from xuance.torch import Tensor, Module, ModuleDict, DistributedDataParallel
 from .core import CategoricalActorNet_SAC as Actor_SAC
 
@@ -242,7 +244,7 @@ class MAAC_Policy_Share(MAAC_Policy):
         self.model_keys = kwargs['model_keys']
         self.lstm = True if kwargs["rnn"] == "LSTM" else False
         self.use_rnn = True if kwargs["use_rnn"] else False
-        
+
         self.representation = representation
 
         self.dim_input_critic, self.n_actions = {}, {}
@@ -270,7 +272,7 @@ class MAAC_Policy_Share(MAAC_Policy):
                 self.critic[key] = DistributedDataParallel(module=self.critic[key], device_ids=[self.rank])
             if self.mixer is not None:
                 self.mixer = DistributedDataParallel(module=self.mixer, device_ids=[self.rank])
-        
+
     @property
     def parameters_model(self):
         parameters = list(self.representation.parameters()) + list(self.actor.parameters()) + \
@@ -418,7 +420,8 @@ class CommNet_Policy(Module):
     @property
     def parameters_model(self):
         parameters = list(self.actor_representation.parameters()) + list(self.actor.parameters()) + list(
-            self.critic_representation.parameters()) + list(self.critic.parameters()) + list(self.communicator.parameters())
+            self.critic_representation.parameters()) + list(self.critic.parameters()) + list(
+            self.communicator.parameters())
         if self.mixer is not None:
             parameters += list(self.mixer.parameters())
         return parameters
@@ -457,7 +460,8 @@ class CommNet_Policy(Module):
         agent_list = self.model_keys if agent_key is None else [agent_key]
 
         # calculate message_receive
-        message_receive = {k: self.communicator[k](self.model_keys, observation[k], rnn_hidden, alive_ally) for k in self.model_keys}
+        message_receive = {k: self.communicator[k](self.model_keys, observation[k], rnn_hidden, alive_ally) for k in
+                           self.model_keys}
         message = {k: torch.cat(list(message_receive.values()), dim=-1) for k in self.model_keys}
 
         for key in agent_list:
@@ -472,7 +476,6 @@ class CommNet_Policy(Module):
         if global_state is not None:
             global_state = torch.as_tensor(global_state).to(self.device)
         return values_n if self.mixer is None else self.mixer(values_n, global_state)
-
 
 
 class IC3Net_Policy(Module):
@@ -539,7 +542,8 @@ class IC3Net_Policy(Module):
     @property
     def parameters_model(self):
         parameters = list(self.actor_representation.parameters()) + list(self.actor.parameters()) + list(
-            self.critic_representation.parameters()) + list(self.critic.parameters()) + list(self.communicator.parameters())
+            self.critic_representation.parameters()) + list(self.critic.parameters()) + list(
+            self.communicator.parameters())
         if self.mixer is not None:
             parameters += list(self.mixer.parameters())
         return parameters
@@ -578,7 +582,8 @@ class IC3Net_Policy(Module):
         agent_list = self.model_keys if agent_key is None else [agent_key]
 
         # calculate message_receive
-        message_receive = {k: self.communicator[k](self.model_keys, observation[k], rnn_hidden, alive_ally) for k in self.model_keys}
+        message_receive = {k: self.communicator[k](self.model_keys, observation[k], rnn_hidden, alive_ally) for k in
+                           self.model_keys}
         message = {k: torch.cat(list(message_receive.values()), dim=-1) for k in self.model_keys}
 
         for key in agent_list:
@@ -659,7 +664,8 @@ class TarMAC_Policy(Module):
     @property
     def parameters_model(self):
         parameters = list(self.actor_representation.parameters()) + list(self.actor.parameters()) + list(
-            self.critic_representation.parameters()) + list(self.critic.parameters()) + list(self.communicator.parameters())
+            self.critic_representation.parameters()) + list(self.critic.parameters()) + list(
+            self.communicator.parameters())
         if self.mixer is not None:
             parameters += list(self.mixer.parameters())
         return parameters
@@ -683,7 +689,7 @@ class TarMAC_Policy(Module):
 
         # calculate message_receive
         message_receive = {k: self.communicator[k](k, observation[k], rnn_hidden, alive_ally) for k in
-                               self.model_keys}
+                           self.model_keys}
 
         for key in agent_list:
             outputs = self.actor_representation[key](message_receive[key], *rnn_hidden[key])
@@ -699,7 +705,8 @@ class TarMAC_Policy(Module):
         agent_list = self.model_keys if agent_key is None else [agent_key]
 
         # calculate message_receive
-        message_receive = {k: self.communicator[k](self.model_keys, observation[k], rnn_hidden, alive_ally) for k in self.model_keys}
+        message_receive = {k: self.communicator[k](self.model_keys, observation[k], rnn_hidden, alive_ally) for k in
+                           self.model_keys}
         message = {k: torch.cat(list(message_receive.values()), dim=-1) for k in self.model_keys}
 
         for key in agent_list:
@@ -931,39 +938,180 @@ class MeanFieldActorCriticPolicy(Module):
     def __init__(self,
                  action_space: Discrete,
                  n_agents: int,
-                 representation: Module,
+                 representation_actor: ModuleDict,
+                 representation_critic: ModuleDict,
                  actor_hidden_size: Sequence[int] = None,
                  critic_hidden_size: Sequence[int] = None,
                  normalize: Optional[ModuleType] = None,
                  initialize: Optional[Callable[..., Tensor]] = None,
                  activation: Optional[ModuleType] = None,
                  device: Optional[Union[str, int, torch.device]] = None,
-                 **kwargs
-                 ):
+                 use_distributed_training: bool = False,
+                 **kwargs):
         super(MeanFieldActorCriticPolicy, self).__init__()
-        self.action_dim = action_space.n
-        self.representation = representation
-        self.representation_info_shape = self.representation.output_shapes
-        self.actor_net = CategoricalActorNet(representation.output_shapes['state'][0], self.action_dim, n_agents,
-                                             actor_hidden_size, normalize, initialize, kwargs['gain'], activation,
-                                             device)
-        self.critic_net = CriticNet(representation.output_shapes['state'][0] + self.action_dim, n_agents,
-                                    critic_hidden_size, normalize, initialize, activation, device)
-        self.parameters_actor = list(self.actor_net.parameters()) + list(self.representation.parameters())
-        self.parameters_critic = self.critic_net.parameters()
-        self.pi_dist = CategoricalDistribution(self.action_dim)
+        self.device = device
+        self.action_space = action_space
+        self.n_agents = n_agents
+        self.use_parameter_sharing = kwargs['use_parameter_sharing']
+        self.model_keys = kwargs['model_keys']
+        self.lstm = True if kwargs["rnn"] == "LSTM" else False
+        self.use_rnn = True if kwargs["use_rnn"] else False
 
-    def forward(self, observation: Tensor, agent_ids: Tensor):
-        outputs = self.representation(observation)
-        input_actor = torch.concat([outputs['state'], agent_ids], dim=-1)
-        act_logits = self.actor_net(input_actor)
-        self.pi_dist.set_param(logits=act_logits)
-        return outputs, self.pi_dist
+        self.actor_representation = representation_actor
+        self.critic_representation = representation_critic
 
-    def critic(self, observation: Tensor, actions_mean: Tensor, agent_ids: Tensor):
-        outputs = self.representation(observation)
-        critic_in = torch.concat([outputs['state'], actions_mean, agent_ids], dim=-1)
-        return self.critic_net(critic_in)
+        self.dim_input_action_embedding, self.dim_input_critic, self.n_actions = {}, {}, {}
+        self.action_mean_embedding = ModuleDict()
+        self.actor, self.critic = ModuleDict(), ModuleDict()
+        for key in self.model_keys:
+            self.n_actions[key] = self.action_space[key].n
+            dim_actor_in, dim_actor_out, dim_critic_in, dim_critic_out = self._get_actor_critic_input(
+                self.n_actions[key],
+                self.actor_representation[key].output_shapes['state'][0],
+                self.critic_representation[key].output_shapes['state'][0], n_agents)
+            dim_critic_in += kwargs['action_embedding_hidden_size'][-1]
+
+            self.action_mean_embedding[key] = Basic_MLP((self.dim_input_action_embedding[key],),
+                                                        kwargs['action_embedding_hidden_size'],
+                                                        normalize, initialize, activation, device)
+            self.actor[key] = ActorNet(dim_actor_in, dim_actor_out, actor_hidden_size,
+                                       normalize, initialize, activation, None, device)
+            self.critic[key] = CriticNet(dim_critic_in, critic_hidden_size, normalize, initialize, activation, device)
+
+        # Prepare DDP module.
+        self.distributed_training = use_distributed_training
+        if self.distributed_training:
+            self.rank = int(os.environ["RANK"])
+            for key in self.model_keys:
+                if self.actor_representation[key]._get_name() != "Basic_Identical":
+                    self.actor_representation[key] = DistributedDataParallel(self.actor_representation[key],
+                                                                             device_ids=[self.rank])
+                if self.critic_representation[key]._get_name() != "Basic_Identical":
+                    self.critic_representation[key] = DistributedDataParallel(self.critic_representation[key],
+                                                                              device_ids=[self.rank])
+                self.action_mean_embedding[key] = DistributedDataParallel(module=self.action_mean_embedding[key],
+                                                                          device_ids=[self.rank])
+                self.actor[key] = DistributedDataParallel(module=self.actor[key], device_ids=[self.rank])
+                self.critic[key] = DistributedDataParallel(module=self.critic[key], device_ids=[self.rank])
+
+    @property
+    def parameters_model(self):
+        parameters = list(self.actor_representation.parameters()) + list(self.actor.parameters()) + list(
+            self.critic_representation.parameters()) + list(self.critic.parameters()) + list(
+            self.action_mean_embedding.parameters())
+        return parameters
+
+    def get_boltzmann_policy(self, q):
+        actions_prob = self.softmax(q / self.temperature)
+        return actions_prob
+
+    def _get_actor_critic_input(self, dim_action, dim_actor_rep, dim_critic_rep, n_agents):
+        """
+        Returns the input dimensions of actor network and critic networks.
+
+        Parameters:
+            dim_action: The dimension of actions.
+            dim_actor_rep: The dimension of the output of actor representation.
+            dim_action_max: The maximum dimension of the output of actor
+            dim_critic_rep: The dimension of the output of critic representation.
+            n_agents: The number of agents.
+
+        Returns:
+            dim_actor_in: The dimension of input of the actor networks.
+            dim_actor_out: The dimension of output of the actor networks.
+            dim_critic_in: The dimension of the input of critic networks.
+            dim_critic_out: The dimension of the output of critic networks.
+        """
+        dim_actor_in, dim_actor_out = dim_actor_rep, dim_action
+        dim_critic_in, dim_critic_out = dim_critic_rep, dim_action
+        if self.use_parameter_sharing:
+            dim_actor_in += n_agents
+            dim_critic_in += n_agents
+        return dim_actor_in, dim_actor_out, dim_critic_in, dim_critic_out
+
+    def forward(self, observation: Dict[str, Tensor], agent_ids: Optional[Tensor] = None,
+                actions_mean: Dict[str, Tensor] = None,
+                avail_actions: Dict[str, Tensor] = None, agent_key: str = None,
+                rnn_hidden: Optional[Dict[str, List[Tensor]]] = None):
+        """
+        Returns actions of the policy.
+
+        Parameters:
+            observation (Dict[str, Tensor]): The input observations for the policies.
+            agent_ids (Tensor): The agents' ids (for parameter sharing).
+            actions_mean (Dict[str, Tensor]): The mean of the agents' actions.
+            avail_actions (Dict[str, Tensor]): Actions mask values, default is None.
+            agent_key (str): Calculate actions for specified agent.
+            rnn_hidden (Optional[Dict[str, List[Tensor]]]): The RNN hidden states of actor representation.
+
+        Returns:
+            rnn_hidden_new (Optional[Dict[str, List[Tensor]]]): The new RNN hidden states of actor representation.
+            pi_dists (dict): The stochastic policy distributions.
+        """
+        rnn_hidden_new, pi_logits, pi_dists = {}, {}, {}
+        agent_list = self.model_keys if agent_key is None else [agent_key]
+
+        actions_mean = {key: Tensor(actions_mean[key]).to(self.device) for key in agent_list}
+        if avail_actions is not None:
+            avail_actions = {key: Tensor(avail_actions[key]) for key in agent_list}
+
+        for key in agent_list:
+            if self.use_rnn:
+                outputs = self.actor_representation[key](observation[key], *rnn_hidden[key])
+                rnn_hidden_new[key] = (outputs['rnn_hidden'], outputs['rnn_cell'])
+            else:
+                outputs = self.actor_representation[key](observation[key])
+                rnn_hidden_new[key] = [None, None]
+
+            # mean actions embedding
+            if self.use_parameter_sharing:
+                input_embedding = torch.cat([actions_mean[key], agent_ids], dim=-1)
+                act_embedding = self.action_mean_embedding[key](input_embedding)
+                actor_input = torch.cat([outputs['state'], act_embedding['state'], agent_ids], dim=-1)
+            else:
+                act_embedding = self.action_mean_embedding[key](actions_mean[key])
+                actor_input = torch.cat([outputs['state'], act_embedding['state']], dim=-1)
+
+            avail_actions_input = None if avail_actions is None else avail_actions[key]
+            pi_logits[key] = self.actor[key](actor_input, avail_actions_input)
+            actions_prob = self.get_boltzmann_policy(pi_logits[key])
+            pi_dists[key] = Categorical(probs=actions_prob)
+        return rnn_hidden_new, pi_dists
+
+    def get_values(self, observation: Dict[str, Tensor], agent_ids: Tensor = None, agent_key: str = None,
+                   rnn_hidden: Optional[Dict[str, List[Tensor]]] = None):
+        """
+        Get critic values via critic networks.
+
+        Parameters:
+            observation (Dict[str, Tensor]): The input observations for the policies.
+            agent_ids (Tensor): The agents' ids (for parameter sharing).
+            agent_key (str): Calculate actions for specified agent.
+            rnn_hidden (Optional[Dict[str, List[Tensor]]]): The RNN hidden states of critic representation.
+
+        Returns:
+            rnn_hidden_new (Optional[Dict[str, List[Tensor]]]): The new RNN hidden states of critic representation.
+            values (dict): The evaluated critic values.
+        """
+        rnn_hidden_new, values = {}, {}
+        agent_list = self.model_keys if agent_key is None else [agent_key]
+
+        for key in agent_list:
+            if self.use_rnn:
+                outputs = self.critic_representation[key](observation[key], *rnn_hidden[key])
+                rnn_hidden_new[key] = (outputs['rnn_hidden'], outputs['rnn_cell'])
+            else:
+                outputs = self.critic_representation[key](observation[key])
+                rnn_hidden_new[key] = [None, None]
+
+            if self.use_parameter_sharing:
+                critic_input = torch.concat([outputs['state'], agent_ids], dim=-1)
+            else:
+                critic_input = outputs['state']
+
+            values[key] = self.critic[key](critic_input)
+
+        return rnn_hidden_new, values
 
 
 class Basic_ISAC_Policy(Module):

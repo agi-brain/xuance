@@ -47,16 +47,16 @@ class MFQ_Agents(OffPolicyMARLAgents):
         else:
             avail_actions_shape = None
         input_dict = dict(agent_keys=self.agent_keys,
-                                         state_space=self.state_space if self.use_global_state else None,
-                                         obs_space=self.observation_space,
-                                         act_space=self.action_space,
-                                         n_envs=self.n_envs,
-                                         buffer_size=self.buffer_size,
-                                         batch_size=self.batch_size,
-                                         avail_actions_shape=avail_actions_shape,
-                                         use_actions_mask=self.use_actions_mask,
-                                         max_episode_steps=self.episode_length,
-                                         n_actions_max=self.n_actions_max)
+                          state_space=self.state_space if self.use_global_state else None,
+                          obs_space=self.observation_space,
+                          act_space=self.action_space,
+                          n_envs=self.n_envs,
+                          buffer_size=self.buffer_size,
+                          batch_size=self.batch_size,
+                          avail_actions_shape=avail_actions_shape,
+                          use_actions_mask=self.use_actions_mask,
+                          max_episode_steps=self.episode_length,
+                          n_actions_max=self.n_actions_max)
         Buffer = MeanField_OffPolicyBuffer_RNN if self.use_rnn else MeanField_OffPolicyBuffer
         return Buffer(**input_dict)
 

@@ -19,13 +19,15 @@ normalize: "LayerNorm"  # Layer normalization.
 initialize: "orthogonal"  # Network initializer.
 gain: 0.01  # Gain value for network initialization.
 
-representation_hidden_size: [128, ]  # A list of hidden units for each layer of Basic_MLP representation networks.
-actor_hidden_size: [128, ]
-critic_hidden_size: [128, ]
+representation_hidden_size: [256, ]  # A list of hidden units for each layer of Basic_MLP representation networks.
+action_embedding_hidden_size: [64, 32]
+actor_hidden_size: [512, ]
+critic_hidden_size: [256, ]
 activation: 'leaky_relu'
 activation_action: 'sigmoid'
 use_parameter_sharing: True  # If to use parameter sharing for all agents' policies.
 use_actions_mask: False  # If to use actions mask for unavailable actions.
+temperature: 0.1  # softmax for policy (be used for the exploration rate of Boltzmann policy.)
 
 seed: 1
 parallels: 16

@@ -36,7 +36,8 @@ from .deterministic import DRQNPolicy
 from .deterministic_marl import BasicQnetwork as BasicQnetwork_marl
 from .deterministic_marl import MFQnetwork, MixingQnetwork, Weighted_MixingQnetwork, Qtran_MixingQnetwork, DCG_policy, \
     Independent_DDPG_Policy, MADDPG_Policy, MATD3_Policy
-from .categorical_marl import MeanFieldActorCriticPolicy, COMA_Policy, IC3Net_Policy, CommNet_Policy, TarMAC_Policy
+from .categorical_marl import MeanFieldActorCriticPolicy as Categorical_MFAC_Policy
+from .categorical_marl import COMA_Policy, IC3Net_Policy, CommNet_Policy, TarMAC_Policy
 from .categorical_marl import MAAC_Policy as Categorical_MAAC_Policy
 from .categorical_marl import MAAC_Policy_Share as Categorical_MAAC_Policy_Share
 from .categorical_marl import Basic_ISAC_Policy as Categorical_ISAC
@@ -93,7 +94,7 @@ REGISTRY_Policy = {
     "Independent_DDPG_Policy": Independent_DDPG_Policy,
     "MADDPG_Policy": MADDPG_Policy,
     "MF_Q_network": MFQnetwork,
-    "Categorical_MFAC_Policy": MeanFieldActorCriticPolicy,
+    "Categorical_MFAC_Policy": Categorical_MFAC_Policy,
     "Gaussian_MAAC_Policy": Gaussain_MAAC,
     "Gaussian_ISAC_Policy": Gaussian_ISAC,
     "Gaussian_MASAC_Policy": Gaussian_MASAC,
