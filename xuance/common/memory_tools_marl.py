@@ -556,53 +556,43 @@ class I3CNet_Buffer_RNN(MARL_OnPolicyBuffer_RNN):
 
 class MeanField_OnPolicyBuffer(MARL_OnPolicyBuffer):
     """
-    Replay buffer for on-policy Mean-Field MARL algorithms (Mean-Field Actor-Critic).
+    Replay buffer for Mean Field Actor-Critic algorithm.
 
     Args:
-        n_agents: number of agents.
-        state_space: global state space, type: Discrete, Box.
-        obs_space: observation space for one agent (suppose same obs space for group agents).
-        act_space: action space for one agent (suppose same actions space for group agents).
-        rew_space: reward space.
-        done_space: terminal variable space.
-        n_envs: number of parallel environments.
-        n_size: buffer size of trajectory data for one environment.
-        use_gae: whether to use GAE trick.
-        use_advnorm: whether to use Advantage normalization trick.
-        gamma: discount factor.
-        gae_lam: gae lambda.
-        kwargs: the other arguments.
+        agent_keys (List[str]): Keys that identify each agent.
+        state_space (Dict[str, Space]): Global state space, type: Discrete, Box.
+        obs_space (Dict[str, Dict[str, Space]]): Observation space for one agent (suppose same obs space for group agents).
+        act_space (Dict[str, Dict[str, Space]]): Action space for one agent (suppose same actions space for group agents).
+        n_envs (int): Number of parallel environments.
+        buffer_size (int): Buffer size of total experience data.
+        use_gae (bool): Whether to use GAE trick.
+        use_advnorm (bool): Whether to use Advantage normalization trick.
+        gamma (float): Discount factor.
+        gae_lam (float): gae lambda.
+        **kwargs: Other arguments.
     """
 
-    def __init__(self, n_agents, state_space, obs_space, act_space, rew_space, done_space, n_envs,
-                 n_size, use_gae, use_advnorm, gamma, gae_lam, **kwargs):
-        self.prob_space = kwargs['prob_space']
-        super(MeanField_OnPolicyBuffer, self).__init__(n_agents, state_space, obs_space, act_space, rew_space,
-                                                       done_space, n_envs, n_size, use_gae, use_advnorm, gamma, gae_lam,
-                                                       **kwargs)
+    def __init__(self,
+                 agent_keys: List[str],
+                 state_space: Dict[str, Space] = None,
+                 obs_space: Dict[str, Dict[str, Space]] = None,
+                 act_space: Dict[str, Dict[str, Space]] = None,
+                 n_envs: int = 1,
+                 buffer_size: int = 1,
+                 use_gae: Optional[bool] = False,
+                 use_advnorm: Optional[bool] = False,
+                 gamma: Optional[float] = None,
+                 gae_lam: Optional[float] = None,
+                 **kwargs):
+        self.n_actions_max = kwargs.get('n_actions_max')
+        self.prob_space = (self.n_actions_max,)
+        super(MeanField_OnPolicyBuffer, self).__init__(agent_keys, state_space, obs_space, act_space, n_envs,
+                                                       buffer_size, use_gae, use_advnorm, gamma, gae_lam, **kwargs)
 
     def clear(self):
-        self.data.update({
-            'obs': np.zeros((self.n_envs, self.n_size, self.n_agents) + self.obs_space).astype(np.float32),
-            'actions': np.zeros((self.n_envs, self.n_size, self.n_agents) + self.act_space).astype(np.float32),
-            'act_mean': np.zeros((self.n_envs, self.n_size,) + self.prob_space).astype(np.float32),
-            'rewards': np.zeros((self.n_envs, self.n_size,) + self.rew_space).astype(np.float32),
-            'returns': np.zeros((self.n_envs, self.n_size,) + self.rew_space).astype(np.float32),
-            'values': np.zeros((self.n_envs, self.n_size, self.n_agents, 1)).astype(np.float32),
-            'advantages': np.zeros((self.n_envs, self.n_size,) + self.rew_space).astype(np.float32),
-            'terminals': np.zeros((self.n_envs, self.n_size,) + self.done_space).astype(np.bool_),
-            'agent_mask': np.ones((self.n_envs, self.n_size, self.n_agents)).astype(np.bool_),
-        })
-        if self.state_space is not None:
-            self.data.update({'state': np.zeros((self.n_envs, self.n_size,) + self.state_space).astype(np.float32)})
-        self.ptr = 0  # current pointer
-        self.size = 0  # current buffer size
-        self.start_ids = np.zeros(self.n_envs)
-
-    def finish_ac_path(self, value, i_env):  # when an episode is finished
-        if self.size == 0:
-            return
-        self.start_ids[i_env] = self.ptr
+        super().clear()
+        self.data["actions_mean"] = {k: create_memory(space2shape(self.prob_space), self.n_envs, self.n_size)
+                                     for k in self.agent_keys}
 
 
 class MARL_OffPolicyBuffer(BaseBuffer):

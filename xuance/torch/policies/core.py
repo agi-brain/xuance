@@ -267,13 +267,17 @@ class ActorNet(nn.Module):
         layers.extend(mlp_block(input_shape[0], action_dim, None, activation_action, initialize, device)[0])
         self.model = nn.Sequential(*layers)
 
-    def forward(self, x: Tensor):
+    def forward(self, x: Tensor, avail_actions: Optional[Tensor] = None):
         """
         Returns the output of the actor.
         Parameters:
             x (Tensor): The input tensor.
+            avail_actions (Optional[Tensor]): The actions mask values when use actions mask, default is None.
         """
-        return self.model(x)
+        logits = self.model(x)
+        if avail_actions is not None:
+            logits[avail_actions == 0] = -1e10
+        return logits
 
 
 class CategoricalActorNet(Module):

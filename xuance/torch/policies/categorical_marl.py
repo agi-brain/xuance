@@ -6,6 +6,7 @@ from copy import deepcopy
 from operator import itemgetter
 from gymnasium.spaces import Discrete
 from torch.distributions import Categorical
+from torch.nn.functional import one_hot
 from xuance.common import Sequence, Optional, Callable, Union, Dict, List
 from xuance.torch.policies import CategoricalActorNet, ActorNet
 from xuance.torch.policies.core import CriticNet, BasicQhead
@@ -952,6 +953,8 @@ class MeanFieldActorCriticPolicy(Module):
         self.device = device
         self.action_space = action_space
         self.n_agents = n_agents
+        self.n_actions_list = [a_space.n for a_space in self.action_space.values()]
+        self.n_actions_max = max(self.n_actions_list)
         self.use_parameter_sharing = kwargs['use_parameter_sharing']
         self.model_keys = kwargs['model_keys']
         self.lstm = True if kwargs["rnn"] == "LSTM" else False
@@ -960,23 +963,27 @@ class MeanFieldActorCriticPolicy(Module):
         self.actor_representation = representation_actor
         self.critic_representation = representation_critic
 
-        self.dim_input_action_embedding, self.dim_input_critic, self.n_actions = {}, {}, {}
+        self.dim_input_critic, self.n_actions = {}, {}
         self.action_mean_embedding = ModuleDict()
         self.actor, self.critic = ModuleDict(), ModuleDict()
+        dim_action_embedding = self.n_actions_max + self.n_agents if self.use_parameter_sharing else self.n_actions_max
         for key in self.model_keys:
             self.n_actions[key] = self.action_space[key].n
             dim_actor_in, dim_actor_out, dim_critic_in, dim_critic_out = self._get_actor_critic_input(
                 self.n_actions[key],
                 self.actor_representation[key].output_shapes['state'][0],
-                self.critic_representation[key].output_shapes['state'][0], n_agents)
+                self.critic_representation[key].output_shapes['state'][0],
+                n_agents,)
             dim_critic_in += kwargs['action_embedding_hidden_size'][-1]
 
-            self.action_mean_embedding[key] = Basic_MLP((self.dim_input_action_embedding[key],),
+            self.action_mean_embedding[key] = Basic_MLP((dim_action_embedding,),
                                                         kwargs['action_embedding_hidden_size'],
                                                         normalize, initialize, activation, device)
             self.actor[key] = ActorNet(dim_actor_in, dim_actor_out, actor_hidden_size,
                                        normalize, initialize, activation, None, device)
             self.critic[key] = CriticNet(dim_critic_in, critic_hidden_size, normalize, initialize, activation, device)
+        self.softmax = torch.nn.Softmax(dim=-1)
+        self.temperature = kwargs['temperature']
 
         # Prepare DDP module.
         self.distributed_training = use_distributed_training
@@ -1005,6 +1012,28 @@ class MeanFieldActorCriticPolicy(Module):
         actions_prob = self.softmax(q / self.temperature)
         return actions_prob
 
+    def get_mean_actions(self, actions: Dict[str, Tensor],
+                         agent_mask_tensor: Tensor, batch_size: int):
+        if self.use_parameter_sharing:
+            actions_tensor = actions[self.model_keys[0]].reshape([-1, self.n_agents])
+        else:
+            actions_tensor = torch.stack(itemgetter(*self.model_keys)(actions), dim=-1).reshape([-1, self.n_agents])
+        actions_onehot = one_hot(actions_tensor, num_classes=self.n_actions_max)
+
+        # count alive neighbors
+        _eyes = torch.eye(self.n_agents).unsqueeze(0).repeat(batch_size, 1, 1).to(self.device)
+        agent_mask_diagonal = agent_mask_tensor.unsqueeze(-1).repeat(1, 1, self.n_agents) * _eyes
+        agent_mask_neighbors = agent_mask_tensor.unsqueeze(-1).repeat(1, 1, self.n_agents) - agent_mask_diagonal
+        agent_alive_neighbors = agent_mask_neighbors.sum(dim=-1, keepdim=True)
+
+        # calculate mean actions of each agent's neighbors
+        agent_mask_repeat = agent_mask_tensor.unsqueeze(-1).repeat(1, 1, self.n_actions_max)
+        actions_onehot = actions_onehot * agent_mask_repeat
+        actions_sum = actions_onehot.sum(dim=-2, keepdim=True).repeat(1, self.n_agents, 1)
+        actions_neighbors_sum = actions_sum - actions_onehot  # Sum of other agents' actions.
+        actions_mean_masked = actions_neighbors_sum * agent_mask_repeat / agent_alive_neighbors
+        return actions_mean_masked
+
     def _get_actor_critic_input(self, dim_action, dim_actor_rep, dim_critic_rep, n_agents):
         """
         Returns the input dimensions of actor network and critic networks.
@@ -1030,7 +1059,6 @@ class MeanFieldActorCriticPolicy(Module):
         return dim_actor_in, dim_actor_out, dim_critic_in, dim_critic_out
 
     def forward(self, observation: Dict[str, Tensor], agent_ids: Optional[Tensor] = None,
-                actions_mean: Dict[str, Tensor] = None,
                 avail_actions: Dict[str, Tensor] = None, agent_key: str = None,
                 rnn_hidden: Optional[Dict[str, List[Tensor]]] = None):
         """
@@ -1039,7 +1067,6 @@ class MeanFieldActorCriticPolicy(Module):
         Parameters:
             observation (Dict[str, Tensor]): The input observations for the policies.
             agent_ids (Tensor): The agents' ids (for parameter sharing).
-            actions_mean (Dict[str, Tensor]): The mean of the agents' actions.
             avail_actions (Dict[str, Tensor]): Actions mask values, default is None.
             agent_key (str): Calculate actions for specified agent.
             rnn_hidden (Optional[Dict[str, List[Tensor]]]): The RNN hidden states of actor representation.
@@ -1051,7 +1078,6 @@ class MeanFieldActorCriticPolicy(Module):
         rnn_hidden_new, pi_logits, pi_dists = {}, {}, {}
         agent_list = self.model_keys if agent_key is None else [agent_key]
 
-        actions_mean = {key: Tensor(actions_mean[key]).to(self.device) for key in agent_list}
         if avail_actions is not None:
             avail_actions = {key: Tensor(avail_actions[key]) for key in agent_list}
 
@@ -1063,14 +1089,10 @@ class MeanFieldActorCriticPolicy(Module):
                 outputs = self.actor_representation[key](observation[key])
                 rnn_hidden_new[key] = [None, None]
 
-            # mean actions embedding
             if self.use_parameter_sharing:
-                input_embedding = torch.cat([actions_mean[key], agent_ids], dim=-1)
-                act_embedding = self.action_mean_embedding[key](input_embedding)
-                actor_input = torch.cat([outputs['state'], act_embedding['state'], agent_ids], dim=-1)
+                actor_input = torch.concat([outputs['state'], agent_ids], dim=-1)
             else:
-                act_embedding = self.action_mean_embedding[key](actions_mean[key])
-                actor_input = torch.cat([outputs['state'], act_embedding['state']], dim=-1)
+                actor_input = outputs['state']
 
             avail_actions_input = None if avail_actions is None else avail_actions[key]
             pi_logits[key] = self.actor[key](actor_input, avail_actions_input)
@@ -1078,13 +1100,16 @@ class MeanFieldActorCriticPolicy(Module):
             pi_dists[key] = Categorical(probs=actions_prob)
         return rnn_hidden_new, pi_dists
 
-    def get_values(self, observation: Dict[str, Tensor], agent_ids: Tensor = None, agent_key: str = None,
+    def get_values(self, observation: Dict[str, Tensor],
+                   actions_mean: Dict[str, Tensor] = None,
+                   agent_ids: Tensor = None, agent_key: str = None,
                    rnn_hidden: Optional[Dict[str, List[Tensor]]] = None):
         """
         Get critic values via critic networks.
 
         Parameters:
             observation (Dict[str, Tensor]): The input observations for the policies.
+            actions_mean (Dict[str, Tensor]): The mean actions of each agent's neighbors.
             agent_ids (Tensor): The agents' ids (for parameter sharing).
             agent_key (str): Calculate actions for specified agent.
             rnn_hidden (Optional[Dict[str, List[Tensor]]]): The RNN hidden states of critic representation.
@@ -1096,6 +1121,7 @@ class MeanFieldActorCriticPolicy(Module):
         rnn_hidden_new, values = {}, {}
         agent_list = self.model_keys if agent_key is None else [agent_key]
 
+        actions_mean = {key: Tensor(actions_mean[key]).to(self.device) for key in agent_list}
         for key in agent_list:
             if self.use_rnn:
                 outputs = self.critic_representation[key](observation[key], *rnn_hidden[key])
@@ -1105,9 +1131,12 @@ class MeanFieldActorCriticPolicy(Module):
                 rnn_hidden_new[key] = [None, None]
 
             if self.use_parameter_sharing:
-                critic_input = torch.concat([outputs['state'], agent_ids], dim=-1)
+                action_embedding_input = torch.cat([actions_mean[key], agent_ids], dim=-1)
+                act_embedding = self.action_mean_embedding[key](action_embedding_input)
+                critic_input = torch.concat([outputs['state'], act_embedding['state'], agent_ids], dim=-1)
             else:
-                critic_input = outputs['state']
+                act_embedding = self.action_mean_embedding[key](actions_mean[key])
+                critic_input = torch.cat([outputs['state'], act_embedding['state']], dim=-1)
 
             values[key] = self.critic[key](critic_input)
 

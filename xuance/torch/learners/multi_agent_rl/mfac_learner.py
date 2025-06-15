@@ -4,34 +4,25 @@ Paper link:
 http://proceedings.mlr.press/v80/yang18d/yang18d.pdf
 Implementation: Pytorch
 """
+import numpy as np
 import torch
 from torch import nn
-from xuance.torch.learners import LearnerMAS
-from xuance.common import Optional, Union
 from argparse import Namespace
+from operator import itemgetter
+from xuance.common import Optional, List
+from xuance.torch import Tensor
+from xuance.torch.utils import ValueNorm
+from xuance.torch.learners.multi_agent_rl.iac_learner import IAC_Learner
 
 
-class MFAC_Learner(LearnerMAS):
+class MFAC_Learner(IAC_Learner):
     def __init__(self,
                  config: Namespace,
+                 model_keys: List[str],
+                 agent_keys: List[str],
                  policy: nn.Module,
-                 optimizer: torch.optim.Optimizer,
-                 scheduler: Optional[torch.optim.lr_scheduler._LRScheduler] = None,
-                 device: Optional[Union[int, str, torch.device]] = None,
-                 model_dir: str = "./",
-                 gamma: float = 0.99,
-                 ):
-        self.gamma = gamma
-        self.clip_range = config.clip_range
-        self.use_linear_lr_decay = config.use_linear_lr_decay
-        self.use_grad_clip, self.grad_clip_norm = config.use_grad_clip, config.grad_clip_norm
-        self.use_value_norm = config.use_value_norm
-        self.vf_coef, self.ent_coef = config.vf_coef, config.ent_coef
-        self.tau = config.tau
-        self.mse_loss = nn.MSELoss()
-        super(MFAC_Learner, self).__init__(config, policy, optimizer, scheduler, device, model_dir)
-        self.optimizer = optimizer
-        self.scheduler = scheduler
+                 callback):
+        super(MFAC_Learner, self).__init__(config, model_keys, agent_keys, policy, callback)
 
     def update(self, sample):
         self.iterations += 1

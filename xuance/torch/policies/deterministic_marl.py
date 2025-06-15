@@ -977,7 +977,7 @@ class MFQnetwork(Module):
         Parameters:
             observation (Dict[Tensor]): The input observations for the policies.
             agent_ids (Tensor): The agents' ids (for parameter sharing).
-            actions_mean (Dict[str, Tensor]): The mean of the agents' actions.
+            actions_mean (Dict[str, Tensor]): The mean actions of each agent's neighbors.
             avail_actions (Dict[str, Tensor]): Actions mask values, default is None.
             agent_key (str): Calculate actions for specified agent.
             rnn_hidden (Optional[Dict[str, List[Tensor]]]): The hidden variables of the RNN.
@@ -1004,8 +1004,8 @@ class MFQnetwork(Module):
 
             # mean actions embedding
             if self.use_parameter_sharing:
-                input_embedding = torch.cat([actions_mean[key], agent_ids], dim=-1)
-                act_embedding = self.action_mean_embedding[key](input_embedding)
+                action_embedding_input = torch.cat([actions_mean[key], agent_ids], dim=-1)
+                act_embedding = self.action_mean_embedding[key](action_embedding_input)
                 q_inputs = torch.cat([outputs['state'], act_embedding['state'], agent_ids], dim=-1)
             else:
                 act_embedding = self.action_mean_embedding[key](actions_mean[key])
