@@ -5,8 +5,8 @@ env_seed: 1  # The random seed of the environment.
 continuous_action: False  # Continuous action space or not.
 learner: "MFAC_Learner"
 policy: "Categorical_MFAC_Policy"
-representation: "Basic_Identical"
-vectorize: "DummyVecMultiAgentEnv"
+representation: "Basic_MLP"
+vectorize: "SubprocVecMultiAgentEnv"
 runner: "MARL"
 
 use_rnn: False  # Whether to use recurrent neural networks.
@@ -19,11 +19,11 @@ normalize: "LayerNorm"  # Layer normalization.
 initialize: "orthogonal"  # Network initializer.
 gain: 0.01  # Gain value for network initialization.
 
-representation_hidden_size: [256, ]  # A list of hidden units for each layer of Basic_MLP representation networks.
-action_embedding_hidden_size: [64, 32]
-actor_hidden_size: [512, ]
-critic_hidden_size: [256, ]
-activation: 'leaky_relu'
+representation_hidden_size: [64, ]  # A list of hidden units for each layer of Basic_MLP representation networks.
+action_embedding_hidden_size: [32, ]
+actor_hidden_size: [64, ]
+critic_hidden_size: [64, ]
+activation: 'relu'
 activation_action: 'sigmoid'
 use_parameter_sharing: True  # If to use parameter sharing for all agents' policies.
 use_actions_mask: False  # If to use actions mask for unavailable actions.
@@ -31,28 +31,29 @@ temperature: 0.1  # softmax for policy (be used for the exploration rate of Bolt
 
 seed: 1
 parallels: 16
-buffer_size: 32
-n_epochs: 1
+buffer_size: 3200
+n_epochs: 10
 n_minibatch: 1
-learning_rate: 0.01  # learning rate
+learning_rate: 0.0007  # learning rate
 weight_decay: 0
 
 vf_coef: 0.5
 ent_coef: 0.01
-gamma: 0.95  # discount factor
+clip_range: 0.2  # The clip range for ratio.
+gamma: 0.99  # discount factor
 
 # tricks
 use_linear_lr_decay: False  # If to use linear learning rate decay.
 end_factor_lr_decay: 0.5  # The end factor for learning rate scheduler.
-use_global_state: True  # If to use global state to replace merged observations.
-use_value_clip: False  # Limit the value range.
+use_global_state: False  # If to use global state to replace merged observations.
+use_value_clip: True  # Limit the value range.
 value_clip_range: 0.2  # The value clip range.
-use_value_norm: False  # Use running mean and std to normalize rewards.
-use_huber_loss: False  # True: use huber loss; False: use MSE loss.
+use_value_norm: True  # Use running mean and std to normalize rewards.
+use_huber_loss: True  # True: use huber loss; False: use MSE loss.
 huber_delta: 10.0  # The threshold at which to change between delta-scaled L1 and L2 loss. (For huber loss).
-use_advnorm: False  # If to use advantage normalization.
+use_advnorm: True  # If to use advantage normalization.
 use_gae: True  # Use GAE trick.
-gae_lambda: 0.8  # The GAE lambda.
+gae_lambda: 0.95  # The GAE lambda.
 use_grad_clip: True  # Gradient normalization.
 grad_clip_norm: 10.0  # The max norm of the gradient.
 clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm().

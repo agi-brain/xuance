@@ -557,42 +557,34 @@ class I3CNet_Buffer_RNN(MARL_OnPolicyBuffer_RNN):
 class MeanField_OnPolicyBuffer(MARL_OnPolicyBuffer):
     """
     Replay buffer for Mean Field Actor-Critic algorithm.
-
-    Args:
-        agent_keys (List[str]): Keys that identify each agent.
-        state_space (Dict[str, Space]): Global state space, type: Discrete, Box.
-        obs_space (Dict[str, Dict[str, Space]]): Observation space for one agent (suppose same obs space for group agents).
-        act_space (Dict[str, Dict[str, Space]]): Action space for one agent (suppose same actions space for group agents).
-        n_envs (int): Number of parallel environments.
-        buffer_size (int): Buffer size of total experience data.
-        use_gae (bool): Whether to use GAE trick.
-        use_advnorm (bool): Whether to use Advantage normalization trick.
-        gamma (float): Discount factor.
-        gae_lam (float): gae lambda.
-        **kwargs: Other arguments.
     """
 
-    def __init__(self,
-                 agent_keys: List[str],
-                 state_space: Dict[str, Space] = None,
-                 obs_space: Dict[str, Dict[str, Space]] = None,
-                 act_space: Dict[str, Dict[str, Space]] = None,
-                 n_envs: int = 1,
-                 buffer_size: int = 1,
-                 use_gae: Optional[bool] = False,
-                 use_advnorm: Optional[bool] = False,
-                 gamma: Optional[float] = None,
-                 gae_lam: Optional[float] = None,
-                 **kwargs):
+    def __init__(self, *args, **kwargs):
         self.n_actions_max = kwargs.get('n_actions_max')
         self.prob_space = (self.n_actions_max,)
-        super(MeanField_OnPolicyBuffer, self).__init__(agent_keys, state_space, obs_space, act_space, n_envs,
-                                                       buffer_size, use_gae, use_advnorm, gamma, gae_lam, **kwargs)
+        super(MeanField_OnPolicyBuffer, self).__init__(*args, **kwargs)
 
     def clear(self):
         super().clear()
         self.data["actions_mean"] = {k: create_memory(space2shape(self.prob_space), self.n_envs, self.n_size)
                                      for k in self.agent_keys}
+
+
+class MeanField_OnPolicyBuffer_RNN(MARL_OnPolicyBuffer_RNN):
+    def __init__(self, *args, **kwargs):
+        self.n_actions_max = kwargs.get('n_actions_max')
+        self.prob_space = (self.n_actions_max,)
+        super(MeanField_OnPolicyBuffer_RNN, self).__init__(*args, **kwargs)
+
+    def clear(self):
+        super().clear()
+        self.data['actions_mean'] = {k: np.zeros((self.buffer_size, self.max_eps_len) + self.prob_space,
+                                                 dtype=np.float32) for k in self.agent_keys}
+
+    def clear_episodes(self):
+        super().clear_episodes()
+        self.episode_data['actions_mean'] = {k: np.zeros((self.n_envs, self.max_eps_len) + self.prob_space,
+                                                         dtype=np.float32) for k in self.agent_keys}
 
 
 class MARL_OffPolicyBuffer(BaseBuffer):

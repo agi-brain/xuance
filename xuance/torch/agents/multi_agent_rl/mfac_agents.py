@@ -5,9 +5,7 @@ from copy import deepcopy
 from argparse import Namespace
 from operator import itemgetter
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
-from xuance.common import List, Optional, Union, MeanField_OnPolicyBuffer
-from xuance.mindspore.agents.multi_agent_rl.iac_agents import IAC_Agents
-from xuance.torch import Module
+from xuance.common import List, Optional, Union, MeanField_OnPolicyBuffer, MeanField_OnPolicyBuffer_RNN
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
 from xuance.torch.policies import REGISTRY_Policy
 from xuance.torch.agents import OnPolicyMARLAgents, BaseCallback
@@ -21,6 +19,7 @@ class MFAC_Agents(OnPolicyMARLAgents):
         envs: the vectorized environments.
         callback: A user-defined callback function object to inject custom logic during training.
     """
+
     def __init__(self,
                  config: Namespace,
                  envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv],
@@ -148,6 +147,7 @@ class MFAC_Agents(OnPolicyMARLAgents):
         experience_data = {
             'obs': {k: np.array([data[k] for data in obs_dict]) for k in self.agent_keys},
             'actions': {k: np.array([data[k] for data in actions_dict]) for k in self.agent_keys},
+            'log_pi_old': log_pi_a,
             'rewards': {k: np.array([data[k] for data in rewards_dict]) for k in self.agent_keys},
             'values': values_dict,
             'terminals': {k: np.array([data[k] for data in terminals_dict]) for k in self.agent_keys},
@@ -195,7 +195,7 @@ class MFAC_Agents(OnPolicyMARLAgents):
             values_dict (dict): The evaluated critic values (when test_mode is False).
         """
         n_env = len(obs_dict)
-        rnn_hidden_critic_new, log_pi_a_dict, values_dict = {}, {}, {}
+        rnn_hidden_critic_new, values_out, log_pi_a_dict, values_dict = {}, {}, {}, {}
 
         mean_actions_input, agent_mask_array = self._build_inputs_mean_mask(agent_mask, act_mean_dict)
         obs_input, agents_id, avail_actions_input = self._build_inputs(obs_dict, avail_actions_dict)
@@ -206,15 +206,10 @@ class MFAC_Agents(OnPolicyMARLAgents):
                                                      rnn_hidden=rnn_hidden_actor)
 
         if not test_mode:
-            rnn_hidden_critic_new, values_dict = self.policy.get_values(observation=obs_input,
-                                                                        actions_mean=mean_actions_input,
-                                                                        agent_ids=agents_id,
-                                                                        rnn_hidden=rnn_hidden_critic)
-            if self.use_parameter_sharing:
-                values_dict = {k: values_dict[self.model_keys[0]].detach().cpu().numpy().reshape(n_env, -1)[:, i]
-                               for i, k in enumerate(self.agent_keys)}
-            else:
-                values_dict = {k: v.detach().cpu().numpy().reshape(n_env) for k, v in values_dict.items()}
+            rnn_hidden_critic_new, values_out = self.policy.get_values(observation=obs_input,
+                                                                       actions_mean=mean_actions_input,
+                                                                       agent_ids=agents_id,
+                                                                       rnn_hidden=rnn_hidden_critic)
 
         if self.use_parameter_sharing:
             key = self.agent_keys[0]
@@ -228,6 +223,11 @@ class MFAC_Agents(OnPolicyMARLAgents):
                 actions_out = actions_sample.reshape(n_env, self.n_agents)
             actions_dict = [{k: actions_out[e, i].cpu().detach().numpy() for i, k in enumerate(self.agent_keys)}
                             for e in range(n_env)]
+            if not test_mode:
+                log_pi_a = pi_dists[key].log_prob(actions_sample).cpu().detach().numpy().reshape(n_env, self.n_agents)
+                log_pi_a_dict = {k: log_pi_a[:, i] for i, k in enumerate(self.agent_keys)}
+                values_out[key] = values_out[key].reshape(n_env, self.n_agents)
+                values_dict = {k: values_out[key][:, i].cpu().detach().numpy() for i, k in enumerate(self.agent_keys)}
         else:
             actions_sample = {k: pi_dists[k].sample() for k in self.agent_keys}
             if self.continuous_control:
@@ -239,13 +239,18 @@ class MFAC_Agents(OnPolicyMARLAgents):
             actions_mean_masked = self.policy.get_mean_actions(actions=actions_sample,
                                                                agent_mask_tensor=agent_mask_tensor,
                                                                batch_size=n_env)
+            if not test_mode:
+                log_pi_a = {k: pi_dists[k].log_prob(actions_sample[k]).cpu().detach().numpy() for k in self.agent_keys}
+                log_pi_a_dict = {k: log_pi_a[k].reshape([n_env]) for i, k in enumerate(self.agent_keys)}
+                values_dict = {k: values_out[k].cpu().detach().numpy().reshape([n_env]) for k in self.agent_keys}
+
         actions_mean_masked = actions_mean_masked.cpu().detach().numpy()
         actions_mean_dict = [{k: actions_mean_masked[e, i] for i, k in enumerate(self.agent_keys)}
                              for e in range(n_env)]
 
         return {"rnn_hidden_actor": rnn_hidden_actor_new, "rnn_hidden_critic": rnn_hidden_critic_new,
                 "actions": actions_dict, "actions_mean": actions_mean_dict,
-                "log_pi": None, "values": values_dict}
+                "log_pi": log_pi_a_dict, "values": values_dict}
 
     def values_next(self,
                     i_env: int,

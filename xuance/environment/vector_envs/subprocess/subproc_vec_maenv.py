@@ -99,6 +99,7 @@ class SubprocVecMultiAgentEnv(VecEnv):
         self.buf_state = [np.zeros(space2shape(self.state_space)) for _ in range(self.num_envs)]
         self.buf_obs = [{} for _ in range(self.num_envs)]
         self.buf_avail_actions = [{} for _ in range(self.num_envs)]
+        self.buf_info = [{} for _ in range(self.num_envs)]
 
         self.actions = None
         self.max_episode_steps = self.env_info['max_episode_steps']
@@ -113,6 +114,7 @@ class SubprocVecMultiAgentEnv(VecEnv):
         result = flatten_list(result)
         obs, info = zip(*result)
         self.buf_obs = list(obs)
+        self.buf_info = list(info)
         self.buf_state = [info[e]['state'] for e in range(self.num_envs)]
         self.buf_avail_actions = [info[e]['avail_actions'] for e in range(self.num_envs)]
         return list(obs), list(info)
@@ -131,6 +133,7 @@ class SubprocVecMultiAgentEnv(VecEnv):
         self.waiting = False
         obs, rewards, terminated, truncated, info = zip(*results)
         self.buf_obs = list(obs)
+        self.buf_info = list(info)
         self.buf_state = [info[e]['state'] for e in range(self.num_envs)]
         self.buf_avail_actions = [info[e]['avail_actions'] for e in range(self.num_envs)]
         return list(obs), list(rewards), list(terminated), list(truncated), list(info)
@@ -177,6 +180,7 @@ class SubprocVecEnv_StarCraft2(SubprocVecMultiAgentEnv):
         self.waiting = False
         obs, rewards, terminated, truncated, info = zip(*results)
         self.buf_obs = list(obs)
+        self.buf_info = list(info)
         self.buf_state = [info[e]['state'] for e in range(self.num_envs)]
         self.buf_avail_actions = [info[e]['avail_actions'] for e in range(self.num_envs)]
         for i in range(self.num_envs):
@@ -204,6 +208,7 @@ class SubprocVecEnv_Football(SubprocVecMultiAgentEnv):
         self.waiting = False
         obs, rewards, terminated, truncated, info = zip(*results)
         self.buf_obs = list(obs)
+        self.buf_info = list(info)
         self.buf_state = [info[e]['state'] for e in range(self.num_envs)]
         self.buf_avail_actions = [info[e]['avail_actions'] for e in range(self.num_envs)]
         for i in range(self.num_envs):
