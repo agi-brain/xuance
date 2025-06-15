@@ -24,56 +24,104 @@ class MFAC_Learner(IAC_Learner):
                  callback):
         super(MFAC_Learner, self).__init__(config, model_keys, agent_keys, policy, callback)
 
+    def build_actions_mean_input(self, sample: Optional[dict], use_parameter_sharing: Optional[bool] = False):
+        batch_size = sample['batch_size']
+        seq_length = sample['sequence_length'] if self.use_rnn else 1
+        if use_parameter_sharing:
+            k = self.model_keys[0]
+            bs = batch_size * self.n_agents
+            if self.n_agents == 1:
+                actions_mean_tensor = Tensor(sample['actions_mean'][k]).to(self.device).unsqueeze(1)
+            else:
+                actions_mean_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['actions_mean']),
+                                                      axis=1)).to(self.device)
+            if self.use_rnn:
+                actions_mean = {k: actions_mean_tensor.reshape(bs, seq_length + 1, -1)}
+            else:
+                actions_mean = {k: actions_mean_tensor.reshape(bs, -1)}
+        else:
+            actions_mean = {k: Tensor(sample['actions_mean'][k]).to(self.device) for k in self.agent_keys}
+
+        return actions_mean
+
     def update(self, sample):
         self.iterations += 1
-        state = torch.Tensor(sample['state']).to(self.device)
-        obs = torch.Tensor(sample['obs']).to(self.device)
-        actions = torch.Tensor(sample['actions']).to(self.device)
-        act_mean = torch.Tensor(sample['act_mean']).to(self.device)
-        returns = torch.Tensor(sample['returns']).to(self.device)
-        agent_mask = torch.Tensor(sample['agent_mask']).float().reshape(-1, self.n_agents, 1).to(self.device)
-        batch_size = obs.shape[0]
-        IDs = torch.eye(self.n_agents).unsqueeze(0).expand(batch_size, -1, -1).to(self.device)
 
-        act_mean_n = act_mean.unsqueeze(1).repeat([1, self.n_agents, 1])
+        # prepare training data
+        act_mean = self.build_actions_mean_input(sample=sample,
+                                                 use_parameter_sharing=self.use_parameter_sharing)
+        sample_Tensor = self.build_training_data(sample=sample,
+                                                 use_parameter_sharing=self.use_parameter_sharing,
+                                                 use_actions_mask=self.use_actions_mask)
+        batch_size = sample_Tensor['batch_size']
+        obs = sample_Tensor['obs']
+        actions = sample_Tensor['actions']
+        agent_mask = sample_Tensor['agent_mask']
+        avail_actions = sample_Tensor['avail_actions']
+        values = sample_Tensor['values']
+        returns = sample_Tensor['returns']
+        advantages = sample_Tensor['advantages']
+        IDs = sample_Tensor['agent_ids']
 
-        info = self.callback.on_update_start(self.iterations, method="update", policy=self.policy)
+        bs = batch_size * self.n_agents if self.use_parameter_sharing else batch_size
 
-        # actor loss
-        _, pi_dist = self.policy(obs, IDs)
-        log_pi = pi_dist.log_prob(actions).unsqueeze(-1)
-        entropy = pi_dist.entropy().unsqueeze(-1)
+        info = self.callback.on_update_start(self.iterations, method="update", actions_mean=act_mean,
+                                             policy=self.policy, sample_Tensor=sample_Tensor, bs=bs)
 
-        targets = returns
-        value_pred = self.policy.critic(obs, act_mean_n, IDs)
-        advantages = targets - value_pred
-        td_error = value_pred - targets.detach()
+        # feedforward
+        _, pi_dist_dict = self.policy(observation=obs, agent_ids=IDs, avail_actions=avail_actions)
+        _, values_pred_dict = self.policy.get_values(observation=obs, actions_mean=act_mean, agent_ids=IDs)
 
-        pg_loss = -((advantages.detach() * log_pi) * agent_mask).sum() / agent_mask.sum()
-        vf_loss = ((td_error ** 2) * agent_mask).sum() / agent_mask.sum()
-        entropy_loss = (entropy * agent_mask).sum() / agent_mask.sum()
-        loss = pg_loss + self.vf_coef * vf_loss - self.ent_coef * entropy_loss
+        loss_a, loss_e, loss_c = [], [], []
+        for key in self.model_keys:
+            mask_values = agent_mask[key]
+            # policy gradient loss
+            log_pi = pi_dist_dict[key].log_prob(actions[key])
+            pg_loss = -((advantages[key].detach() * log_pi) * mask_values).sum() / mask_values.sum()
+            loss_a.append(pg_loss)
 
-        self.optimizer.zero_grad()
-        loss.backward()
-        if self.use_grad_clip:
-            grad_norm = torch.nn.utils.clip_grad_norm_(self.policy.parameters(), self.grad_clip_norm)
-            info["gradient_norm"] = grad_norm.item()
-        self.optimizer.step()
-        if self.scheduler is not None:
-            self.scheduler.step()
+            # entropy loss
+            entropy = pi_dist_dict[key].entropy()
+            entropy_loss = (entropy * mask_values).sum() / mask_values.sum()
+            loss_e.append(entropy_loss)
 
-        # Logger
-        lr = self.optimizer.state_dict()['param_groups'][0]['lr']
+            # value loss
+            value_pred_i = values_pred_dict[key].reshape(bs)
+            value_target = returns[key].reshape(bs)
+            values_i = values[key].reshape(bs)
+            if self.use_value_clip:
+                value_clipped = values_i + (value_pred_i - values_i).clamp(-self.value_clip_range,
+                                                                           self.value_clip_range)
+                if self.use_value_norm:
+                    self.value_normalizer[key].update(value_target.reshape(bs, 1))
+                    value_target = self.value_normalizer[key].normalize(value_target.reshape(bs, 1)).reshape(bs)
+                if self.use_huber_loss:
+                    loss_v = self.huber_loss(value_pred_i, value_target)
+                    loss_v_clipped = self.huber_loss(value_clipped, value_target)
+                else:
+                    loss_v = (value_pred_i - value_target) ** 2
+                    loss_v_clipped = (value_clipped - value_target) ** 2
+                loss_c_ = torch.max(loss_v, loss_v_clipped) * mask_values
+                loss_c.append(loss_c_.sum() / mask_values.sum())
+            else:
+                if self.use_value_norm:
+                    self.value_normalizer[key].update(value_target)
+                    value_target = self.value_normalizer[key].normalize(value_target)
+                if self.use_huber_loss:
+                    loss_v = self.huber_loss(value_pred_i, value_target) * mask_values
+                else:
+                    loss_v = ((value_pred_i - value_target) ** 2) * mask_values
+                loss_c.append(loss_v.sum() / mask_values.sum())
 
-        info.update({
-            "learning_rate": lr,
-            "pg_loss": pg_loss.item(),
-            "vf_loss": vf_loss.item(),
-            "entropy_loss": entropy_loss.item(),
-            "loss": loss.item(),
-            "predicted_value": value_pred.mean().item()
-        })
+            info.update({
+                f"predict_value/{key}": value_pred_i.mean().item()
+            })
+
+            info.update(self.callback.on_update_agent_wise(self.iterations, key, info=info, method="update",
+                                                           mask_values=mask_values, log_pi=log_pi, pg_loss=pg_loss,
+                                                           entropy=entropy, entropy_loss=entropy_loss,
+                                                           value_pred_i=value_pred_i, value_target=value_target,
+                                                           values_i=values_i, loss_v=loss_v))
 
         info.update(self.callback.on_update_end(self.iterations, method="update", policy=self.policy, info=info))
 
