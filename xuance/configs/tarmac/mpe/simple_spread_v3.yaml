@@ -3,7 +3,7 @@ env_name: "mpe"  # The environment name.
 env_id: "simple_spread_v3"  # The environment id.
 env_seed: 1
 continuous_action: False  # If to use continuous control.
-learner: "TarMAC_Learner"
+learner: "TarMac_Learner"
 policy: "TarMAC_Policy"
 representation: "Basic_RNN"
 vectorize: "SubprocVecMultiAgentEnv"  # The method to vectorize your environment such that can run in parallel.
@@ -25,7 +25,7 @@ actor_hidden_size: []  # A list of hidden units for each layer of actor network.
 critic_hidden_size: []  # A list of hidden units for each layer of critic network.
 activation: "relu"  # The activation function of each hidden layer.
 activation_action: "sigmoid"  # The activation function for the last layer of the actor.
-use_parameter_sharing: False  # If to use parameter sharing for all agents' policies.
+use_parameter_sharing: True  # If to use parameter sharing for all agents' policies.
 use_actions_mask: False  # If to use actions mask for unavailable actions.
 comm_passes: 2
 dim_message: 64
@@ -39,9 +39,12 @@ n_minibatch: 1  # Number of minibatch to sample and train.  batch_size = buffer_
 learning_rate: 0.0007  # Learning rate.
 weight_decay: 0  # The steps to decay the greedy epsilon.
 
-vf_coef: 0.5  # Coefficient factor for critic loss.
+vf_coef: 1.0  # Coefficient factor for critic loss.
 ent_coef: 0.01  # Coefficient factor for entropy loss.
-gamma: 0.99  # Discount factor.
+target_kl: 0.25
+clip_range: 0.2
+clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
+gamma: 0.99  # discount factor
 
 # tricks
 use_linear_lr_decay: False  # If to use linear learning rate decay.

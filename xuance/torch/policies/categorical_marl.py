@@ -357,14 +357,13 @@ class MAAC_Policy_Share(MAAC_Policy):
 
         return rnn_hidden_new, values
 
+class CommNet_Policy(MAAC_Policy):
 
-class CommNet_Policy(Module):
     def __init__(self,
                  action_space: Optional[Dict[str, Discrete]],
                  n_agents: int,
                  representation_actor: ModuleDict,
                  representation_critic: ModuleDict,
-                 communicator: ModuleDict,
                  mixer: Optional[Module] = None,
                  actor_hidden_size: Sequence[int] = None,
                  critic_hidden_size: Sequence[int] = None,
@@ -374,83 +373,53 @@ class CommNet_Policy(Module):
                  device: Optional[Union[str, int, torch.device]] = None,
                  use_distributed_training: bool = False,
                  **kwargs):
-        super(CommNet_Policy, self).__init__()
-        self.device = device
-        self.action_space = action_space
-        self.n_agents = n_agents
-        self.use_parameter_sharing = kwargs['use_parameter_sharing']
-        self.model_keys = kwargs['model_keys']
-        self.lstm = True if kwargs["rnn"] == "LSTM" else False
-        self.use_rnn = True if kwargs["use_rnn"] else False
-
-        self.actor_representation = representation_actor
-        self.critic_representation = representation_critic
-        self.communicator = communicator
-
-        self.dim_input_critic, self.n_actions = {}, {}
-        self.actor, self.critic = ModuleDict(), ModuleDict()
-        for key in self.model_keys:
-            self.n_actions[key] = self.action_space[key].n
-            dim_actor_in, dim_actor_out, dim_critic_in, dim_critic_out = self._get_actor_critic_input(
-                self.n_actions[key],
-                self.actor_representation[key].output_shapes['state'][0],
-                self.critic_representation[key].output_shapes['state'][0], n_agents)
-
-            self.actor[key] = CategoricalActorNet(dim_actor_in, dim_actor_out, actor_hidden_size,
-                                                  normalize, initialize, activation, device)
-            self.critic[key] = CriticNet(dim_critic_in, critic_hidden_size, normalize, initialize, activation, device)
-
-        self.mixer = mixer
-
-        # Prepare DDP module.
-        self.distributed_training = use_distributed_training
-        if self.distributed_training:
-            self.rank = int(os.environ["RANK"])
-            for key in self.model_keys:
-                if self.actor_representation[key]._get_name() != "Basic_Identical":
-                    self.actor_representation[key] = DistributedDataParallel(self.actor_representation[key],
-                                                                             device_ids=[self.rank])
-                if self.critic_representation[key]._get_name() != "Basic_Identical":
-                    self.critic_representation[key] = DistributedDataParallel(self.critic_representation[key],
-                                                                              device_ids=[self.rank])
-                self.actor[key] = DistributedDataParallel(module=self.actor[key], device_ids=[self.rank])
-                self.critic[key] = DistributedDataParallel(module=self.critic[key], device_ids=[self.rank])
-            if self.mixer is not None:
-                self.mixer = DistributedDataParallel(module=self.mixer, device_ids=[self.rank])
+        super(CommNet_Policy, self).__init__(action_space=action_space, n_agents=n_agents, representation_actor=representation_actor,
+                                             representation_critic=representation_critic, mixer=mixer, actor_hidden_size=actor_hidden_size,
+                                             critic_hidden_size=critic_hidden_size, normalize=normalize, initialize=initialize, activation=activation,
+                                             device=device, use_distributed_training=use_distributed_training, **kwargs)
+        self.communicator = kwargs['communicator']
+        self.agent_keys = kwargs['agent_keys']
 
     @property
     def parameters_model(self):
         parameters = list(self.actor_representation.parameters()) + list(self.actor.parameters()) + list(
-            self.critic_representation.parameters()) + list(self.critic.parameters()) + list(
-            self.communicator.parameters())
+            self.critic_representation.parameters()) + list(self.critic.parameters()) + list(self.communicator.parameters())
         if self.mixer is not None:
             parameters += list(self.mixer.parameters())
         return parameters
-
-    def _get_actor_critic_input(self, dim_action, dim_actor_rep, dim_critic_rep, n_agents):
-        dim_actor_in, dim_actor_out = dim_actor_rep, dim_action
-        dim_critic_in, dim_critic_out = dim_critic_rep, dim_action
-        if self.use_parameter_sharing:
-            dim_actor_in += n_agents
-            dim_critic_in += n_agents
-        return dim_actor_in, dim_actor_out, dim_critic_in, dim_critic_out
 
     def forward(self, observation: Dict[str, Tensor], agent_ids: Optional[Tensor] = None,
                 avail_actions: Dict[str, Tensor] = None, agent_key: str = None,
                 rnn_hidden: Optional[Dict[str, List[Tensor]]] = None, alive_ally: Optional[dict] = None):
         rnn_hidden_new, pi_dists = {}, {}
         agent_list = self.model_keys if agent_key is None else [agent_key]
-
+        seq_length = observation['agent_0'].shape[1]
         if avail_actions is not None:
             avail_actions = {key: Tensor(avail_actions[key]) for key in agent_list}
+        observation = {k: self.communicator[k].obs_encode(observation[k]) for k in agent_list}
+        actor_inputs = {k: [] for k in agent_list}
+        for i in range(seq_length):
+            alive_ally_i = {k: alive_ally[k][:, i:i + 1, :] for k in self.agent_keys}
+            observation_i = {k: observation[k][:, i:i + 1, :] for k in agent_list}
+            rnn_input = deepcopy(rnn_hidden)
+            observation_i = {k: self.communicator[k](observation_i[k], rnn_input, alive_ally_i) for k in self.model_keys}
+            for key in agent_list:
+                if self.use_rnn:
+                    outputs = self.actor_representation[key](observation_i[key], *rnn_hidden[key])
+                    rnn_hidden_new[key] = (outputs['rnn_hidden'], outputs['rnn_cell'])
+                else:
+                    outputs = self.actor_representation[key](observation[key])
+                    rnn_hidden_new[key] = [None, None]
 
-        # calculate message_receive
-        message_receive = {k: self.communicator[k](k, observation[k], rnn_hidden, alive_ally) for k in self.model_keys}
-
+                if self.use_parameter_sharing:
+                    agent_ids_i = agent_ids[:, i:i + 1, :]
+                    actor_input = torch.concat([outputs['state'], agent_ids_i], dim=-1)
+                else:
+                    actor_input = outputs['state']
+                actor_inputs[key].append(actor_input)
+            rnn_hidden = deepcopy(rnn_hidden_new)
         for key in agent_list:
-            outputs = self.actor_representation[key](message_receive[key], *rnn_hidden[key])
-            rnn_hidden_new[key] = (outputs['rnn_hidden'], outputs['rnn_cell'])
-            actor_input = outputs['state']
+            actor_input = torch.cat(actor_inputs[key], dim=1)
             avail_actions_input = None if avail_actions is None else avail_actions[key]
             pi_dists[key] = self.actor[key](actor_input, avail_actions_input)
         return rnn_hidden_new, pi_dists
@@ -459,34 +428,48 @@ class CommNet_Policy(Module):
                    rnn_hidden: Optional[Dict[str, List[Tensor]]] = None, alive_ally: Optional[dict] = None):
         rnn_hidden_new, values = {}, {}
         agent_list = self.model_keys if agent_key is None else [agent_key]
+        batch_size, seq_length = observation['agent_0'].shape[0], observation['agent_0'].shape[1]
+        observation = {k: self.communicator[k].obs_encode(observation[k]) for k in agent_list}
+        critic_inputs = {k: [] for k in agent_list}
+        for i in range(seq_length):
+            alive_ally_i = {k: alive_ally[k][:, i:i + 1, :] for k in self.agent_keys}
+            observation_i = {k: observation[k][:, i:i + 1, :] for k in agent_list}
+            rnn_input = deepcopy(rnn_hidden)
+            if self.use_parameter_sharing:
+                key = self.model_keys[0]
+                observation_i = {key: self.communicator[key](observation_i[key], rnn_input, alive_ally_i)}
+            else:
+                observation_i = {k: self.communicator[k](observation_i[k], rnn_input, alive_ally_i) for k in self.model_keys}
+            for key in agent_list:
+                if self.use_rnn:
+                    outputs = self.critic_representation[key](observation_i[key], *rnn_hidden[key])
+                    rnn_hidden_new[key] = (outputs['rnn_hidden'], outputs['rnn_cell'])
+                else:
+                    outputs = self.critic_representation[key](observation[key])
+                    rnn_hidden_new[key] = [None, None]
 
-        # calculate message_receive
-        message_receive = {k: self.communicator[k](self.model_keys, observation[k], rnn_hidden, alive_ally) for k in
-                           self.model_keys}
-        message = {k: torch.cat(list(message_receive.values()), dim=-1) for k in self.model_keys}
+                if self.use_parameter_sharing:
+                    agent_ids_i = agent_ids[:, i:i + 1, :]
+                    critic_input = torch.concat([outputs['state'], agent_ids_i], dim=-1)
+                else:
+                    critic_input = outputs['state']
+                critic_inputs[key].append(critic_input)
+            rnn_hidden = deepcopy(rnn_hidden_new)
 
         for key in agent_list:
-            outputs = self.critic_representation[key](message[key], *rnn_hidden[key])
-            rnn_hidden_new[key] = (outputs['rnn_hidden'], outputs['rnn_cell'])
-            critic_input = outputs['state']
+            critic_input = torch.cat(critic_inputs[key], dim=1)
             values[key] = self.critic[key](critic_input)
 
         return rnn_hidden_new, values
 
-    def value_tot(self, values_n: Tensor, global_state=None):
-        if global_state is not None:
-            global_state = torch.as_tensor(global_state).to(self.device)
-        return values_n if self.mixer is None else self.mixer(values_n, global_state)
 
-
-class IC3Net_Policy(Module):
+class IC3Net_Policy(CommNet_Policy):
 
     def __init__(self,
                  action_space: Optional[Dict[str, Discrete]],
                  n_agents: int,
                  representation_actor: ModuleDict,
                  representation_critic: ModuleDict,
-                 communicator: ModuleDict,
                  mixer: Optional[Module] = None,
                  actor_hidden_size: Sequence[int] = None,
                  critic_hidden_size: Sequence[int] = None,
@@ -496,119 +479,65 @@ class IC3Net_Policy(Module):
                  device: Optional[Union[str, int, torch.device]] = None,
                  use_distributed_training: bool = False,
                  **kwargs):
-        super(IC3Net_Policy, self).__init__()
-        self.device = device
-        self.action_space = action_space
-        self.n_agents = n_agents
-        self.use_parameter_sharing = kwargs['use_parameter_sharing']
-        self.model_keys = kwargs['model_keys']
-        self.lstm = True if kwargs["rnn"] == "LSTM" else False
-        self.use_rnn = True if kwargs["use_rnn"] else False
-
-        self.actor_representation = representation_actor
-        self.critic_representation = representation_critic
-        self.communicator = communicator
-
-        self.dim_input_critic, self.n_actions = {}, {}
-        self.actor, self.critic = ModuleDict(), ModuleDict()
-        for key in self.model_keys:
-            self.n_actions[key] = self.action_space[key].n
-            dim_actor_in, dim_actor_out, dim_critic_in, dim_critic_out = self._get_actor_critic_input(
-                self.n_actions[key],
-                self.actor_representation[key].output_shapes['state'][0],
-                self.critic_representation[key].output_shapes['state'][0], n_agents)
-
-            self.actor[key] = CategoricalActorNet(dim_actor_in, dim_actor_out, actor_hidden_size,
-                                                  normalize, initialize, activation, device)
-            self.critic[key] = CriticNet(dim_critic_in, critic_hidden_size, normalize, initialize, activation, device)
-
-        self.mixer = mixer
-
-        # Prepare DDP module.
-        self.distributed_training = use_distributed_training
-        if self.distributed_training:
-            self.rank = int(os.environ["RANK"])
-            for key in self.model_keys:
-                if self.actor_representation[key]._get_name() != "Basic_Identical":
-                    self.actor_representation[key] = DistributedDataParallel(self.actor_representation[key],
-                                                                             device_ids=[self.rank])
-                if self.critic_representation[key]._get_name() != "Basic_Identical":
-                    self.critic_representation[key] = DistributedDataParallel(self.critic_representation[key],
-                                                                              device_ids=[self.rank])
-                self.actor[key] = DistributedDataParallel(module=self.actor[key], device_ids=[self.rank])
-                self.critic[key] = DistributedDataParallel(module=self.critic[key], device_ids=[self.rank])
-            if self.mixer is not None:
-                self.mixer = DistributedDataParallel(module=self.mixer, device_ids=[self.rank])
-
+        super(IC3Net_Policy, self).__init__(action_space=action_space, n_agents=n_agents,
+                                             representation_actor=representation_actor,
+                                             representation_critic=representation_critic, mixer=mixer,
+                                             actor_hidden_size=actor_hidden_size,
+                                             critic_hidden_size=critic_hidden_size, normalize=normalize,
+                                             initialize=initialize, activation=activation,
+                                             device=device, use_distributed_training=use_distributed_training, **kwargs)
     @property
     def parameters_model(self):
         parameters = list(self.actor_representation.parameters()) + list(self.actor.parameters()) + list(
-            self.critic_representation.parameters()) + list(self.critic.parameters()) + list(
-            self.communicator.parameters())
+            self.critic_representation.parameters()) + list(self.critic.parameters()) + list(self.communicator.parameters())
         if self.mixer is not None:
             parameters += list(self.mixer.parameters())
         return parameters
-
-    def _get_actor_critic_input(self, dim_action, dim_actor_rep, dim_critic_rep, n_agents):
-        dim_actor_in, dim_actor_out = dim_actor_rep, dim_action
-        dim_critic_in, dim_critic_out = dim_critic_rep, dim_action
-        if self.use_parameter_sharing:
-            dim_actor_in += n_agents
-            dim_critic_in += n_agents
-        return dim_actor_in, dim_actor_out, dim_critic_in, dim_critic_out
 
     def forward(self, observation: Dict[str, Tensor], agent_ids: Optional[Tensor] = None,
                 avail_actions: Dict[str, Tensor] = None, agent_key: str = None,
                 rnn_hidden: Optional[Dict[str, List[Tensor]]] = None, alive_ally: Optional[dict] = None):
         rnn_hidden_new, pi_dists = {}, {}
         agent_list = self.model_keys if agent_key is None else [agent_key]
-
+        seq_length = observation['agent_0'].shape[1]
         if avail_actions is not None:
             avail_actions = {key: Tensor(avail_actions[key]) for key in agent_list}
+        observation = {k: self.communicator[k].obs_encode(observation[k]) for k in agent_list}
+        actor_inputs = {k: [] for k in agent_list}
+        for i in range(seq_length):
+            alive_ally_i = {k: alive_ally[k][:, i:i + 1, :] for k in self.agent_keys}
+            observation_i = {k: observation[k][:, i:i + 1, :] for k in agent_list}
+            rnn_input = deepcopy(rnn_hidden)
+            observation_i = {k: self.communicator[k](observation_i[k], rnn_input, alive_ally_i) for k in self.model_keys}
+            for key in agent_list:
+                if self.use_rnn:
+                    outputs = self.actor_representation[key](observation_i[key], *rnn_hidden[key])
+                    rnn_hidden_new[key] = (outputs['rnn_hidden'], outputs['rnn_cell'])
+                else:
+                    outputs = self.actor_representation[key](observation[key])
+                    rnn_hidden_new[key] = [None, None]
 
-        # calculate message_receive
-        message_receive = {k: self.communicator[k](k, observation[k], rnn_hidden, alive_ally) for k in self.model_keys}
-
+                if self.use_parameter_sharing:
+                    agent_ids_i = agent_ids[:, i:i + 1, :]
+                    actor_input = torch.concat([outputs['state'], agent_ids_i], dim=-1)
+                else:
+                    actor_input = outputs['state']
+                actor_inputs[key].append(actor_input)
+            rnn_hidden = deepcopy(rnn_hidden_new)
         for key in agent_list:
-            outputs = self.actor_representation[key](message_receive[key], *rnn_hidden[key])
-            rnn_hidden_new[key] = (outputs['rnn_hidden'], outputs['rnn_cell'])
-            actor_input = outputs['state']
+            actor_input = torch.cat(actor_inputs[key], dim=1)
             avail_actions_input = None if avail_actions is None else avail_actions[key]
             pi_dists[key] = self.actor[key](actor_input, avail_actions_input)
         return rnn_hidden_new, pi_dists
 
-    def get_values(self, observation: Dict[str, Tensor], agent_ids: Tensor = None, agent_key: str = None,
-                   rnn_hidden: Optional[Dict[str, List[Tensor]]] = None, alive_ally: Optional[dict] = None):
-        rnn_hidden_new, values = {}, {}
-        agent_list = self.model_keys if agent_key is None else [agent_key]
 
-        # calculate message_receive
-        message_receive = {k: self.communicator[k](self.model_keys, observation[k], rnn_hidden, alive_ally) for k in
-                           self.model_keys}
-        message = {k: torch.cat(list(message_receive.values()), dim=-1) for k in self.model_keys}
-
-        for key in agent_list:
-            outputs = self.critic_representation[key](message[key], *rnn_hidden[key])
-            rnn_hidden_new[key] = (outputs['rnn_hidden'], outputs['rnn_cell'])
-            critic_input = outputs['state']
-            values[key] = self.critic[key](critic_input)
-
-        return rnn_hidden_new, values
-
-    def value_tot(self, values_n: Tensor, global_state=None):
-        if global_state is not None:
-            global_state = torch.as_tensor(global_state).to(self.device)
-        return values_n if self.mixer is None else self.mixer(values_n, global_state)
-
-
-class TarMAC_Policy(Module):
+class TarMAC_Policy(CommNet_Policy):
 
     def __init__(self,
                  action_space: Optional[Dict[str, Discrete]],
                  n_agents: int,
                  representation_actor: ModuleDict,
                  representation_critic: ModuleDict,
-                 communicator: ModuleDict,
                  mixer: Optional[Module] = None,
                  actor_hidden_size: Sequence[int] = None,
                  critic_hidden_size: Sequence[int] = None,
@@ -618,110 +547,49 @@ class TarMAC_Policy(Module):
                  device: Optional[Union[str, int, torch.device]] = None,
                  use_distributed_training: bool = False,
                  **kwargs):
-        super(TarMAC_Policy, self).__init__()
-        self.device = device
-        self.action_space = action_space
-        self.n_agents = n_agents
-        self.use_parameter_sharing = kwargs['use_parameter_sharing']
-        self.model_keys = kwargs['model_keys']
-        self.lstm = True if kwargs["rnn"] == "LSTM" else False
-        self.use_rnn = True if kwargs["use_rnn"] else False
-
-        self.actor_representation = representation_actor
-        self.critic_representation = representation_critic
-        self.communicator = communicator
-
-        self.dim_input_critic, self.n_actions = {}, {}
-        self.actor, self.critic = ModuleDict(), ModuleDict()
-        for key in self.model_keys:
-            self.n_actions[key] = self.action_space[key].n
-            dim_actor_in, dim_actor_out, dim_critic_in, dim_critic_out = self._get_actor_critic_input(
-                self.n_actions[key],
-                self.actor_representation[key].output_shapes['state'][0],
-                self.critic_representation[key].output_shapes['state'][0], n_agents)
-
-            self.actor[key] = CategoricalActorNet(dim_actor_in, dim_actor_out, actor_hidden_size,
-                                                  normalize, initialize, activation, device)
-            self.critic[key] = CriticNet(dim_critic_in, critic_hidden_size, normalize, initialize, activation, device)
-
-        self.mixer = mixer
-
-        # Prepare DDP module.
-        self.distributed_training = use_distributed_training
-        if self.distributed_training:
-            self.rank = int(os.environ["RANK"])
-            for key in self.model_keys:
-                if self.actor_representation[key]._get_name() != "Basic_Identical":
-                    self.actor_representation[key] = DistributedDataParallel(self.actor_representation[key],
-                                                                             device_ids=[self.rank])
-                if self.critic_representation[key]._get_name() != "Basic_Identical":
-                    self.critic_representation[key] = DistributedDataParallel(self.critic_representation[key],
-                                                                              device_ids=[self.rank])
-                self.actor[key] = DistributedDataParallel(module=self.actor[key], device_ids=[self.rank])
-                self.critic[key] = DistributedDataParallel(module=self.critic[key], device_ids=[self.rank])
-            if self.mixer is not None:
-                self.mixer = DistributedDataParallel(module=self.mixer, device_ids=[self.rank])
-
-    @property
-    def parameters_model(self):
-        parameters = list(self.actor_representation.parameters()) + list(self.actor.parameters()) + list(
-            self.critic_representation.parameters()) + list(self.critic.parameters()) + list(
-            self.communicator.parameters())
-        if self.mixer is not None:
-            parameters += list(self.mixer.parameters())
-        return parameters
-
-    def _get_actor_critic_input(self, dim_action, dim_actor_rep, dim_critic_rep, n_agents):
-        dim_actor_in, dim_actor_out = dim_actor_rep, dim_action
-        dim_critic_in, dim_critic_out = dim_critic_rep, dim_action
-        if self.use_parameter_sharing:
-            dim_actor_in += n_agents
-            dim_critic_in += n_agents
-        return dim_actor_in, dim_actor_out, dim_critic_in, dim_critic_out
+        super(TarMAC_Policy, self).__init__(action_space=action_space, n_agents=n_agents,
+                                             representation_actor=representation_actor,
+                                             representation_critic=representation_critic, mixer=mixer,
+                                             actor_hidden_size=actor_hidden_size,
+                                             critic_hidden_size=critic_hidden_size, normalize=normalize,
+                                             initialize=initialize, activation=activation,
+                                             device=device, use_distributed_training=use_distributed_training, **kwargs)
 
     def forward(self, observation: Dict[str, Tensor], agent_ids: Optional[Tensor] = None,
                 avail_actions: Dict[str, Tensor] = None, agent_key: str = None,
                 rnn_hidden: Optional[Dict[str, List[Tensor]]] = None, alive_ally: Optional[dict] = None):
         rnn_hidden_new, pi_dists = {}, {}
         agent_list = self.model_keys if agent_key is None else [agent_key]
-
+        seq_length = observation['agent_0'].shape[1]
         if avail_actions is not None:
             avail_actions = {key: Tensor(avail_actions[key]) for key in agent_list}
+        observation = {k: self.communicator[k].obs_encode(observation[k]) for k in agent_list}
+        actor_inputs = {k: [] for k in agent_list}
+        for i in range(seq_length):
+            alive_ally_i = {k: alive_ally[k][:, i:i + 1, :] for k in self.agent_keys}
+            observation_i = {k: observation[k][:, i:i + 1, :] for k in agent_list}
+            rnn_input = deepcopy(rnn_hidden)
+            observation_i = {k: self.communicator[k](observation_i[k], rnn_input, alive_ally_i) for k in self.model_keys}
+            for key in agent_list:
+                if self.use_rnn:
+                    outputs = self.actor_representation[key](observation_i[key], *rnn_hidden[key])
+                    rnn_hidden_new[key] = (outputs['rnn_hidden'], outputs['rnn_cell'])
+                else:
+                    outputs = self.actor_representation[key](observation[key])
+                    rnn_hidden_new[key] = [None, None]
 
-        # calculate message_receive
-        message_receive = {k: self.communicator[k](k, observation[k], rnn_hidden, alive_ally) for k in
-                           self.model_keys}
-
+                if self.use_parameter_sharing:
+                    agent_ids_i = agent_ids[:, i:i + 1, :]
+                    actor_input = torch.concat([outputs['state'], agent_ids_i], dim=-1)
+                else:
+                    actor_input = outputs['state']
+                actor_inputs[key].append(actor_input)
+            rnn_hidden = deepcopy(rnn_hidden_new)
         for key in agent_list:
-            outputs = self.actor_representation[key](message_receive[key], *rnn_hidden[key])
-            rnn_hidden_new[key] = (outputs['rnn_hidden'], outputs['rnn_cell'])
-            actor_input = outputs['state']
+            actor_input = torch.cat(actor_inputs[key], dim=1)
             avail_actions_input = None if avail_actions is None else avail_actions[key]
             pi_dists[key] = self.actor[key](actor_input, avail_actions_input)
         return rnn_hidden_new, pi_dists
-
-    def get_values(self, observation: Dict[str, Tensor], agent_ids: Tensor = None, agent_key: str = None,
-                   rnn_hidden: Optional[Dict[str, List[Tensor]]] = None, alive_ally: Optional[dict] = None):
-        rnn_hidden_new, values = {}, {}
-        agent_list = self.model_keys if agent_key is None else [agent_key]
-
-        # calculate message_receive
-        message_receive = {k: self.communicator[k](self.model_keys, observation[k], rnn_hidden, alive_ally) for k in
-                           self.model_keys}
-        message = {k: torch.cat(list(message_receive.values()), dim=-1) for k in self.model_keys}
-
-        for key in agent_list:
-            outputs = self.critic_representation[key](message[key], *rnn_hidden[key])
-            rnn_hidden_new[key] = (outputs['rnn_hidden'], outputs['rnn_cell'])
-            critic_input = outputs['state']
-            values[key] = self.critic[key](critic_input)
-
-        return rnn_hidden_new, values
-
-    def value_tot(self, values_n: Tensor, global_state=None):
-        if global_state is not None:
-            global_state = torch.as_tensor(global_state).to(self.device)
-        return values_n if self.mixer is None else self.mixer(values_n, global_state)
 
 
 class COMA_Policy(Module):

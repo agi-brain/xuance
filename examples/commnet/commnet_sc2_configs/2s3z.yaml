@@ -23,7 +23,7 @@ vectorize: "Subproc_StarCraft2"
 use_rnn: True  # Whether to use recurrent neural networks.
 rnn: "LSTM"
 N_recurrent_layers: 1  # Number of recurrent layers.
-fc_hidden_sizes: [64]
+fc_hidden_sizes: [64, 64, 64]
 recurrent_hidden_size: 64
 dropout: 0
 normalize: "LayerNorm"
@@ -33,7 +33,7 @@ gain: 0.01
 actor_hidden_size: []
 critic_hidden_size: []
 activation: "relu"  # The activation function of each hidden layer.
-use_parameter_sharing: False  # If to use parameter sharing for all agents' policies.
+use_parameter_sharing: True  # If to use parameter sharing for all agents' policies.
 use_actions_mask: True  # If to use actions mask for unavailable actions.
 
 seed: 5
@@ -41,17 +41,20 @@ parallels: 8
 buffer_size: 128
 n_epochs: 15
 n_minibatch: 1
-learning_rate: 0.0002  # 7e-4
+learning_rate: 0.0007  # 7e-4
 weight_decay: 0
 
-vf_coef: 0.1
-ent_coef: 0.01
+vf_coef: 1.0  # Coefficient factor for critic loss.
+ent_coef: 0.01  # Coefficient factor for entropy loss.
+target_kl: 0.25
+clip_range: 0.2
+clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
 gamma: 0.99  # discount factor
 
 # tricks
 use_linear_lr_decay: True  # if use linear learning rate decay
-end_factor_lr_decay: 0.2
-lr_decay_steps: 500
+end_factor_lr_decay: 0.7
+lr_decay_steps: 1000
 use_global_state: False  # if use global state to calculate values
 use_value_clip: True  # limit the value range
 value_clip_range: 0.2
@@ -70,5 +73,5 @@ running_steps: 2000000
 eval_interval: 20000
 test_episode: 16
 
-log_dir: "./logs/ic3net/2s3z"
-model_dir: "./models/ic3net/2s3z"
+log_dir: "./logs/commnet"
+model_dir: "./models/commnet"
