@@ -487,5 +487,3 @@ If you use XuanCe in your research or development, please cite the paper:
   year={2023}
 }
 ```
-
-[[Code]: 
