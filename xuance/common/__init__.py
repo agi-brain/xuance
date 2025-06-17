@@ -8,7 +8,6 @@ from xuance.common.memory_tools import create_memory, store_element, sample_batc
 from xuance.common.memory_tools_marl import BaseBuffer, MARL_OnPolicyBuffer, MARL_OnPolicyBuffer_RNN, \
     MeanField_OnPolicyBuffer, MeanField_OnPolicyBuffer_RNN, \
     MeanField_OffPolicyBuffer, MeanField_OffPolicyBuffer_RNN, \
-    I3CNet_Buffer, I3CNet_Buffer_RNN, \
     MARL_OffPolicyBuffer, MARL_OffPolicyBuffer_RNN
 from xuance.common.memory_offline import OfflineBuffer_D4RL
 from xuance.common.segtree_tool import SegmentTree, SumSegmentTree, MinSegmentTree

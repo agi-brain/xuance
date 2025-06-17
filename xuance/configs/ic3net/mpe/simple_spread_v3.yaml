@@ -28,7 +28,7 @@ actor_hidden_size: [64, ]  # A list of hidden units for each layer of actor netw
 critic_hidden_size: [64, ]  # A list of hidden units for each layer of critic network.
 activation: "relu"  # The activation function of each hidden layer.
 activation_action: "sigmoid"  # The activation function for the last layer of the actor.
-use_parameter_sharing: False  # If to use parameter sharing for all agents' policies.
+use_parameter_sharing: True  # If to use parameter sharing for all agents' policies.
 use_actions_mask: False  # If to use actions mask for unavailable actions.
 continuous: False  # Whether to use continuous actions.
 comm_passes: 2  # Number of comm passes per step over the model.
@@ -42,9 +42,11 @@ n_minibatch: 1 # Number of minibatch to sample and train.  batch_size = buffer_s
 learning_rate: 0.0005  # Learning rate.
 weight_decay: 0  # The steps to decay the greedy epsilon.
 
-vf_coef: 0.1  # Coefficient factor for critic loss.
+vf_coef: 1.0  # Coefficient factor for critic loss.
 ent_coef: 0.01  # Coefficient factor for entropy loss.
-gamma: 0.99  # Discount factor.
+target_kl: 0.25
+clip_range: 0.2
+gamma: 0.99  # discount factor
 
 # tricks
 use_linear_lr_decay: False  # If to use linear learning rate decay.

@@ -14,7 +14,7 @@ agent: "TarMAC"
 env_name: "StarCraft2"
 env_id: "3m"
 env_seed: 1
-learner: "TarMAC_Learner"
+learner: "TarMac_Learner"
 policy: "TarMAC_Policy"
 representation: "Basic_RNN"
 vectorize: "Subproc_StarCraft2"

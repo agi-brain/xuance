@@ -4,7 +4,7 @@ logger: "tensorboard"  # Choices: tensorboard, wandb.
 wandb_user_name: "your_user_name"
 render: True
 render_mode: 'rgb_array' # Choices: 'human', 'rgb_array'.
-fps: 30
+fps: 15
 test_mode: False
 device: "cuda:0"  # Choose an calculating device. PyTorch: "cpu", "cuda:0"; TensorFlow: "cpu"/"CPU", "gpu"/"GPU"; MindSpore: "CPU", "GPU", "Ascend", "Davinci".
 distributed_training: False  # Whether to use multi-GPU for distributed training.
@@ -33,7 +33,7 @@ gain: 0.01
 actor_hidden_size: []
 critic_hidden_size: []
 activation: "relu"  # The activation function of each hidden layer.
-use_parameter_sharing: False  # If to use parameter sharing for all agents' policies.
+use_parameter_sharing: True  # If to use parameter sharing for all agents' policies.
 use_actions_mask: True  # If to use actions mask for unavailable actions.
 
 seed: 1
@@ -41,16 +41,19 @@ parallels: 8
 buffer_size: 128
 n_epochs: 15
 n_minibatch: 1
-learning_rate: 0.0001     # 1e-4
+learning_rate: 0.0007  # 7e-4
 weight_decay: 0
 
-vf_coef: 1.0
-ent_coef: 0.01
-gamma: 0.98  # discount factor
+vf_coef: 1.0  # Coefficient factor for critic loss.
+ent_coef: 0.01  # Coefficient factor for entropy loss.
+target_kl: 0.25
+clip_range: 0.2
+clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
+gamma: 0.99  # discount factor
 
 # tricks
 use_linear_lr_decay: True  # if use linear learning rate decay
-end_factor_lr_decay: 0.5
+end_factor_lr_decay: 0.7
 lr_decay_steps: 1000
 use_global_state: False  # if use global state to calculate values
 use_value_clip: True  # limit the value range
@@ -60,7 +63,7 @@ use_huber_loss: True  # True: use huber loss; False: use MSE loss.
 huber_delta: 10.0
 use_advnorm: True  # use advantage normalization.
 use_gae: True  # use GAE trick to calculate returns.
-gae_lambda: 0.98
+gae_lambda: 0.95
 use_grad_clip: True  # gradient normalization
 grad_clip_norm: 10.0
 dim_message: 64   # message encode dim which is same to the recurrent dim
@@ -70,5 +73,5 @@ running_steps: 1000000
 eval_interval: 10000
 test_episode: 16
 
-log_dir: "./logs/ic3net/3m"
-model_dir: "./models/ic3net/3m"
+log_dir: "./logs/ic3net/2s3z"
+model_dir: "./models/ic3net/2s3z"
