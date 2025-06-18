@@ -36,7 +36,8 @@ setup(
         'Programming Language :: Python :: 3.10',
     ],
     extras_require={
-        "torch": ["torch==1.13.0"],
+        "torch": ["torch==1.13.0",
+                  "torchvision"],
         "tensorflow": ["tensorflow==2.6.0",
                        "tensorflow-addons==0.21.0",
                        "tensorflow-probability==0.14.0"],
