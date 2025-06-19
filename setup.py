@@ -36,14 +36,14 @@ setup(
         'Programming Language :: Python :: 3.10',
     ],
     extras_require={
-        "torch": ["torch==1.13.0",
+        "torch": ["torch",
                   "torchvision"],
         "tensorflow": ["tensorflow==2.6.0",
                        "tensorflow-addons==0.21.0",
                        "tensorflow-probability==0.14.0"],
         "mindspore": ["mindspore==2.2.0"],
         "all": [
-            "torch==1.13.0",
+            "torch",
             "tensorflow==2.6.0",
             "mindspore==2.2.14"  # mindspore might be installed manually.
         ],
@@ -63,17 +63,17 @@ setup(
         "einops": ["einops==0.8.1"],  # default version is 0.8.1 for ViT
     },
     install_requires=[
-        "numpy<1.23.0,>=1.21.6",
-        "scipy==1.7.3",
+        "numpy>=1.21.6",
+        "scipy>=1.15.3",
         "PyYAML",  # default version is 6.0
         "gymnasium==1.1.1",
         "pygame>=2.1.0",
-        "tqdm==4.66.3",
+        "tqdm>=4.66.3",
         "pyglet==1.5.15",
         "pettingzoo>=1.23.0",  # for MARL
         "tensorboard>=2.11.2",  # logger
-        "wandb==0.15.3",
-        "moviepy==1.0.3",
+        "wandb>=0.15.3",
+        "moviepy>=1.0.3",
         "imageio",  # default version is 2.9.0
         "opencv-python",  # default version is 4.5.4.58
         "mpi4py",  # default version is 3.1.3
