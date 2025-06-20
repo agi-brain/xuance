@@ -63,20 +63,20 @@ setup(
         "einops": ["einops==0.8.1"],  # default version is 0.8.1 for ViT
     },
     install_requires=[
-        "numpy>=1.21.6",
-        "scipy>=1.15.3",
-        "PyYAML",  # default version is 6.0
-        "gymnasium==1.1.1",
-        "pygame>=2.1.0",
-        "tqdm>=4.66.3",
+        "numpy",  # suggest version: >=1.21.6
+        "scipy",  # suggest version: >=1.15.3
+        "PyYAML",  # suggest version: 6.0
+        "gymnasium",  # suggest version: >=1.1.1
+        "pygame",  # suggest version: >=2.1.0
+        "tqdm",  # suggest version: >=4.66.3
         "pyglet==1.5.15",
-        "pettingzoo>=1.23.0",  # for MARL
-        "tensorboard>=2.11.2",  # logger
-        "wandb>=0.15.3",
-        "moviepy>=1.0.3",
-        "imageio",  # default version is 2.9.0
-        "opencv-python",  # default version is 4.5.4.58
-        "mpi4py",  # default version is 3.1.3
+        "pettingzoo",  # for MARL, suggest version: >=1.23.0
+        "tensorboard",  # logger, suggest version: >=2.11.2
+        "wandb",  # suggest version: >=0.15.3
+        "moviepy",  # suggest version: >=1.0.3
+        "imageio",  # suggest version: 2.9.0
+        "opencv-python",  # suggest version: 4.5.4.58
+        "mpi4py",  # suggest version: 3.1.3
     ],
     setup_requires=['pytest-runner'],
     tests_requires=['pytest'],
