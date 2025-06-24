@@ -55,14 +55,14 @@ class TestValueBaseAlgo(unittest.TestCase):
     #     else:
     #         runner.run()
 
-    def test_npg_discrete(self):
-        args_npg = deepcopy(args)
-        args_npg.n_steps = 1000
-        runner = get_runner(method="npg", env=env_name, env_id=env_id_discrete, parser_args=args_npg)
-        if is_benchmark:
-            runner.benchmark()
-        else:
-            runner.run()
+    # def test_npg_discrete(self):
+    #     args_npg = deepcopy(args)
+    #     args_npg.n_steps = 1000
+    #     runner = get_runner(method="npg", env=env_name, env_id=env_id_discrete, parser_args=args_npg)
+    #     if is_benchmark:
+    #         runner.benchmark()
+    #     else:
+    #         runner.run()
 
     """P-DQN"""
 

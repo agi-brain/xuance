@@ -1,8 +1,7 @@
+import torch
 from argparse import Namespace
 from typing import List
-
 from torch import nn
-
 from xuance.torch.learners.multi_agent_rl.commnet_learner import CommNet_Learner
 
 
