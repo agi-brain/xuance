@@ -1,15 +1,15 @@
 agent: "C51DQN"  # Name of agent
-env_name: "Classic Control"
-env_id: "MountainCar-v0"
+env_name: "Classic Control"  # Environment name.
+env_id: "MountainCar-v0"  # Environment ID.
 env_seed: 1  # Random seed for the environment.
 vectorize: "DummyVecEnv"  # Method to vectorize the environment.
 learner: "C51_Learner"  # Name of the learner.
 policy: "C51_Q_network"  # Name of the policy.
-representation: "Basic_MLP"
+representation: "Basic_MLP"  # The representation.
 runner: "DRL"  # Name of the runner.
 
-representation_hidden_size: [128,]
-q_hidden_size: [128,]
+representation_hidden_size: [128,]  # hidden sizes for MLP representation.
+q_hidden_size: [128,]  # hidden sizes for Q networks.
 activation: 'relu'  # The activation function for hidden layers.
 
 seed: 1  # The random seed.

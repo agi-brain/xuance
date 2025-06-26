@@ -1,7 +1,7 @@
 agent: "C51DQN"  # Name of agent
-vectorize: "Dummy_Atari"
-env_name: "Atari"
-env_id: "ALE/Breakout-v5"
+vectorize: "Dummy_Atari"  # Method to vectorize the environment.
+env_name: "Atari"  # Environment name.
+env_id: "ALE/Breakout-v5"  # Environment ID.
 env_seed: 1  # Random seed for the environment.
 obs_type: "grayscale"  # choice for Atari env: ram, rgb, grayscale
 img_size: [84, 84]  # default is 210 x 160 in gym[Atari]
@@ -10,7 +10,7 @@ frame_skip: 4  # frame skip trick
 noop_max: 30  # Do no-op action for a number of steps in [1, noop_max].
 learner: "C51_Learner"  # Name of the learner.
 policy: "C51_Q_network"  # Name of the policy.
-representation: "Basic_CNN"
+representation: "Basic_CNN"  # The representation.
 runner: "DRL"  # Name of the runner.
 
 # the following three arguments are for "Basic_CNN" representation.
