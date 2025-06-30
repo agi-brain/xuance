@@ -36,8 +36,8 @@ weight_decay: 0  # The steps to decay the greedy epsilon.
 
 start_greedy: 0.5  # The start value of greedy epsilon.
 end_greedy: 0.01  # The end value of greedy epsilon.
-decay_step_greedy: 100000
-sync_frequency: 200
+decay_step_greedy: 100000  # The steps to decay the greedy epsilon.
+sync_frequency: 200  # The frequency to synchronize target networks.
 
 vf_coef: 0.1  # Coefficient factor for critic loss.
 ent_coef: 0.01  # Coefficient factor for entropy loss.

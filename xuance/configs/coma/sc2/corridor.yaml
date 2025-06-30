@@ -37,7 +37,7 @@ weight_decay: 0  # The steps to decay the greedy epsilon.
 start_greedy: 0.5  # The start value of greedy epsilon.
 end_greedy: 0.01  # The end value of greedy epsilon.
 decay_step_greedy: 1000000
-sync_frequency: 200
+sync_frequency: 200  # The frequency to synchronize target networks.
 
 vf_coef: 0.1  # Coefficient factor for critic loss.
 ent_coef: 0.01  # Coefficient factor for entropy loss.
@@ -47,14 +47,14 @@ gamma: 0.99  # Discount factor.
 use_linear_lr_decay: False  # If to use linear learning rate decay.
 end_factor_lr_decay: 0.5  # The end factor for learning rate scheduler.
 use_advnorm: False  # Whether to use advantage normalization.
-use_gae: True
+use_gae: True  # Use GAE trick.
 gae_lambda: 0.8  # The GAE lambda.
 use_grad_clip: True  # Gradient normalization.
 grad_clip_norm: 10.0  # The max norm of the gradient.
 clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm().
 
-running_steps: 10000000
-eval_interval: 100000
+running_steps: 10000000  # The total running steps.
+eval_interval: 100000  # The interval between every two trainings.
 test_episode: 16  # The episodes to test in each test period.
 
 log_dir: "./logs/coma/"  # The directory to store logger file.
