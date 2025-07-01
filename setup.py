@@ -69,7 +69,7 @@ setup(
         "gymnasium",  # suggest version: >=1.1.1
         "pygame",  # suggest version: >=2.1.0
         "tqdm",  # suggest version: >=4.66.3
-        "pyglet==1.5.15",
+        "pyglet==1.5.15",  # suggest version: ==1.5.15
         "pettingzoo",  # for MARL, suggest version: >=1.23.0
         "tensorboard",  # logger, suggest version: >=2.11.2
         "wandb",  # suggest version: >=0.15.3

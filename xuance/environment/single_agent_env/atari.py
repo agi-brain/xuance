@@ -5,15 +5,13 @@ from xuance.environment.single_agent_env.gym import LazyFrames
 try:
     import cv2
 except ImportError:
-    print("The module opencv-python might not be installed."
-          "Please ensure you have installed opencv-python via `pip install opencv-python==4.5.4.58`.")
+    pass
 
 try:
     import ale_py
     gym.register_envs(ale_py)
 except ImportError:
-    print("The module ale-py might not be installed."
-          "If you want to run Atari 2600 benchmarks, please ensure you have installed ale-py via `pip install ale-py`.")
+    pass
 
 
 class Atari_Env(gym.Wrapper):
