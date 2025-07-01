@@ -14,10 +14,10 @@ from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
 
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
 from xuance.torch.agents import BaseCallback
-from xuance.torch.agents.multi_agent_rl.commnet_agents import CommNet_Agents
+from xuance.torch.agents.multi_agent_rl.ic3net_agents import IC3Net_Agents
 
 
-class TarMAC_Agents(CommNet_Agents):
+class TarMAC_Agents(IC3Net_Agents):
     def __init__(self,
                  config: Namespace,
                  envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv],
@@ -40,7 +40,7 @@ class TarMAC_Agents(CommNet_Agents):
                 agent_keys=self.agent_keys,
                 n_agents=self.n_agents,
                 device=self.device,
-                use_parameter_sharing=self.use_parameter_sharing)
+                config=self.config)
             communicator[key] = TarMAC(**input_communicator)
         return communicator
 
@@ -68,7 +68,8 @@ class TarMAC_Agents(CommNet_Agents):
                 device=device, use_distributed_training=self.distributed_training,
                 use_parameter_sharing=self.use_parameter_sharing, model_keys=self.model_keys,
                 use_rnn=self.use_rnn, rnn=self.config.rnn if self.use_rnn else None,
-                communicator=communicator, agent_keys=self.agent_keys)
+                communicator=communicator, agent_keys=self.agent_keys,
+                comm_passes=self.config.comm_passes, config=self.config)
             self.continuous_control = False
         else:
             raise AttributeError(f"{agent} currently does not support the policy named {self.config.policy}.")

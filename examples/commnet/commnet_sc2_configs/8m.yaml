@@ -50,6 +50,7 @@ target_kl: 0.25
 clip_range: 0.2
 clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
 gamma: 0.99  # discount factor
+comm_passes: 1    # the number of the message encode times
 
 # tricks
 use_linear_lr_decay: True  # if use linear learning rate decay
@@ -66,8 +67,6 @@ use_gae: True  # use GAE trick to calculate returns.
 gae_lambda: 0.95
 use_grad_clip: True  # gradient normalization
 grad_clip_norm: 10.0
-dim_message: 64   # message encode dim which is same to the recurrent dim
-comm_passes: 1    # the number of the message encode times
 
 running_steps: 1000000
 eval_interval: 10000
