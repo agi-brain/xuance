@@ -379,6 +379,7 @@ class CommNet_Policy(MAAC_Policy):
                                              device=device, use_distributed_training=use_distributed_training, **kwargs)
         self.communicator = kwargs['communicator']
         self.agent_keys = kwargs['agent_keys']
+        self.comm_passes = kwargs['comm_passes']
 
     @property
     def parameters_model(self):
@@ -401,8 +402,11 @@ class CommNet_Policy(MAAC_Policy):
         for i in range(seq_length):
             alive_ally_i = {k: alive_ally[k][:, i:i + 1, :] for k in self.agent_keys}
             observation_i = {k: observation[k][:, i:i + 1, :] for k in agent_list}
-            rnn_input = deepcopy(rnn_hidden)
-            observation_i = {k: self.communicator[k](observation_i[k], rnn_input, alive_ally_i) for k in self.model_keys}
+            msg_send = {k: rnn_hidden[k][0].transpose(0, 1) for k in self.model_keys}
+            for _ in range(self.comm_passes):
+                msg_receive = {k: self.communicator[k](observation_i[k], msg_send, alive_ally_i) for k in self.model_keys}
+                msg_send = {k: observation_i[k] + msg_receive[k] for k in self.model_keys}
+            observation_i = msg_send
             for key in agent_list:
                 if self.use_rnn:
                     outputs = self.actor_representation[key](observation_i[key], *rnn_hidden[key])
@@ -434,12 +438,11 @@ class CommNet_Policy(MAAC_Policy):
         for i in range(seq_length):
             alive_ally_i = {k: alive_ally[k][:, i:i + 1, :] for k in self.agent_keys}
             observation_i = {k: observation[k][:, i:i + 1, :] for k in agent_list}
-            rnn_input = deepcopy(rnn_hidden)
-            if self.use_parameter_sharing:
-                key = self.model_keys[0]
-                observation_i = {key: self.communicator[key](observation_i[key], rnn_input, alive_ally_i)}
-            else:
-                observation_i = {k: self.communicator[k](observation_i[k], rnn_input, alive_ally_i) for k in self.model_keys}
+            msg_send = {k: rnn_hidden[k][0].transpose(0, 1) for k in self.model_keys}
+            for _ in range(self.comm_passes):
+                msg_receive = {k: self.communicator[k](observation_i[k], msg_send, alive_ally_i) for k in self.model_keys}
+                msg_send = {k: observation_i[k] + msg_receive[k][0] for k in self.model_keys}
+            observation_i = msg_send
             for key in agent_list:
                 if self.use_rnn:
                     outputs = self.critic_representation[key](observation_i[key], *rnn_hidden[key])
@@ -486,13 +489,10 @@ class IC3Net_Policy(CommNet_Policy):
                                              critic_hidden_size=critic_hidden_size, normalize=normalize,
                                              initialize=initialize, activation=activation,
                                              device=device, use_distributed_training=use_distributed_training, **kwargs)
-    @property
-    def parameters_model(self):
-        parameters = list(self.actor_representation.parameters()) + list(self.actor.parameters()) + list(
-            self.critic_representation.parameters()) + list(self.critic.parameters()) + list(self.communicator.parameters())
-        if self.mixer is not None:
-            parameters += list(self.mixer.parameters())
-        return parameters
+
+        self.config = kwargs['config']
+        self.gate = {k: self.communicator[k].create_mlp(self.config.recurrent_hidden_size, self.config.gate_hidden_size, 2, nn.LeakyReLU(), self.device)
+                     for k in self.model_keys}
 
     def forward(self, observation: Dict[str, Tensor], agent_ids: Optional[Tensor] = None,
                 avail_actions: Dict[str, Tensor] = None, agent_key: str = None,
@@ -504,11 +504,23 @@ class IC3Net_Policy(CommNet_Policy):
             avail_actions = {key: Tensor(avail_actions[key]) for key in agent_list}
         observation = {k: self.communicator[k].obs_encode(observation[k]) for k in agent_list}
         actor_inputs = {k: [] for k in agent_list}
+        gate_log_probs = {k: [] for k in agent_list}
         for i in range(seq_length):
             alive_ally_i = {k: alive_ally[k][:, i:i + 1, :] for k in self.agent_keys}
             observation_i = {k: observation[k][:, i:i + 1, :] for k in agent_list}
-            rnn_input = deepcopy(rnn_hidden)
-            observation_i = {k: self.communicator[k](observation_i[k], rnn_input, alive_ally_i) for k in self.model_keys}
+            msg_send = {k: rnn_hidden[k][0].transpose(0, 1) for k in self.model_keys}
+            for comm_time in range(self.comm_passes):
+                # calculate gate_control
+                gate_prob = {k: self.gate[k](msg_send[k]) for k in agent_list}
+                gate_dist = {k: Categorical(logits=gate_prob[k]) for k in agent_list}
+                gate_control = {k: gate_dist[k].sample() for k in agent_list}
+                gate_log_prob = {k: gate_dist[k].log_prob(gate_control[k]) for k in agent_list}
+                comm_out = {k: self.communicator[k](observation_i[k], msg_send, alive_ally_i, gate_control) for k in self.model_keys}
+                msg_send = {k: observation_i[k] + comm_out[k] for k in self.model_keys}
+                if comm_time == self.comm_passes - 1:
+                    for k in agent_list:
+                        gate_log_probs[k].append(gate_log_prob[k])
+            observation_i = msg_send
             for key in agent_list:
                 if self.use_rnn:
                     outputs = self.actor_representation[key](observation_i[key], *rnn_hidden[key])
@@ -528,10 +540,53 @@ class IC3Net_Policy(CommNet_Policy):
             actor_input = torch.cat(actor_inputs[key], dim=1)
             avail_actions_input = None if avail_actions is None else avail_actions[key]
             pi_dists[key] = self.actor[key](actor_input, avail_actions_input)
-        return rnn_hidden_new, pi_dists
+        gate_log_probs = {k: torch.cat(gate_log_probs[k], dim=1) for k in self.model_keys}
+        return rnn_hidden_new, pi_dists, gate_log_probs
+
+    def get_values(self, observation: Dict[str, Tensor], agent_ids: Tensor = None, agent_key: str = None,
+                   rnn_hidden: Optional[Dict[str, List[Tensor]]] = None, alive_ally: Optional[dict] = None):
+        rnn_hidden_new, values = {}, {}
+        agent_list = self.model_keys if agent_key is None else [agent_key]
+        batch_size, seq_length = observation['agent_0'].shape[0], observation['agent_0'].shape[1]
+        observation = {k: self.communicator[k].obs_encode(observation[k]) for k in agent_list}
+        critic_inputs = {k: [] for k in agent_list}
+        for i in range(seq_length):
+            alive_ally_i = {k: alive_ally[k][:, i:i + 1, :] for k in self.agent_keys}
+            observation_i = {k: observation[k][:, i:i + 1, :] for k in agent_list}
+            msg_send = {k: rnn_hidden[k][0].transpose(0, 1) for k in self.model_keys}
+            for comm_time in range(self.comm_passes):
+                # calculate gate_control
+                gate_prob = {k: self.gate[k](msg_send[k]) for k in agent_list}
+                gate_dist = {k: Categorical(logits=gate_prob[k]) for k in agent_list}
+                gate_control = {k: gate_dist[k].sample() for k in agent_list}
+                comm_out = {k: self.communicator[k](observation_i[k], msg_send, alive_ally_i, gate_control) for k in
+                            self.model_keys}
+                msg_send = {k: observation_i[k] + comm_out[k] for k in self.model_keys}
+            observation_i = msg_send
+            for key in agent_list:
+                if self.use_rnn:
+                    outputs = self.critic_representation[key](observation_i[key], *rnn_hidden[key])
+                    rnn_hidden_new[key] = (outputs['rnn_hidden'], outputs['rnn_cell'])
+                else:
+                    outputs = self.critic_representation[key](observation[key])
+                    rnn_hidden_new[key] = [None, None]
+
+                if self.use_parameter_sharing:
+                    agent_ids_i = agent_ids[:, i:i + 1, :]
+                    critic_input = torch.concat([outputs['state'], agent_ids_i], dim=-1)
+                else:
+                    critic_input = outputs['state']
+                critic_inputs[key].append(critic_input)
+            rnn_hidden = deepcopy(rnn_hidden_new)
+
+        for key in agent_list:
+            critic_input = torch.cat(critic_inputs[key], dim=1)
+            values[key] = self.critic[key](critic_input)
+
+        return rnn_hidden_new, values
 
 
-class TarMAC_Policy(CommNet_Policy):
+class TarMAC_Policy(IC3Net_Policy):
 
     def __init__(self,
                  action_space: Optional[Dict[str, Discrete]],
@@ -565,11 +620,23 @@ class TarMAC_Policy(CommNet_Policy):
             avail_actions = {key: Tensor(avail_actions[key]) for key in agent_list}
         observation = {k: self.communicator[k].obs_encode(observation[k]) for k in agent_list}
         actor_inputs = {k: [] for k in agent_list}
+        gate_log_probs = {k: [] for k in agent_list}
         for i in range(seq_length):
             alive_ally_i = {k: alive_ally[k][:, i:i + 1, :] for k in self.agent_keys}
             observation_i = {k: observation[k][:, i:i + 1, :] for k in agent_list}
-            rnn_input = deepcopy(rnn_hidden)
-            observation_i = {k: self.communicator[k](observation_i[k], rnn_input, alive_ally_i) for k in self.model_keys}
+            msg_send = {k: rnn_hidden[k][0].transpose(0, 1) for k in self.model_keys}
+            for comm_time in range(self.comm_passes):
+                # calculate gate_control
+                gate_prob = {k: self.gate[k](msg_send[k]) for k in agent_list}
+                gate_dist = {k: Categorical(logits=gate_prob[k]) for k in agent_list}
+                gate_control = {k: gate_dist[k].sample() for k in agent_list}
+                gate_log_prob = {k: gate_dist[k].log_prob(gate_control[k]) for k in agent_list}
+                comm_out = {k: self.communicator[k](observation_i[k], msg_send, alive_ally_i, gate_control) for k in self.model_keys}
+                msg_send = {k: observation_i[k] + comm_out[k] for k in self.model_keys}
+                if comm_time == self.comm_passes - 1:
+                    for k in agent_list:
+                        gate_log_probs[k].append(gate_log_prob[k])
+            observation_i = msg_send
             for key in agent_list:
                 if self.use_rnn:
                     outputs = self.actor_representation[key](observation_i[key], *rnn_hidden[key])
@@ -589,7 +656,8 @@ class TarMAC_Policy(CommNet_Policy):
             actor_input = torch.cat(actor_inputs[key], dim=1)
             avail_actions_input = None if avail_actions is None else avail_actions[key]
             pi_dists[key] = self.actor[key](actor_input, avail_actions_input)
-        return rnn_hidden_new, pi_dists
+        gate_log_probs = {k: torch.cat(gate_log_probs[k], dim=1) for k in self.model_keys}
+        return rnn_hidden_new, pi_dists, gate_log_probs
 
 
 class COMA_Policy(Module):

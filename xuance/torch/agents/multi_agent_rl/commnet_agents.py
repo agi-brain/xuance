@@ -37,12 +37,11 @@ class CommNet_Agents(IPPO_Agents):
             input_communicator = dict(
                 input_shape=space2shape(input_space[key]),
                 hidden_sizes=hidden_sizes,
-                comm_passes=self.config.comm_passes,
                 model_keys=self.model_keys,
                 agent_keys=self.agent_keys,
                 n_agents=self.n_agents,
                 device=self.device,
-                use_parameter_sharing=self.use_parameter_sharing)
+                config=self.config)
             communicator[key] = CommNet(**input_communicator)
         return communicator
 

@@ -19,16 +19,14 @@ normalize: "LayerNorm"
 initialize: "orthogonal"
 gain: 0.01
 
+gate_hidden_size: [64, ]
 actor_hidden_size: []
 critic_hidden_size: []
 activation: "relu"  # The activation function of each hidden layer.
 use_parameter_sharing: True  # If to use parameter sharing for all agents' policies.
 use_actions_mask: True  # If to use actions mask for unavailable actions.
-dim_message: 64
-comm_passes: 2
-use_gate: True  # whether to use gate control
 
-seed: 1
+seed: 5
 parallels: 8
 buffer_size: 128
 n_epochs: 15
@@ -58,10 +56,12 @@ use_gae: True  # use GAE trick to calculate returns.
 gae_lambda: 0.95
 use_grad_clip: True  # gradient normalization
 grad_clip_norm: 10.0
+comm_passes: 2    # the number of the message encode
+ues_gate: True  # whether to use gate control
 
-running_steps: 1000000  # 1M
-eval_interval: 10000
-test_episode: 8
+running_steps: 2000000
+eval_interval: 20000
+test_episode: 16
 
 log_dir: "./logs/tarmac/"
 model_dir: "./models/tarmac/"

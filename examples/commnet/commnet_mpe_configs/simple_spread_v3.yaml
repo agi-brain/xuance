@@ -38,8 +38,6 @@ activation: "relu"  # The activation function of each hidden layer.
 activation_action: "sigmoid"  # The activation function for the last layer of the actor.
 use_parameter_sharing: True # If to use parameter sharing for all agents' policies.
 use_actions_mask: False  # If to use actions mask for unavailable actions.
-comm_passes: 2
-dim_message: 64
 
 seed: 1  # Random seed.
 parallels: 16  # The number of environments to run in parallel.
@@ -55,6 +53,7 @@ target_kl: 0.25
 clip_range: 0.2
 clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
 gamma: 0.98  # discount factor
+comm_passes: 1
 
 # tricks
 use_linear_lr_decay: False  # If to use linear learning rate decay.
