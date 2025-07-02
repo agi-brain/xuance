@@ -314,10 +314,10 @@
 
 安装步骤如下（在终端 / 命令行下执行）：
 
-**步骤 1**：创建一个新的 conda 虚拟环境（建议 python>=3.7）：
+**步骤 1**：创建一个新的 conda 虚拟环境（建议 python>=3.8）：
 
 ```bash
-conda create -n xuance_env python=3.7
+conda create -n xuance_env python=3.8
 ```
 
 **步骤 2**：激活该环境：

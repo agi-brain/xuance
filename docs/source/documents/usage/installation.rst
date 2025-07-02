@@ -15,7 +15,7 @@ You can choose between two installation methods: from PyPI or GitHub repository.
 Install XuanCe
 ---------------------------------------------
 
-**Step 1**: Create and activate a new conda environment (python>=3.7 is suggested).
+**Step 1**: Create and activate a new conda environment (python>=3.8 is suggested).
 
 .. code-block:: bash
 

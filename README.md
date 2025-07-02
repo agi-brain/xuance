@@ -365,7 +365,7 @@ environment.
 
 After that, open a terminal and install **XuanCe** by the following steps.
 
-**Step 1**: Create and activate a new conda environment (python>=3.7 is suggested):
+**Step 1**: Create and activate a new conda environment (python>=3.8 is suggested):
 
 ```bash
 conda create -n xuance_env python=3.8 && conda activate xuance_env
