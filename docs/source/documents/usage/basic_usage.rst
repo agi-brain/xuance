@@ -3,11 +3,11 @@ Quick Start
 
 .. raw:: html
 
-   <div style="text-align: left; margin-bottom: 10px;">
-       <a href="https://colab.research.google.com/github/agi-brain/xuance/blob/master/docs/source/notebook/quick_start.ipynb">
-           <img alt="Open In Colab" src="https://colab.research.google.com/assets/colab-badge.svg">
-       </a>
-   </div>
+   <a href="https://colab.research.google.com/github/agi-brain/xuance/blob/master/docs/source/notebook/quick_start.ipynb"
+      target="_blank"
+      style="float: left; margin: 0 0 10px 10px;">
+       <img alt="Open In Colab" src="https://colab.research.google.com/assets/colab-badge.svg">
+   </a>
 
 Run a DRL example
 -----------------------
