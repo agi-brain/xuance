@@ -20,9 +20,9 @@ setup(
     author='Wenzhang Liu, et al.',
     author_email='liu_wzh@foxmail.com',
     license='MIT',
-    url='',
-    download_url='https://github.com/agi-brain/xuance.git',
-    keywords=['deep reinforcement learning', 'software library', 'PyTorch', 'TensorFlow2', 'MindSpore'],
+    url='https://github.com/agi-brain/xuance.git',
+    download_url='https://pypi.org/project/xuance/#files',
+    keywords=['deep reinforcement learning', 'open source library', 'PyTorch', 'TensorFlow2', 'MindSpore'],
     classifiers=[
         'Development Status :: 4 - Beta',
         # Chose either "3 - Alpha", "4 - Beta" or "5 - Production/Stable" as the current state of your package
