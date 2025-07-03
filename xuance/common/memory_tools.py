@@ -558,7 +558,7 @@ class PerOffPolicyBuffer(Buffer):
                 weights_.append(weight / max_weight)
             step_choices[i] = idxes
             weights[i] = np.array(weights_)
-        step_choices = step_choices.astype(np.uint8)
+        step_choices = step_choices.astype(np.int64)
 
         samples_dict = {
             'obs': sample_batch(self.observations, tuple([env_choices, step_choices.flatten()])),
