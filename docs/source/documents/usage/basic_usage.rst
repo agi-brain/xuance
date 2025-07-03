@@ -1,14 +1,16 @@
 Quick Start
 =======================
 
-Run a DRL example
------------------------
-
 .. raw:: html
 
-   <a href="https://colab.research.google.com/github/agi-brain/xuance/blob/master/docs/source/notebook/quick_start.ipynb">
-        <img alt="Open In Colab" src="https://colab.research.google.com/assets/colab-badge.svg">
-   </a>
+   <div style="text-align: left; margin-bottom: 10px;">
+       <a href="https://colab.research.google.com/github/agi-brain/xuance/blob/master/docs/source/notebook/quick_start.ipynb">
+           <img alt="Open In Colab" src="https://colab.research.google.com/assets/colab-badge.svg">
+       </a>
+   </div>
+
+Run a DRL example
+-----------------------
 
 | In XuanCe, it is easy to build a DRL agent.
 | First you need to create a *runner* and specify the ``agent_name``, ``env_name``,
