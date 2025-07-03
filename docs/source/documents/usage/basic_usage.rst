@@ -6,8 +6,8 @@ Run a DRL example
 
 .. raw:: html
 
-   <a href="https://colab.research.google.com/assets/colab-badge.svg">
-        <img alt="Open In Colab" src="https://colab.research.google.com/github/agi-brain/xuance/blob/master/docs/source/notebooks/quick_start.ipynb">
+   <a href="https://colab.research.google.com/github/agi-brain/xuance/blob/master/docs/source/notebooks/quick_start.ipynb">
+        <img alt="Open In Colab" src="https://colab.research.google.com/assets/colab-badge.svg">
    </a>
 
 | In XuanCe, it is easy to build a DRL agent.
