@@ -4,6 +4,12 @@ Quick Start
 Run a DRL example
 -----------------------
 
+.. raw:: html
+
+   <a href="https://colab.research.google.com/assets/colab-badge.svg">
+        <img alt="Open In Colab" src="https://colab.research.google.com/github/agi-brain/xuance/blob/master/docs/source/notebooks/quick_start.ipynb">
+   </a>
+
 | In XuanCe, it is easy to build a DRL agent.
 | First you need to create a *runner* and specify the ``agent_name``, ``env_name``,
 | then a runner that contains agent, policy, and envs, etc., will be built.
