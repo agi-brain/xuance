@@ -7,6 +7,16 @@ and facilitate further algorithm development and implementation of their own rei
 this section will take the PPO algorithm training on the MuJoCo environment task as an example,
 and provide a detailed introduction on how to call the API from the bottom level to implement reinforcement learning model training.
 
+.. raw:: html
+
+   <a href="https://colab.research.google.com/github/agi-brain/xuance/blob/master/docs/source/notebook/further_usage.ipynb"
+      target="_blank"
+      rel="noopener noreferrer"
+      style="float: left; margin-left: 0px;">
+       <img alt="Open In Colab" src="https://colab.research.google.com/assets/colab-badge.svg">
+   </a>
+   <br>
+
 Step 1: Create config file
 --------------------------------
 

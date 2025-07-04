@@ -36,7 +36,7 @@ Run a DRL example
 
     .. code-block:: python
 
-        import xuance argparse
+        import xuance, argparse
 
         def parse_args():
             parser = argparse.ArgumentParser("Run a demo.")
