@@ -73,14 +73,18 @@ Here is an example of configurations for DDPG algorithm, named "ddpg_new_env.yam
     render_mode: 'rgb_array' # Choices: 'human', 'rgb_array'.
     fps: 50
     test_mode: False
-    device: "cuda:0"
+    device: "cpu"
+    distributed_training: False
+    master_port: '12355'
 
     agent: "DDPG"
     env_name: "MyNewEnv"
     env_id: "new-v1"
+    env_seed: 1
     vectorize: "DummyVecEnv"
     policy: "DDPG_Policy"
     representation: "Basic_Identical"
+    learner: "DDPG_Learner"
     runner: "DRL"
 
     representation_hidden_size:  # If you choose Basic_Identical representation, then ignore this value
@@ -101,8 +105,8 @@ Here is an example of configurations for DDPG algorithm, named "ddpg_new_env.yam
     start_noise: 0.5
     end_noise: 0.1
     training_frequency: 1
-    running_steps: 1000000  # 1M
-    start_training: 10000
+    running_steps: 100000
+    start_training: 1000
 
     use_grad_clip: False  # gradient normalization
     grad_clip_norm: 0.5

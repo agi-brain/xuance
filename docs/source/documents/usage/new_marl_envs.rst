@@ -3,6 +3,16 @@ Build Multi-Agent Environment
 
 In XuanCe, users also have the flexibility to create and run their own customized environments with multiple agents in addition to utilizing the provided ones.
 
+.. raw:: html
+
+   <a href="https://colab.research.google.com/github/agi-brain/xuance/blob/master/docs/source/notebook/new_marl_envs.ipynb"
+      target="_blank"
+      rel="noopener noreferrer"
+      style="float: left; margin-left: 0px;">
+       <img alt="Open In Colab" src="https://colab.research.google.com/assets/colab-badge.svg">
+   </a>
+   <br>
+
 Step 1: Create a New Multi-Agent Environment
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -87,7 +97,7 @@ Here is an example of configurations for DDPG algorithm, named "ippo_new_configs
     render_mode: 'rgb_array' # Choices: 'human', 'rgb_array'.
     fps: 15
     test_mode: False
-    device: "cuda:0"  # Choose an calculating device. PyTorch: "cpu", "cuda:0"; TensorFlow: "cpu"/"CPU", "gpu"/"GPU"; MindSpore: "CPU", "GPU", "Ascend", "Davinci".
+    device: "cpu"  # Choose an calculating device. PyTorch: "cpu", "cuda:0"; TensorFlow: "cpu"/"CPU", "gpu"/"GPU"; MindSpore: "CPU", "GPU", "Ascend", "Davinci".
     distributed_training: False  # Whether to use multi-GPU for distributed training.
     master_port: '12355'  # The master port for current experiment when use distributed training.
 
@@ -151,8 +161,8 @@ Here is an example of configurations for DDPG algorithm, named "ippo_new_configs
     grad_clip_norm: 10.0  # The max norm of the gradient.
     clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm().
 
-    running_steps: 10000000  # The total running steps.
-    eval_interval: 100000  # The interval between every two trainings.
+    running_steps: 100000  # The total running steps.
+    eval_interval: 10000  # The interval between every two trainings.
     test_episode: 5  # The episodes to test in each test period.
 
     log_dir: "./logs/ippo/"
