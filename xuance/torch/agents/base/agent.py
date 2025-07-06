@@ -35,7 +35,7 @@ class Agent(ABC):
         self.config = config
         self.use_rnn = getattr(config, "use_rnn", False)
         self.use_actions_mask = getattr(config, "use_actions_mask", False)
-        self.distributed_training = config.distributed_training
+        self.distributed_training = getattr(config, "distributed_training", False)
         if self.distributed_training:
             self.world_size = int(os.environ['WORLD_SIZE'])
             self.rank = int(os.environ['RANK'])

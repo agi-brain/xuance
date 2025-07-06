@@ -5,7 +5,7 @@ In XuanCe, users have the flexibility to create and run their own customized env
 
 .. raw:: html
 
-   <a href="https://colab.research.google.com/github/agi-brain/xuance/blob/master/docs/source/notebook/new_drl_envs.ipynb"
+   <a href="https://colab.research.google.com/github/agi-brain/xuance/blob/master/docs/source/notebook-colab/new_drl_envs.ipynb"
       target="_blank"
       rel="noopener noreferrer"
       style="float: left; margin-left: 0px;">

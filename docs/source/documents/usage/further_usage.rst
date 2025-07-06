@@ -9,7 +9,7 @@ and provide a detailed introduction on how to call the API from the bottom level
 
 .. raw:: html
 
-   <a href="https://colab.research.google.com/github/agi-brain/xuance/blob/master/docs/source/notebook/further_usage.ipynb"
+   <a href="https://colab.research.google.com/github/agi-brain/xuance/blob/master/docs/source/notebook-colab/further_usage.ipynb"
       target="_blank"
       rel="noopener noreferrer"
       style="float: left; margin-left: 0px;">

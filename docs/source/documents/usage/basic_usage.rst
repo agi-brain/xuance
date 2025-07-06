@@ -3,7 +3,7 @@ Quick Start
 
 .. raw:: html
 
-   <a href="https://colab.research.google.com/github/agi-brain/xuance/blob/master/docs/source/notebook/quick_start.ipynb"
+   <a href="https://colab.research.google.com/github/agi-brain/xuance/blob/master/docs/source/notebook-colab/quick_start.ipynb"
       target="_blank"
       rel="noopener noreferrer"
       style="float: left; margin-left: 0px;">
