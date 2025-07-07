@@ -54,11 +54,12 @@ setup(
             "optuna-dashboard>=0.17.0",
             "plotly>=5.24.1",
         ],
-        "atari": ["gymnasium[accept-rom-license]==1.1.1",
-                  "gymnasium[atari]==1.1.1",
+        "mujoco": ["gymnasium[mujoco]"],
+        "atari": ["gymnasium[accept-rom-license]",
+                  "gymnasium[atari]",
                   "ale-py==0.10.1"],
         "box2d": ["swig==4.3.0",
-                  "gymnasium[box2d]==1.1.1"],  # for Box2D
+                  "gymnasium[box2d]"],  # for Box2D
         "minigrid": ["minigrid==3.0.0"],
         "metadrive": ["metadrive"],
         "rware": ["rware"],
