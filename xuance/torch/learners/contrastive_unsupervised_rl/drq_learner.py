@@ -7,9 +7,13 @@ import torch
 from torch import nn
 from argparse import Namespace
 
-from torchvision.transforms import transforms
+try:
+    from torchvision.transforms import transforms
+except:
+    pass
 
 from xuance.torch.learners import Learner
+
 
 class FrameStackTransform:
     def __init__(self):
