@@ -151,4 +151,7 @@ favicons = [
 
 # -- Generate Changelog -------------------------------------------------
 
-sphinx_github_changelog_token = os.environ.get("SPHINX_GITHUB_CHANGELOG_TOKEN")
+sphinx_github_changelog_token = (
+    os.environ.get("SPHINX_GITHUB_CHANGELOG_TOKEN") or
+    os.environ.get("GITHUB_TOKEN")
+)
