@@ -356,6 +356,7 @@ def set_device(dl_toolbox: str, expected_device: str):
                 device = "cpu"
         return device
     if dl_toolbox == 'tensorflow':
+        os.environ["TF_USE_LEGACY_KERAS"] = "1"  # Configure TensorFlow to use the legacy Keras 2 for tf.keras imports.
         if expected_device == "GPU" or expected_device == "gpu":
             import tensorflow as tf
             if len(tf.config.list_physical_devices('GPU')) == 0:

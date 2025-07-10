@@ -13,23 +13,32 @@ from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
 from xuance.tensorflow import Module, REGISTRY_Representation, REGISTRY_Learners
 from xuance.tensorflow.learners import learner
 from xuance.tensorflow.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions
+from .callback import MultiAgentBaseCallback
 
 
 class MARLAgents(ABC):
+    """Base class of agents for MARL.
+
+    Args:
+        config: the Namespace variable that provides hyperparameters and other settings.
+        envs: the vectorized environments.
+        callback: A user-defined callback function object to inject custom logic during training.
+    """
     def __init__(self,
                  config: Namespace,
-                 envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv]):
+                 envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv],
+                 callback: Optional[MultiAgentBaseCallback] = None):
         # Training settings.
         self.config = config
-        self.use_rnn = config.use_rnn if hasattr(config, "use_rnn") else False
+        self.use_rnn = getattr(config, "use_rnn", False)
         self.use_parameter_sharing = config.use_parameter_sharing
-        self.use_actions_mask = config.use_actions_mask if hasattr(config, "use_actions_mask") else False
-        self.use_global_state = config.use_global_state if hasattr(config, "use_global_state") else False
+        self.use_actions_mask = getattr(config, "use_actions_mask", False)
+        self.use_global_state = getattr(config, "use_global_state", False)
 
         self.gamma = config.gamma
-        self.start_training = config.start_training if hasattr(config, "start_training") else 1
-        self.training_frequency = config.training_frequency if hasattr(config, "training_frequency") else 1
-        self.n_epochs = config.n_epochs if hasattr(config, "n_epochs") else 1
+        self.start_training = getattr(config, "start_training", 1)
+        self.training_frequency = getattr(config, "training_frequency", 1)
+        self.n_epochs = getattr(config, "n_epochs", 1)
         self.device = config.device
 
         # Environment attributes.
@@ -43,7 +52,7 @@ class MARLAgents(ABC):
         self.state_space = envs.state_space if self.use_global_state else None
         self.observation_space = envs.observation_space
         self.action_space = envs.action_space
-        self.episode_length = config.episode_length if hasattr(config, "episode_length") else envs.max_episode_steps
+        self.episode_length = getattr(config, "episode_length", envs.max_episode_steps)
         self.config.episode_length = self.episode_length
         self.current_step = 0
         self.current_episode = np.zeros((self.n_envs,), np.int32)
@@ -87,6 +96,7 @@ class MARLAgents(ABC):
         self.policy: Optional[Module] = None
         self.learner: Optional[learner] = None
         self.memory: Optional[object] = None
+        self.callback = callback or MultiAgentBaseCallback()
 
     def store_experience(self, *args, **kwargs):
         raise NotImplementedError

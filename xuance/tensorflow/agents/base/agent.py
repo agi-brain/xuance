@@ -12,6 +12,7 @@ from xuance.common import get_time_string, create_directory, RunningMeanStd, spa
 from xuance.environment import DummyVecEnv, SubprocVecEnv
 from xuance.tensorflow import REGISTRY_Representation, REGISTRY_Learners, Module
 from xuance.tensorflow.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions
+from .callback import BaseCallback
 
 
 class Agent(ABC):
@@ -24,7 +25,8 @@ class Agent(ABC):
     """
     def __init__(self,
                  config: Namespace,
-                 envs: Union[DummyVecEnv, SubprocVecEnv]):
+                 envs: Union[DummyVecEnv, SubprocVecEnv],
+                 callback: Optional[BaseCallback] = None):
         # Training settings.
         self.config = config
         self.use_rnn = config.use_rnn if hasattr(config, "use_rnn") else False
@@ -32,9 +34,9 @@ class Agent(ABC):
         self.distributed_training = config.distributed_training
 
         self.gamma = config.gamma
-        self.start_training = config.start_training if hasattr(config, "start_training") else 1
-        self.training_frequency = config.training_frequency if hasattr(config, "start_training") else 1
-        self.n_epochs = config.n_epochs if hasattr(config, "n_epochs") else 1
+        self.start_training = getattr(config, "start_training", 1)
+        self.training_frequency = getattr(config, "training_frequency", 1)
+        self.n_epochs = getattr(config, "n_epochs", 1)
         self.device = config.device
 
         # Environment attributes.
@@ -97,6 +99,7 @@ class Agent(ABC):
         self.policy: Optional[Module] = None
         self.learner: Optional[Module] = None
         self.memory: Optional[object] = None
+        self.callback = callback or BaseCallback()
     
     def save_model(self, model_name):
         # save the neural networks
