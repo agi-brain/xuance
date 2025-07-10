@@ -339,6 +339,10 @@ StarCraft2
 The `StarCraft multi-agent challenge (SMAC) <../api/environments/multi_agent_env/smac.html>`_ is `WhiRL's <https://whirl.cs.ox.ac.uk/>`_ environment for research of cooperative MARL algorithms.
 SMAC uses StarCraft II, a real-time strategy game developed by Blizzard Entertainment, as its underlying environment.
 
+.. note::
+
+    Before installing the ``smac`` package, make sure your Python version is 3.8 or lower; otherwise, you may encounter errors when rendering the environment.
+
 **Step 1: Install the smac python package**
 
 You can install the SMAC package directly from the GitHub:
