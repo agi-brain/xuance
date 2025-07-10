@@ -79,7 +79,7 @@ class AC_CNN_Atari(Module):
             cnn[0] = self._init_layer(cnn[0])
             layers.extend(cnn)
         layers.append(nn.Flatten())
-        input_shape = (np.prod(input_shape, dtype=np.int), )
+        input_shape = (np.prod(input_shape, dtype=np.int32), )
         for h in self.fc_hidden_sizes:
             mlp, input_shape = mlp_block(input_shape[0], h, None, self.activation, None)
             mlp[0] = self._init_layer(mlp[0])
