@@ -9,7 +9,7 @@ from xuance.environment.single_agent_env import Gym_Env
 from xuance.tensorflow import Module
 from xuance.tensorflow.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions
 from xuance.tensorflow.policies import REGISTRY_Policy
-from xuance.tensorflow.agents import Agent
+from xuance.tensorflow.agents import Agent, BaseCallback
 
 
 class PDQN_Agent(Agent):

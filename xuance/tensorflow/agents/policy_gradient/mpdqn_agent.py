@@ -4,6 +4,7 @@ from xuance.common import Optional
 from xuance.tensorflow import Module
 from xuance.tensorflow.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions
 from xuance.tensorflow.policies import REGISTRY_Policy
+from xuance.tensorflow.agents import BaseCallback
 from xuance.tensorflow.agents.policy_gradient.pdqn_agent import PDQN_Agent
 
 

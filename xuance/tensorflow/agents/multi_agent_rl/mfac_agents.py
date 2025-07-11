@@ -8,7 +8,7 @@ from xuance.tensorflow.policies import REGISTRY_Policy
 from xuance.tensorflow.agents import OnPolicyMARLAgents, BaseCallback
 
 
-class MFAC_Agents(MARLAgents):
+class MFAC_Agents(OnPolicyMARLAgents):
     """The implementation of Mean Field Actor-Critic (MFAC) agents.
 
         Args:
