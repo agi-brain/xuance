@@ -1,64 +1,35 @@
 import numpy as np
 from tqdm import tqdm
 from argparse import Namespace
-from xuance.common import Union, DummyOffPolicyBuffer, DummyOffPolicyBuffer_Atari
+from xuance.common import Union, Optional, DummyOffPolicyBuffer, DummyOffPolicyBuffer_Atari
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
 from xuance.tensorflow import tk, Module
-from xuance.tensorflow.agents import MARLAgents
-from xuance.tensorflow.learners import DQN_Learner
+from xuance.tensorflow.policies import REGISTRY_Policy
+from xuance.tensorflow.agents import OnPolicyMARLAgents, BaseCallback
 
 
 class MFAC_Agents(MARLAgents):
+    """The implementation of Mean Field Actor-Critic (MFAC) agents.
+
+        Args:
+            config: the Namespace variable that provides hyperparameters and other settings.
+            envs: the vectorized environments.
+            callback: A user-defined callback function object to inject custom logic during training.
+        """
+
     def __init__(self,
                  config: Namespace,
                  envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv],
-                 device: str = "cpu:0"):
-        self.gamma = config.gamma
-        self.n_envs = envs.num_envs
-        self.n_size = config.buffer_size
-        self.n_epochs = config.n_epochs
-        self.n_minibatch = config.n_minibatch
-        if config.state_space is not None:
-            config.dim_state, state_shape = config.state_space.shape, config.state_space.shape
-        else:
-            config.dim_state, state_shape = None, None
+                 callback: Optional[BaseCallback] = None):
+        super(MFAC_Agents, self).__init__(config, envs, callback)
 
-        input_representation = get_repre_in(config)
-        representation = REGISTRY_Representation[config.representation](*input_representation)
-        input_policy = get_policy_in_marl(config, representation)
-        policy = REGISTRY_Policy[config.policy](*input_policy, gain=config.gain)
-        lr_scheduler = MyLinearLR(config.learning_rate, start_factor=1.0, end_factor=self.end_factor_lr_decay,
-                                  total_iters=get_total_iters(config.agent_name, config))
-        optimizer = tk.optimizers.Adam(lr_scheduler)
-        self.observation_space = envs.observation_space
-        self.action_space = envs.action_space
-        self.representation_info_shape = policy.representation.output_shapes
-        self.auxiliary_info_shape = {}
+        self.n_actions_list = [a_space.n for a_space in self.action_space.values()]
+        self.n_actions_max = max(self.n_actions_list)
+        self.actions_mean = [{k: np.zeros(self.n_actions_max) for k in self.agent_keys} for _ in range(self.n_envs)]
 
-        if config.state_space is not None:
-            config.dim_state, state_shape = config.state_space.shape, config.state_space.shape
-        else:
-            config.dim_state, state_shape = None, None
-        if config.state_space is not None:
-            config.dim_state, state_shape = config.state_space.shape, config.state_space.shape
-        else:
-            config.dim_state, state_shape = None, None
-        memory = MeanField_OnPolicyBuffer(config.n_agents,
-                                          state_shape,
-                                          config.obs_shape,
-                                          config.act_shape,
-                                          config.rew_shape,
-                                          config.done_shape,
-                                          envs.num_envs,
-                                          config.buffer_size,
-                                          config.use_gae, config.use_advnorm, config.gamma, config.gae_lambda,
-                                          prob_space=config.act_prob_shape)
-        self.buffer_size = memory.buffer_size
-        self.batch_size = self.buffer_size // self.n_minibatch
-        learner = MFAC_Learner(config, policy, optimizer, config.device, config.model_dir, config.gamma)
-        super(MFAC_Agents, self).__init__(config, envs, policy, memory, learner, device,
-                                          config.log_dir, config.model_dir)
-        self.on_policy = True
+        self.policy = self._build_policy()  # build policy
+        self.memory = self._build_memory()  # build memory
+        self.learner = self._build_learner(self.config, self.model_keys, self.agent_keys, self.policy, self.callback)
 
     def act(self, obs_n, test_mode, act_mean=None, agent_mask=None):
         batch_size = len(obs_n)

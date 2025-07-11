@@ -1,9 +1,10 @@
 from argparse import Namespace
-from xuance.common import Union
+from xuance.common import Union, Optional
 from xuance.environment import DummyVecEnv, SubprocVecEnv
 from xuance.tensorflow import Module
 from xuance.tensorflow.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions
 from xuance.tensorflow.policies import REGISTRY_Policy
+from xuance.tensorflow.agents import BaseCallback
 from xuance.tensorflow.agents.policy_gradient.ddpg_agent import DDPG_Agent
 
 
@@ -17,8 +18,9 @@ class TD3_Agent(DDPG_Agent):
     """
     def __init__(self,
                  config: Namespace,
-                 envs: Union[DummyVecEnv, SubprocVecEnv]):
-        super(TD3_Agent, self).__init__(config, envs)
+                 envs: Union[DummyVecEnv, SubprocVecEnv],
+                 callback: Optional[BaseCallback] = None):
+        super(TD3_Agent, self).__init__(config, envs, callback)
 
     def _build_policy(self) -> Module:
         normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None

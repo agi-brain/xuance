@@ -376,7 +376,7 @@ class OnPolicyMARLAgents(MARLAgents):
         envs = self.envs if env_fn is None else env_fn()
         num_envs = envs.num_envs
         videos, episode_videos, images = [[] for _ in range(num_envs)], [], None
-        current_episode, current_step, scores, best_score = 0, 0, [], -np.inf
+        _current_episode, _current_step, scores, best_score = 0, 0, [], -np.inf
         obs_dict, info = envs.reset()
         avail_actions = envs.buf_avail_actions if self.use_actions_mask else None
         state = envs.buf_state if self.use_global_state else None
@@ -390,7 +390,7 @@ class OnPolicyMARLAgents(MARLAgents):
                 self.memory.clear_episodes()
         rnn_hidden_actor, rnn_hidden_critic = self.init_rnn_hidden(num_envs)
 
-        while current_episode < n_episodes:
+        while _current_episode < n_episodes:
             policy_out = self.action(obs_dict=obs_dict, state=state, avail_actions_dict=avail_actions,
                                      rnn_hidden_actor=rnn_hidden_actor, rnn_hidden_critic=rnn_hidden_critic,
                                      test_mode=test_mode)
@@ -415,14 +415,14 @@ class OnPolicyMARLAgents(MARLAgents):
                                        terminals=terminated_dict, truncations=truncated, infos=info,
                                        state=state, next_state=next_state,
                                        current_train_step=self.current_step, n_episodes=n_episodes,
-                                       current_step=current_step, current_episode=current_episode)
+                                       current_step=_current_step, current_episode=_current_episode)
 
             obs_dict, avail_actions = deepcopy(next_obs_dict), deepcopy(next_avail_actions)
             state = deepcopy(next_state) if self.use_global_state else None
 
             for i in range(num_envs):
                 if all(terminated_dict[i].values()) or truncated[i]:
-                    current_episode += 1
+                    _current_episode += 1
                     episode_score = float(np.mean(itemgetter(*self.agent_keys)(info[i]["episode_score"])))
                     scores.append(episode_score)
                     if test_mode:
@@ -432,7 +432,7 @@ class OnPolicyMARLAgents(MARLAgents):
                             best_score = episode_score
                             episode_videos = videos[i].copy()
                         if self.config.test_mode:
-                            print("Episode: %d, Score: %.2f" % (current_episode, episode_score))
+                            print("Episode: %d, Score: %.2f" % (_current_episode, episode_score))
                     else:
                         if all(terminated_dict[i].values()):
                             value_next = {key: 0.0 for key in self.agent_keys}
@@ -469,7 +469,7 @@ class OnPolicyMARLAgents(MARLAgents):
                     if self.use_actions_mask:
                         avail_actions[i] = info[i]["reset_avail_actions"]
                         envs.buf_avail_actions[i] = info[i]["reset_avail_actions"]
-            current_step += num_envs
+            _current_step += num_envs
 
         if test_mode:
             if self.config.render_mode == "rgb_array" and self.render:
@@ -488,7 +488,7 @@ class OnPolicyMARLAgents(MARLAgents):
 
             self.callback.on_test_end(envs=envs, policy=self.policy,
                                       current_train_step=self.current_step,
-                                      current_step=current_step, current_episode=current_episode,
+                                      current_step=_current_step, current_episode=_current_episode,
                                       scores=scores, best_score=best_score)
 
             if env_fn is not None:

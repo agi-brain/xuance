@@ -1,12 +1,12 @@
 from tqdm import tqdm
 from copy import deepcopy
 from argparse import Namespace
-from xuance.common import Union
+from xuance.common import Union, Optional
 from xuance.environment import DummyVecEnv, SubprocVecEnv
 from xuance.tensorflow import Module
 from xuance.tensorflow.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions
 from xuance.tensorflow.policies import REGISTRY_Policy
-from xuance.tensorflow.agents import OnPolicyAgent
+from xuance.tensorflow.agents import OnPolicyAgent, BaseCallback
 
 
 class PPOKL_Agent(OnPolicyAgent):
@@ -19,8 +19,9 @@ class PPOKL_Agent(OnPolicyAgent):
     """
     def __init__(self,
                  config: Namespace,
-                 envs: Union[DummyVecEnv, SubprocVecEnv]):
-        super(PPOKL_Agent, self).__init__(config, envs)
+                 envs: Union[DummyVecEnv, SubprocVecEnv],
+                 callback: Optional[BaseCallback] = None):
+        super(PPOKL_Agent, self).__init__(config, envs, callback)
         self.auxiliary_info_shape = {"old_dist": None}
         self.memory = self._build_memory(self.auxiliary_info_shape)  # build memory
         self.policy = self._build_policy()  # build policy

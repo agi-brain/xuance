@@ -32,7 +32,7 @@ class OnPolicyAgent(Agent):
         self.memory: Optional[DummyOnPolicyBuffer] = None
 
     def _build_memory(self, auxiliary_info_shape=None):
-        self.atari = True if self.config.env_name == "Atari" else False
+        self.atari = self.config.env_name == "Atari"
         Buffer = DummyOnPolicyBuffer_Atari if self.atari else DummyOnPolicyBuffer
         self.buffer_size = self.n_envs * self.horizon_size
         self.batch_size = self.buffer_size // self.n_minibatch
@@ -250,4 +250,3 @@ class OnPolicyAgent(Agent):
         test_envs.close()
 
         return scores
-

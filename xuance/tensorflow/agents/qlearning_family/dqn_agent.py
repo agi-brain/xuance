@@ -1,10 +1,10 @@
 from argparse import Namespace
-from xuance.common import Union
+from xuance.common import Union, Optional
 from xuance.environment import DummyVecEnv, SubprocVecEnv
 from xuance.tensorflow import Module
 from xuance.tensorflow.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions
 from xuance.tensorflow.policies import REGISTRY_Policy
-from xuance.tensorflow.agents import OffPolicyAgent
+from xuance.tensorflow.agents import OffPolicyAgent, BaseCallback
 
 
 class DQN_Agent(OffPolicyAgent):
@@ -17,8 +17,9 @@ class DQN_Agent(OffPolicyAgent):
     """
     def __init__(self,
                  config: Namespace,
-                 envs: Union[DummyVecEnv, SubprocVecEnv]):
-        super(DQN_Agent, self).__init__(config, envs)
+                 envs: Union[DummyVecEnv, SubprocVecEnv],
+                 callback: Optional[BaseCallback] = None):
+        super(DQN_Agent, self).__init__(config, envs, callback)
         self.start_greedy, self.end_greedy = config.start_greedy, config.end_greedy
         self.e_greedy = config.start_greedy
         self.delta_egreedy = (self.start_greedy - self.end_greedy) / (config.decay_step_greedy / self.n_envs)

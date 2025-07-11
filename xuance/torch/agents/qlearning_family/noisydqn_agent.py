@@ -3,13 +3,12 @@ import numpy as np
 from tqdm import tqdm
 from copy import deepcopy
 from argparse import Namespace
-from xuance.common import Union, Optional
+from xuance.common import Union, Optional, DummyOffPolicyBuffer, DummyOffPolicyBuffer_Atari
 from xuance.environment import DummyVecEnv, SubprocVecEnv
 from xuance.torch import Module
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
 from xuance.torch.policies import REGISTRY_Policy
 from xuance.torch.agents import Agent, BaseCallback
-from xuance.common import DummyOffPolicyBuffer, DummyOffPolicyBuffer_Atari
 
 
 class NoisyDQN_Agent(Agent):

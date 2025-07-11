@@ -1,9 +1,10 @@
 from tqdm import tqdm
 from copy import deepcopy
 from argparse import Namespace
+from xuance.common import Union, Optional, PerOffPolicyBuffer
 from xuance.environment import DummyVecEnv, SubprocVecEnv
+from xuance.tensorflow.agents import BaseCallback
 from xuance.tensorflow.agents.qlearning_family import DQN_Agent
-from xuance.common import Union, PerOffPolicyBuffer
 
 
 class PerDQN_Agent(DQN_Agent):
@@ -17,8 +18,9 @@ class PerDQN_Agent(DQN_Agent):
 
     def __init__(self,
                  config: Namespace,
-                 envs: Union[DummyVecEnv, SubprocVecEnv]):
-        super(PerDQN_Agent, self).__init__(config, envs)
+                 envs: Union[DummyVecEnv, SubprocVecEnv],
+                 callback: Optional[BaseCallback] = None):
+        super(PerDQN_Agent, self).__init__(config, envs, callback)
         self.PER_beta0 = config.PER_beta0
         self.PER_beta = config.PER_beta0
 

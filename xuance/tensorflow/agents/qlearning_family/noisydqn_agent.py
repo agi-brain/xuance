@@ -2,12 +2,12 @@ import numpy as np
 from tqdm import tqdm
 from copy import deepcopy
 from argparse import Namespace
+from xuance.common import Union, Optional, DummyOffPolicyBuffer, DummyOffPolicyBuffer_Atari
 from xuance.environment import DummyVecEnv, SubprocVecEnv
 from xuance.tensorflow import Module
 from xuance.tensorflow.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions
 from xuance.tensorflow.policies import REGISTRY_Policy
-from xuance.tensorflow.agents import Agent
-from xuance.common import Union, DummyOffPolicyBuffer, DummyOffPolicyBuffer_Atari
+from xuance.tensorflow.agents import Agent, BaseCallback
 
 
 class NoisyDQN_Agent(Agent):
@@ -20,8 +20,9 @@ class NoisyDQN_Agent(Agent):
     """
     def __init__(self,
                  config: Namespace,
-                 envs: Union[DummyVecEnv, SubprocVecEnv]):
-        super(NoisyDQN_Agent, self).__init__(config, envs)
+                 envs: Union[DummyVecEnv, SubprocVecEnv],
+                 callback: Optional[BaseCallback] = None):
+        super(NoisyDQN_Agent, self).__init__(config, envs, callback)
 
         self.start_noise, self.end_noise = config.start_noise, config.end_noise
         self.noise_scale = config.start_noise

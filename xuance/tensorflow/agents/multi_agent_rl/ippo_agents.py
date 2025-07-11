@@ -5,7 +5,7 @@ from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
 from xuance.tensorflow import Module
 from xuance.tensorflow.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions
 from xuance.tensorflow.policies import REGISTRY_Policy
-from xuance.tensorflow.agents import OnPolicyMARLAgents
+from xuance.tensorflow.agents import OnPolicyMARLAgents, BaseCallback
 
 
 class IPPO_Agents(OnPolicyMARLAgents):
@@ -19,8 +19,9 @@ class IPPO_Agents(OnPolicyMARLAgents):
 
     def __init__(self,
                  config: Namespace,
-                 envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv]):
-        super(IPPO_Agents, self).__init__(config, envs)
+                 envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv],
+                 callback: Optional[BaseCallback] = None):
+        super(IPPO_Agents, self).__init__(config, envs, callback)
 
         self.policy = self._build_policy()  # build policy
         self.memory = self._build_memory()  # build memory

@@ -7,7 +7,7 @@ from xuance.common import Optional, List, Union, MARL_OffPolicyBuffer, MARL_OffP
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
 from xuance.tensorflow import Tensor, Module
 from xuance.tensorflow.utils.distributions import Categorical
-from xuance.tensorflow.agents.base import MARLAgents
+from xuance.tensorflow.agents.base import MARLAgents, BaseCallback
 
 
 class OffPolicyMARLAgents(MARLAgents):
@@ -17,26 +17,33 @@ class OffPolicyMARLAgents(MARLAgents):
         config: the Namespace variable that provides hyperparameters and other settings.
         envs: the vectorized environments.
         callback: A user-defined callback function object to inject custom logic during training.
+                It can be used for logging, early stopping, model saving, or visualization.
+                If not provided, a default no-op callback is used.
     """
 
     def __init__(self,
                  config: Namespace,
-                 envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv]):
-        super(OffPolicyMARLAgents, self).__init__(config, envs)
-        self.start_greedy = config.start_greedy if hasattr(config, "start_greedy") else None
-        self.end_greedy = config.end_greedy if hasattr(config, "start_greedy") else None
+                 envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv],
+                 callback: Optional[BaseCallback] = None):
+        super(OffPolicyMARLAgents, self).__init__(config, envs, callback)
+        self.on_policy = False
+        self.start_greedy = getattr(config, "start_greedy", None)
+        self.end_greedy = getattr(config, "end_greedy", None)
         self.delta_egreedy: Optional[float] = None
         self.e_greedy: Optional[float] = None
 
-        self.start_noise = config.start_noise if hasattr(config, "start_noise") else None
-        self.end_noise = config.end_noise if hasattr(config, "end_noise") else None
+        self.start_noise = getattr(config, "start_noise", None)
+        self.end_noise = getattr(config, "end_noise", None)
         self.delta_noise: Optional[float] = None
         self.noise_scale: Optional[float] = None
-        self.actions_low = self.action_space.low if hasattr(self.action_space, "low") else None
-        self.actions_high = self.action_space.high if hasattr(self.action_space, "high") else None
+        self.actions_low = getattr(self.action_space, "low", None)
+        self.actions_high = getattr(self.action_space, "high", None)
 
         self.auxiliary_info_shape = None
         self.memory: Optional[MARL_OffPolicyBuffer, MARL_OffPolicyBuffer_RNN] = None
+
+        self.buffer_size = self.config.buffer_size
+        self.batch_size = self.config.batch_size
 
     def _build_memory(self):
         """Build replay buffer for models training
@@ -50,8 +57,8 @@ class OffPolicyMARLAgents(MARLAgents):
                             obs_space=self.observation_space,
                             act_space=self.action_space,
                             n_envs=self.n_envs,
-                            buffer_size=self.config.buffer_size,
-                            batch_size=self.config.batch_size,
+                            buffer_size=self.buffer_size,
+                            batch_size=self.batch_size,
                             avail_actions_shape=avail_actions_shape,
                             use_actions_mask=self.use_actions_mask,
                             max_episode_steps=self.episode_length)
@@ -183,7 +190,8 @@ class OffPolicyMARLAgents(MARLAgents):
                obs_dict: List[dict],
                avail_actions_dict: Optional[List[dict]] = None,
                rnn_hidden: Optional[dict] = None,
-               test_mode: Optional[bool] = False):
+               test_mode: Optional[bool] = False,
+               **kwargs):
         """
         Returns actions for agents.
 
@@ -223,6 +231,7 @@ class OffPolicyMARLAgents(MARLAgents):
         Parameters:
             n_steps (int): The number of steps to train the model.
         """
+        train_info = {}
         if self.use_rnn:
             with tqdm(total=n_steps) as process_bar:
                 step_start, step_last = deepcopy(self.current_step), deepcopy(self.current_step)
@@ -230,29 +239,47 @@ class OffPolicyMARLAgents(MARLAgents):
                 while step_last - step_start < n_steps_all:
                     self.run_episodes(None, n_episodes=self.n_envs, test_mode=False)
                     if self.current_step >= self.start_training:
-                        train_info = self.train_epochs(n_epochs=self.n_epochs)
-                        self.log_infos(train_info, self.current_step)
+                        update_info = self.train_epochs(n_epochs=self.n_epochs)
+                        self.log_infos(update_info, self.current_step)
+                        train_info.update(update_info)
+                        self.callback.on_train_epochs_end(self.current_step, policy=self.policy, memory=self.memory,
+                                                          current_episode=self.current_episode, n_steps=n_steps,
+                                                          update_info=update_info)
                     process_bar.update((self.current_step - step_last) // self.n_envs)
                     step_last = deepcopy(self.current_step)
                 process_bar.update(n_steps - process_bar.last_print_n)
-            return
+                self.callback.on_train_step_end(self.current_step, envs=self.envs, policy=self.policy,
+                                                n_steps=n_steps, train_info=train_info)
+            return train_info
 
         obs_dict = self.envs.buf_obs
         avail_actions = self.envs.buf_avail_actions if self.use_actions_mask else None
         state = self.envs.buf_state.copy() if self.use_global_state else None
         for _ in tqdm(range(n_steps)):
-            step_info = {}
             policy_out = self.action(obs_dict=obs_dict, avail_actions_dict=avail_actions, test_mode=False)
             actions_dict = policy_out['actions']
             next_obs_dict, rewards_dict, terminated_dict, truncated, info = self.envs.step(actions_dict)
             next_state = self.envs.buf_state.copy() if self.use_global_state else None
             next_avail_actions = self.envs.buf_avail_actions if self.use_actions_mask else None
+
+            self.callback.on_train_step(self.current_step, envs=self.envs, policy=self.policy,
+                                        obs=obs_dict, policy_out=policy_out, acts=actions_dict, next_obs=next_obs_dict,
+                                        rewards=rewards_dict, state=state, next_state=next_state,
+                                        avail_actions=avail_actions, next_avail_actions=next_avail_actions,
+                                        terminals=terminated_dict, truncations=truncated, infos=info,
+                                        n_steps=n_steps)
+
             self.store_experience(obs_dict, avail_actions, actions_dict, next_obs_dict, next_avail_actions,
                                   rewards_dict, terminated_dict, info,
                                   **{'state': state, 'next_state': next_state})
             if self.current_step >= self.start_training and self.current_step % self.training_frequency == 0:
-                train_info = self.train_epochs(n_epochs=self.n_epochs)
-                self.log_infos(train_info, self.current_step)
+                update_info = self.train_epochs(n_epochs=self.n_epochs)
+                self.log_infos(update_info, self.current_step)
+                train_info.update(update_info)
+                self.callback.on_train_epochs_end(self.current_step, policy=self.policy, memory=self.memory,
+                                                  current_episode=self.current_episode, n_steps=n_steps,
+                                                  update_info=update_info)
+
             obs_dict = deepcopy(next_obs_dict)
             if self.use_global_state:
                 state = deepcopy(next_state)
@@ -269,17 +296,31 @@ class OffPolicyMARLAgents(MARLAgents):
                     if self.use_actions_mask:
                         avail_actions[i] = info[i]["reset_avail_actions"]
                         self.envs.buf_avail_actions[i] = info[i]["reset_avail_actions"]
+                    self.current_episode[i] += 1
                     if self.use_wandb:
-                        step_info["Train-Results/Episode-Steps/env-%d" % i] = info[i]["episode_step"]
-                        step_info["Train-Results/Episode-Rewards/env-%d" % i] = info[i]["episode_score"]
+                        episode_info = {
+                            f"Train-Results/Episode-Steps/env-%d" % i: info[i]["episode_step"],
+                            f"Train-Results/Episode-Rewards/env-%d" % i: info[i]["episode_score"]
+                        }
                     else:
-                        step_info["Train-Results/Episode-Steps"] = {"env-%d" % i: info[i]["episode_step"]}
-                        step_info["Train-Results/Episode-Rewards"] = {
-                            "env-%d" % i: np.mean(itemgetter(*self.agent_keys)(info[i]["episode_score"]))}
-                    self.log_infos(step_info, self.current_step)
+                        episode_info = {
+                            f"Train-Results/Episode-Steps": {"env-%d" % i: info[i]["episode_step"]},
+                            f"Train-Results/Episode-Rewards": {
+                                "env-%d" % i: np.mean(itemgetter(*self.agent_keys)(info[i]["episode_score"]))}
+                        }
+                    self.log_infos(episode_info, self.current_step)
+                    train_info.update(episode_info)
+                    self.callback.on_train_episode_info(envs=self.envs, policy=self.policy, env_id=i,
+                                                        infos=info, use_wandb=self.use_wandb,
+                                                        current_step=self.current_step,
+                                                        current_episode=self.current_episode,
+                                                        n_steps=n_steps)
 
             self.current_step += self.n_envs
             self._update_explore_factor()
+            self.callback.on_train_step_end(self.current_step, envs=self.envs, policy=self.policy,
+                                            n_steps=n_steps, train_info=train_info)
+        return train_info
 
     def run_episodes(self, env_fn=None, n_episodes: int = 1, test_mode: bool = False):
         """
@@ -295,8 +336,8 @@ class OffPolicyMARLAgents(MARLAgents):
         """
         envs = self.envs if env_fn is None else env_fn()
         num_envs = envs.num_envs
-        videos, episode_videos = [[] for _ in range(num_envs)], []
-        episode_count, scores, best_score = 0, [0.0 for _ in range(num_envs)], -np.inf
+        videos, episode_videos, images = [[] for _ in range(num_envs)], [], None
+        _current_episode, _current_step, scores, best_score = 0, 0, [], -np.inf
         obs_dict, info = envs.reset()
         state = envs.buf_state.copy() if self.use_global_state else None
         avail_actions = envs.buf_avail_actions if self.use_actions_mask else None
@@ -310,8 +351,7 @@ class OffPolicyMARLAgents(MARLAgents):
                 self.memory.clear_episodes()
         rnn_hidden = self.init_rnn_hidden(num_envs)
 
-        while episode_count < n_episodes:
-            step_info = {}
+        while _current_episode < n_episodes:
             policy_out = self.action(obs_dict=obs_dict,
                                      avail_actions_dict=avail_actions,
                                      rnn_hidden=rnn_hidden,
@@ -329,6 +369,15 @@ class OffPolicyMARLAgents(MARLAgents):
                 self.store_experience(obs_dict, avail_actions, actions_dict, next_obs_dict, next_avail_actions,
                                       rewards_dict, terminated_dict, info,
                                       **{'state': state, 'next_state': next_state})
+
+            self.callback.on_test_step(envs=envs, policy=self.policy, images=images, test_mode=test_mode,
+                                       obs=obs_dict, policy_out=policy_out, acts=actions_dict,
+                                       next_obs=next_obs_dict, rewards=rewards_dict,
+                                       terminals=terminated_dict, truncations=truncated, infos=info,
+                                       state=state, next_state=next_state,
+                                       current_train_step=self.current_step, n_episodes=n_episodes,
+                                       current_step=_current_step, current_episode=_current_episode)
+
             obs_dict = deepcopy(next_obs_dict)
             if self.use_global_state:
                 state = deepcopy(next_state)
@@ -337,7 +386,7 @@ class OffPolicyMARLAgents(MARLAgents):
 
             for i in range(num_envs):
                 if all(terminated_dict[i].values()) or truncated[i]:
-                    episode_count += 1
+                    _current_episode += 1
                     obs_dict[i] = info[i]["reset_obs"]
                     envs.buf_obs[i] = info[i]["reset_obs"]
                     if self.use_global_state:
@@ -363,18 +412,29 @@ class OffPolicyMARLAgents(MARLAgents):
                             best_score = episode_score
                             episode_videos = videos[i].copy()
                         if self.config.test_mode:
-                            print("Episode: %d, Score: %.2f" % (episode_count, episode_score))
+                            print("Episode: %d, Score: %.2f" % (_current_episode, episode_score))
                     else:
+                        self.current_episode[i] += 1
                         if self.use_wandb:
-                            step_info["Train-Results/Episode-Steps/env-%d" % i] = info[i]["episode_step"]
-                            step_info["Train-Results/Episode-Rewards/env-%d" % i] = info[i]["episode_score"]
+                            episode_info = {
+                                "Train-Results/Episode-Steps/env-%d" % i: info[i]["episode_step"],
+                                "Train-Results/Episode-Rewards/env-%d" % i: info[i]["episode_score"]
+                            }
                         else:
-                            step_info["Train-Results/Episode-Steps"] = {"env-%d" % i: info[i]["episode_step"]}
-                            step_info["Train-Results/Episode-Rewards"] = {
-                                "env-%d" % i: np.mean(itemgetter(*self.agent_keys)(info[i]["episode_score"]))}
+                            episode_info = {
+                                "Train-Results/Episode-Steps": {"env-%d" % i: info[i]["episode_step"]},
+                                "Train-Results/Episode-Rewards": {
+                                    "env-%d" % i: np.mean(itemgetter(*self.agent_keys)(info[i]["episode_score"]))}
+                            }
                         self.current_step += info[i]["episode_step"]
-                        self.log_infos(step_info, self.current_step)
+                        self.log_infos(episode_info, self.current_step)
                         self._update_explore_factor()
+                        self.callback.on_train_episode_info(envs=self.envs, policy=self.policy, env_id=i,
+                                                            infos=info, use_wandb=self.use_wandb,
+                                                            current_step=self.current_step,
+                                                            current_episode=self.current_episode,
+                                                            n_episodes=n_episodes)
+            _current_step += num_envs
 
         if test_mode:
             if self.config.render_mode == "rgb_array" and self.render:
@@ -391,6 +451,12 @@ class OffPolicyMARLAgents(MARLAgents):
             }
 
             self.log_infos(test_info, self.current_step)
+
+            self.callback.on_test_end(envs=envs, policy=self.policy,
+                                      current_train_step=self.current_step,
+                                      current_step=_current_step, current_episode=_current_episode,
+                                      scores=scores, best_score=best_score)
+
             if env_fn is not None:
                 envs.close()
         return scores

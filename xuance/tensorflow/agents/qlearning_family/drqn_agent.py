@@ -2,12 +2,12 @@ import numpy as np
 from tqdm import tqdm
 from copy import deepcopy
 from argparse import Namespace
+from xuance.common import Union, Optional, RecurrentOffPolicyBuffer, EpisodeBuffer
 from xuance.environment import DummyVecEnv, SubprocVecEnv
 from xuance.tensorflow import Module
 from xuance.tensorflow.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions
 from xuance.tensorflow.policies import REGISTRY_Policy
-from xuance.tensorflow.agents import OffPolicyAgent
-from xuance.common import Union, RecurrentOffPolicyBuffer, EpisodeBuffer
+from xuance.tensorflow.agents import OffPolicyAgent, BaseCallback
 
 
 class DRQN_Agent(OffPolicyAgent):
@@ -21,8 +21,9 @@ class DRQN_Agent(OffPolicyAgent):
 
     def __init__(self,
                  config: Namespace,
-                 envs: Union[DummyVecEnv, SubprocVecEnv]):
-        super(DRQN_Agent, self).__init__(config, envs)
+                 envs: Union[DummyVecEnv, SubprocVecEnv],
+                 callback: Optional[BaseCallback] = None):
+        super(DRQN_Agent, self).__init__(config, envs, callback)
 
         self.start_greedy, self.end_greedy = config.start_greedy, config.end_greedy
         self.egreedy = config.start_greedy

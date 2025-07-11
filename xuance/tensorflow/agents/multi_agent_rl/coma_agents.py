@@ -1,80 +1,68 @@
-import numpy as np
-from tqdm import tqdm
 from argparse import Namespace
-from xuance.common import Union, DummyOffPolicyBuffer, DummyOffPolicyBuffer_Atari
+from xuance.common import List, Optional, Union
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
-from xuance.tensorflow import tk, Module
-from xuance.tensorflow.agents import MARLAgents
-from xuance.tensorflow.learners import DQN_Learner
+from xuance.tensorflow import Module
+from xuance.tensorflow.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions
+from xuance.tensorflow.policies import REGISTRY_Policy
+from xuance.tensorflow.agents import OnPolicyMARLAgents, BaseCallback
 
 
-class COMA_Agents(MARLAgents):
+class COMA_Agents(OnPolicyMARLAgents):
+    """The implementation of COMA agents.
+
+    Args:
+        config: the Namespace variable that provides hyperparameters and other settings.
+        envs: the vectorized environments.
+        callback: A user-defined callback function object to inject custom logic during training.
+    """
+
     def __init__(self,
                  config: Namespace,
                  envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv],
-                 device: str = "cpu:0"):
-        self.gamma = config.gamma
+                 callback: Optional[BaseCallback] = None):
+        super(COMA_Agents, self).__init__(config, envs, callback)
         self.start_greedy, self.end_greedy = config.start_greedy, config.end_greedy
         self.egreedy = self.start_greedy
         self.delta_egreedy = (self.start_greedy - self.end_greedy) / config.decay_step_greedy
 
-        self.n_envs = envs.num_envs
-        self.n_size = config.n_size
-        self.n_epochs = config.n_epochs
-        self.n_minibatch = config.n_minibatch
-        if config.state_space is not None:
-            config.dim_state, state_shape = config.state_space.shape[0], config.state_space.shape
+        self.use_global_state = True
+        self.continuous_control = False
+        self.state_space = envs.state_space
+
+        self.policy = self._build_policy()  # build policy
+        self.memory = self._build_memory()  # build memory
+        self.learner = self._build_learner(self.config, self.model_keys, self.agent_keys, self.policy, self.callback)
+        self.learner.egreedy = self.egreedy
+
+    def _build_policy(self) -> Module:
+        """
+        Build representation(s) and policy(ies) for agent(s)
+
+        Returns:
+            policy (torch.nn.Module): A dict of policies.
+        """
+        normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None
+        initializer = InitializeFunctions[self.config.initialize] if hasattr(self.config, "initialize") else None
+        activation = ActivationFunctions[self.config.activation]
+
+        # build representations
+        A_representation = self._build_representation(self.config.representation, self.observation_space, self.config)
+        C_representation = self._build_representation(self.config.representation, self.observation_space, self.config)
+
+        # build policies
+        if self.config.policy == "Categorical_COMA_Policy":
+            policy = REGISTRY_Policy["Categorical_COMA_Policy"](
+                action_space=self.action_space, n_agents=self.n_agents,
+                representation_actor=A_representation, representation_critic=C_representation,
+                actor_hidden_size=self.config.actor_hidden_size, critic_hidden_size=self.config.critic_hidden_size,
+                normalize=normalize_fn, initialize=initializer, activation=activation,
+                use_parameter_sharing=self.use_parameter_sharing, model_keys=self.model_keys,
+                use_rnn=self.use_rnn, rnn=self.config.rnn if self.use_rnn else None,
+                dim_global_state=self.state_space.shape[0])
         else:
-            config.dim_state, state_shape = None, None
+            raise AttributeError(f"COMA currently does not support the policy named {self.config.policy}.")
 
-        # create representation for COMA actor
-        input_representation = get_repre_in(config)
-        self.use_rnn = config.use_rnn
-        self.use_global_state = config.use_global_state
-        kwargs_rnn = {"N_recurrent_layers": config.N_recurrent_layers,
-                      "dropout": config.dropout,
-                      "rnn": config.rnn} if self.use_rnn else {}
-        representation = REGISTRY_Representation[config.representation](*input_representation, **kwargs_rnn)
-        # create policy
-        input_policy = get_policy_in_marl(config, representation)
-        policy = REGISTRY_Policy[config.policy](*input_policy,
-                                                use_rnn=config.use_rnn,
-                                                rnn=config.rnn,
-                                                gain=config.gain,
-                                                use_global_state=self.use_global_state,
-                                                dim_obs=config.dim_obs,
-                                                dim_state=config.dim_state)
-        lr_scheduler = [MyLinearLR(config.learning_rate_actor, start_factor=1.0, end_factor=self.end_factor_lr_decay,
-                                   total_iters=get_total_iters(config.agent_name, config)),
-                        MyLinearLR(config.learning_rate_critic, start_factor=1.0, end_factor=self.end_factor_lr_decay,
-                                   total_iters=get_total_iters(config.agent_name, config))]
-        optimizer = [tk.optimizers.Adam(lr_scheduler[0]),
-                     tk.optimizers.Adam(lr_scheduler[1])]
-        self.observation_space = envs.observation_space
-        self.action_space = envs.action_space
-        self.representation_info_shape = policy.representation.output_shapes
-        self.auxiliary_info_shape = {}
-
-        if config.state_space is not None:
-            config.dim_state, state_shape = config.state_space.shape, config.state_space.shape
-        else:
-            config.dim_state, state_shape = None, None
-        config.act_onehot_shape = config.act_shape + tuple([config.dim_act])
-
-        buffer = COMA_Buffer_RNN if self.use_rnn else COMA_Buffer
-        input_buffer = (config.n_agents, config.state_space.shape, config.obs_shape, config.act_shape, config.rew_shape,
-                        config.done_shape, envs.num_envs, config.n_size,
-                        config.use_gae, config.use_advnorm, config.gamma, config.gae_lambda)
-        memory = buffer(*input_buffer, max_episode_steps=envs.max_episode_steps,
-                        dim_act=config.dim_act, td_lambda=config.td_lambda)
-        self.buffer_size = memory.buffer_size
-        self.batch_size = self.buffer_size // self.n_minibatch
-
-        learner = COMA_Learner(config, policy, optimizer,
-                               config.device, config.model_dir, config.gamma, config.sync_frequency)
-        super(COMA_Agents, self).__init__(config, envs, policy, memory, learner, device,
-                                          config.log_dir, config.model_dir)
-        self.on_policy = True
+        return policy
 
     def act(self, obs_n, *rnn_hidden, avail_actions=None, test_mode=False):
         batch_size = len(obs_n)

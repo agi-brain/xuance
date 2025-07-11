@@ -5,14 +5,13 @@ from tqdm import tqdm
 from copy import deepcopy
 from argparse import Namespace
 from gymnasium import spaces
-from xuance.common import Optional
+from xuance.common import Optional, DummyOffPolicyBuffer
 from xuance.environment.single_agent_env import Gym_Env
 from xuance.torch import Module
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
 from xuance.torch.policies import REGISTRY_Policy
 from xuance.torch.agents import Agent, BaseCallback
 from xuance.torch.agents.policy_gradient.pdqn_agent import PDQN_Agent
-from xuance.common import DummyOffPolicyBuffer
 
 
 class SPDQN_Agent(PDQN_Agent, Agent):

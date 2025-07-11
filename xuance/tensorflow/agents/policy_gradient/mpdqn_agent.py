@@ -1,5 +1,6 @@
 from argparse import Namespace
 from xuance.environment.single_agent_env import Gym_Env
+from xuance.common import Optional
 from xuance.tensorflow import Module
 from xuance.tensorflow.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions
 from xuance.tensorflow.policies import REGISTRY_Policy
@@ -16,8 +17,9 @@ class MPDQN_Agent(PDQN_Agent):
     """
     def __init__(self,
                  config: Namespace,
-                 envs: Gym_Env):
-        super(MPDQN_Agent, self).__init__(config, envs)
+                 envs: Gym_Env,
+                 callback: Optional[BaseCallback] = None):
+        super(MPDQN_Agent, self).__init__(config, envs, callback)
 
     def _build_policy(self) -> Module:
         normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None

@@ -27,17 +27,17 @@ class OffPolicyMARLAgents(MARLAgents):
                  callback: Optional[BaseCallback] = None):
         super(OffPolicyMARLAgents, self).__init__(config, envs, callback)
         self.on_policy = False
-        self.start_greedy = config.start_greedy if hasattr(config, "start_greedy") else None
-        self.end_greedy = config.end_greedy if hasattr(config, "start_greedy") else None
+        self.start_greedy = getattr(config, "start_greedy", None)
+        self.end_greedy = getattr(config, "end_greedy", None)
         self.delta_egreedy: Optional[float] = None
         self.e_greedy: Optional[float] = None
 
-        self.start_noise = config.start_noise if hasattr(config, "start_noise") else None
-        self.end_noise = config.end_noise if hasattr(config, "end_noise") else None
+        self.start_noise = getattr(config, "start_noise", None)
+        self.end_noise = getattr(config, "end_noise", None)
         self.delta_noise: Optional[float] = None
         self.noise_scale: Optional[float] = None
-        self.actions_low = self.action_space.low if hasattr(self.action_space, "low") else None
-        self.actions_high = self.action_space.high if hasattr(self.action_space, "high") else None
+        self.actions_low = getattr(self.action_space, "low", None)
+        self.actions_high = getattr(self.action_space, "high", None)
 
         self.auxiliary_info_shape = None
         self.memory: Optional[MARL_OffPolicyBuffer, MARL_OffPolicyBuffer_RNN] = None
@@ -339,7 +339,7 @@ class OffPolicyMARLAgents(MARLAgents):
         envs = self.envs if env_fn is None else env_fn()
         num_envs = envs.num_envs
         videos, episode_videos, images = [[] for _ in range(num_envs)], [], None
-        current_episode, current_step, scores, best_score = 0, 0, [], -np.inf
+        _current_episode, _current_step, scores, best_score = 0, 0, [], -np.inf
         obs_dict, info = envs.reset()
         state = envs.buf_state.copy() if self.use_global_state else None
         avail_actions = envs.buf_avail_actions if self.use_actions_mask else None
@@ -353,7 +353,7 @@ class OffPolicyMARLAgents(MARLAgents):
                 self.memory.clear_episodes()
         rnn_hidden = self.init_rnn_hidden(num_envs)
 
-        while current_episode < n_episodes:
+        while _current_episode < n_episodes:
             policy_out = self.action(obs_dict=obs_dict,
                                      avail_actions_dict=avail_actions,
                                      rnn_hidden=rnn_hidden,
@@ -378,7 +378,7 @@ class OffPolicyMARLAgents(MARLAgents):
                                        terminals=terminated_dict, truncations=truncated, infos=info,
                                        state=state, next_state=next_state,
                                        current_train_step=self.current_step, n_episodes=n_episodes,
-                                       current_step=current_step, current_episode=current_episode)
+                                       current_step=_current_step, current_episode=_current_episode)
 
             obs_dict = deepcopy(next_obs_dict)
             if self.use_global_state:
@@ -388,7 +388,7 @@ class OffPolicyMARLAgents(MARLAgents):
 
             for i in range(num_envs):
                 if all(terminated_dict[i].values()) or truncated[i]:
-                    current_episode += 1
+                    _current_episode += 1
                     obs_dict[i] = info[i]["reset_obs"]
                     envs.buf_obs[i] = info[i]["reset_obs"]
                     if self.use_global_state:
@@ -414,7 +414,7 @@ class OffPolicyMARLAgents(MARLAgents):
                             best_score = episode_score
                             episode_videos = videos[i].copy()
                         if self.config.test_mode:
-                            print("Episode: %d, Score: %.2f" % (current_episode, episode_score))
+                            print("Episode: %d, Score: %.2f" % (_current_episode, episode_score))
                     else:
                         self.current_episode[i] += 1
                         if self.use_wandb:
@@ -436,7 +436,7 @@ class OffPolicyMARLAgents(MARLAgents):
                                                             current_step=self.current_step,
                                                             current_episode=self.current_episode,
                                                             n_episodes=n_episodes)
-            current_step += num_envs
+            _current_step += num_envs
 
         if test_mode:
             if self.config.render_mode == "rgb_array" and self.render:
@@ -456,7 +456,7 @@ class OffPolicyMARLAgents(MARLAgents):
 
             self.callback.on_test_end(envs=envs, policy=self.policy,
                                       current_train_step=self.current_step,
-                                      current_step=current_step, current_episode=current_episode,
+                                      current_step=_current_step, current_episode=_current_episode,
                                       scores=scores, best_score=best_score)
 
             if env_fn is not None:

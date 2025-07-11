@@ -5,7 +5,7 @@ from xuance.environment import DummyVecEnv, SubprocVecEnv
 from xuance.tensorflow import Module
 from xuance.tensorflow.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions
 from xuance.tensorflow.policies import REGISTRY_Policy
-from xuance.tensorflow.agents import OffPolicyAgent
+from xuance.tensorflow.agents import OffPolicyAgent, BaseCallback
 
 
 class SACDIS_Agent(OffPolicyAgent):
@@ -18,8 +18,9 @@ class SACDIS_Agent(OffPolicyAgent):
     """
     def __init__(self,
                  config: Namespace,
-                 envs: Union[DummyVecEnv, SubprocVecEnv]):
-        super(SACDIS_Agent, self).__init__(config, envs)
+                 envs: Union[DummyVecEnv, SubprocVecEnv],
+                 callback: Optional[BaseCallback] = None):
+        super(SACDIS_Agent, self).__init__(config, envs, callback)
 
         self.policy = self._build_policy()  # build policy
         self.memory = self._build_memory()

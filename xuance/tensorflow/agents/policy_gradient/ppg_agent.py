@@ -2,12 +2,12 @@ import numpy as np
 from tqdm import tqdm
 from copy import deepcopy
 from argparse import Namespace
-from xuance.common import Union
+from xuance.common import Union, Optional
 from xuance.environment import DummyVecEnv, SubprocVecEnv
 from xuance.tensorflow import tf, Module
 from xuance.tensorflow.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions
 from xuance.tensorflow.policies import REGISTRY_Policy
-from xuance.tensorflow.agents import OnPolicyAgent
+from xuance.tensorflow.agents import OnPolicyAgent, BaseCallback
 from xuance.tensorflow.utils import split_distributions
 
 
@@ -22,8 +22,9 @@ class PPG_Agent(OnPolicyAgent):
 
     def __init__(self,
                  config: Namespace,
-                 envs: Union[DummyVecEnv, SubprocVecEnv]):
-        super(PPG_Agent, self).__init__(config, envs)
+                 envs: Union[DummyVecEnv, SubprocVecEnv],
+                 callback: Optional[BaseCallback] = None):
+        super(PPG_Agent, self).__init__(config, envs, callback)
         self.continuous_control = False
         self.policy_nepoch = config.policy_nepoch
         self.value_nepoch = config.value_nepoch

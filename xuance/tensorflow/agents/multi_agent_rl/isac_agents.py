@@ -4,7 +4,7 @@ from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
 from xuance.tensorflow import tf, Module
 from xuance.tensorflow.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions
 from xuance.tensorflow.policies import REGISTRY_Policy
-from xuance.tensorflow.agents import OffPolicyMARLAgents
+from xuance.tensorflow.agents import OffPolicyMARLAgents, BaseCallback
 
 
 class ISAC_Agents(OffPolicyMARLAgents):
@@ -18,8 +18,9 @@ class ISAC_Agents(OffPolicyMARLAgents):
 
     def __init__(self,
                  config: Namespace,
-                 envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv]):
-        super(ISAC_Agents, self).__init__(config, envs)
+                 envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv],
+                 callback: Optional[BaseCallback] = None):
+        super(ISAC_Agents, self).__init__(config, envs, callback)
         # build policy, optimizers, schedulers
         self.policy = self._build_policy()  # build policy
         self.memory = self._build_memory()  # build memory

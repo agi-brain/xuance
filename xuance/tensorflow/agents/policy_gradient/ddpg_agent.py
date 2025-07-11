@@ -5,7 +5,7 @@ from xuance.environment import DummyVecEnv, SubprocVecEnv
 from xuance.tensorflow import Module
 from xuance.tensorflow.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions
 from xuance.tensorflow.policies import REGISTRY_Policy
-from xuance.tensorflow.agents import OffPolicyAgent
+from xuance.tensorflow.agents import OffPolicyAgent, BaseCallback
 
 
 class DDPG_Agent(OffPolicyAgent):
@@ -19,8 +19,9 @@ class DDPG_Agent(OffPolicyAgent):
 
     def __init__(self,
                  config: Namespace,
-                 envs: Union[DummyVecEnv, SubprocVecEnv]):
-        super(DDPG_Agent, self).__init__(config, envs)
+                 envs: Union[DummyVecEnv, SubprocVecEnv],
+                 callback: Optional[BaseCallback] = None):
+        super(DDPG_Agent, self).__init__(config, envs, callback)
         self.start_noise, self.end_noise = config.start_noise, config.end_noise
         self.noise_scale = config.start_noise
         self.delta_noise = (self.start_noise - self.end_noise) / (config.running_steps / self.n_envs)

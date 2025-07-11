@@ -216,7 +216,7 @@ class MixingQnetwork(BasicQnetwork):
 
     def copy_target(self):
         for key in self.model_keys:
-            self.target_representation[key].set_weights(self.representation.get_weights())
+            self.target_representation[key].set_weights(self.representation[key].get_weights())
             self.target_Qhead[key].set_weights(self.eval_Qhead[key].get_weights())
         self.target_Qtot.set_weights(self.eval_Qtot.get_weights())
 
