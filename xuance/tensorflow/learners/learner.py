@@ -73,7 +73,8 @@ class LearnerMAS(ABC):
                  config: Namespace,
                  model_keys: List[str],
                  agent_keys: List[str],
-                 policy: Module):
+                 policy: Module,
+                 callback):
         self.os_name = platform.platform()
         self.value_normalizer = None
         self.config = config
@@ -84,14 +85,16 @@ class LearnerMAS(ABC):
         self.model_keys = model_keys
         self.agent_keys = agent_keys
         self.episode_length = config.episode_length
-        self.learning_rate = config.learning_rate if hasattr(config, 'learning_rate') else None
-        self.use_linear_lr_decay = config.use_linear_lr_decay if hasattr(config, 'use_linear_lr_decay') else False
-        self.end_factor_lr_decay = config.end_factor_lr_decay if hasattr(config, 'end_factor_lr_decay') else 0.5
-        self.gamma = config.gamma if hasattr(config, 'gamma') else 0.99
-        self.use_rnn = config.use_rnn if hasattr(config, 'use_rnn') else False
-        self.use_actions_mask = config.use_actions_mask if hasattr(config, 'use_actions_mask') else False
+        self.learning_rate = getattr(config, 'learning_rate', None)
+        self.use_linear_lr_decay = getattr(config, 'use_linear_lr_decay', False)
+        self.end_factor_lr_decay = getattr(config, 'end_factor_lr_decay', 0.5)
+        self.gamma = getattr(config, 'gamma', 0.99)
+        self.use_rnn = getattr(config, 'use_rnn', False)
+        self.use_actions_mask = getattr(config, 'use_actions_mask', False)
         self.policy = policy
         self.optimizer: Union[dict, list, Optional[tk.optimizers]] = None
+        self.callback = callback
+
         self.use_grad_clip = config.use_grad_clip
         self.grad_clip_norm = config.grad_clip_norm
         self.device = config.device

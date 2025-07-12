@@ -1,6 +1,6 @@
 import numpy as np
-from tensorflow.keras.activations import softmax
-from xuance.common import Sequence, Optional, Union, Callable
+from gymnasium.spaces import Discrete
+from xuance.common import Sequence, Optional, Callable, Union, Dict
 from xuance.tensorflow import tf, tk, Module, Tensor
 from xuance.tensorflow.utils import mlp_block, gru_block, lstm_block, ModuleType
 from xuance.tensorflow.utils import CategoricalDistribution, DiagGaussianDistribution, ActivatedDiagGaussianDistribution
@@ -266,13 +266,17 @@ class ActorNet(Module):
         self.model = tk.Sequential(layers)
 
     @tf.function
-    def call(self, x: Union[Tensor, np.ndarray], **kwargs):
+    def call(self, x: Union[Tensor, np.ndarray], avail_actions: Optional[Tensor] = None, **kwargs):
         """
         Returns the output of the actor.
         Parameters:
             x (Union[Tensor, np.ndarray]): The input tensor.
+            avail_actions (Optional[Tensor]): The actions mask values when use actions mask, default is None.
         """
-        return self.model(x)
+        logits = self.model(x)
+        if avail_actions is not None:
+            logits[avail_actions == 0] = -1e10
+        return logits
 
 
 class CategoricalActorNet(Module):
@@ -345,6 +349,7 @@ class CategoricalActorNet_SAC(CategoricalActorNet):
                  activation: Optional[ModuleType] = None):
         super(CategoricalActorNet_SAC, self).__init__(state_dim, action_dim, hidden_sizes,
                                                       normalize, initialize, activation)
+        self.output = tk.layers.Softmax(axis=-1)
 
     def call(self, x: Union[Tensor, np.ndarray], avail_actions: Optional[Tensor] = None, **kwargs):
         """
@@ -359,7 +364,7 @@ class CategoricalActorNet_SAC(CategoricalActorNet):
         logits = self.model(x)
         if avail_actions is not None:
             logits[avail_actions == 0] = -1e10
-        probs = softmax(logits)
+        probs = self.output(logits)
         self.dist.set_param(probs=probs)
         return probs
 
@@ -629,14 +634,36 @@ class QMIX_FF_mixer(Module):
 
 
 class QTRAN_base(Module):
-    def __init__(self, dim_state, dim_action, dim_hidden, n_agents, dim_utility_hidden):
+    """
+    The basic QTRAN module.
+
+    Args:
+        dim_state (int): The dimension of the global state.
+        action_space (Dict[str, Discrete]): The action space for all agents.
+        dim_hidden (int): The dimension of the hidden layers.
+        n_agents (int): The number of agents.
+        dim_utility_hidden (int): The dimension of the utility hidden states.
+        use_parameter_sharing (bool): Whether to use parameters sharing trick.
+        device: Optional[Union[str, int, torch.device]]: The calculating device.
+    """
+    def __init__(self,
+                 dim_state: int = 0,
+                 action_space: Dict[str, Discrete] = None,
+                 dim_hidden: int = 32,
+                 n_agents: int = 1,
+                 dim_utility_hidden: int = 1,
+                 use_parameter_sharing: bool = False,):
         super(QTRAN_base, self).__init__()
         self.dim_state = dim_state
-        self.dim_action = dim_action
+        self.action_space = action_space
+        self.n_actions_list = [a_space.n for a_space in action_space.values()]
+        self.n_actions_max = max(self.n_actions_list)
         self.dim_hidden = dim_hidden
         self.n_agents = n_agents
-        self.dim_q_input = (dim_utility_hidden + self.dim_action) * self.n_agents
-        self.dim_v_input = dim_utility_hidden * self.n_agents
+        self.use_parameter_sharing = use_parameter_sharing
+
+        self.dim_q_input = self.dim_state + dim_utility_hidden + self.n_actions_max
+        self.dim_v_input = self.dim_state
 
         linear_Q_jt = [tk.layers.Dense(input_shape=(self.dim_q_input,), units=self.dim_hidden,
                                        activation=tk.layers.Activation('relu')),
@@ -652,38 +679,117 @@ class QTRAN_base(Module):
         self.V_jt = tk.Sequential(linear_V_jt)
 
     @tf.function
-    def call(self, hidden_states_n, actions_n=None, **kwargs):
-        input_q = tf.reshape(tf.concat([hidden_states_n, actions_n], axis=-1), [-1, self.dim_q_input])
-        input_v = tf.reshape(hidden_states_n, [-1, self.dim_v_input])
+    def call(self, states: Tensor, hidden_state_inputs: Tensor, actions_onehot: Tensor, **kwargs):
+        """
+        Calculating the joint Q and V values.
+
+        Parameters:
+            states (Tensor): The global states.
+            hidden_state_inputs (Tensor): The joint hidden states inputs for QTRAN network.
+            actions_onehot (Tensor): The joint onehot actions for QTRAN network.
+
+        Returns:
+            q_jt (Tensor): The evaluated joint Q values.
+            v_jt (Tensor): The evaluated joint V values.
+        """
+        h_state_action_input = tf.concat([hidden_state_inputs, actions_onehot], axis=-1)
+        h_state_action_encode = tf.reshape(self.action_encoding(h_state_action_input),
+                                           [-1, self.n_agents, self.dim_ae_input])
+        h_state_action_encode = h_state_action_encode.sum(axis=1)  # Sum across agents
+        input_q = tf.concat([states, h_state_action_encode], axis=-1)
+        input_v = states
         q_jt = self.Q_jt(input_q)
         v_jt = self.V_jt(input_v)
         return q_jt, v_jt
 
 
-class QTRAN_alt(QTRAN_base):
-    def __init__(self, dim_state, dim_action, dim_hidden, n_agents, dim_utility_hidden):
-        super(QTRAN_alt, self).__init__(dim_state, dim_action, dim_hidden, n_agents, dim_utility_hidden)
+class QTRAN_alt(Module):
+    """
+    The basic QTRAN module.
 
-    def counterfactual_values(self, q_self_values, q_selected_values):
-        q_repeat = tf.tile(tf.expand_dims(q_selected_values, axis=1), multiples=(1, self.n_agents, 1, self.dim_action))
-        counterfactual_values_n = q_repeat.numpy()
-        for agent in range(self.n_agents):
-            counterfactual_values_n[:, agent, agent] = q_self_values[:, agent, :].numpy()
-        counterfactual_values_n = tf.convert_to_tensor(counterfactual_values_n)
-        return tf.reduce_sum(counterfactual_values_n, axis=2)
+    Parameters:
+        dim_state (int): The dimension of the global state.
+        action_space (Dict[str, Discrete]): The action space for all agents.
+        dim_hidden (int): The dimension of the hidden layers.
+        n_agents (int): The number of agents.
+        dim_utility_hidden (int): The dimension of the utility hidden states.
+        use_parameter_sharing (bool): Whether to use parameters sharing trick.
+    """
+    def __init__(self,
+                 dim_state: int = 0,
+                 action_space: Dict[str, Discrete] = None,
+                 dim_hidden: int = 32,
+                 n_agents: int = 1,
+                 dim_utility_hidden: int = 1,
+                 use_parameter_sharing: bool = False):
+        super(QTRAN_alt, self).__init__()
+        self.dim_state = dim_state
+        self.action_space = action_space
+        self.n_actions_list = [a_space.n for a_space in action_space.values()]
+        self.n_actions_max = max(self.n_actions_list)
+        self.dim_hidden = dim_hidden
+        self.n_agents = n_agents
+        self.use_parameter_sharing = use_parameter_sharing
 
-    def counterfactual_values_hat(self, hidden_states_n, actions_n):
-        action_repeat = tf.tile(tf.expand_dims(actions_n, axis=2), multiples=(1, 1, self.dim_action, 1))
-        action_self_all = tf.expand_dims(tf.eye(self.dim_action), axis=0).numpy()
-        action_counterfactual_n = tf.tile(tf.expand_dims(action_repeat, axis=2), multiples=(
-            1, 1, self.n_agents, 1, 1)).numpy()  # batch * N * N * dim_a * dim_a
-        q_n = []
-        for agent in range(self.n_agents):
-            action_counterfactual_n[:, agent, agent, :, :] = action_self_all
-            q_actions = []
-            for a in range(self.dim_action):
-                input_a = tf.convert_to_tensor(action_counterfactual_n[:, :, agent, a, :])
-                q, _ = self.call(hidden_states_n, input_a)
-                q_actions.append(q)
-            q_n.append(tf.expand_dims(tf.concat(q_actions, axis=-1), axis=1))
-        return tf.concat(q_n, axis=1)
+        self.dim_q_input = self.dim_state + dim_utility_hidden + self.n_actions_max + self.n_agents
+        self.dim_v_input = self.dim_state
+
+        self.Q_jt = tf.keras.Sequential([
+            tk.layers.Dense(self.dim_hidden, input_shape=(self.dim_q_input,)),
+            tk.layers.ReLU(),
+            tk.layers.Dense(self.dim_hidden),
+            tk.layers.ReLU(),
+            tk.layers.Dense(self.n_actions_max)
+        ])
+
+        self.V_jt = tf.keras.Sequential([
+            tk.layers.Dense(self.dim_hidden, input_shape=(self.dim_v_input,)),
+            tk.layers.ReLU(),
+            tk.layers.Dense(self.dim_hidden),
+            tk.layers.ReLU(),
+            tk.layers.Dense(1)
+        ])
+
+        self.dim_ae_input = dim_utility_hidden + self.n_actions_max
+
+        self.action_encoding = tf.keras.Sequential([
+            tk.layers.Dense(self.dim_ae_input, input_shape=(self.dim_ae_input,)),
+            tk.layers.ReLU(),
+            tk.layers.Dense(self.dim_ae_input)
+        ])
+
+    @tf.function
+    def call(self, states: Tensor, hidden_state_inputs: Tensor, actions_onehot: Tensor, **kwargs):
+        """Calculating the joint Q and V values.
+
+        Parameters:
+            states (Tensor): The global states.
+            hidden_state_inputs (Tensor): The joint hidden states inputs for QTRAN network.
+            actions_onehot (Tensor): The joint onehot actions for QTRAN network.
+
+        Returns:
+            q_jt (Tensor): The evaluated joint Q values.
+            v_jt (Tensor): The evaluated joint V values.
+        """
+        h_state_action_input = tf.concat([hidden_state_inputs, actions_onehot], axis=-1)
+
+        h_state_action_encode = self.action_encoding(h_state_action_input)
+        bs = tf.shape(h_state_action_encode)[0]
+        dim_h = tf.shape(h_state_action_encode)[-1]
+
+        agent_ids = tf.eye(self.n_agents, dtype=tf.float32)
+        agent_masks = 1.0 - agent_ids
+        repeat_agent_ids = tf.tile(agent_ids[tf.newaxis, :, :], [bs, 1, 1])  # [bs, n_agents, n_agents]
+        repeated_agent_masks = tf.tile(agent_masks[tf.newaxis, :, :, tf.newaxis], [bs, 1, 1, dim_h])
+
+        repeated_h_state_action_encode = tf.tile(h_state_action_encode[:, :, tf.newaxis, :], [1, 1, self.n_agents, 1])
+        h_state_action_encode_masked = repeated_h_state_action_encode * repeated_agent_masks
+        h_state_action_encode_sum = tf.reduce_sum(h_state_action_encode_masked, axis=2)  # sum over other agents
+
+        repeated_states = tf.tile(states[:, tf.newaxis, :], [1, self.n_agents, 1])
+        input_q = tf.concat([repeated_states, h_state_action_encode_sum, repeat_agent_ids], axis=-1)
+
+        q_jt = self.Q_jt(input_q)
+        v_jt = self.V_jt(states)
+
+        return q_jt, v_jt

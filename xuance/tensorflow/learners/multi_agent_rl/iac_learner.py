@@ -9,9 +9,9 @@ from torch import nn
 from argparse import Namespace
 from operator import itemgetter
 from xuance.common import Optional, List
-from xuance.torch import Tensor
-from xuance.torch.utils import ValueNorm
-from xuance.torch.learners import LearnerMAS
+from xuance.tensorflow import Tensor
+from xuance.tensorflow.utils import ValueNorm
+from xuance.tensorflow.learners import LearnerMAS
 
 
 class IAC_Learner(LearnerMAS):
@@ -19,8 +19,9 @@ class IAC_Learner(LearnerMAS):
                  config: Namespace,
                  model_keys: List[str],
                  agent_keys: List[str],
-                 policy: nn.Module):
-        super(IAC_Learner, self).__init__(config, model_keys, agent_keys, policy)
+                 policy: nn.Module,
+                 callback):
+        super(IAC_Learner, self).__init__(config, model_keys, agent_keys, policy, callback)
         self.build_optimizer()
         self.use_value_clip, self.value_clip_range = config.use_value_clip, config.value_clip_range
         self.use_huber_loss, self.huber_delta = config.use_huber_loss, config.huber_delta

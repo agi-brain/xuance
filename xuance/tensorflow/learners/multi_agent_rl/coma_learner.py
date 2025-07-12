@@ -3,34 +3,48 @@ COMA: Counterfactual Multi-Agent Policy Gradients
 Paper link: https://ojs.aaai.org/index.php/AAAI/article/view/11794
 Implementation: TensorFlow 2.X
 """
-from argparse import Namespace
-from xuance.common import Sequence
 from xuance.tensorflow import tf, tk, Module
-from xuance.tensorflow.learners import LearnerMAS
+from xuance.common import List
+from argparse import Namespace
+from xuance.tensorflow.learners.multi_agent_rl.iac_learner import IAC_Learner
 
 
-class COMA_Learner(LearnerMAS):
+class COMA_Learner(IAC_Learner):
     def __init__(self,
                  config: Namespace,
+                 model_keys: List[str],
+                 agent_keys: List[str],
                  policy: Module,
-                 optimizer: Sequence[tk.optimizers.Optimizer],
-                 device: str = "cpu:0",
-                 model_dir: str = "./",
-                 gamma: float = 0.99,
-                 sync_frequency: int = 100
-                 ):
-        self.gamma = gamma
-        self.td_lambda = config.td_lambda
-        self.sync_frequency = sync_frequency
-        self.use_global_state = config.use_global_state
-        self.sync_frequency = sync_frequency
-        super(COMA_Learner, self).__init__(config, policy, optimizer, device, model_dir)
+                 callback):
+        config.use_value_clip, config.value_clip_range = False, None
+        config.use_huber_loss, config.huber_delta = False, None
+        config.use_value_norm = False
+        config.vf_coef, config.ent_coef = None, None
+        super(COMA_Learner, self).__init__(config, model_keys, agent_keys, policy, callback)
+        self.sync_frequency = config.sync_frequency
+        self.n_actions = {k: self.policy.action_space[k].n for k in self.model_keys}
+        self.mse_loss = tk.layers.MSELoss()
+
+    def build_optimizer(self):
+        if ("macOS" in self.os_name) and ("arm" in self.os_name):  # For macOS with Apple's M-series chips.
+            self.optimizer = {k: tk.optimizers.legacy.Adam(self.config.learning_rate) for k in self.model_keys}
+        else:
+            self.optimizer = {k: tk.optimizers.Adam(self.config.learning_rate) for k in self.model_keys}
+
         self.optimizer = {
-            'actor': optimizer[0],
-            'critic': optimizer[1]
+            'actor': torch.optim.Adam(self.policy.parameters_actor, self.config.learning_rate_actor, eps=1e-5),
+            'critic': torch.optim.Adam(self.policy.parameters_critic, self.config.learning_rate_critic, eps=1e-5)
         }
-        self.iterations_actor = self.iterations
-        self.iterations_critic = 0
+        self.scheduler = {
+            'actor': torch.optim.lr_scheduler.LinearLR(self.optimizer['actor'],
+                                                       start_factor=1.0,
+                                                       end_factor=self.end_factor_lr_decay,
+                                                       total_iters=self.config.running_steps),
+            'critic': torch.optim.lr_scheduler.LinearLR(self.optimizer['critic'],
+                                                        start_factor=1.0,
+                                                        end_factor=self.end_factor_lr_decay,
+                                                        total_iters=self.config.running_steps)
+        }
 
     def update(self, sample, epsilon=0.0):
         self.iterations += 1
