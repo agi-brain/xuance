@@ -26,7 +26,7 @@ class QTRAN_Learner(LearnerMAS):
         self.scheduler = torch.optim.lr_scheduler.LinearLR(self.optimizer,
                                                            start_factor=1.0,
                                                            end_factor=self.end_factor_lr_decay,
-                                                           total_iters=self.config.running_steps)
+                                                           total_iters=self.total_iters)
         self.n_actions = {k: self.policy.action_space[k].n for k in self.model_keys}
 
     def update(self, sample):

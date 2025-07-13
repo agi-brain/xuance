@@ -22,7 +22,7 @@ class Learner(ABC):
         self.episode_length = config.episode_length
         self.learning_rate = config.learning_rate if hasattr(config, 'learning_rate') else None
         self.use_linear_lr_decay = config.use_linear_lr_decay if hasattr(config, 'use_linear_lr_decay') else False
-        self.end_factor_lr_decay = config.end_factor_lr_decay if hasattr(config, 'end_factor_lr_decay') else 0.5
+        self.end_factor_lr_decay = config.end_factor_lr_decay if hasattr(config, 'end_factor_lr_decay') else 1.0
         self.gamma = config.gamma if hasattr(config, 'gamma') else 0.99
         self.use_rnn = config.use_rnn if hasattr(config, 'use_rnn') else False
         self.use_actions_mask = config.use_actions_mask if hasattr(config, 'use_actions_mask') else False
@@ -50,8 +50,15 @@ class Learner(ABC):
         self.grad_clip_norm = config.grad_clip_norm
         self.device = config.device
         self.model_dir = config.model_dir
-        self.running_steps = config.running_steps
+        self.total_iters = self.estimate_total_iterations()
         self.iterations = 0
+
+    def estimate_total_iterations(self):
+        """Estimated total number of training iterations"""
+        start_training = getattr(self.config, "start_training", 0)
+        training_frequency = getattr(self.config, "training_frequency", 1)
+        total_iters = (self.config.running_steps - start_training) // (training_frequency * self.config.parallels)
+        return total_iters
 
     def save_model(self, model_path):
         torch.save(self.policy.state_dict(), model_path)
@@ -224,7 +231,8 @@ class LearnerMAS(ABC):
             if use_actions_mask:
                 avail_actions = {k: Tensor(sample['avail_actions'][k]).float().to(self.device) for k in self.agent_keys}
                 if not self.use_rnn:
-                    avail_actions_next = {k: Tensor(sample['avail_actions_next'][k]).float().to(self.device) for k in self.model_keys}
+                    avail_actions_next = {k: Tensor(sample['avail_actions_next'][k]).float().to(self.device) for k in
+                                          self.model_keys}
 
         if use_global_state:
             state = Tensor(sample['state']).to(self.device)

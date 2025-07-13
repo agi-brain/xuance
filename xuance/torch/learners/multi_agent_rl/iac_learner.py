@@ -40,7 +40,7 @@ class IAC_Learner(LearnerMAS):
         self.scheduler = torch.optim.lr_scheduler.LinearLR(self.optimizer,
                                                            start_factor=1.0,
                                                            end_factor=self.end_factor_lr_decay,
-                                                           total_iters=self.config.running_steps)
+                                                           total_iters=self.total_iters)
 
     def build_training_data(self, sample: Optional[dict],
                             use_parameter_sharing: Optional[bool] = False,

@@ -22,7 +22,7 @@ class IQL_Learner(LearnerMAS):
         self.scheduler = {key: torch.optim.lr_scheduler.LinearLR(self.optimizer[key],
                                                                  start_factor=1.0,
                                                                  end_factor=self.end_factor_lr_decay,
-                                                                 total_iters=self.config.running_steps)
+                                                                 total_iters=self.total_iters)
                           for key in self.model_keys}
         self.gamma = config.gamma
         self.sync_frequency = config.sync_frequency

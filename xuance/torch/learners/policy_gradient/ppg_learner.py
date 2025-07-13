@@ -20,13 +20,20 @@ class PPG_Learner(Learner):
         self.scheduler = torch.optim.lr_scheduler.LinearLR(self.optimizer,
                                                            start_factor=1.0,
                                                            end_factor=self.end_factor_lr_decay,
-                                                           total_iters=self.config.running_steps)
+                                                           total_iters=self.total_iters)
         self.mse_loss = nn.MSELoss()
         self.ent_coef = config.ent_coef
         self.clip_range = config.clip_range
         self.kl_beta = config.kl_beta
         self.policy_iterations = 0
         self.value_iterations = 0
+
+    def estimate_total_iterations(self):
+        """Estimated total number of training iterations"""
+        buffer_size = self.config.horizon_size * self.config.parallels
+        update_times = self.config.running_steps // buffer_size
+        total_iters = update_times * self.config.n_epochs * self.config.n_minibatch
+        return total_iters
 
     def update_policy(self, **samples):
         self.policy_iterations += 1

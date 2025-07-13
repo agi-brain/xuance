@@ -23,6 +23,13 @@ class A2C_Learner(Learner):
         self.vf_coef = config.vf_coef
         self.ent_coef = config.ent_coef
 
+    def estimate_total_iterations(self):
+        """Estimated total number of training iterations"""
+        buffer_size = self.config.horizon_size * self.config.parallels
+        update_times = self.config.running_steps // buffer_size
+        total_iters = update_times * self.config.n_epochs * self.config.n_minibatch
+        return total_iters
+
     def update(self, **samples):
         self.iterations += 1
         obs_batch = torch.as_tensor(samples['obs'], device=self.device)

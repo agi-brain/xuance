@@ -19,7 +19,7 @@ class C51_Learner(Learner):
         self.scheduler = torch.optim.lr_scheduler.LinearLR(self.optimizer,
                                                            start_factor=1.0,
                                                            end_factor=self.end_factor_lr_decay,
-                                                           total_iters=self.config.running_steps)
+                                                           total_iters=self.total_iters)
         self.gamma = config.gamma
         self.sync_frequency = config.sync_frequency
         self.one_hot = nn.functional.one_hot

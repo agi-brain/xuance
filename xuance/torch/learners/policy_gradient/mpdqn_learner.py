@@ -21,11 +21,11 @@ class MPDQN_Learner(Learner):
         conactor_lr_scheduler = torch.optim.lr_scheduler.LinearLR(conactor_optimizer,
                                                                   start_factor=1.0,
                                                                   end_factor=self.end_factor_lr_decay,
-                                                                  total_iters=self.config.running_steps)
+                                                                  total_iters=self.total_iters)
         qnetwork_lr_scheduler = torch.optim.lr_scheduler.LinearLR(qnetwork_optimizer,
                                                                   start_factor=1.0,
                                                                   end_factor=self.end_factor_lr_decay,
-                                                                  total_iters=self.config.running_steps)
+                                                                  total_iters=self.total_iters)
         self.scheduler = [conactor_lr_scheduler, qnetwork_lr_scheduler]
         self.tau = config.tau
         self.gamma = config.gamma

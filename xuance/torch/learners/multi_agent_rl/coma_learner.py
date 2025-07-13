@@ -36,11 +36,11 @@ class COMA_Learner(IAC_Learner):
             'actor': torch.optim.lr_scheduler.LinearLR(self.optimizer['actor'],
                                                        start_factor=1.0,
                                                        end_factor=self.end_factor_lr_decay,
-                                                       total_iters=self.config.running_steps),
+                                                       total_iters=self.total_iters),
             'critic': torch.optim.lr_scheduler.LinearLR(self.optimizer['critic'],
                                                         start_factor=1.0,
                                                         end_factor=self.end_factor_lr_decay,
-                                                        total_iters=self.config.running_steps)
+                                                        total_iters=self.total_iters)
         }
 
     def update(self, sample, epsilon=0.0):
