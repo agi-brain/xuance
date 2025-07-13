@@ -354,7 +354,6 @@ class CategoricalActorNet_SAC(CategoricalActorNet):
                  activation: Optional[ModuleType] = None):
         super(CategoricalActorNet_SAC, self).__init__(state_dim, action_dim, hidden_sizes,
                                                       normalize, initialize, activation)
-        self.output = tk.layers.Softmax(axis=-1)
 
     def call(self, x: Union[Tensor, np.ndarray], avail_actions: Optional[Tensor] = None, **kwargs):
         """
@@ -369,7 +368,7 @@ class CategoricalActorNet_SAC(CategoricalActorNet):
         logits = self.model(x)
         if avail_actions is not None:
             logits[avail_actions == 0] = -1e10
-        probs = self.output(logits)
+        probs = tf.nn.softmax(logits, axis=-1)
         self.dist.set_param(probs=probs)
         return probs
 

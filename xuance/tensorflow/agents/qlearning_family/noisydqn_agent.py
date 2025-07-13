@@ -42,7 +42,7 @@ class NoisyDQN_Agent(Agent):
         self.atari = True if config.env_name == "Atari" else False
         Buffer = DummyOffPolicyBuffer_Atari if self.atari else DummyOffPolicyBuffer
         self.memory = Buffer(**input_buffer)
-        self.learner = self._build_learner(self.config, self.policy)
+        self.learner = self._build_learner(self.config, self.policy, self.callback)
 
     def _build_policy(self) -> Module:
         normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None

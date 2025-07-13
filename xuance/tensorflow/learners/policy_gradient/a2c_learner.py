@@ -10,8 +10,9 @@ from xuance.tensorflow.learners import Learner
 class A2C_Learner(Learner):
     def __init__(self,
                  config: Namespace,
-                 policy: Module):
-        super(A2C_Learner, self).__init__(config, policy)
+                 policy: Module,
+                 callback):
+        super(A2C_Learner, self).__init__(config, policy, callback)
         if ("macOS" in self.os_name) and ("arm" in self.os_name):  # For macOS with Apple's M-series chips.
             if self.distributed_training:
                 with self.policy.mirrored_strategy.scope():

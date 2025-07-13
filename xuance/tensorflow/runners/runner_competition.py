@@ -4,10 +4,10 @@ from copy import deepcopy
 import numpy as np
 from tqdm import tqdm
 from operator import itemgetter
-from xuance.torch.agents import REGISTRY_Agents
+from xuance.tensorflow.agents import REGISTRY_Agents
 from xuance.environment import make_envs
 from xuance.environment.vector_envs import combine_actions
-from xuance.torch.utils.operations import set_seed
+from xuance.tensorflow.utils.operations import set_seed
 
 
 class RunnerCompetition(object):

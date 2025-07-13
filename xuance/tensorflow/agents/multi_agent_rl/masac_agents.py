@@ -27,7 +27,7 @@ class MASAC_Agents(ISAC_Agents):
         Build representation(s) and policy(ies) for agent(s)
 
         Returns:
-            policy (torch.nn.Module): A dict of policies.
+            policy (Module): A dict of policies.
         """
         normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None
         initializer = InitializeFunctions[self.config.initialize] if hasattr(self.config, "initialize") else None

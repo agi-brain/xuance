@@ -233,6 +233,7 @@ class SACDISPolicy(Module):
                  activation: Optional[tk.layers.Layer] = None,
                  use_distributed_training: bool = False):
         super(SACDISPolicy, self).__init__()
+        self.action_space = action_space
         self.action_dim = action_space.n
         self.representation_info_shape = representation.output_shapes
 

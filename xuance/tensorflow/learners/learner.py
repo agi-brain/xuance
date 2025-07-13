@@ -11,7 +11,8 @@ from xuance.tensorflow import Module, tk, tf
 class Learner(ABC):
     def __init__(self,
                  config: Namespace,
-                 policy: Module):
+                 policy: Module,
+                 callback):
         self.os_name = platform.platform()
         self.value_normalizer = None
         self.config = config

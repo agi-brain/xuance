@@ -3,8 +3,8 @@ Soft Actor-Critic with continuous action spaces (SAC)
 Paper link: http://proceedings.mlr.press/v80/haarnoja18b/haarnoja18b.pdf
 Implementation: TensorFlow2
 """
+import numpy as np
 from argparse import Namespace
-from xuance.common import Optional
 from xuance.tensorflow import tf, tk, Module
 from xuance.tensorflow.learners import Learner
 
@@ -19,8 +19,8 @@ class SAC_Learner(Learner):
     def __init__(self,
                  config: Namespace,
                  policy: Module,
-                 target_entropy: Optional[float] = None):
-        super(SAC_Learner, self).__init__(config, policy)
+                 callback):
+        super(SAC_Learner, self).__init__(config, policy, callback)
         if ("macOS" in self.os_name) and ("arm" in self.os_name):  # For macOS with Apple's M-series chips.
             if self.distributed_training:
                 with self.policy.mirrored_strategy.scope():
@@ -42,7 +42,7 @@ class SAC_Learner(Learner):
         self.alpha = config.alpha
         self.use_automatic_entropy_tuning = config.use_automatic_entropy_tuning
         if self.use_automatic_entropy_tuning:
-            self.target_entropy = target_entropy
+            self.target_entropy = -np.prod(policy.action_space.shape).item()
             if self.distributed_training:
                 with self.policy.mirrored_strategy.scope():
                     self.alpha_layer = AlphaLayer()

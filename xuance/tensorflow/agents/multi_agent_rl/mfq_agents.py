@@ -6,8 +6,8 @@ from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
 from xuance.tensorflow import tk, Module
 from xuance.tensorflow.agents import MARLAgents
 from xuance.tensorflow.learners import DQN_Learner
-from xuance.torch.policies import REGISTRY_Policy
-from xuance.torch.agents import OffPolicyMARLAgents, BaseCallback
+from xuance.tensorflow.policies import REGISTRY_Policy
+from xuance.tensorflow.agents import OffPolicyMARLAgents, BaseCallback
 
 
 class MFQ_Agents(MARLAgents):

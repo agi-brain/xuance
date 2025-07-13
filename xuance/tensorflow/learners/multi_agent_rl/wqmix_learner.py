@@ -17,8 +17,9 @@ class WQMIX_Learner(LearnerMAS):
                  config: Namespace,
                  model_keys: List[str],
                  agent_keys: List[str],
-                 policy: Module):
-        super(WQMIX_Learner, self).__init__(config, model_keys, agent_keys, policy)
+                 policy: Module,
+                 callback):
+        super(WQMIX_Learner, self).__init__(config, model_keys, agent_keys, policy, callback)
         if ("macOS" in self.os_name) and ("arm" in self.os_name):  # For macOS with Apple's M-series chips.
             self.optimizer = tk.optimizers.legacy.Adam(config.learning_rate)
         else:

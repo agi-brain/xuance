@@ -4,10 +4,10 @@ from argparse import Namespace
 from operator import itemgetter
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
 from xuance.common import List, Optional, Union
-from xuance.torch import Module
-from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
-from xuance.torch.policies import REGISTRY_Policy
-from xuance.torch.agents import OnPolicyMARLAgents, BaseCallback
+from xuance.tensorflow import Module
+from xuance.tensorflow.utils import NormalizeFunctions, ActivationFunctions
+from xuance.tensorflow.policies import REGISTRY_Policy
+from xuance.tensorflow.agents import OnPolicyMARLAgents, BaseCallback
 
 
 class IAC_Agents(OnPolicyMARLAgents):
@@ -33,7 +33,7 @@ class IAC_Agents(OnPolicyMARLAgents):
         Build representation(s) and policy(ies) for agent(s)
 
         Returns:
-            policy (torch.nn.Module): A dict of policies.
+            policy (Module): A dict of policies.
         """
         normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None
         initializer = torch.nn.init.orthogonal_

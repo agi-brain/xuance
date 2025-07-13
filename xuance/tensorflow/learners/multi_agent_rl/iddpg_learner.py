@@ -13,8 +13,9 @@ class IDDPG_Learner(LearnerMAS):
                  config: Namespace,
                  model_keys: List[str],
                  agent_keys: List[str],
-                 policy: Module):
-        super(IDDPG_Learner, self).__init__(config, model_keys, agent_keys, policy)
+                 policy: Module,
+                 callback):
+        super(IDDPG_Learner, self).__init__(config, model_keys, agent_keys, policy, callback)
         if ("macOS" in self.os_name) and ("arm" in self.os_name):  # For macOS with Apple's M-series chips.
             self.optimizer = {
                 key: {'actor': tk.optimizers.legacy.Adam(config.learning_rate_actor),
