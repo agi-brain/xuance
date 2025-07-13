@@ -46,4 +46,7 @@ class Basic_MLP(Module):
 
     @tf.function
     def call(self, x: Union[Tensor, np.ndarray], **kwargs):
-        return {'state': self.model(x)}
+        input_shape = x.shape
+        x_flat = tf.reshape(x, (-1, input_shape[-1]))
+        y_flat = self.model(x_flat)
+        return {'state': tf.reshape(y_flat, input_shape[:-1] + self.output_shapes['state'])}

@@ -231,8 +231,8 @@ class COMA_Policy(Module):
     def __init__(self,
                  action_space: Optional[Dict[str, Discrete]],
                  n_agents: int,
-                 representation_actor: Module,
-                 representation_critic: Module,
+                 representation_actor: Union[Module, dict],
+                 representation_critic: Union[Module, dict],
                  actor_hidden_size: Sequence[int] = None,
                  critic_hidden_size: Sequence[int] = None,
                  normalize: Optional[tk.layers.Layer] = None,
@@ -274,7 +274,25 @@ class COMA_Policy(Module):
                                         critic_hidden_size, normalize, initializer, activation)
         self.target_critic.set_weights(self.critic.get_weights())
 
-    @tf.function
+    @property
+    def parameters_actor(self):
+        params = []
+        if isinstance(self.actor_representation[self.model_keys[0]], Basic_Identical):
+            for k in self.model_keys:
+                params.extend(self.actor_representation[k].trainable_variables)
+        else:
+            for k in self.model_keys:
+                params.extend(self.actor[k].trainable_variables + self.actor[k].trainable_variables)
+        return params
+
+    @property
+    def parameters_critic(self):
+        params = self.critic.trainable_variables
+        if not isinstance(self.critic_representation[self.model_keys[0]], Basic_Identical):
+            for k in self.model_keys:
+                params += self.critic_representation[k].trainable_variables
+        return params
+
     def call(self, observation: Union[np.ndarray, dict], agent_ids: Union[np.ndarray, dict] = None,
              avail_actions: Union[np.ndarray, dict] = None, agent_key: str = None,
              rnn_hidden: Optional[Dict[str, List[Tensor]]] = None, epsilon=0.0, test_mode=False, **kwargs):
@@ -312,7 +330,8 @@ class COMA_Policy(Module):
             else:
                 actor_input = outputs['state']
 
-            pi_logits[key] = self.actor[key](actor_input)
+            avail_actions_input = None if avail_actions is None else avail_actions[key]
+            pi_logits[key] = self.actor[key](actor_input, avail_actions_input)
             act_probs[key] = tf.nn.softmax(pi_logits[key], axis=-1)
 
             if not test_mode:
@@ -343,34 +362,41 @@ class COMA_Policy(Module):
         critic_inputs = []
 
         if self.use_rnn:
-            critic_inputs.append(state.unsqueeze(-2).repeat(1, 1, self.n_agents, 1))  # batch * T * N * dim_S
+            critic_inputs.append(tf.tile(tf.expand_dims(state, -2), [1, 1, self.n_agents, 1]))  # batch * T * N * dim_S)
         else:
-            critic_inputs.append(state.unsqueeze(-2).repeat(1, self.n_agents, 1))  # batch * N * dim_S
+            critic_inputs.append(tf.tile(tf.expand_dims(state, -2), [1, self.n_agents, 1]))  # batch * N * dim_S
 
         obs_rep = {}
         for key in self.model_keys:
             if self.use_rnn:
-                outputs = self.critic_representation[key](observation[key], *rnn_hidden[key])
+                if target:
+                    outputs = self.target_critic_representation[key](observation[key], *rnn_hidden[key])
+                else:
+                    outputs = self.critic_representation[key](observation[key], *rnn_hidden[key])
                 rnn_hidden_new[key] = (outputs['rnn_hidden'], outputs['rnn_cell'])
             else:
-                outputs = self.critic_representation[key](observation[key])
+                if target:
+                    outputs = self.target_critic_representation[key](observation[key])
+                else:
+                    outputs = self.critic_representation[key](observation[key])
                 rnn_hidden_new[key] = [None, None]
             obs_rep[key] = outputs['state']
 
-        agent_mask = (1 - tf.nn.eye(self.n_agents, dtype=tf.float32, device=self.device)).unsqueeze(-1)
+        agent_mask = tf.expand_dims((1 - tf.eye(self.n_agents, dtype=tf.float32)), axis=-1)
         if self.use_parameter_sharing:
             key = self.model_keys[0]
-            agent_mask = agent_mask.repeat(1, 1, self.n_actions[key]).reshape(self.n_agents, -1).unsqueeze(0)
+            agent_mask = tf.reshape(tf.tile(agent_mask, [1, 1, self.n_actions[key]]), [self.n_agents, -1])
+            agent_mask = tf.expand_dims(agent_mask, 0)
             if self.use_rnn:
                 actions_input = actions[key].reshape(batch_size, seq_len, 1, -1).repeat(1, 1, self.n_agents, 1)
                 critic_inputs.append(obs_rep[key].reshape(batch_size, self.n_agents, seq_len, -1).transpose(1, 2))
                 critic_inputs.append(actions_input * agent_mask.unsqueeze(0))
                 critic_inputs.append(agent_ids.reshape(batch_size, self.n_agents, seq_len, -1).transpose(1, 2))
             else:
-                actions_input = actions[key].reshape(batch_size, 1, -1).repeat(1, self.n_agents, 1)
-                critic_inputs.append(obs_rep[key].reshape(batch_size, self.n_agents, -1))
+                actions_input = tf.tile(tf.reshape(actions[key], [batch_size, 1, -1]), [1, self.n_agents, 1])
+                critic_inputs.append(tf.reshape(obs_rep[key], [batch_size, self.n_agents, -1]))
                 critic_inputs.append(actions_input * agent_mask)
-                critic_inputs.append(agent_ids.reshape(batch_size, self.n_agents, -1))
+                critic_inputs.append(tf.reshape(agent_ids, [batch_size, self.n_agents, -1]))
             critic_inputs = tf.concat(critic_inputs, axis=-1)
         else:
             agent_mask = tf.concat([agent_mask[i].repeat(1, self.n_actions[k])
@@ -392,16 +418,10 @@ class COMA_Policy(Module):
         values = self.target_critic(critic_inputs) if target else self.critic(critic_inputs)
         return rnn_hidden_new, values
 
-    def param_actor(self):
-        if isinstance(self.representation, Basic_Identical):
-            return self.actor.trainable_variables
-        else:
-            return self.representation.trainable_variables + self.actor.trainable_variables
-
     def copy_target(self):
         for key in self.model_keys:
             self.target_critic_representation[key].set_weights(self.critic_representation[key].get_weights())
-            self.target_critic[key].set_weights(self.critic[key].get_weights())
+        self.target_critic.set_weights(self.critic.get_weights())
 
 
 class MeanFieldActorCriticPolicy(Module):

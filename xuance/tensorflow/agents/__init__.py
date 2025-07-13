@@ -1,6 +1,6 @@
 from .base.callback import BaseCallback, MultiAgentBaseCallback
 from .base import Agent, MARLAgents, RandomAgents
-from .core import OffPolicyAgent, OnPolicyAgent, OffPolicyMARLAgents, OnPolicyMARLAgents
+from .core import OnPolicyAgent, OffPolicyAgent, OffPolicyMARLAgents, OnPolicyMARLAgents
 
 '''Single-Agent Reinforcement Learning algorithms'''
 from .policy_gradient import PG_Agent
@@ -14,7 +14,7 @@ from .policy_gradient import PDQN_Agent
 from .policy_gradient import MPDQN_Agent
 from .policy_gradient import SPDQN_Agent
 from .policy_gradient import SAC_Agent
-from .policy_gradient import SACDIS_Agent
+# from .policy_gradient import NPG_Agent
 from .qlearning_family import DQN_Agent
 from .qlearning_family import DuelDQN_Agent
 from .qlearning_family import DDQN_Agent
@@ -24,6 +24,10 @@ from .qlearning_family import QRDQN_Agent
 from .qlearning_family import PerDQN_Agent
 from .qlearning_family import DRQN_Agent
 
+'''Model-based Reinforcement Learning'''
+# from .model_based_rl import DreamerV2Agent
+# from .model_based_rl import DreamerV3Agent
+
 '''Multi-Agent Reinforcement Learning Algorithms'''
 from .multi_agent_rl import IQL_Agents
 from .multi_agent_rl import VDN_Agents
@@ -31,6 +35,7 @@ from .multi_agent_rl import QMIX_Agents
 from .multi_agent_rl import WQMIX_Agents
 from .multi_agent_rl import QTRAN_Agents
 from .multi_agent_rl import DCG_Agents
+from .multi_agent_rl import IAC_Agents
 from .multi_agent_rl import VDAC_Agents
 from .multi_agent_rl import COMA_Agents
 from .multi_agent_rl import IDDPG_Agents
@@ -43,6 +48,14 @@ from .multi_agent_rl import ISAC_Agents
 from .multi_agent_rl import MASAC_Agents
 from .multi_agent_rl import MATD3_Agents
 
+# from .multi_agent_rl import CommNet_Agents
+# from .multi_agent_rl import IC3Net_Agents
+# from .multi_agent_rl import TarMAC_Agents
+
+# from .offline_rl import TD3_BC_Agent
+#
+# from .contrastive_unsupervised_rl import CURL_Agent, SPR_Agent, DrQ_Agent
+
 REGISTRY_Agents = {
     "PG": PG_Agent,
     "A2C": A2C_Agent,
@@ -51,7 +64,6 @@ REGISTRY_Agents = {
     "PPG": PPG_Agent,
     "DDPG": DDPG_Agent,
     "SAC": SAC_Agent,
-    "SACDIS": SACDIS_Agent,
     "TD3": TD3_Agent,
     "DQN": DQN_Agent,
     "Duel_DQN": DuelDQN_Agent,
@@ -64,6 +76,10 @@ REGISTRY_Agents = {
     "MPDQN": MPDQN_Agent,
     "SPDQN": SPDQN_Agent,
     "DRQN": DRQN_Agent,
+    # "NPG": NPG_Agent,
+    #
+    # "DreamerV2": DreamerV2Agent,
+    # "DreamerV3": DreamerV3Agent,
 
     "RANDOM": RandomAgents,
     "IQL": IQL_Agents,
@@ -75,6 +91,7 @@ REGISTRY_Agents = {
     "QTRAN_alt": QTRAN_Agents,
     "DCG": DCG_Agents,
     "DCG_S": DCG_Agents,
+    "IAC": IAC_Agents,
     "VDAC": VDAC_Agents,
     "COMA": COMA_Agents,
     "IDDPG": IDDPG_Agents,
@@ -86,20 +103,37 @@ REGISTRY_Agents = {
     "ISAC": ISAC_Agents,
     "MASAC": MASAC_Agents,
     "MATD3": MATD3_Agents,
+    # "IC3Net": IC3Net_Agents,
+    # "CommNet": CommNet_Agents,
+    # "TarMAC": TarMAC_Agents,
+    #
+    # "TD3BC": TD3_BC_Agent,
+    #
+    # "CURL":  CURL_Agent,
+    # "SPR":  SPR_Agent,
+    # "DrQ": DrQ_Agent,
 }
 
 __all__ = [
-    "Agent", "MARLAgents", "RandomAgents",
+    "BaseCallback", "Agent", "MARLAgents", "RandomAgents",
 
-    "OffPolicyAgent", "OnPolicyAgent", "OffPolicyMARLAgents", "OnPolicyMARLAgents",
+    "OnPolicyAgent", "OffPolicyAgent", "OffPolicyMARLAgents", "OnPolicyMARLAgents", "OfflineAgent",
 
     "REGISTRY_Agents",
 
     "PG_Agent", "A2C_Agent", "PPOCLIP_Agent", "PPOKL_Agent", "PPG_Agent", "DDPG_Agent", "TD3_Agent", "PDQN_Agent",
-    "MPDQN_Agent", "SPDQN_Agent", "SAC_Agent", "SACDIS_Agent", "DQN_Agent", "DuelDQN_Agent", "DDQN_Agent",
-    "NoisyDQN_Agent", "C51_Agent", "QRDQN_Agent", "PerDQN_Agent", "DRQN_Agent",
+    "MPDQN_Agent", "SPDQN_Agent", "SAC_Agent", "DQN_Agent", "DuelDQN_Agent", "DDQN_Agent",
+    "NoisyDQN_Agent", "C51_Agent", "QRDQN_Agent", "PerDQN_Agent", "DRQN_Agent","NPG_Agent",
 
-    "IQL_Agents", "VDN_Agents", "QMIX_Agents", "WQMIX_Agents", "QTRAN_Agents", "DCG_Agents", "VDAC_Agents",
-    "COMA_Agents", "IDDPG_Agents", "MADDPG_Agents", "MFQ_Agents", "MFAC_Agents", "IPPO_Agents", "MAPPO_Agents",
-    "ISAC_Agents", "MASAC_Agents", "MATD3_Agents"
+    # "DreamerV2Agent", "DreamerV3Agent",
+
+    "IQL_Agents", "VDN_Agents", "QMIX_Agents", "WQMIX_Agents", "QTRAN_Agents", "DCG_Agents",
+    "IAC_Agents", "VDAC_Agents", "COMA_Agents", "IDDPG_Agents", "MADDPG_Agents",
+    # "IC3Net_Agents", "CommNet_Agents", "TarMAC_Agents",
+    "MFQ_Agents", "MFAC_Agents", "IPPO_Agents", "MAPPO_Agents",
+    "ISAC_Agents", "MASAC_Agents", "MATD3_Agents",
+
+    # "TD3_BC_Agent",
+    #
+    # "CURL_Agent", "SPR_Agent", "DrQ_Agent"
 ]

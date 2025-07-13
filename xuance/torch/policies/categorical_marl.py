@@ -784,7 +784,8 @@ class COMA_Policy(Module):
             else:
                 actor_input = outputs['state']
 
-            pi_logits[key] = self.actor[key](actor_input)
+            avail_actions_input = None if avail_actions is None else avail_actions[key]
+            pi_logits[key] = self.actor[key](actor_input, avail_actions_input)
             act_probs[key] = nn.functional.softmax(pi_logits[key], dim=-1)
 
             if not test_mode:
@@ -822,10 +823,16 @@ class COMA_Policy(Module):
         obs_rep = {}
         for key in self.model_keys:
             if self.use_rnn:
-                outputs = self.critic_representation[key](observation[key], *rnn_hidden[key])
+                if target:
+                    outputs = self.target_critic_representation[key](observation[key], *rnn_hidden[key])
+                else:
+                    outputs = self.critic_representation[key](observation[key], *rnn_hidden[key])
                 rnn_hidden_new[key] = (outputs['rnn_hidden'], outputs['rnn_cell'])
             else:
-                outputs = self.critic_representation[key](observation[key])
+                if target:
+                    outputs = self.target_critic_representation[key](observation[key])
+                else:
+                    outputs = self.critic_representation[key](observation[key])
                 rnn_hidden_new[key] = [None, None]
             obs_rep[key] = outputs['state']
 

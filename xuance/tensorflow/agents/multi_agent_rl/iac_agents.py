@@ -26,7 +26,7 @@ class IAC_Agents(OnPolicyMARLAgents):
         super(IAC_Agents, self).__init__(config, envs, callback)
         self.policy = self._build_policy()  # build policy
         self.memory = self._build_memory()  # build memory
-        self.learner = self._build_learner(self.config, self.model_keys, self.agent_keys, self.policy)
+        self.learner = self._build_learner(self.config, self.model_keys, self.agent_keys, self.policy, self.callback)
 
     def _build_policy(self) -> Module:
         """

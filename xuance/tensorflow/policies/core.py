@@ -28,6 +28,8 @@ class BasicQhead(Module):
                  activation: Optional[tk.layers.Layer] = None):
         super(BasicQhead, self).__init__()
         layers = []
+        self.state_dim = state_dim
+        self.n_actions = n_actions
         input_shape = (state_dim,)
         for h in hidden_sizes:
             mlp, input_shape = mlp_block(input_shape[0], h, normalize, activation, initialize)
@@ -42,7 +44,10 @@ class BasicQhead(Module):
         Parameters:
             x (Union[Tensor, np.ndarray]): The input tensor.
         """
-        return self.model(x)
+        input_shape = x.shape
+        x_flat = tf.reshape(x, (-1, input_shape[-1]))
+        y_flat = self.model(x_flat)
+        return tf.reshape(y_flat, input_shape[:-1] + (self.n_actions, ))
 
 
 class DuelQhead(Module):

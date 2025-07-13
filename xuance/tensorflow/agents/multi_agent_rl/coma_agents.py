@@ -1,4 +1,3 @@
-import tensorflow as tf
 import numpy as np
 from tqdm import tqdm
 from copy import deepcopy
@@ -7,7 +6,7 @@ from operator import itemgetter
 from tensorflow import one_hot
 from xuance.common import List, Optional, Union
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
-from xuance.tensorflow import Module, Tensor
+from xuance.tensorflow import tf, Module, Tensor
 from xuance.tensorflow.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions
 from xuance.tensorflow.utils.distributions import Categorical
 from xuance.tensorflow.policies import REGISTRY_Policy
@@ -148,12 +147,12 @@ class COMA_Agents(OnPolicyMARLAgents):
             if self.use_actions_mask:
                 pi_probs[key][Tensor(avail_actions_input[key]) == 0] = 0.0
             if test_mode:
-                actions_sample = pi_probs[key].max(dim=-1)[1]
+                actions_sample = tf.argmax(pi_probs[key], axis=-1, output_type=tf.int32)
             else:
                 pi_dists = Categorical(probs=pi_probs[key])
                 actions_sample = pi_dists.sample()
-            actions_out = actions_sample.reshape(n_env, self.n_agents)
-            actions_dict = [{k: actions_out[e, i].cpu().detach().numpy() for i, k in enumerate(self.agent_keys)}
+            actions_out = tf.reshape(actions_sample, [n_env, self.n_agents])
+            actions_dict = [{k: actions_out[e, i].numpy() for i, k in enumerate(self.agent_keys)}
                             for e in range(n_env)]
             actions_onehot = {key: one_hot(actions_out, self.action_space[key].n)}
         else:
@@ -169,21 +168,21 @@ class COMA_Agents(OnPolicyMARLAgents):
                 pi_dists = {k: Categorical(probs=pi_probs[k]) for k in self.agent_keys}
                 actions_sample = {k: pi_dists[k].sample() for k in self.agent_keys}
             actions_out = tf.stack(itemgetter(*self.agent_keys)(actions_sample), dim=-1)
-            actions_dict = [{k: actions_sample[k].cpu().detach().numpy()[e].reshape([]) for k in self.agent_keys}
+            actions_dict = [{k: actions_sample[k].numpy()[e].reshape([]) for k in self.agent_keys}
                             for e in range(n_env)]
             actions_onehot = {k: one_hot(actions_sample[k], self.action_space[k].n) for k in self.agent_keys}
 
         if not test_mode:  # calculate target values
             if self.use_rnn:
-                state = Tensor(np.array(state)).reshape(n_env, 1, -1)
+                state = tf.convert_to_tensor(np.array(state)).reshape(n_env, 1, -1)
                 if self.use_parameter_sharing:
                     actions_onehot = {k: actions_onehot[k].unsqueeze(1) for k in self.model_keys}
                 else:
                     actions_onehot = {k: actions_onehot[k] for k in self.model_keys}
             else:
-                state = Tensor(np.array(state)).reshape(n_env, -1)
+                state = tf.reshape(tf.convert_to_tensor(np.array(state)), [n_env, -1])
 
-            rnn_hidden_critic_new, values_out = self.policy.get_values(state=Tensor(state).to(self.device),
+            rnn_hidden_critic_new, values_out = self.policy.get_values(state=state,
                                                                        observation=obs_input,
                                                                        actions=actions_onehot,
                                                                        agent_ids=agents_id,
@@ -192,8 +191,8 @@ class COMA_Agents(OnPolicyMARLAgents):
             if self.use_rnn:
                 values_out = values_out.reshape(n_env, self.n_agents, -1)
                 actions_out = actions_out.reshape(n_env, self.n_agents)
-            values_out = values_out.gather(-1, actions_out.unsqueeze(-1)).reshape(n_env, self.n_agents)
-            values_out = values_out.cpu().detach().numpy()
+            values_out = tf.gather(values_out, tf.expand_dims(actions_out, -1), axis=-1, batch_dims=-1)
+            values_out = tf.reshape(values_out, [n_env, self.n_agents]).numpy()
             values_dict = {k: values_out[:, i] for i, k in enumerate(self.agent_keys)}
         return {"rnn_hidden_actor": rnn_hidden_actor_new, "rnn_hidden_critic": rnn_hidden_critic_new,
                 "actions": actions_dict, "log_pi": log_pi_a_dict, "values": values_dict}
@@ -222,17 +221,17 @@ class COMA_Agents(OnPolicyMARLAgents):
         bs = n_env * self.n_agents
         rnn_hidden_critic_i = None
 
-        agents_id = tf.eye(self.n_agents).unsqueeze(0).repeat(n_env, 1, 1).to(self.device)
+        agents_id = tf.tile(tf.expand_dims(tf.eye(self.n_agents), axis=0), [n_env, 1, 1])
         if self.use_rnn:
             state = state.reshape(n_env, 1, -1)
             agents_id = agents_id.reshape(bs, 1, -1)
         else:
-            state = state.reshape(n_env, -1)
-            agents_id.reshape(bs, -1)
+            state = tf.reshape(state, [n_env, -1])
+            agents_id = tf.reshape(agents_id, [bs, -1])
 
         if self.use_parameter_sharing:
             key = self.agent_keys[0]
-            actions_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(actions_n)))
+            actions_tensor = tf.convert_to_tensor(np.stack(itemgetter(*self.agent_keys)(actions_n)))
             if self.use_rnn:
                 hidden_item_index = np.arange(i_env * self.n_agents, (i_env + 1) * self.n_agents)
                 rnn_hidden_critic_i = {key: self.policy.critic_representation[key].get_hidden_item(
@@ -242,8 +241,8 @@ class COMA_Agents(OnPolicyMARLAgents):
                 actions_tensor = actions_tensor.reshape(n_env, 1, self.n_agents).to(self.device)
             else:
                 obs_input = {key: np.array([itemgetter(*self.agent_keys)(obs_dict)])}
-                actions_tensor = actions_tensor.reshape(n_env, self.n_agents).to(self.device)
-            actions_onehot = {key: one_hot(actions_tensor.long(), self.action_space[key].n)}
+                actions_tensor = tf.reshape(actions_tensor, [n_env, self.n_agents])
+            actions_onehot = {key: one_hot(actions_tensor, self.action_space[key].n)}
         else:
             if self.use_rnn:
                 rnn_hidden_critic_i = {k: self.policy.critic_representation[k].get_hidden_item(
@@ -256,7 +255,7 @@ class COMA_Agents(OnPolicyMARLAgents):
             actions_onehot = {k: one_hot(actions_tensor[:, i].long(), self.action_space[k].n)
                               for i, k in enumerate(self.agent_keys)}
 
-        rnn_hidden_critic_new, values_out = self.policy.get_values(state=Tensor(state).to(self.device),
+        rnn_hidden_critic_new, values_out = self.policy.get_values(state=state,
                                                                    observation=obs_input,
                                                                    actions=actions_onehot,
                                                                    agent_ids=agents_id,
@@ -265,8 +264,8 @@ class COMA_Agents(OnPolicyMARLAgents):
         if self.use_rnn:
             values_out = values_out.reshape(n_env, self.n_agents, -1)
             actions_tensor = actions_tensor.reshape(n_env, self.n_agents)
-        values_out = values_out.gather(-1, actions_tensor.unsqueeze(-1).long())
-        values_out = values_out.cpu().detach().numpy().reshape(self.n_agents)
+        values_out = tf.gather(values_out, tf.expand_dims(actions_tensor, -1), axis=-1, batch_dims=-1)
+        values_out = values_out.numpy().reshape(self.n_agents)
         values_dict = {k: values_out[i] for i, k in enumerate(self.agent_keys)}
         return rnn_hidden_critic_new, values_dict
 
@@ -356,19 +355,19 @@ class COMA_Agents(OnPolicyMARLAgents):
                     self.current_episode[i] += 1
                     if self.use_wandb:
                         episode_info = {
-                            f"Train-Results/Episode-Steps/rank_{self.rank}/env-%d" % i: info[i]["episode_step"],
-                            f"Train-Results/Episode-Rewards/rank_{self.rank}/env-%d" % i: info[i]["episode_score"]
+                            f"Train-Results/Episode-Steps/env-%d" % i: info[i]["episode_step"],
+                            f"Train-Results/Episode-Rewards/env-%d" % i: info[i]["episode_score"]
                         }
                     else:
                         episode_info = {
-                            f"Train-Results/Episode-Steps/rank_{self.rank}": {"env-%d" % i: info[i]["episode_step"]},
-                            f"Train-Results/Episode-Rewards/rank_{self.rank}": {
+                            f"Train-Results/Episode-Steps": {"env-%d" % i: info[i]["episode_step"]},
+                            f"Train-Results/Episode-Rewards": {
                                 "env-%d" % i: np.mean(itemgetter(*self.agent_keys)(info[i]["episode_score"]))}
                         }
                     self.log_infos(episode_info, self.current_step)
                     train_info.update(episode_info)
                     self.callback.on_train_episode_info(envs=self.envs, policy=self.policy, env_id=i,
-                                                        infos=info, rank=self.rank, use_wandb=self.use_wandb,
+                                                        infos=info, use_wandb=self.use_wandb,
                                                         current_step=self.current_step,
                                                         current_episode=self.current_episode,
                                                         n_steps=n_steps)
@@ -475,7 +474,7 @@ class COMA_Agents(OnPolicyMARLAgents):
                         self.current_step += info[i]["episode_step"]
                         self.log_infos(episode_info, self.current_step)
                         self.callback.on_train_episode_info(envs=self.envs, policy=self.policy, env_id=i,
-                                                            infos=info, rank=self.rank, use_wandb=self.use_wandb,
+                                                            infos=info, use_wandb=self.use_wandb,
                                                             current_step=self.current_step,
                                                             current_episode=self.current_episode,
                                                             n_episodes=n_episodes)
