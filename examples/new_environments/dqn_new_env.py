@@ -1,14 +1,17 @@
+import os
 import argparse
 import numpy as np
 from copy import deepcopy
 from gymnasium.spaces import Box, Discrete
-from xuance.common import get_configs, recursive_dict_update
+from xuance.common import get_configs, recursive_dict_update, create_directory
 from xuance.environment import make_envs, RawEnvironment, REGISTRY_ENV
 from xuance.torch.utils.operations import set_seed
-from xuance.torch.agents import DQN_Agent
+from xuance.torch.agents import DQN_Agent, BaseCallback
+from torch.utils.tensorboard import SummaryWriter
 
 
 class MyNewEnv(RawEnvironment):
+    "The customized environment."
     def __init__(self, env_config):
         super(MyNewEnv, self).__init__()
         self.env_id = env_config.env_id
@@ -27,7 +30,10 @@ class MyNewEnv(RawEnvironment):
         rewards = np.random.random()
         terminated = False
         truncated = False if self._current_step < self.max_episode_steps else True
-        info = {}
+        info = {
+            "info_1": np.random.rand(),
+            "info_2": np.random.rand(),
+        }
         return observation, rewards, terminated, truncated, info
 
     def render(self, *args, **kwargs):
@@ -35,6 +41,23 @@ class MyNewEnv(RawEnvironment):
 
     def close(self):
         return
+
+
+class MyCallback(BaseCallback):
+    "The customized callback."
+    def __init__(self, config):
+        super(MyCallback, self).__init__()
+        log_dir = os.path.join(os.getcwd(), config.log_dir, 'callback_info')
+        create_directory(log_dir)
+        self.writer = SummaryWriter(log_dir)
+
+    def on_train_episode_info(self, *args, **kwargs):
+        "Visualize the additional information about the environment on Tensorboard."
+        infos = kwargs['infos']
+        env_id = kwargs['env_id']
+        step = kwargs['current_step']
+        self.writer.add_scalars('environment_information/info_1', {f"env-{env_id}": infos[env_id]["info_1"]}, step)
+        self.writer.add_scalars('environment_information/info_2', {f"env-{env_id}": infos[env_id]["info_2"]}, step)
 
 
 def parse_args():
@@ -52,10 +75,11 @@ if __name__ == "__main__":
     configs_dict = recursive_dict_update(configs_dict, parser.__dict__)
     configs = argparse.Namespace(**configs_dict)
 
-    REGISTRY_ENV[configs.env_name] = MyNewEnv
+    REGISTRY_ENV[configs.env_name] = MyNewEnv  # Register the new environment.
     set_seed(configs.seed)
-    envs = make_envs(configs)
-    Agent = DQN_Agent(config=configs, envs=envs)
+    envs = make_envs(configs)  # Create your custmized environment in parallels.
+    my_callback = MyCallback(configs)  # Create the customized callback.
+    Agent = DQN_Agent(config=configs, envs=envs, callback=my_callback)  # Create a DQN agent.
 
     train_information = {"Deep learning toolbox": configs.dl_toolbox,
                          "Calculating device": configs.device,
