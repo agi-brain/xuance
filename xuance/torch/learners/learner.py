@@ -139,8 +139,21 @@ class LearnerMAS(ABC):
         self.grad_clip_norm = config.grad_clip_norm
         self.device = config.device
         self.model_dir = config.model_dir
-        self.running_steps = config.running_steps
+        self.total_iters = self.estimate_total_iterations()
         self.iterations = 0
+
+    def estimate_total_iterations(self):
+        """Estimated total number of training iterations"""
+        start_training = getattr(self.config, "start_training", 0)
+        training_frequency = getattr(self.config, "training_frequency", 1)
+        n_epochs = getattr(self.config, "n_epochs", 1)
+        episode_length = self.episode_length
+        if self.use_rnn:
+            total_iters = (self.config.running_steps - start_training) // (episode_length * self.config.parallels)
+        else:
+            total_iters = (self.config.running_steps - start_training) // (training_frequency * self.config.parallels)
+        total_iters *= n_epochs
+        return total_iters
 
     def build_training_data(self, sample: Optional[dict],
                             use_parameter_sharing: Optional[bool] = False,

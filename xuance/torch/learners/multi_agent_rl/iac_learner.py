@@ -34,6 +34,19 @@ class IAC_Learner(LearnerMAS):
         else:
             self.value_normalizer = None
 
+    def estimate_total_iterations(self):
+        """Estimated total number of training iterations"""
+        buffer_size = self.config.buffer_size
+        n_epochs = getattr(self.config, "n_epochs", 1)
+        n_minibatch = getattr(self.config, "n_minibatch", 1)
+        episode_length = self.episode_length
+        if self.use_rnn:
+            update_times = (self.config.running_steps // episode_length) // buffer_size
+        else:
+            update_times = self.config.running_steps // buffer_size
+        total_iters = update_times * n_epochs * n_minibatch
+        return total_iters
+
     def build_optimizer(self):
         self.optimizer = torch.optim.Adam(self.policy.parameters_model, lr=self.learning_rate, eps=1e-5,
                                           weight_decay=self.config.weight_decay)
