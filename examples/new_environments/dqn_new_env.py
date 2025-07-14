@@ -44,7 +44,10 @@ class MyNewEnv(RawEnvironment):
 
 
 class MyCallback(BaseCallback):
-    "The customized callback."
+    """The customized callback.
+        Note: Defining a custom callback is not required to use the agent.
+        This example is provided purely to illustrate how one might extend the training loop with user-defined logic.
+    """
     def __init__(self, config):
         super(MyCallback, self).__init__()
         log_dir = os.path.join(os.getcwd(), config.log_dir, 'callback_info')
@@ -52,7 +55,7 @@ class MyCallback(BaseCallback):
         self.writer = SummaryWriter(log_dir)
 
     def on_train_episode_info(self, *args, **kwargs):
-        "Visualize the additional information about the environment on Tensorboard."
+        """Visualize the additional information about the environment on Tensorboard."""
         infos = kwargs['infos']
         env_id = kwargs['env_id']
         step = kwargs['current_step']
@@ -77,7 +80,7 @@ if __name__ == "__main__":
 
     REGISTRY_ENV[configs.env_name] = MyNewEnv  # Register the new environment.
     set_seed(configs.seed)
-    envs = make_envs(configs)  # Create your custmized environment in parallels.
+    envs = make_envs(configs)  # Create your customized environment in parallels.
     my_callback = MyCallback(configs)  # Create the customized callback.
     Agent = DQN_Agent(config=configs, envs=envs, callback=my_callback)  # Create a DQN agent.
 

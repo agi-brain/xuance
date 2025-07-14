@@ -61,7 +61,7 @@ class BaseCallback(ABC):
         return
 
     def on_test_step(self, *args, **kwargs):
-        """Called during each step in the testing phase.
+        """Called during each step in the testing loop.
 
         Args:
             *args: Optional positional arguments.
@@ -70,7 +70,7 @@ class BaseCallback(ABC):
         return
 
     def on_test_end(self, *args, **kwargs):
-        """Called at the end of the testing phase.
+        """Called at the end of the testing loop.
 
         Args:
             *args: Optional positional arguments.
@@ -83,5 +83,12 @@ class MultiAgentBaseCallback(BaseCallback):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    def on_update_agent_wise(self, iterations, agent_key, **kwargs):
+    def on_update_agent_wise(self, iterations, agent_key, **kwargs) -> dict:
+        """Called when updating an agent's policy.
+
+        Args:
+            iterations (int): Number of update iterations that have performed.
+            agent_key (str): The key of the agent to update.
+            **kwargs: Optional keyword arguments.
+        """
         return {}
