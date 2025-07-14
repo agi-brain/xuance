@@ -57,4 +57,4 @@ The example code is provided below:
 Full code
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The full code for the example can be visited in this link: `https://github.com/agi-brain/xuance/blob/master/examples/new_environments/ddpg_new_env.py <https://github.com/agi-brain/xuance/blob/master/examples/new_environments/ddpg_new_env.py>`_
+The full code for the above steps can be visited in this link: `https://github.com/agi-brain/xuance/blob/master/examples/new_environments/dqn_new_env.py <https://github.com/agi-brain/xuance/blob/master/examples/new_environments/dqn_new_env.py>`_
