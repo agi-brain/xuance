@@ -1,16 +1,12 @@
 from tensorflow.keras.activations import softplus
-from abc import ABC, abstractmethod
-from xuance.tensorflow import tf, tfd, Tensor
-
+from abc import abstractmethod
+from xuance.tensorflow import tf, Tensor, tfd
 
 Categorical = tfd.Categorical
-kl_div = tfd.kl_divergence
 
-
-class Distribution(ABC):
+class Distribution:
     def __init__(self):
-        super(Distribution, self).__init__()
-        self.distribution = None
+        pass
 
     @abstractmethod
     def set_param(self, *args):
@@ -45,28 +41,35 @@ class CategoricalDistribution(Distribution):
 
     def set_param(self, probs=None, logits=None):
         if probs is not None:
-            self.distribution = tfd.Categorical(probs=probs)
+            self.probs = probs / probs.sum(-1, keepdims=True)
+            self.logits = tf.math.log(probs) - tf.math.log1p(-probs)
         elif logits is not None:
-            self.distribution = tfd.Categorical(logits=logits)
+            self.logits = logits
+            self.probs = tf.nn.softmax(logits, axis=-1)
         else:
-            raise RuntimeError("Failed to setup distributions without given probs or logits.")
-        self.probs = self.distribution.probs
-        self.logits = self.distribution.logits
+            raise RuntimeError("Either probs or logits must be specified.")
 
     def get_param(self):
-        return self.logits
+        return self.probs or self.logits
 
     def log_prob(self, x):
-        return self.distribution.log_prob(x)
+        x = tf.expand_dims(tf.cast(x, dtype=tf.int32), -1)
+        log_probs = tf.nn.log_softmax(self.logits)
+        y = tf.gather(log_probs, x, batch_dims=1)
+        return y
 
     def entropy(self):
-        return self.distribution.entropy()
+        log_probs = tf.nn.log_softmax(self.logits)
+        e = -tf.reduce_sum(self.probs * log_probs, axis=-1, keepdims=True)
+        return e
 
     def stochastic_sample(self):
-        return self.distribution.sample()
+        logits_detach = self.logits.numpy()
+        sampled_actions = tf.random.categorical(self.logits, num_samples=1)
+        return tf.squeeze(sampled_actions, axis=-1)
 
     def deterministic_sample(self):
-        return tf.argmax(self.distribution.probs, dim=1)
+        return tf.argmax(self.probs, dim=1)
 
     def kl_divergence(self, other: Distribution):
         assert isinstance(other,

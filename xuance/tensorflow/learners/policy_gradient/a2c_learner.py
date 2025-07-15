@@ -31,26 +31,26 @@ class A2C_Learner(Learner):
     @tf.function
     def forward_fn(self, obs_batch, act_batch, ret_batch, adv_batch):
         with tf.GradientTape() as tape:
-            outputs, _, v_pred = self.policy(obs_batch)
-            a_dist = self.policy.actor.dist
-            log_prob = a_dist.log_prob(act_batch)
+            outputs, logits, v_pred = self.policy(obs_batch)
+            # calculate log prob
+            log_prob = tf.nn.log_softmax(logits)
+            log_prob_a = tf.gather(log_prob, act_batch, axis=-1, batch_dims=-1)
+            # calculate entropy
+            probs = tf.exp(log_prob)
+            entropy = -tf.reduce_sum(probs * log_prob, axis=-1, keepdims=True)
 
-            a_loss = -tf.reduce_mean(adv_batch * log_prob)
+            a_loss = -tf.reduce_mean(adv_batch * log_prob_a)
             c_loss = tk.losses.mean_squared_error(ret_batch, v_pred)
-            e_loss = tf.reduce_mean(a_dist.entropy())
+            e_loss = tf.reduce_mean(entropy)
 
             loss = a_loss - self.ent_coef * e_loss + self.vf_coef * c_loss
             gradients = tape.gradient(loss, self.policy.trainable_variables)
 
             if self.use_grad_clip:
-                self.optimizer.apply_gradients([
-                    (tf.clip_by_norm(grad, self.grad_clip_norm), var)
-                    for (grad, var) in zip(gradients, self.policy.trainable_variables)
-                    if grad is not None
-                ])
+                gradients, _ = tf.clip_by_global_norm(gradients, clip_norm=self.grad_clip_norm)
+                self.optimizer.apply_gradients(zip(gradients, self.policy.trainable_variables))
             else:
-                self.optimizer.apply_gradients([(grad, var) for (grad, var) in
-                                                zip(gradients, self.policy.trainable_variables) if grad is not None])
+                self.optimizer.apply_gradients(zip(gradients, self.policy.trainable_variables))
         return a_loss, c_loss, e_loss, v_pred
 
     @tf.function
@@ -66,10 +66,10 @@ class A2C_Learner(Learner):
 
     def update(self, **samples):
         self.iterations += 1
-        obs_batch = samples['obs']
-        act_batch = samples['actions']
-        ret_batch = samples['returns']
-        adv_batch = samples['advantages']
+        obs_batch = tf.convert_to_tensor(samples["obs"], dtype=tf.float32)
+        act_batch = tf.convert_to_tensor(samples["actions"][:, None], dtype=tf.int32)
+        ret_batch = tf.convert_to_tensor(samples["returns"], dtype=tf.float32)
+        adv_batch = tf.convert_to_tensor(samples['advantages'][:, None], dtype=tf.float32)
         a_loss, c_loss, e_loss, v_pred = self.learn(obs_batch, act_batch, ret_batch, adv_batch)
 
         info = {

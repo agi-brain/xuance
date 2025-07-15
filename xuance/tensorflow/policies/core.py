@@ -314,6 +314,7 @@ class CategoricalActorNet(Module):
         self.model = tk.Sequential(layers)
         self.dist = CategoricalDistribution(action_dim)
 
+    @tf.function
     def call(self, x: Union[Tensor, np.ndarray], avail_actions: Optional[Tensor] = None, **kwargs):
         """
         Returns the stochastic distribution over all discrete actions.
@@ -328,8 +329,11 @@ class CategoricalActorNet(Module):
         logits = self.model(x)
         if avail_actions is not None:
             logits[avail_actions == 0] = -1e10
-        self.dist.set_param(logits=logits)
         return logits
+
+    def distribution(self, logits: Tensor):
+        self.dist.set_param(logits=logits)
+        return self.dist
 
 
 class CategoricalActorNet_SAC(CategoricalActorNet):
@@ -355,6 +359,7 @@ class CategoricalActorNet_SAC(CategoricalActorNet):
         super(CategoricalActorNet_SAC, self).__init__(state_dim, action_dim, hidden_sizes,
                                                       normalize, initialize, activation)
 
+    @tf.function
     def call(self, x: Union[Tensor, np.ndarray], avail_actions: Optional[Tensor] = None, **kwargs):
         """
         Returns the stochastic distribution over all discrete actions.
@@ -410,6 +415,7 @@ class GaussianActorNet(Module):
         # self.logstd = tf.Variable(tf.zeros((action_dim,)) - 1, trainable=True)
         self.dist = DiagGaussianDistribution(action_dim)
 
+    @tf.function
     def call(self, x: Union[Tensor, np.ndarray], **kwargs):
         """
         Returns the stochastic distribution over the continuous action space.
@@ -496,6 +502,7 @@ class GaussianActorNet_SAC(Module):
         self.out_mu.build(input_shape=(None, hidden_sizes[-1]))
         self.out_log_std.build(input_shape=(None, hidden_sizes[-1]))
 
+    @tf.function
     def call(self, x: Union[Tensor, np.ndarray], **kwargs):
         """
         Returns the stochastic distribution over the continuous action space.
