@@ -423,11 +423,14 @@ class GaussianActorNet(Module):
             x (Union[Tensor, np.ndarray]): The input tensor.
 
         Returns:
-            self.dist: A distribution over the continuous action space.
+            mu_: The mean variable of the Gaussian distribution.
         """
         mu_ = self.mu(x)
-        self.dist.set_param(mu_, tf.exp(self.logstd))
         return mu_
+
+    def distribution(self, mu: Tensor, std: Tensor):
+        self.dist.set_param(mu=mu, std=std)
+        return self.dist
 
 
 class CriticNet(Module):

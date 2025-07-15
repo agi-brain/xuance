@@ -51,6 +51,7 @@ class ActorPolicy(Module):
             self.actor = ActorNet(representation.output_shapes['state'][0], self.action_dim,
                                   actor_hidden_size, normalize, initialize, activation, activation_action)
 
+    @tf.function
     def call(self, observation: Union[np.ndarray, dict], **kwargs):
         """
         Returns the hidden states, action distribution.
@@ -124,7 +125,7 @@ class ActorCriticPolicy(Module):
 
         Returns:
             outputs: The outputs of representation.
-            a_dist: The distribution of actions output by actor.
+            a_mean: The mean variable of the gaussian distribution.
             value: The state values output by critic.
         """
         outputs = self.representation(observation)
