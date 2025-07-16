@@ -1,3 +1,4 @@
+import numpy as np
 from tensorflow.keras.activations import softplus
 from abc import abstractmethod
 from xuance.tensorflow import tf, Tensor, tfd
@@ -65,7 +66,7 @@ class CategoricalDistribution(Distribution):
 
     def stochastic_sample(self):
         logits_detach = self.logits.numpy()
-        sampled_actions = tf.random.categorical(self.logits, num_samples=1)
+        sampled_actions = tf.random.categorical(logits_detach, num_samples=1)
         return tf.squeeze(sampled_actions, axis=-1)
 
     def deterministic_sample(self):
@@ -86,19 +87,25 @@ class DiagGaussianDistribution(Distribution):
     def set_param(self, mu, std):
         self.mu = mu
         self.std = std
-        self.distribution = tfd.Normal(mu, std)
 
     def get_param(self):
         return self.mu, self.std
 
     def log_prob(self, x):
-        return tf.math.reduce_sum(self.distribution.log_prob(x), axis=-1)
+        log_std = tf.math.log(self.std + 1e-8)
+        log_prob = -0.5 * (((x - self.mu) / (self.std + 1e-8)) ** 2 + 2.0 * log_std + tf.math.log(2.0 * np.pi))
+        log_prob = tf.reduce_sum(log_prob, axis=-1, keepdims=True)
+        return log_prob
 
     def entropy(self):
-        return tf.math.reduce_sum(self.distribution.entropy(), axis=-1)
+        log_std = tf.math.log(self.std + 1e-8)
+        entropy = tf.reduce_sum(0.5 + 0.5 * tf.math.log(2.0 * np.pi) + log_std, axis=-1, keepdims=True)
+        return entropy
 
     def stochastic_sample(self):
-        return self.distribution.sample()
+        eps = tf.random.normal(shape=tf.shape(self.mu))  # 𝜖 ~ N(0, 1)
+        action = self.mu + self.std * eps  # Reparameterization trick
+        return action
 
     def deterministic_sample(self):
         return self.mu
@@ -106,7 +113,10 @@ class DiagGaussianDistribution(Distribution):
     def kl_divergence(self, other: Distribution):
         assert isinstance(other,
                           DiagGaussianDistribution), "KL Divergence should be measured by two same distribution with the same type"
-        return kl_div(self.distribution, other.distribution)
+        var1 = tf.square(self.std)
+        var2 = tf.square(other.std)
+        kl = tf.math.log(other.std / self.std) + (var1 + tf.square(self.mu - other.mu)) / (2.0 * var2) - 0.5
+        return tf.reduce_sum(kl, axis=-1)
 
 
 class ActivatedDiagGaussianDistribution(DiagGaussianDistribution):

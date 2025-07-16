@@ -410,9 +410,8 @@ class GaussianActorNet(Module):
         self.mu = tk.Sequential(layers)
         self.logstd = self.add_weight(name="log_of_std",
                                       shape=(action_dim,),
-                                      initializer=tf.ones,
+                                      initializer=tf.keras.initializers.Constant(0.0),
                                       trainable=True)
-        # self.logstd = tf.Variable(tf.zeros((action_dim,)) - 1, trainable=True)
         self.dist = DiagGaussianDistribution(action_dim)
 
     @tf.function
@@ -426,7 +425,8 @@ class GaussianActorNet(Module):
             mu_: The mean variable of the Gaussian distribution.
         """
         mu_ = self.mu(x)
-        return mu_
+        std_ = tf.math.exp(self.logstd)
+        return mu_, std_
 
     def distribution(self, mu: Tensor, std: Tensor):
         self.dist.set_param(mu=mu, std=std)

@@ -44,6 +44,7 @@ class MAAC_Policy(Module):
                  device: Optional[Union[str, int]] = None,
                  **kwargs):
         super(MAAC_Policy, self).__init__()
+        self.is_continuous = False
         self.device = device
         self.action_space = action_space
         self.n_agents = n_agents
@@ -144,6 +145,7 @@ class MAAC_Policy_Share(MAAC_Policy):
                  device: Optional[Union[str, int]] = None,
                  **kwargs):
         super(MAAC_Policy, self).__init__()
+        self.is_continuous = False
         self.device = device
         self.action_dim = action_space.n
         self.n_agents = n_agents
@@ -241,6 +243,7 @@ class COMA_Policy(Module):
                  device: Optional[Union[str, int]] = None,
                  **kwargs):
         super(COMA_Policy, self).__init__()
+        self.is_continuous = False
         self.device = device
         self.action_space = action_space
         self.n_agents = n_agents
@@ -293,6 +296,7 @@ class COMA_Policy(Module):
                 params += self.critic_representation[k].trainable_variables
         return params
 
+    @tf.function
     def call(self, observation: Union[np.ndarray, dict], agent_ids: Union[np.ndarray, dict] = None,
              avail_actions: Union[np.ndarray, dict] = None, agent_key: str = None,
              rnn_hidden: Optional[Dict[str, List[Tensor]]] = None, epsilon=0.0, test_mode=False, **kwargs):
@@ -437,6 +441,7 @@ class MeanFieldActorCriticPolicy(Module):
                  device: Optional[Union[str, int]] = None,
                  **kwargs):
         super(MeanFieldActorCriticPolicy, self).__init__()
+        self.is_continuous = False
         self.action_dim = action_space.n
         self.representation = representation
         self.representation_info_shape = self.representation.output_shapes

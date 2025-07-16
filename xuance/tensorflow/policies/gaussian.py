@@ -34,6 +34,7 @@ class ActorPolicy(Module):
                  fixed_std: bool = True,
                  use_distributed_training: bool = False):
         super(ActorPolicy, self).__init__()
+        self.is_continuous = True
         self.action_dim = action_space.shape[0]
 
         self.use_distributed_training = use_distributed_training
@@ -95,6 +96,7 @@ class ActorCriticPolicy(Module):
                  activation_action: Optional[tk.layers.Layer] = None,
                  use_distributed_training: bool = False):
         super(ActorCriticPolicy, self).__init__()
+        self.is_continuous = True
         self.action_dim = action_space.shape[0]
 
         self.use_distributed_training = use_distributed_training
@@ -116,6 +118,7 @@ class ActorCriticPolicy(Module):
             self.critic = CriticNet(representation.output_shapes['state'][0],
                                     critic_hidden_size, normalize, initialize, activation)
 
+    @tf.function
     def call(self, observation: Union[np.ndarray, dict], **kwargs):
         """
         Returns the hidden states, action distribution, and values.
@@ -129,9 +132,9 @@ class ActorCriticPolicy(Module):
             value: The state values output by critic.
         """
         outputs = self.representation(observation)
-        a_mean = self.actor(outputs['state'])
+        a_mean, a_std = self.actor(outputs['state'])
         v = self.critic(outputs['state'])
-        return outputs, a_mean, v[:, 0]
+        return outputs, a_mean, a_std, v[:, 0]
 
 
 class PPGActorCritic(Module):
@@ -161,6 +164,7 @@ class PPGActorCritic(Module):
                  activation_action: Optional[tk.layers.Layer] = None,
                  use_distributed_training: bool = False):
         super(PPGActorCritic, self).__init__()
+        self.is_continuous = True
         self.action_dim = action_space.shape[0]
 
         self.use_distributed_training = use_distributed_training
@@ -190,6 +194,7 @@ class PPGActorCritic(Module):
             self.aux_critic = CriticNet(representation.output_shapes['state'][0],
                                         critic_hidden_size, normalize, initialize, activation)
 
+    @tf.function
     def call(self, observation: Union[np.ndarray, dict], **kwargs):
         """
         Returns the actors representation output, action distribution, values, and auxiliary values.
@@ -238,6 +243,7 @@ class SACPolicy(Module):
                  activation_action: Optional[tk.layers.Layer] = None,
                  use_distributed_training: bool = False):
         super(SACPolicy, self).__init__()
+        self.is_continuous = True
         self.action_space = action_space
         self.action_dim = action_space.shape[0]
         self.representation_info_shape = representation.output_shapes

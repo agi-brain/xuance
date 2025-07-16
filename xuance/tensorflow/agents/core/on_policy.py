@@ -79,8 +79,12 @@ class OnPolicyAgent(Agent):
             dists: The policy distributions.
             log_pi: Log of stochastic actions.
         """
-        _, logits, values = self.policy(observations)
-        policy_dists = self.policy.actor.distribution(logits=logits)
+        if self.policy.is_continuous:
+            _, mu, std, values = self.policy(observations)
+            policy_dists = self.policy.actor.distribution(mu=mu, std=std)
+        else:
+            _, logits, values = self.policy(observations)
+            policy_dists = self.policy.actor.distribution(logits=logits)
         actions = policy_dists.stochastic_sample()
         log_pi = policy_dists.log_prob(actions)
 

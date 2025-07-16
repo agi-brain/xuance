@@ -14,7 +14,7 @@ class IQL_Agents(OffPolicyMARLAgents):
     Args:
         config: the Namespace variable that provides hyperparameters and other settings.
         envs: the vectorized environments.
-        callback: .
+        callback: A user-defined callback function object to inject custom logic during training.
     """
 
     def __init__(self,

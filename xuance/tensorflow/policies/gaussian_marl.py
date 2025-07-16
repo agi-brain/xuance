@@ -25,6 +25,7 @@ class MAAC_Policy(Module):
                  activation_action: Optional[tk.layers.Layer] = None,
                  **kwargs):
         super(MAAC_Policy, self).__init__()
+        self.is_continuous = True
         self.action_space = action_space
         self.n_agents = n_agents
         self.use_parameter_sharing = kwargs['use_parameter_sharing']
@@ -70,6 +71,7 @@ class MAAC_Policy(Module):
             dim_critic_in += n_agents
         return dim_actor_in, dim_actor_out, dim_critic_in, dim_critic_out
 
+    @tf.function
     def call(self, observation: Dict[str, np.ndarray], agent_ids: Optional[np.ndarray] = None,
              avail_actions: Dict[str, np.ndarray] = None, agent_key: str = None,
              rnn_hidden: Optional[Dict[str, List[np.ndarray]]] = None):
@@ -155,6 +157,7 @@ class Basic_ISAC_Policy(Module):
                  activation_action: Optional[tk.layers.Layer] = None,
                  **kwargs):
         super(Basic_ISAC_Policy, self).__init__()
+        self.is_continuous = True
         self.action_space = action_space
         self.n_agents = n_agents
         self.use_parameter_sharing = kwargs['use_parameter_sharing']
