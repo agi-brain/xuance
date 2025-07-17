@@ -50,7 +50,6 @@ class PPG_Agent(OnPolicyAgent):
                 actor_hidden_size=self.config.actor_hidden_size, critic_hidden_size=self.config.critic_hidden_size,
                 normalize=normalize_fn, initialize=initializer, activation=activation,
                 use_distributed_training=self.distributed_training)
-            self.continuous_control = False
         elif self.config.policy == "Gaussian_PPG":
             policy = REGISTRY_Policy["Gaussian_PPG"](
                 action_space=self.action_space, representation=representation,
@@ -58,7 +57,6 @@ class PPG_Agent(OnPolicyAgent):
                 normalize=normalize_fn, initialize=initializer, activation=activation,
                 activation_action=ActivationFunctions[self.config.activation_action],
                 use_distributed_training=self.distributed_training)
-            self.continuous_control = True
         else:
             raise AttributeError(f"PPG currently does not support the policy named {self.config.policy}.")
 
@@ -79,28 +77,34 @@ class PPG_Agent(OnPolicyAgent):
             dists: The policy distributions.
             log_pi: Log of stochastic actions.
         """
-        shape_obs = observations.shape
-        if len(shape_obs) > 2:
-            observations = observations.reshape(-1, shape_obs[-1])
-            if self.continuous_control:
-                _, policy_mean, values, _ = self.policy(observations)
-                policy_mean = policy_mean.numpy().reshape(shape_obs[:-1] + self.action_space.shape)
-                policy_std = tf.exp(self.policy.actor.logstd).numpy()
-                self.policy.actor.dist.set_param(policy_mean, policy_std)
-            else:
-                _, policy_logits, values, _ = self.policy(observations)
-                policy_logits = policy_logits.numpy().reshape(shape_obs[:-1] + (self.action_space.n, ))
-                self.policy.actor.dist.set_param(logits=policy_logits)
-            values = tf.reshape(values, shape_obs[:-1])
+        if self.policy.is_continuous:
+            _, mu, std, values, _ = self.policy(observations)
+            policy_dists = self.policy.actor.distribution(mu=mu, std=std)
         else:
-            _, _, values, _ = self.policy(observations)
-        policy_dists = self.policy.actor.dist
+            _, logits, values, _ = self.policy(observations)
+            policy_dists = self.policy.actor.distribution(logits=logits)
+
         actions = policy_dists.stochastic_sample()
         log_pi = policy_dists.log_prob(actions) if return_logpi else None
         dists = split_distributions(policy_dists) if return_dists else None
         actions = actions.numpy()
         values = values.numpy()
         return {"actions": actions, "values": values, "dists": dists, "log_pi": log_pi}
+
+    def batch_actions(self, observations: np.ndarray):
+        """Return batch of actions with shape = [num_envs, batch_size, dim_obs]"""
+        obs_shape = observations.shape
+        obs_flatten = tf.reshape(observations, (-1, obs_shape[-1]))
+        if self.policy.is_continuous:
+            _, mu, std, _, _ = self.policy(obs_flatten)
+            mu = tf.reshape(mu, obs_shape[:-1] + (mu.shape[-1],))
+            policy_dists = self.policy.actor.distribution(mu=mu, std=std)
+        else:
+            _, logits, _, _ = self.policy(obs_flatten)
+            logits = tf.reshape(logits, obs_shape[:-1] + (logits.shape[-1],))
+            policy_dists = self.policy.actor.distribution(logits=logits)
+        dists = split_distributions(policy_dists)
+        return {"dists": dists}
 
     def get_aux_info(self, policy_output: dict = None):
         """Returns auxiliary information.
@@ -153,7 +157,7 @@ class PPG_Agent(OnPolicyAgent):
                 # update old_prob
                 buffer_obs = self.memory.observations
                 buffer_act = self.memory.actions
-                new_policy_out = self.action(buffer_obs, return_dists=True)
+                new_policy_out = self.batch_actions(buffer_obs)
                 aux_info = self.get_aux_info(new_policy_out)
                 self.memory.auxiliary_infos.update(aux_info)
                 for _ in range(self.aux_nepoch):

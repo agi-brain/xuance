@@ -44,7 +44,7 @@ class A2C_Learner(Learner):
             else:
                 outputs, logits, v_pred = self.policy(obs_batch)
                 # calculate log prob
-                log_prob = tf.nn.log_softmax(logits)
+                log_prob = tf.nn.log_softmax(logits, axis=-1)
                 log_prob_a = tf.gather(log_prob, act_batch, axis=-1, batch_dims=-1)
                 # calculate entropy
                 probs = tf.exp(log_prob)

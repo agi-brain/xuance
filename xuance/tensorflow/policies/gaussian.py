@@ -65,8 +65,8 @@ class ActorPolicy(Module):
             a_mean: The distribution of actions output by actor.
         """
         outputs = self.representation(observation)
-        a_mean = self.actor(outputs['state'])
-        return outputs, a_mean, None
+        a_mean, a_std = self.actor(outputs['state'])
+        return outputs, a_mean, a_std, None
 
 
 class ActorCriticPolicy(Module):
@@ -210,10 +210,10 @@ class PPGActorCritic(Module):
         """
         policy_outputs = self.actor_representation(observation)
         critic_outputs = self.critic_representation(observation)
-        a_mean = self.actor(policy_outputs['state'])
+        a_mean, a_std = self.actor(policy_outputs['state'])
         value = self.critic(critic_outputs['state'])
         aux_value = self.aux_critic(policy_outputs['state'])
-        return policy_outputs, a_mean, value[:, 0], aux_value[:, 0]
+        return policy_outputs, a_mean, a_std, value[:, 0], aux_value[:, 0]
 
 
 class SACPolicy(Module):

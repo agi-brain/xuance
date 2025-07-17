@@ -73,7 +73,7 @@ def merge_distributions(distribution_list):
         logits = tf.concat([dist.logits for dist in distribution_list], axis=0)
         action_dim = logits.shape[-1]
         dist = CategoricalDistribution(action_dim)
-        dist.set_param(tf.stop_gradient(logits))
+        dist.set_param(logits=tf.stop_gradient(logits))
         return dist
     elif isinstance(distribution_list[0], DiagGaussianDistribution):
         shape = distribution_list.shape
@@ -84,7 +84,7 @@ def merge_distributions(distribution_list):
         dist = DiagGaussianDistribution(action_dim)
         mu = tf.reshape(mu, shape + (action_dim,))
         std = tf.reshape(std, shape + (action_dim,))
-        dist.set_param(mu, std)
+        dist.set_param(mu=mu, std=std)
         return dist
     elif isinstance(distribution_list[0, 0], CategoricalDistribution):
         shape = distribution_list.shape

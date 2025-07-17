@@ -57,6 +57,7 @@ class CategoricalDistribution(Distribution):
         x = tf.expand_dims(tf.cast(x, dtype=tf.int32), -1)
         log_probs = tf.nn.log_softmax(self.logits)
         y = tf.gather(log_probs, x, batch_dims=1)
+        y = tf.squeeze(y, axis=-1)
         return y
 
     def entropy(self):
@@ -75,7 +76,11 @@ class CategoricalDistribution(Distribution):
     def kl_divergence(self, other: Distribution):
         assert isinstance(other,
                           CategoricalDistribution), "KL Divergence should be measured by two same distribution with the same type"
-        return kl_div(self.distribution, other.distribution)
+        log_p = tf.nn.log_softmax(self.logits, axis=-1)  # log P(a)
+        log_q = tf.nn.log_softmax(other.logits, axis=-1)  # log Q(a)
+        p = tf.math.exp(log_p)  # P(a)
+        kl = tf.reduce_sum(p * (log_p - log_q), axis=-1)
+        return kl
 
 
 class DiagGaussianDistribution(Distribution):
@@ -94,7 +99,7 @@ class DiagGaussianDistribution(Distribution):
     def log_prob(self, x):
         log_std = tf.math.log(self.std + 1e-8)
         log_prob = -0.5 * (((x - self.mu) / (self.std + 1e-8)) ** 2 + 2.0 * log_std + tf.math.log(2.0 * np.pi))
-        log_prob = tf.reduce_sum(log_prob, axis=-1, keepdims=True)
+        log_prob = tf.reduce_sum(log_prob, axis=-1, keepdims=False)
         return log_prob
 
     def entropy(self):
