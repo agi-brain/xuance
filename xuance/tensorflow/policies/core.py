@@ -359,24 +359,6 @@ class CategoricalActorNet_SAC(CategoricalActorNet):
         super(CategoricalActorNet_SAC, self).__init__(state_dim, action_dim, hidden_sizes,
                                                       normalize, initialize, activation)
 
-    @tf.function
-    def call(self, x: Union[Tensor, np.ndarray], avail_actions: Optional[Tensor] = None, **kwargs):
-        """
-        Returns the stochastic distribution over all discrete actions.
-        Parameters:
-            x (Union[Tensor, np.ndarray]): The input tensor.
-            avail_actions (Optional[Tensor]): The actions mask values when use actions mask, default is None.
-
-        Returns:
-            self.dist: CategoricalDistribution(action_dim), a distribution over all discrete actions.
-        """
-        logits = self.model(x)
-        if avail_actions is not None:
-            logits[avail_actions == 0] = -1e10
-        probs = tf.nn.softmax(logits, axis=-1)
-        self.dist.set_param(probs=probs)
-        return probs
-
 
 class GaussianActorNet(Module):
     """

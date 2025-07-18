@@ -311,9 +311,8 @@ class SACDISPolicy(Module):
             act_sample: The sampled actions from the distribution output by the actor.
         """
         outputs = self.actor_representation(observation)
-        _ = self.actor(outputs['state'])
-        act_samples = self.actor.dist.stochastic_sample()
-        return outputs, act_samples
+        logits = self.actor(outputs['state'])
+        return outputs, logits
 
     @tf.function
     def Qpolicy(self, observation: Union[np.ndarray, dict]):
@@ -333,7 +332,8 @@ class SACDISPolicy(Module):
         outputs_critic_1 = self.critic_1_representation(observation)
         outputs_critic_2 = self.critic_2_representation(observation)
 
-        act_prob = self.actor(outputs_actor['state'])
+        act_logits = self.actor(outputs_actor['state'])
+        act_prob = tf.nn.softmax(act_logits, axis=-1)
         z = act_prob == 0.0
         z = tf.cast(z, dtype=tf.float32) * 1e-8
         log_action_prob = tf.math.log(act_prob + z)
@@ -359,7 +359,8 @@ class SACDISPolicy(Module):
         outputs_critic_1 = self.target_critic_1_representation(observation)
         outputs_critic_2 = self.target_critic_2_representation(observation)
 
-        new_act_prob = self.actor(outputs_actor['state'])
+        new_act_logits = self.actor(outputs_actor['state'])
+        new_act_prob = tf.nn.softmax(new_act_logits, axis=-1)
         z = new_act_prob == 0.0
         z = tf.cast(z, dtype=tf.float32) * 1e-8
         log_action_prob = tf.math.log(new_act_prob + z)

@@ -68,8 +68,13 @@ class SAC_Agent(OffPolicyAgent):
             dists: The policy distributions.
             log_pi: Log of stochastic actions.
         """
-        _, mu, std = self.policy(observations)
-        policy_dists = self.policy.actor.distribution(mu=mu, std=std)
-        act_sample = policy_dists.activated_rsample()
+        if self.policy.is_continuous:
+            _, mu, std = self.policy(observations)
+            policy_dists = self.policy.actor.distribution(mu=mu, std=std)
+            act_sample = policy_dists.activated_rsample()
+        else:
+            _, logits = self.policy(observations)
+            policy_dists = self.policy.actor.distribution(logits=logits)
+            act_sample = policy_dists.stochastic_sample()
         actions = act_sample.numpy()
         return {"actions": actions}
