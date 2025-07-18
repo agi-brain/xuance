@@ -98,7 +98,8 @@ class SAC_Learner(Learner):
     @tf.function
     def alpha_forward_fn(self, log_pi):
         with tf.GradientTape() as tape:
-            alpha_loss = -tf.math.reduce_mean(self.alpha_layer.log_alpha.value() * (log_pi + self.target_entropy))
+            object_value = tf.stop_gradient(log_pi + self.target_entropy)
+            alpha_loss = -tf.math.reduce_mean(self.alpha_layer.log_alpha * object_value)
             gradients = tape.gradient(alpha_loss, self.alpha_layer.trainable_variables)
             self.alpha_optimizer.apply_gradients([
                 (grad, var)

@@ -500,11 +500,9 @@ class GaussianActorNet_SAC(Module):
             mlp, input_shape = mlp_block(input_shape[0], h, normalize, activation, initialize)
             layers.extend(mlp)
         self.out = tk.Sequential(layers)
-        self.out_mu = tk.layers.Dense(units=action_dim, activation=None, input_shape=(hidden_sizes[-1],))
-        self.out_log_std = tk.layers.Dense(units=action_dim, activation=None, input_shape=(hidden_sizes[-1],))
+        self.mu = tk.layers.Dense(units=action_dim, activation=None, input_shape=(hidden_sizes[-1],))
+        self.log_std = tk.layers.Dense(units=action_dim, activation=None, input_shape=(hidden_sizes[-1],))
         self.dist = ActivatedDiagGaussianDistribution(action_dim, activation_action)
-        self.out_mu.build(input_shape=(None, hidden_sizes[-1]))
-        self.out_log_std.build(input_shape=(None, hidden_sizes[-1]))
 
     @tf.function
     def call(self, x: Union[Tensor, np.ndarray], **kwargs):
@@ -517,8 +515,8 @@ class GaussianActorNet_SAC(Module):
             self.dist: A distribution over the continuous action space.
         """
         output = self.out(x)
-        mu_ = self.out_mu(output)
-        log_std = tf.clip_by_value(self.out_log_std(output), -20, 2)
+        mu_ = self.mu(output)
+        log_std = tf.clip_by_value(self.log_std(output), -20, 2)
         std_ = tf.exp(log_std)
         return mu_, std_
 
