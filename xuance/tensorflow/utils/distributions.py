@@ -135,7 +135,7 @@ class ActivatedDiagGaussianDistribution(DiagGaussianDistribution):
     def activated_rsample_and_logprob(self):
         act_pre_activated = self.stochastic_sample()  # sample without being activated.
         act_activated = self.activation_fn(act_pre_activated)
-        log_prob = self.distribution.log_prob(act_pre_activated)
+        log_prob = self.log_prob(act_pre_activated)
         correction = - 2. * (tf.math.log(2.0) - act_pre_activated - softplus(-2. * act_pre_activated))
         log_prob += correction
         return act_activated, tf.math.reduce_sum(log_prob, axis=-1)

@@ -68,17 +68,10 @@ class SAC_Learner(Learner):
             p_loss = tf.reduce_mean(self.alpha * log_pi - policy_q)
             gradients = tape.gradient(p_loss, self.policy.actor_trainable_variables)
             if self.use_grad_clip:
-                self.optimizer['actor'].apply_gradients([
-                    (tf.clip_by_norm(grad, self.grad_clip_norm), var)
-                    for (grad, var) in zip(gradients, self.policy.actor_trainable_variables)
-                    if grad is not None
-                ])
+                gradients, _ = tf.clip_by_global_norm(gradients, clip_norm=self.grad_clip_norm)
+                self.optimizer['actor'].apply_gradients(zip(gradients, self.policy.actor_trainable_variables))
             else:
-                self.optimizer['actor'].apply_gradients([
-                    (grad, var)
-                    for (grad, var) in zip(gradients, self.policy.actor_trainable_variables)
-                    if grad is not None
-                ])
+                self.optimizer['actor'].apply_gradients(zip(gradients, self.policy.actor_trainable_variables))
         return p_loss, log_pi, policy_q
 
     @tf.function
@@ -96,15 +89,10 @@ class SAC_Learner(Learner):
             q_loss = tk.losses.mean_squared_error(y_true, y_pred_1) + tk.losses.mean_squared_error(y_true, y_pred_2)
             gradients = tape.gradient(q_loss, self.policy.critic_trainable_variables)
             if self.use_grad_clip:
-                self.optimizer['critic'].apply_gradients([
-                    (tf.clip_by_norm(grad, self.grad_clip_norm), var)
-                    for (grad, var) in zip(gradients, self.policy.critic_trainable_variables)
-                    if grad is not None])
+                gradients, _ = tf.clip_by_global_norm(gradients, clip_norm=self.grad_clip_norm)
+                self.optimizer['critic'].apply_gradients(zip(gradients, self.policy.critic_trainable_variables))
             else:
-                self.optimizer['critic'].apply_gradients([
-                    (grad, var)
-                    for (grad, var) in zip(gradients, self.policy.critic_trainable_variables)
-                    if grad is not None])
+                self.optimizer['critic'].apply_gradients(zip(gradients, self.policy.critic_trainable_variables))
         return q_loss
 
     @tf.function
@@ -146,11 +134,11 @@ class SAC_Learner(Learner):
 
     def update(self, **samples):
         self.iterations += 1
-        obs_batch = samples['obs']
-        act_batch = samples['actions']
-        next_batch = samples['obs_next']
-        rew_batch = samples['rewards']
-        ter_batch = samples['terminals']
+        obs_batch = tf.convert_to_tensor(samples["obs"], dtype=tf.float32)
+        act_batch = tf.convert_to_tensor(samples["actions"], dtype=tf.float32)
+        next_batch = tf.convert_to_tensor(samples["obs_next"], dtype=tf.float32)
+        rew_batch = tf.convert_to_tensor(samples['rewards'], dtype=tf.float32)
+        ter_batch = tf.convert_to_tensor(samples['terminals'], dtype=tf.float32)
 
         q_loss = self.learn_critic(obs_batch, act_batch, rew_batch, next_batch, ter_batch)
         p_loss, log_pi, policy_q = self.learn_actor(obs_batch)

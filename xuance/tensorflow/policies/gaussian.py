@@ -317,9 +317,8 @@ class SACPolicy(Module):
             act_sample: The sampled actions from the distribution output by the actor.
         """
         outputs = self.actor_representation(observation)
-        _ = self.actor(outputs['state'])
-        act_sample = self.actor.dist.activated_rsample()
-        return outputs, act_sample
+        a_mean, a_std = self.actor(outputs['state'])
+        return outputs, a_mean, a_std
 
     @tf.function
     def Qpolicy(self, observation: Union[np.ndarray, dict]):
@@ -338,9 +337,17 @@ class SACPolicy(Module):
         outputs_critic_1 = self.critic_1_representation(observation)
         outputs_critic_2 = self.critic_2_representation(observation)
 
-        _ = self.actor(outputs_actor['state'])
-        act_dist = self.actor.dist
-        act_sample, log_action_prob = act_dist.activated_rsample_and_logprob()
+        mu, std = self.actor(outputs_actor['state'])
+        eps = tf.random.normal(shape=tf.shape(mu))  # 𝜖 ~ N(0, 1)
+        act_pre_activated = mu + std * eps  # actions before activated
+        act_sample = self.actor.activation_action(act_pre_activated)
+        # calculate log_action_prob
+        log_std = tf.math.log(std + 1e-8)
+        log_2pi = tf.math.log(2.0 * np.pi)
+        log_prob = -0.5 * (((act_pre_activated - mu) / (std + 1e-8)) ** 2 + 2.0 * log_std + log_2pi)
+        log_prob = tf.reduce_sum(log_prob, axis=-1, keepdims=False)
+        correction = - 2. * (tf.math.log(2.0) - act_pre_activated - tk.activations.softplus(-2. * act_pre_activated))
+        log_action_prob = tf.math.reduce_sum(log_prob + correction, axis=-1)
 
         q_1 = self.critic_1(tf.concat([outputs_critic_1['state'], act_sample], axis=-1))
         q_2 = self.critic_2(tf.concat([outputs_critic_2['state'], act_sample], axis=-1))
@@ -362,9 +369,17 @@ class SACPolicy(Module):
         outputs_critic_1 = self.target_critic_1_representation(observation)
         outputs_critic_2 = self.target_critic_2_representation(observation)
 
-        _ = self.actor(outputs_actor['state'])
-        new_act_dist = self.actor.dist
-        new_act_sample, log_action_prob = new_act_dist.activated_rsample_and_logprob()
+        mu, std = self.actor(outputs_actor['state'])
+        eps = tf.random.normal(shape=tf.shape(mu))  # 𝜖 ~ N(0, 1)
+        act_pre_activated = mu + std * eps  # actions before activated
+        new_act_sample = self.actor.activation_action(act_pre_activated)
+        # calculate log_action_prob
+        log_std = tf.math.log(std + 1e-8)
+        log_2pi = tf.math.log(2.0 * np.pi)
+        log_prob = -0.5 * (((act_pre_activated - mu) / (std + 1e-8)) ** 2 + 2.0 * log_std + log_2pi)
+        log_prob = tf.reduce_sum(log_prob, axis=-1, keepdims=False)
+        correction = - 2. * (tf.math.log(2.0) - act_pre_activated - tk.activations.softplus(-2. * act_pre_activated))
+        log_action_prob = tf.math.reduce_sum(log_prob + correction, axis=-1)
 
         target_q_1 = self.target_critic_1(tf.concat([outputs_critic_1['state'], new_act_sample], axis=-1))
         target_q_2 = self.target_critic_2(tf.concat([outputs_critic_2['state'], new_act_sample], axis=-1))

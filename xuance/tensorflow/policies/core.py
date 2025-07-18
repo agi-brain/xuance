@@ -493,6 +493,7 @@ class GaussianActorNet_SAC(Module):
                  activation: Optional[ModuleType] = None,
                  activation_action: Optional[ModuleType] = None):
         super(GaussianActorNet_SAC, self).__init__()
+        self.activation_action = activation_action
         layers = []
         input_shape = (state_dim,)
         for h in hidden_sizes:
@@ -516,11 +517,14 @@ class GaussianActorNet_SAC(Module):
             self.dist: A distribution over the continuous action space.
         """
         output = self.out(x)
-        mu = self.out_mu(output)
+        mu_ = self.out_mu(output)
         log_std = tf.clip_by_value(self.out_log_std(output), -20, 2)
-        std = tf.exp(log_std)
-        self.dist.set_param(mu, std)
-        return mu
+        std_ = tf.exp(log_std)
+        return mu_, std_
+
+    def distribution(self, mu: Tensor, std: Tensor):
+        self.dist.set_param(mu=mu, std=std)
+        return self.dist
 
 
 class VDN_mixer(Module):
