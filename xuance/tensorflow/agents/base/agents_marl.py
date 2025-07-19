@@ -34,6 +34,7 @@ class MARLAgents(ABC):
         self.use_parameter_sharing = config.use_parameter_sharing
         self.use_actions_mask = getattr(config, "use_actions_mask", False)
         self.use_global_state = getattr(config, "use_global_state", False)
+        self.distributed_training = config.distributed_training
 
         self.gamma = config.gamma
         self.start_training = getattr(config, "start_training", 1)

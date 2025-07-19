@@ -79,6 +79,7 @@ class LearnerMAS(ABC):
         self.os_name = platform.platform()
         self.value_normalizer = None
         self.config = config
+        self.distributed_training = config.distributed_training
         self.n_agents = config.n_agents
         self.dim_id = self.n_agents
 

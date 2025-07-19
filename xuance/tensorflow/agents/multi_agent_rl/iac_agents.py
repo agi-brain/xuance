@@ -1,11 +1,10 @@
 import numpy as np
-import torch
 from argparse import Namespace
 from operator import itemgetter
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
 from xuance.common import List, Optional, Union
-from xuance.tensorflow import Module
-from xuance.tensorflow.utils import NormalizeFunctions, ActivationFunctions
+from xuance.tensorflow import Module, tf
+from xuance.tensorflow.utils import NormalizeFunctions, InitializeFunctions, ActivationFunctions
 from xuance.tensorflow.policies import REGISTRY_Policy
 from xuance.tensorflow.agents import OnPolicyMARLAgents, BaseCallback
 
@@ -36,9 +35,8 @@ class IAC_Agents(OnPolicyMARLAgents):
             policy (Module): A dict of policies.
         """
         normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None
-        initializer = torch.nn.init.orthogonal_
+        initializer = InitializeFunctions[self.config.initialize] if hasattr(self.config, "initialize") else None
         activation = ActivationFunctions[self.config.activation]
-        device = self.device
         agent = self.config.agent
 
         # build representations
@@ -52,10 +50,9 @@ class IAC_Agents(OnPolicyMARLAgents):
                 representation_actor=A_representation, representation_critic=C_representation,
                 actor_hidden_size=self.config.actor_hidden_size, critic_hidden_size=self.config.critic_hidden_size,
                 normalize=normalize_fn, initialize=initializer, activation=activation,
-                device=device, use_distributed_training=self.distributed_training,
+                use_distributed_training=self.distributed_training,
                 use_parameter_sharing=self.use_parameter_sharing, model_keys=self.model_keys,
                 use_rnn=self.use_rnn, rnn=self.config.rnn if self.use_rnn else None)
-            self.continuous_control = False
         elif self.config.policy == "Gaussian_MAAC_Policy":
             policy = REGISTRY_Policy["Gaussian_MAAC_Policy"](
                 action_space=self.action_space, n_agents=self.n_agents,
@@ -63,10 +60,9 @@ class IAC_Agents(OnPolicyMARLAgents):
                 actor_hidden_size=self.config.actor_hidden_size, critic_hidden_size=self.config.critic_hidden_size,
                 normalize=normalize_fn, initialize=initializer, activation=activation,
                 activation_action=ActivationFunctions[self.config.activation_action],
-                device=device, use_distributed_training=self.distributed_training,
+                use_distributed_training=self.distributed_training,
                 use_parameter_sharing=self.use_parameter_sharing, model_keys=self.model_keys,
                 use_rnn=self.use_rnn, rnn=self.config.rnn if self.use_rnn else None)
-            self.continuous_control = True
         else:
             raise AttributeError(f"{agent} currently does not support the policy named {self.config.policy}.")
         return policy
@@ -135,36 +131,37 @@ class IAC_Agents(OnPolicyMARLAgents):
         rnn_hidden_critic_new, log_pi_a_dict, values_dict = {}, {}, {}
 
         obs_input, agents_id, avail_actions_input = self._build_inputs(obs_dict, avail_actions_dict)
-        rnn_hidden_actor_new, pi_dists = self.policy(observation=obs_input,
-                                                     agent_ids=agents_id,
-                                                     avail_actions=avail_actions_input,
-                                                     rnn_hidden=rnn_hidden_actor)
+        rnn_hidden_actor_new, pi_logits = self.policy(observation=obs_input,
+                                                      agent_ids=agents_id,
+                                                      avail_actions=avail_actions_input,
+                                                      rnn_hidden=rnn_hidden_actor)
         if not test_mode:
             rnn_hidden_critic_new, values_dict = self.policy.get_values(observation=obs_input,
                                                                         agent_ids=agents_id,
                                                                         rnn_hidden=rnn_hidden_critic)
             if self.use_parameter_sharing:
-                values_dict = {k: values_dict[self.model_keys[0]].detach().cpu().numpy().reshape(n_env, -1)[:, i]
+                values_dict = {k: values_dict[self.model_keys[0]].numpy().reshape(n_env, -1)[:, i]
                                for i, k in enumerate(self.agent_keys)}
             else:
-                values_dict = {k: v.detach().cpu().numpy().reshape(n_env) for k, v in values_dict.items()}
+                values_dict = {k: v.numpy().reshape(n_env) for k, v in values_dict.items()}
 
         if self.use_parameter_sharing:
             key = self.agent_keys[0]
-            actions_sample = pi_dists[key].stochastic_sample()
+            pi_dists = self.policy.actor[key].distribution(logits=pi_logits[key])
+            actions_sample = pi_dists.stochastic_sample()
             if self.continuous_control:
-                actions_out = actions_sample.reshape(n_env, self.n_agents, -1)
+                actions_out = actions_sample.numpy().reshape(n_env, self.n_agents, -1)
             else:
-                actions_out = actions_sample.reshape(n_env, self.n_agents)
-            actions_dict = [{k: actions_out[e, i].cpu().detach().numpy() for i, k in enumerate(self.agent_keys)}
-                            for e in range(n_env)]
+                actions_out = actions_sample.numpy().reshape(n_env, self.n_agents)
+            actions_dict = [{k: actions_out[e, i] for i, k in enumerate(self.agent_keys)} for e in range(n_env)]
         else:
+            pi_dists = {k: self.policy.actor[k].distribution(logits=pi_logits[k]) for k in self.agent_keys}
             actions_sample = {k: pi_dists[k].stochastic_sample() for k in self.agent_keys}
             if self.continuous_control:
-                actions_dict = [{k: actions_sample[k].cpu().detach().numpy()[e].reshape([-1]) for k in self.agent_keys}
+                actions_dict = [{k: actions_sample[k].numpy()[e].reshape([-1]) for k in self.agent_keys}
                                 for e in range(n_env)]
             else:
-                actions_dict = [{k: actions_sample[k].cpu().detach().numpy()[e].reshape([]) for k in self.agent_keys}
+                actions_dict = [{k: actions_sample[k].numpy()[e].reshape([]) for k in self.agent_keys}
                                 for e in range(n_env)]
 
         return {"rnn_hidden_actor": rnn_hidden_actor_new, "rnn_hidden_critic": rnn_hidden_critic_new,
@@ -189,33 +186,14 @@ class IAC_Agents(OnPolicyMARLAgents):
             values_dict: The critic values.
         """
         n_env = 1
-        rnn_hidden_critic_i = None
-        if self.use_parameter_sharing:
-            key = self.agent_keys[0]
-            if self.use_rnn:
-                hidden_item_index = np.arange(i_env * self.n_agents, (i_env + 1) * self.n_agents)
-                rnn_hidden_critic_i = {key: self.policy.critic_representation[key].get_hidden_item(
-                    hidden_item_index, *rnn_hidden_critic[key])}
-                batch_size = n_env * self.n_agents
-                obs_array = np.array(itemgetter(*self.agent_keys)(obs_dict))
-                obs_input = {key: obs_array.reshape([batch_size, 1, -1])}
-                agents_id = torch.eye(self.n_agents).unsqueeze(0).expand(n_env, -1, -1).reshape(batch_size, 1, -1).to(
-                    self.device)
-            else:
-                obs_input = {key: np.array([itemgetter(*self.agent_keys)(obs_dict)])}
-                agents_id = torch.eye(self.n_agents).unsqueeze(0).expand(n_env, -1, -1).to(self.device)
 
-            rnn_hidden_critic_new, values_dict = self.policy.get_values(observation=obs_input,
-                                                                        agent_ids=agents_id,
-                                                                        rnn_hidden=rnn_hidden_critic_i)
-            values_out = values_dict[key].detach().cpu().numpy().reshape(-1)
-            values_dict = {k: values_out[i] for i, k in enumerate(self.agent_keys)}
+        obs_input, agents_id, avail_actions_input = self._build_inputs([obs_dict])
+        rnn_hidden_critic_new, values_dict = self.policy.get_values(observation=obs_input,
+                                                                    agent_ids=agents_id,
+                                                                    rnn_hidden=rnn_hidden_critic)
+        if self.use_parameter_sharing:
+            values_dict = {k: values_dict[self.model_keys[0]].numpy().reshape(-1)[i]
+                           for i, k in enumerate(self.agent_keys)}
         else:
-            if self.use_rnn:
-                rnn_hidden_critic_i = {k: self.policy.critic_representation[k].get_hidden_item(
-                    [i_env, ], *rnn_hidden_critic[k]) for k in self.agent_keys}
-            obs_input = {k: obs_dict[k][None, None, :] for k in self.agent_keys} if self.use_rnn else obs_dict
-            rnn_hidden_critic_new, values_dict = self.policy.get_values(observation=obs_input,
-                                                                        rnn_hidden=rnn_hidden_critic_i)
-            values_dict = {k: v.detach().cpu().numpy().reshape([]) for k, v in values_dict.items()}
+            values_dict = {k: v.numpy().reshape([]) for k, v in values_dict.items()}
         return rnn_hidden_critic_new, values_dict

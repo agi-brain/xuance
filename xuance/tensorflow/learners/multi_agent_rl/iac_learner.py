@@ -9,7 +9,7 @@ from torch import nn
 from argparse import Namespace
 from operator import itemgetter
 from xuance.common import Optional, List
-from xuance.tensorflow import Tensor
+from xuance.tensorflow import tk
 from xuance.tensorflow.utils import ValueNorm
 from xuance.tensorflow.learners import LearnerMAS
 
@@ -35,12 +35,18 @@ class IAC_Learner(LearnerMAS):
             self.value_normalizer = None
 
     def build_optimizer(self):
-        self.optimizer = torch.optim.Adam(self.policy.parameters_model, lr=self.learning_rate, eps=1e-5,
-                                          weight_decay=self.config.weight_decay)
-        self.scheduler = torch.optim.lr_scheduler.LinearLR(self.optimizer,
-                                                           start_factor=1.0,
-                                                           end_factor=self.end_factor_lr_decay,
-                                                           total_iters=self.config.running_steps)
+        if ("macOS" in self.os_name) and ("arm" in self.os_name):  # For macOS with Apple's M-series chips.
+            if self.distributed_training:
+                with self.policy.mirrored_strategy.scope():
+                    self.optimizer = tk.optimizers.legacy.Adam(self.config.learning_rate)
+            else:
+                self.optimizer = tk.optimizers.legacy.Adam(self.config.learning_rate)
+        else:
+            if self.distributed_training:
+                with self.policy.mirrored_strategy.scope():
+                    self.optimizer = tk.optimizers.Adam(self.config.learning_rate)
+            else:
+                self.optimizer = tk.optimizers.Adam(self.config.learning_rate)
 
     def build_training_data(self, sample: Optional[dict],
                             use_parameter_sharing: Optional[bool] = False,
