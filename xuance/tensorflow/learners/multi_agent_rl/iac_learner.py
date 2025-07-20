@@ -161,7 +161,7 @@ class IAC_Learner(LearnerMAS):
                     self.policy.mirrored_strategy.reduce(tf.distribute.ReduceOp.SUM, c_loss, axis=None),
                     self.policy.mirrored_strategy.reduce(tf.distribute.ReduceOp.SUM, e_loss, axis=None),
                     self.policy.mirrored_strategy.reduce(tf.distribute.ReduceOp.SUM, v_pred, axis=None))
-        else
+        else:
             return self.forward_fn(*inputs)
 
     def update(self, sample):
