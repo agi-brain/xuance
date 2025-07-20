@@ -1,15 +1,13 @@
 """
 Independent Advantage Actor Critic (IAC)
 Paper link: https://ojs.aaai.org/index.php/AAAI/article/view/11794
-Implementation: Pytorch
+Implementation: TensorFlow2
 """
 import numpy as np
-import torch
-from torch import nn
 from argparse import Namespace
 from operator import itemgetter
 from xuance.common import Optional, List
-from xuance.tensorflow import tk
+from xuance.tensorflow import tf, tk, Module
 from xuance.tensorflow.utils import ValueNorm
 from xuance.tensorflow.learners import LearnerMAS
 
@@ -19,7 +17,7 @@ class IAC_Learner(LearnerMAS):
                  config: Namespace,
                  model_keys: List[str],
                  agent_keys: List[str],
-                 policy: nn.Module,
+                 policy: Module,
                  callback):
         super(IAC_Learner, self).__init__(config, model_keys, agent_keys, policy, callback)
         self.build_optimizer()
@@ -27,10 +25,8 @@ class IAC_Learner(LearnerMAS):
         self.use_huber_loss, self.huber_delta = config.use_huber_loss, config.huber_delta
         self.use_value_norm = config.use_value_norm
         self.vf_coef, self.ent_coef = config.vf_coef, config.ent_coef
-        self.mse_loss = nn.MSELoss()
-        self.huber_loss = nn.HuberLoss(reduction="none", delta=self.huber_delta)
         if self.use_value_norm:
-            self.value_normalizer = {key: ValueNorm(1).to(self.device) for key in self.model_keys}
+            self.value_normalizer = {key: ValueNorm(1) for key in self.model_keys}
         else:
             self.value_normalizer = None
 
@@ -153,6 +149,21 @@ class IAC_Learner(LearnerMAS):
         }
         return sample_Tensor
 
+    def forward_fn(self, *args):
+        with tf.GradientTape() as tape:
+            pass
+
+    def learn(self, *inputs):
+        if self.distributed_training:
+            loss, a_loss, c_loss, e_loss, v_pred = self.policy.mirrored_strategy.run(self.forward_fn, args=inputs)
+            return (self.policy.mirrored_strategy.reduce(tf.distribute.ReduceOp.SUM, loss, axis=None),
+                    self.policy.mirrored_strategy.reduce(tf.distribute.ReduceOp.SUM, a_loss, axis=None),
+                    self.policy.mirrored_strategy.reduce(tf.distribute.ReduceOp.SUM, c_loss, axis=None),
+                    self.policy.mirrored_strategy.reduce(tf.distribute.ReduceOp.SUM, e_loss, axis=None),
+                    self.policy.mirrored_strategy.reduce(tf.distribute.ReduceOp.SUM, v_pred, axis=None))
+        else
+            return self.forward_fn(*inputs)
+
     def update(self, sample):
         self.iterations += 1
         info = {}
@@ -162,16 +173,21 @@ class IAC_Learner(LearnerMAS):
                                                  use_parameter_sharing=self.use_parameter_sharing,
                                                  use_actions_mask=self.use_actions_mask)
         batch_size = sample_Tensor['batch_size']
-        obs = sample_Tensor['obs']
-        actions = sample_Tensor['actions']
-        agent_mask = sample_Tensor['agent_mask']
-        avail_actions = sample_Tensor['avail_actions']
-        values = sample_Tensor['values']
-        returns = sample_Tensor['returns']
-        advantages = sample_Tensor['advantages']
-        IDs = sample_Tensor['agent_ids']
+        obs = tf.convert_to_tensor(sample_Tensor['obs'], dtype=tf.float32)
+        actions = tf.convert_to_tensor(sample_Tensor['actions'], dtype=tf.float32)
+        agent_mask = tf.convert_to_tensor(sample_Tensor['agent_mask'], dtype=tf.float32)
+        avail_actions = tf.convert_to_tensor(sample_Tensor['avail_actions'], dtype=tf.float32)
+        values = tf.convert_to_tensor(sample_Tensor['values'], dtype=tf.float32)
+        returns = tf.convert_to_tensor(sample_Tensor['returns'], dtype=tf.float32)
+        advantages = tf.convert_to_tensor(sample_Tensor['advantages'], dtype=tf.float32)
+        IDs = tf.convert_to_tensor(sample_Tensor['agent_ids'], dtype=tf.float32)
 
         bs = batch_size * self.n_agents if self.use_parameter_sharing else batch_size
+
+        loss, a_loss, c_loss, e_loss, v_pred = self.learn(bs, obs, actions, agent_mask, avail_actions,
+                                                          values, returns, advantages, IDs)
+
+        info.update({f"predict_value/{key}": v_pred.mean().item() for key in self.model_keys})
 
         # feedforward
         _, pi_dist_dict = self.policy(observation=obs, agent_ids=IDs, avail_actions=avail_actions)
