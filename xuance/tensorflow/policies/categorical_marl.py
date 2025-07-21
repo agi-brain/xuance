@@ -400,6 +400,7 @@ class COMA_Policy(Module):
 
         return rnn_hidden_new, act_probs
 
+    @tf.function
     def get_values(self, state: Tensor, observation: Dict[str, Tensor], actions: Dict[str, Tensor],
                    agent_ids: Tensor = None, rnn_hidden: Optional[Dict[str, List[Tensor]]] = None, target=False):
         """
@@ -479,6 +480,7 @@ class COMA_Policy(Module):
         values = self.target_critic(critic_inputs) if target else self.critic(critic_inputs)
         return rnn_hidden_new, values
 
+    @tf.function
     def copy_target(self):
         for key in self.model_keys:
             self.target_critic_representation[key].set_weights(self.critic_representation[key].get_weights())

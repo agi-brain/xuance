@@ -66,70 +66,72 @@ class IAC_Learner(LearnerMAS):
         if use_parameter_sharing:
             k = self.model_keys[0]
             bs = batch_size * self.n_agents
-            obs_tensor = np.stack(itemgetter(*self.agent_keys)(sample['obs']), axis=1)
-            actions_tensor = np.stack(itemgetter(*self.agent_keys)(sample['actions']), axis=1)
-            values_tensor = np.stack(itemgetter(*self.agent_keys)(sample['values']), axis=1)
-            returns_tensor = np.stack(itemgetter(*self.agent_keys)(sample['returns']), axis=1)
-            advantages_tensor = np.stack(itemgetter(*self.agent_keys)(sample['advantages']), axis=1)
-            log_pi_old_tensor = np.stack(itemgetter(*self.agent_keys)(sample['log_pi_old']), axis=1)
-            ter_tensor = np.stack(itemgetter(*self.agent_keys)(sample['terminals']), axis=1).astype(np.float32)
-            msk_tensor = np.stack(itemgetter(*self.agent_keys)(sample['agent_mask']), axis=1).astype(np.float32)
+            obs_tensor = tf.stack(itemgetter(*self.agent_keys)(sample['obs']), axis=1)
+            actions_tensor = tf.cast(tf.stack(itemgetter(*self.agent_keys)(sample['actions']), axis=1), dtype=tf.int32)
+            values_tensor = tf.stack(itemgetter(*self.agent_keys)(sample['values']), axis=1)
+            returns_tensor = tf.stack(itemgetter(*self.agent_keys)(sample['returns']), axis=1)
+            advantages_tensor = tf.stack(itemgetter(*self.agent_keys)(sample['advantages']), axis=1)
+            log_pi_old_tensor = tf.stack(itemgetter(*self.agent_keys)(sample['log_pi_old']), axis=1)
+            ter_tensor = tf.cast(tf.stack(itemgetter(*self.agent_keys)(sample['terminals']), axis=1), dtype=tf.float32)
+            msk_tensor = tf.cast(tf.stack(itemgetter(*self.agent_keys)(sample['agent_mask']), axis=1), dtype=tf.float32)
             if self.use_rnn:
-                obs = {k: obs_tensor.reshape(bs, seq_length, -1)}
+                obs = {k: tf.reshape(obs_tensor, [bs, seq_length, -1])}
                 if len(actions_tensor.shape) == 3:
-                    actions = {k: actions_tensor.reshape(bs, seq_length)}
+                    actions = {k: tf.reshape(actions_tensor, [bs, seq_length])}
                 elif len(actions_tensor.shape) == 4:
-                    actions = {k: actions_tensor.reshape(bs, seq_length, -1)}
+                    actions = {k: tf.reshape(actions_tensor, [bs, seq_length, -1])}
                 else:
                     raise AttributeError("Wrong actions shape.")
-                values = {k: values_tensor.reshape(bs, seq_length)}
-                returns = {k: returns_tensor.reshape(bs, seq_length)}
-                advantages = {k: advantages_tensor.reshape(bs, seq_length)}
-                log_pi_old = {k: log_pi_old_tensor.reshape(bs, seq_length)}
-                terminals = {k: ter_tensor.reshape(bs, seq_length)}
-                agent_mask = {k: msk_tensor.reshape(bs, seq_length)}
-                IDs = np.eye(self.n_agents, dtype=np.float32)[None, :, None, :].repeat(batch_size, axis=0).repeat(
-                    seq_length + 1, axis=2).reshape(bs, seq_length + 1, self.n_agents)
+                values = {k: tf.reshape(values_tensor, [bs, seq_length])}
+                returns = {k: tf.reshape(returns_tensor, [bs, seq_length])}
+                advantages = {k: tf.reshape(advantages_tensor, [bs, seq_length])}
+                log_pi_old = {k: tf.reshape(log_pi_old_tensor, [bs, seq_length])}
+                terminals = {k: tf.reshape(ter_tensor, [bs, seq_length])}
+                agent_mask = {k: tf.reshape(msk_tensor, [bs, seq_length])}
+                IDs = tf.reshape(tf.tile(tf.eye(self.n_agents, dtype=np.float32)[None, :, None, :],
+                                         [batch_size, 1, seq_length + 1, 1]), [bs, seq_length + 1, self.n_agents])
             else:
-                obs = {k: obs_tensor.reshape(bs, -1)}
+                obs = {k: tf.reshape(obs_tensor, [bs, -1])}
                 if len(actions_tensor.shape) == 2:
-                    actions = {k: actions_tensor.reshape(bs)}
+                    actions = {k: tf.reshape(actions_tensor, [bs])}
                 elif len(actions_tensor.shape) == 3:
-                    actions = {k: actions_tensor.reshape(bs, -1)}
+                    actions = {k: tf.reshape(actions_tensor, [bs, -1])}
                 else:
                     raise AttributeError("Wrong actions shape.")
-                values = {k: values_tensor.reshape(bs)}
-                returns = {k: returns_tensor.reshape(bs)}
-                advantages = {k: advantages_tensor.reshape(bs)}
-                log_pi_old = {k: log_pi_old_tensor.reshape(bs)}
-                terminals = {k: ter_tensor.reshape(bs)}
-                agent_mask = {k: msk_tensor.reshape(bs)}
-                IDs = np.eye(self.n_agents, dtype=np.float32)[None].repeat(batch_size, 0).reshape(bs, self.n_agents)
+                values = {k: tf.reshape(values_tensor, [bs])}
+                returns = {k: tf.reshape(returns_tensor, [bs])}
+                advantages = {k: tf.reshape(advantages_tensor, [bs])}
+                log_pi_old = {k: tf.reshape(log_pi_old_tensor, [bs])}
+                terminals = {k: tf.reshape(ter_tensor, [bs])}
+                agent_mask = {k: tf.reshape(msk_tensor, [bs])}
+                IDs = tf.reshape(tf.tile(tf.eye(self.n_agents, dtype=np.float32)[None],
+                                         [batch_size, 1, 1]), [bs, self.n_agents])
 
             if use_actions_mask:
-                avail_a = np.stack(itemgetter(*self.agent_keys)(sample['avail_actions']), axis=1)
+                avail_a = tf.stack(itemgetter(*self.agent_keys)(sample['avail_actions']), axis=1)
                 if self.use_rnn:
-                    avail_actions = {k: avail_a.reshape([bs, seq_length, -1]).astype(np.float32)}
+                    avail_actions = {k: tf.reshape(avail_a, [bs, seq_length, -1])}
                 else:
-                    avail_actions = {k: avail_a.reshape([bs, -1]).astype(np.float32)}
+                    avail_actions = {k: tf.reshape(avail_a, [bs, -1])}
 
         else:
-            obs = {k: sample['obs'][k] for k in self.agent_keys}
-            actions = {k: sample['actions'][k] for k in self.agent_keys}
-            values = {k: sample['values'][k] for k in self.agent_keys}
-            returns = {k: sample['returns'][k] for k in self.agent_keys}
-            advantages = {k: sample['advantages'][k] for k in self.agent_keys}
-            log_pi_old = {k: sample['log_pi_old'][k] for k in self.agent_keys}
-            terminals = {k: sample['terminals'][k].astype(np.float32) for k in self.agent_keys}
-            agent_mask = {k: sample['agent_mask'][k].astype(np.float32) for k in self.agent_keys}
+            obs = {k: tf.convert_to_tensor(sample['obs'][k], dtype=tf.float32) for k in self.agent_keys}
+            actions = {k: tf.convert_to_tensor(sample['actions'][k], dtype=tf.int32) for k in self.agent_keys}
+            values = {k: tf.convert_to_tensor(sample['values'][k], dtype=tf.float32) for k in self.agent_keys}
+            returns = {k: tf.convert_to_tensor(sample['returns'][k], dtype=tf.float32) for k in self.agent_keys}
+            advantages = {k: tf.convert_to_tensor(sample['advantages'][k], dtype=tf.float32) for k in self.agent_keys}
+            log_pi_old = {k: tf.convert_to_tensor(sample['log_pi_old'][k], dtype=tf.float32) for k in self.agent_keys}
+            terminals = {k: tf.convert_to_tensor(sample['terminals'][k], dtype=tf.float32) for k in self.agent_keys}
+            agent_mask = {k: tf.convert_to_tensor(sample['agent_mask'][k], dtype=tf.float32) for k in self.agent_keys}
             if use_actions_mask:
-                avail_actions = {k: sample['avail_actions'][k].astype(np.float32) for k in self.agent_keys}
+                avail_actions = {k: tf.convert_to_tensor(sample['avail_actions'][k], dtype=tf.float32)
+                                 for k in self.agent_keys}
 
         if use_global_state:
-            state = sample['state']
+            state = tf.convert_to_tensor(sample['state'], dtype=tf.float32)
 
         if self.use_rnn:
-            filled = sample['filled'].astype(np.float32)
+            filled = tf.convert_to_tensor(sample['filled'], dtype=tf.float32)
 
         sample_Tensor = {
             'batch_size': batch_size,
@@ -149,10 +151,69 @@ class IAC_Learner(LearnerMAS):
         }
         return sample_Tensor
 
+    @tf.function
     def forward_fn(self, *args):
+        bs, obs, actions, agent_mask, avail_actions, values, returns, advantages, IDs = args
         with tf.GradientTape() as tape:
-            pass
+            _, pi_logits = self.policy(observation=obs, agent_ids=IDs, avail_actions=avail_actions)
+            _, values_pred_dict = self.policy.get_values(observation=obs, agent_ids=IDs)
 
+            loss_a, loss_e, loss_c = [], [], []
+            for key in self.model_keys:
+                mask_values = agent_mask[key]
+                mask_values_sum = tf.reduce_sum(mask_values)
+                # policy gradient loss
+                log_prob = tf.nn.log_softmax(pi_logits[key], axis=-1)
+                log_pi = tf.gather(log_prob, actions[key], axis=-1, batch_dims=-1)
+                pg_loss = -tf.reduce_sum((advantages[key] * log_pi) * mask_values) / mask_values_sum
+                loss_a.append(pg_loss)
+
+                # entropy loss
+                probs = tf.exp(log_prob)
+                entropy = -tf.reduce_sum(probs * log_prob, axis=-1, keepdims=True)
+                entropy_loss = tf.reduce_sum(entropy * mask_values) / mask_values_sum
+                loss_e.append(entropy_loss)
+
+                # value loss
+                value_pred_i = tf.reshape(values_pred_dict[key], [bs])
+                value_target = tf.reshape(returns[key], [bs])
+                values_i = tf.reshape(values[key], [bs])
+                if self.use_value_clip:
+                    value_clipped = values_i + (value_pred_i - values_i).clamp(-self.value_clip_range,
+                                                                               self.value_clip_range)
+                    if self.use_value_norm:
+                        self.value_normalizer[key].update(value_target.reshape(bs, 1))
+                        value_target = self.value_normalizer[key].normalize(value_target.reshape(bs, 1)).reshape(bs)
+                    if self.use_huber_loss:
+                        loss_v = self.huber_loss(value_pred_i, value_target)
+                        loss_v_clipped = self.huber_loss(value_clipped, value_target)
+                    else:
+                        loss_v = (value_pred_i - value_target) ** 2
+                        loss_v_clipped = (value_clipped - value_target) ** 2
+                    loss_c_ = tf.max(loss_v, loss_v_clipped) * mask_values
+                    loss_c.append(loss_c_.sum() / mask_values.sum())
+                else:
+                    if self.use_value_norm:
+                        self.value_normalizer[key].update(value_target)
+                        value_target = self.value_normalizer[key].normalize(value_target)
+                    if self.use_huber_loss:
+                        loss_v = self.huber_loss(value_pred_i, value_target) * mask_values
+                    else:
+                        loss_v = ((value_pred_i - value_target) ** 2) * mask_values
+                    loss_c.append(tf.reduce_sum(loss_v) / mask_values_sum)
+
+            # Total loss
+            loss = sum(loss_a) + self.vf_coef * sum(loss_c) - self.ent_coef * sum(loss_e)
+            gradients = tape.gradient(loss, self.policy.trainable_variables)
+            if self.use_grad_clip:
+                gradients, _ = tf.clip_by_global_norm(gradients, clip_norm=self.grad_clip_norm)
+                self.optimizer.apply_gradients(zip(gradients, self.policy.trainable_variables))
+            else:
+                self.optimizer.apply_gradients(zip(gradients, self.policy.trainable_variables))
+
+        return loss, loss_a, loss_c, loss_e, values_pred_dict
+
+    @tf.function
     def learn(self, *inputs):
         if self.distributed_training:
             loss, a_loss, c_loss, e_loss, v_pred = self.policy.mirrored_strategy.run(self.forward_fn, args=inputs)
@@ -173,91 +234,28 @@ class IAC_Learner(LearnerMAS):
                                                  use_parameter_sharing=self.use_parameter_sharing,
                                                  use_actions_mask=self.use_actions_mask)
         batch_size = sample_Tensor['batch_size']
-        obs = tf.convert_to_tensor(sample_Tensor['obs'], dtype=tf.float32)
-        actions = tf.convert_to_tensor(sample_Tensor['actions'], dtype=tf.float32)
-        agent_mask = tf.convert_to_tensor(sample_Tensor['agent_mask'], dtype=tf.float32)
-        avail_actions = tf.convert_to_tensor(sample_Tensor['avail_actions'], dtype=tf.float32)
-        values = tf.convert_to_tensor(sample_Tensor['values'], dtype=tf.float32)
-        returns = tf.convert_to_tensor(sample_Tensor['returns'], dtype=tf.float32)
-        advantages = tf.convert_to_tensor(sample_Tensor['advantages'], dtype=tf.float32)
-        IDs = tf.convert_to_tensor(sample_Tensor['agent_ids'], dtype=tf.float32)
+        obs = sample_Tensor['obs']
+        actions = sample_Tensor['actions']
+        agent_mask = sample_Tensor['agent_mask']
+        avail_actions = sample_Tensor['avail_actions']
+        values = sample_Tensor['values']
+        returns = sample_Tensor['returns']
+        advantages = sample_Tensor['advantages']
+        IDs = sample_Tensor['agent_ids']
 
         bs = batch_size * self.n_agents if self.use_parameter_sharing else batch_size
 
         loss, a_loss, c_loss, e_loss, v_pred = self.learn(bs, obs, actions, agent_mask, avail_actions,
                                                           values, returns, advantages, IDs)
 
-        info.update({f"predict_value/{key}": v_pred.mean().item() for key in self.model_keys})
-
-        # feedforward
-        _, pi_dist_dict = self.policy(observation=obs, agent_ids=IDs, avail_actions=avail_actions)
-        _, values_pred_dict = self.policy.get_values(observation=obs, agent_ids=IDs)
-
-        loss_a, loss_e, loss_c = [], [], []
-        for key in self.model_keys:
-            mask_values = agent_mask[key]
-            # policy gradient loss
-            log_pi = pi_dist_dict[key].log_prob(actions[key])
-            pg_loss = -((advantages[key].detach() * log_pi) * mask_values).sum() / mask_values.sum()
-            loss_a.append(pg_loss)
-
-            # entropy loss
-            entropy = pi_dist_dict[key].entropy()
-            entropy_loss = (entropy * mask_values).sum() / mask_values.sum()
-            loss_e.append(entropy_loss)
-
-            # value loss
-            value_pred_i = values_pred_dict[key].reshape(bs)
-            value_target = returns[key].reshape(bs)
-            values_i = values[key].reshape(bs)
-            if self.use_value_clip:
-                value_clipped = values_i + (value_pred_i - values_i).clamp(-self.value_clip_range,
-                                                                           self.value_clip_range)
-                if self.use_value_norm:
-                    self.value_normalizer[key].update(value_target.reshape(bs, 1))
-                    value_target = self.value_normalizer[key].normalize(value_target.reshape(bs, 1)).reshape(bs)
-                if self.use_huber_loss:
-                    loss_v = self.huber_loss(value_pred_i, value_target)
-                    loss_v_clipped = self.huber_loss(value_clipped, value_target)
-                else:
-                    loss_v = (value_pred_i - value_target) ** 2
-                    loss_v_clipped = (value_clipped - value_target) ** 2
-                loss_c_ = torch.max(loss_v, loss_v_clipped) * mask_values
-                loss_c.append(loss_c_.sum() / mask_values.sum())
-            else:
-                if self.use_value_norm:
-                    self.value_normalizer[key].update(value_target)
-                    value_target = self.value_normalizer[key].normalize(value_target)
-                if self.use_huber_loss:
-                    loss_v = self.huber_loss(value_pred_i, value_target) * mask_values
-                else:
-                    loss_v = ((value_pred_i - value_target) ** 2) * mask_values
-                loss_c.append(loss_v.sum() / mask_values.sum())
-
-            info.update({
-                f"predict_value/{key}": value_pred_i.mean().item()
-            })
-
-        # Total loss
-        loss = sum(loss_a) + self.vf_coef * sum(loss_c) - self.ent_coef * sum(loss_e)
-        self.optimizer.zero_grad()
-        loss.backward()
-        if self.use_grad_clip:
-            grad_norm = torch.nn.utils.clip_grad_norm_(self.policy.parameters_model, self.grad_clip_norm)
-            info["gradient_norm"] = grad_norm.item()
-        self.optimizer.step()
-        if self.scheduler is not None:
-            self.scheduler.step()
-
-        # Logger
-        lr = self.optimizer.state_dict()['param_groups'][0]['lr']
+        info.update({f"predict_value/{key}": tf.reduce_mean(v_pred[key]).numpy() for key in self.model_keys})
 
         info.update({
-            "learning_rate": lr,
-            "pg_loss": sum(loss_a).item(),
-            "vf_loss": sum(loss_c).item(),
-            "entropy_loss": sum(loss_e).item(),
-            "loss": loss.item(),
+            # "learning_rate": lr,
+            "pg_loss": sum(a_loss).numpy(),
+            "vf_loss": sum(c_loss).numpy(),
+            "entropy_loss": sum(e_loss).numpy(),
+            "loss": loss.numpy(),
         })
 
         return info
