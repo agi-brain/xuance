@@ -24,7 +24,7 @@ class OnPolicyMARLAgents(MARLAgents):
                  config: Namespace,
                  envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv],
                  callback: Optional[BaseCallback] = None):
-        super(OnPolicyMARLAgents, self).__init__(config, envs)
+        super(OnPolicyMARLAgents, self).__init__(config, envs, callback)
         self.on_policy = True
         self.continuous_control: bool = False
         self.n_epochs = config.n_epochs

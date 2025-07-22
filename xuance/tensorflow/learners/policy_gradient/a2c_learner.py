@@ -35,12 +35,13 @@ class A2C_Learner(Learner):
         with tf.GradientTape() as tape:
             if self.is_continuous:
                 outputs, mu, std, v_pred = self.policy(obs_batch)
+                log_2pi = tf.math.log(2.0 * np.pi)
                 # calculate log prob
                 log_std = tf.math.log(std + 1e-8)
-                log_prob = -0.5 * (((act_batch - mu) / (std + 1e-8)) ** 2 + 2.0 * log_std + tf.math.log(2.0 * np.pi))
+                log_prob = -0.5 * (((act_batch - mu) / (std + 1e-8)) ** 2 + 2.0 * log_std + log_2pi)
                 log_prob_a = tf.reduce_sum(log_prob, axis=-1, keepdims=True)
                 # calculate entropy
-                entropy = tf.reduce_sum(0.5 + 0.5 * tf.math.log(2.0 * np.pi) + log_std, axis=-1, keepdims=True)
+                entropy = tf.reduce_sum(0.5 + 0.5 * log_2pi + log_std, axis=-1, keepdims=True)
             else:
                 outputs, logits, v_pred = self.policy(obs_batch)
                 # calculate log prob

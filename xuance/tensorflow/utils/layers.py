@@ -10,15 +10,10 @@ def mlp_block(input_dim: int,
               activation: Optional[tk.layers.Layer] = None,
               initializer: Optional[tk.initializers.Initializer] = None):
     block = []
-    if initializer is not None:
-        linear = tk.layers.Dense(units=output_dim,
-                                 activation=activation,
-                                 kernel_initializer=initializer,
-                                 input_shape=(input_dim,))
-    else:
-        linear = tk.layers.Dense(units=output_dim,
-                                 activation=activation,
-                                 input_shape=(input_dim,))
+    linear = tk.layers.Dense(input_shape=(input_dim,),
+                             units=output_dim,
+                             kernel_initializer=initializer,
+                             activation=activation)
     block.append(linear)
     if normalize is not None:
         block.append(normalize())
@@ -35,21 +30,13 @@ def cnn_block(input_shape: Sequence[int],
     assert len(input_shape) == 3
     H, W, C = input_shape
     block = []
-    if initializer is not None:
-        cnn = tk.layers.Conv2D(filters=filters,
-                               kernel_size=kernel_size,
-                               padding='same',
-                               strides=(stride, stride),
-                               activation=activation,
-                               kernel_initializer=initializer,
-                               input_shape=input_shape)
-    else:
-        cnn = tk.layers.Conv2D(filters=filters,
-                               kernel_size=kernel_size,
-                               padding='same',
-                               strides=(stride, stride),
-                               activation=activation,
-                               input_shape=input_shape)
+    cnn = tk.layers.Conv2D(filters=filters,
+                           kernel_size=kernel_size,
+                           padding='same',
+                           strides=(stride, stride),
+                           activation=activation,
+                           kernel_initializer=initializer,
+                           input_shape=input_shape)
     block.append(cnn)
     if normalize is not None:
         block.append(normalize())

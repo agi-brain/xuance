@@ -53,6 +53,7 @@ class IAC_Agents(OnPolicyMARLAgents):
                 use_distributed_training=self.distributed_training,
                 use_parameter_sharing=self.use_parameter_sharing, model_keys=self.model_keys,
                 use_rnn=self.use_rnn, rnn=self.config.rnn if self.use_rnn else None)
+            self.continuous_control = False
         elif self.config.policy == "Gaussian_MAAC_Policy":
             policy = REGISTRY_Policy["Gaussian_MAAC_Policy"](
                 action_space=self.action_space, n_agents=self.n_agents,
@@ -63,6 +64,7 @@ class IAC_Agents(OnPolicyMARLAgents):
                 use_distributed_training=self.distributed_training,
                 use_parameter_sharing=self.use_parameter_sharing, model_keys=self.model_keys,
                 use_rnn=self.use_rnn, rnn=self.config.rnn if self.use_rnn else None)
+            self.continuous_control = True
         else:
             raise AttributeError(f"{agent} currently does not support the policy named {self.config.policy}.")
         return policy
@@ -132,10 +134,16 @@ class IAC_Agents(OnPolicyMARLAgents):
         rnn_hidden_critic_new, log_pi_a_dict, values_dict = {}, {}, {}
 
         obs_input, agents_id, avail_actions_input = self._build_inputs(obs_dict, avail_actions_dict)
-        rnn_hidden_actor_new, pi_logits = self.policy(observation=obs_input,
-                                                      agent_ids=agents_id,
-                                                      avail_actions=avail_actions_input,
-                                                      rnn_hidden=rnn_hidden_actor)
+        if self.continuous_control:
+            rnn_hidden_actor_new, pi_mu, pi_std = self.policy(observation=obs_input,
+                                                              agent_ids=agents_id,
+                                                              avail_actions=avail_actions_input,
+                                                              rnn_hidden=rnn_hidden_actor)
+        else:
+            rnn_hidden_actor_new, pi_logits = self.policy(observation=obs_input,
+                                                          agent_ids=agents_id,
+                                                          avail_actions=avail_actions_input,
+                                                          rnn_hidden=rnn_hidden_actor)
         if not test_mode:
             rnn_hidden_critic_new, values_dict = self.policy.get_values(observation=obs_input,
                                                                         agent_ids=agents_id,
@@ -148,20 +156,24 @@ class IAC_Agents(OnPolicyMARLAgents):
 
         if self.use_parameter_sharing:
             key = self.agent_keys[0]
-            pi_dists = self.policy.actor[key].distribution(logits=pi_logits[key])
-            actions_sample = pi_dists.stochastic_sample()
             if self.continuous_control:
+                pi_dists = self.policy.actor[key].distribution(mu=pi_mu[key], std=pi_std[key])
+                actions_sample = pi_dists.stochastic_sample()
                 actions_out = actions_sample.numpy().reshape(n_env, self.n_agents, -1)
             else:
+                pi_dists = self.policy.actor[key].distribution(logits=pi_logits[key])
+                actions_sample = pi_dists.stochastic_sample()
                 actions_out = actions_sample.numpy().reshape(n_env, self.n_agents)
             actions_dict = [{k: actions_out[e, i] for i, k in enumerate(self.agent_keys)} for e in range(n_env)]
         else:
-            pi_dists = {k: self.policy.actor[k].distribution(logits=pi_logits[k]) for k in self.agent_keys}
-            actions_sample = {k: pi_dists[k].stochastic_sample() for k in self.agent_keys}
             if self.continuous_control:
+                pi_dists = {k: self.policy.actor[k].distribution(pi_mu[k], pi_std[k]) for k in self.agent_keys}
+                actions_sample = {k: pi_dists[k].stochastic_sample() for k in self.agent_keys}
                 actions_dict = [{k: actions_sample[k].numpy()[e].reshape([-1]) for k in self.agent_keys}
                                 for e in range(n_env)]
             else:
+                pi_dists = {k: self.policy.actor[k].distribution(logits=pi_logits[k]) for k in self.agent_keys}
+                actions_sample = {k: pi_dists[k].stochastic_sample() for k in self.agent_keys}
                 actions_dict = [{k: actions_sample[k].numpy()[e].reshape([]) for k in self.agent_keys}
                                 for e in range(n_env)]
 

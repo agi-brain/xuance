@@ -29,6 +29,7 @@ class IAC_Learner(LearnerMAS):
             self.value_normalizer = {key: ValueNorm(1) for key in self.model_keys}
         else:
             self.value_normalizer = None
+        self.is_continuous = self.policy.is_continuous
 
     def build_optimizer(self):
         if ("macOS" in self.os_name) and ("arm" in self.os_name):  # For macOS with Apple's M-series chips.
@@ -67,7 +68,7 @@ class IAC_Learner(LearnerMAS):
             k = self.model_keys[0]
             bs = batch_size * self.n_agents
             obs_tensor = tf.stack(itemgetter(*self.agent_keys)(sample['obs']), axis=1)
-            actions_tensor = tf.cast(tf.stack(itemgetter(*self.agent_keys)(sample['actions']), axis=1), dtype=tf.int32)
+            actions_tensor = tf.stack(itemgetter(*self.agent_keys)(sample['actions']), axis=1)
             values_tensor = tf.stack(itemgetter(*self.agent_keys)(sample['values']), axis=1)
             returns_tensor = tf.stack(itemgetter(*self.agent_keys)(sample['returns']), axis=1)
             advantages_tensor = tf.stack(itemgetter(*self.agent_keys)(sample['advantages']), axis=1)
@@ -92,12 +93,10 @@ class IAC_Learner(LearnerMAS):
                                          [batch_size, 1, seq_length + 1, 1]), [bs, seq_length + 1, self.n_agents])
             else:
                 obs = {k: tf.reshape(obs_tensor, [bs, -1])}
-                if len(actions_tensor.shape) == 2:
-                    actions = {k: tf.reshape(actions_tensor, [bs])}
-                elif len(actions_tensor.shape) == 3:
-                    actions = {k: tf.reshape(actions_tensor, [bs, -1])}
+                if self.is_continuous:
+                    actions = {k: tf.reshape(tf.cast(actions_tensor, dtype=tf.float32), [bs, -1])}
                 else:
-                    raise AttributeError("Wrong actions shape.")
+                    actions = {k: tf.reshape(tf.cast(actions_tensor, dtype=tf.int32), [bs, 1])}
                 values = {k: tf.reshape(values_tensor, [bs])}
                 returns = {k: tf.reshape(returns_tensor, [bs])}
                 advantages = {k: tf.reshape(advantages_tensor, [bs])}
@@ -116,7 +115,11 @@ class IAC_Learner(LearnerMAS):
 
         else:
             obs = {k: tf.convert_to_tensor(sample['obs'][k], dtype=tf.float32) for k in self.agent_keys}
-            actions = {k: tf.convert_to_tensor(sample['actions'][k], dtype=tf.int32) for k in self.agent_keys}
+            if self.is_continuous:
+                actions = {k: tf.convert_to_tensor(sample['actions'][k], dtype=tf.float32) for k in self.agent_keys}
+            else:
+                actions = {k: tf.expand_dims(tf.convert_to_tensor(sample['actions'][k], dtype=tf.int32), axis=-1)
+                           for k in self.agent_keys}
             values = {k: tf.convert_to_tensor(sample['values'][k], dtype=tf.float32) for k in self.agent_keys}
             returns = {k: tf.convert_to_tensor(sample['returns'][k], dtype=tf.float32) for k in self.agent_keys}
             advantages = {k: tf.convert_to_tensor(sample['advantages'][k], dtype=tf.float32) for k in self.agent_keys}
@@ -155,49 +158,69 @@ class IAC_Learner(LearnerMAS):
     def forward_fn(self, *args):
         bs, obs, actions, agent_mask, avail_actions, values, returns, advantages, IDs = args
         with tf.GradientTape() as tape:
-            _, pi_logits = self.policy(observation=obs, agent_ids=IDs, avail_actions=avail_actions)
-            _, values_pred_dict = self.policy.get_values(observation=obs, agent_ids=IDs)
-
             loss_a, loss_e, loss_c = [], [], []
+            if self.is_continuous:
+                _, pi_mu, pi_std = self.policy(observation=obs, agent_ids=IDs, avail_actions=avail_actions)
+                for key in self.model_keys:
+                    mask_values = agent_mask[key]
+                    mask_values_sum = tf.reduce_sum(mask_values)
+                    log_2pi = tf.math.log(2.0 * np.pi)
+                    # policy gradient loss
+                    log_std = tf.math.log(pi_std[key] + 1e-8)
+                    log_prob = -0.5 * (((actions[key] - pi_mu[key]) / (pi_std[key] + 1e-8)) ** 2 + 2.0 * log_std + log_2pi)
+                    log_pi = tf.reduce_sum(log_prob, axis=-1, keepdims=False)
+                    pg_loss = -tf.reduce_sum((advantages[key] * log_pi) * mask_values) / mask_values_sum
+                    loss_a.append(pg_loss)
+
+                    # entropy loss
+                    entropy = tf.reduce_sum(0.5 + 0.5 * log_2pi + log_std, axis=-1, keepdims=True)
+                    entropy_loss = tf.reduce_sum(entropy * mask_values) / mask_values_sum
+                    loss_e.append(entropy_loss)
+            else:
+                _, pi_logits = self.policy(observation=obs, agent_ids=IDs, avail_actions=avail_actions)
+                for key in self.model_keys:
+                    mask_values = agent_mask[key]
+                    mask_values_sum = tf.reduce_sum(mask_values)
+                    # policy gradient loss
+                    log_prob = tf.nn.log_softmax(pi_logits[key], axis=-1)
+                    log_pi = tf.gather(log_prob, actions[key], axis=-1, batch_dims=-1)
+                    log_pi = tf.squeeze(log_pi, axis=-1)
+                    pg_loss = -tf.reduce_sum((advantages[key] * log_pi) * mask_values) / mask_values_sum
+                    loss_a.append(pg_loss)
+
+                    # entropy loss
+                    probs = tf.exp(log_prob)
+                    entropy = -tf.reduce_sum(probs * log_prob, axis=-1, keepdims=False)
+                    entropy_loss = tf.reduce_sum(entropy * mask_values) / mask_values_sum
+                    loss_e.append(entropy_loss)
+
+            _, values_pred_dict = self.policy.get_values(observation=obs, agent_ids=IDs)
             for key in self.model_keys:
-                mask_values = agent_mask[key]
-                mask_values_sum = tf.reduce_sum(mask_values)
-                # policy gradient loss
-                log_prob = tf.nn.log_softmax(pi_logits[key], axis=-1)
-                log_pi = tf.gather(log_prob, actions[key], axis=-1, batch_dims=-1)
-                pg_loss = -tf.reduce_sum((advantages[key] * log_pi) * mask_values) / mask_values_sum
-                loss_a.append(pg_loss)
-
-                # entropy loss
-                probs = tf.exp(log_prob)
-                entropy = -tf.reduce_sum(probs * log_prob, axis=-1, keepdims=True)
-                entropy_loss = tf.reduce_sum(entropy * mask_values) / mask_values_sum
-                loss_e.append(entropy_loss)
-
                 # value loss
                 value_pred_i = tf.reshape(values_pred_dict[key], [bs])
                 value_target = tf.reshape(returns[key], [bs])
                 values_i = tf.reshape(values[key], [bs])
                 if self.use_value_clip:
-                    value_clipped = values_i + (value_pred_i - values_i).clamp(-self.value_clip_range,
-                                                                               self.value_clip_range)
+                    value_clipped = values_i + tf.clip_by_value(value_pred_i - values_i,
+                                                                -self.value_clip_range, self.value_clip_range)
                     if self.use_value_norm:
-                        self.value_normalizer[key].update(value_target.reshape(bs, 1))
-                        value_target = self.value_normalizer[key].normalize(value_target.reshape(bs, 1)).reshape(bs)
+                        self.value_normalizer[key].update(tf.reshape(value_target, [bs, 1]))
+                        value_target = tf.reshape(self.value_normalizer[key].normalize(tf.reshape(value_target,
+                                                                                                  [bs, 1])), [bs])
                     if self.use_huber_loss:
-                        loss_v = self.huber_loss(value_pred_i, value_target)
-                        loss_v_clipped = self.huber_loss(value_clipped, value_target)
+                        loss_v = tk.losses.huber(value_target, value_pred_i, self.huber_delta)
+                        loss_v_clipped = tk.losses.huber(value_target, value_clipped, self.huber_delta)
                     else:
                         loss_v = (value_pred_i - value_target) ** 2
                         loss_v_clipped = (value_clipped - value_target) ** 2
-                    loss_c_ = tf.max(loss_v, loss_v_clipped) * mask_values
-                    loss_c.append(loss_c_.sum() / mask_values.sum())
+                    loss_c_ = tf.maximum(loss_v, loss_v_clipped) * mask_values
+                    loss_c.append(tf.reduce_sum(loss_c_) / mask_values_sum)
                 else:
                     if self.use_value_norm:
                         self.value_normalizer[key].update(value_target)
                         value_target = self.value_normalizer[key].normalize(value_target)
                     if self.use_huber_loss:
-                        loss_v = self.huber_loss(value_pred_i, value_target) * mask_values
+                        loss_v = tk.losses.huber(value_target, value_pred_i, self.huber_delta) * mask_values
                     else:
                         loss_v = ((value_pred_i - value_target) ** 2) * mask_values
                     loss_c.append(tf.reduce_sum(loss_v) / mask_values_sum)
