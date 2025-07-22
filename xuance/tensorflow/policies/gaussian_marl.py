@@ -3,13 +3,27 @@ from copy import deepcopy
 from gymnasium.spaces import Box
 from xuance.common import Sequence, Optional, Callable, Union, Dict, List
 from xuance.common import Sequence, Optional, Union, Dict
-from xuance.tensorflow import tf, tk, Module
+from xuance.tensorflow import tf, tk, Module, Tensor
 from .core import GaussianActorNet, GaussianActorNet_SAC, CriticNet
 
 
 class MAAC_Policy(Module):
     """
-    MAAC_Policy: Multi-Agent Actor-Critic Policy with Gaussian policies
+    MAAC_Policy: Multi-Agent Actor-Critic Policy with Gaussian distributions.
+
+    Args:
+        action_space (Box): The continuous action space.
+        n_agents (int): The number of agents.
+        representation_actor (ModuleDict): A dict of representation modules for each agent's actor.
+        representation_critic (ModuleDict): A dict of representation modules for each agent's critic.
+        actor_hidden_size (Sequence[int]): A list of hidden layer sizes for actor network.
+        critic_hidden_size (Sequence[int]): A list of hidden layer sizes for critic network.
+        normalize (Optional[ModuleType]): The layer normalization over a minibatch of inputs.
+        initialize (Optional[Callable[..., Tensor]]): The parameters initializer.
+        activation (Optional[ModuleType]): The activation function for each layer.
+        activation_action (Optional[ModuleType]): The activation of final layer to bound the actions.
+        use_distributed_training (bool): Whether to use multi-GPU for distributed training.
+        **kwargs: Other arguments.
     """
 
     def __init__(self,
@@ -17,12 +31,14 @@ class MAAC_Policy(Module):
                  n_agents: int,
                  representation_actor: Module,
                  representation_critic: Module,
+                 mixer: Optional[Module] = None,
                  actor_hidden_size: Sequence[int] = None,
                  critic_hidden_size: Sequence[int] = None,
                  normalize: Optional[tk.layers.Layer] = None,
                  initialize: Optional[tk.initializers.Initializer] = None,
                  activation: Optional[tk.layers.Layer] = None,
                  activation_action: Optional[tk.layers.Layer] = None,
+                 use_distributed_training: bool = False,
                  **kwargs):
         super(MAAC_Policy, self).__init__()
         self.is_continuous = True
@@ -48,6 +64,8 @@ class MAAC_Policy(Module):
                                                normalize, initialize, activation, activation_action)
             self.critic[key] = CriticNet(dim_critic_in, critic_hidden_size, normalize, initialize, activation)
 
+        self.mixer = mixer
+
     def _get_actor_critic_input(self, dim_action, dim_actor_rep, dim_critic_rep, n_agents):
         """
         Returns the input dimensions of actor netwrok and critic networks.
@@ -71,19 +89,19 @@ class MAAC_Policy(Module):
             dim_critic_in += n_agents
         return dim_actor_in, dim_actor_out, dim_critic_in, dim_critic_out
 
-    # @tf.function
-    def call(self, observation: Dict[str, np.ndarray], agent_ids: Optional[np.ndarray] = None,
-             avail_actions: Dict[str, np.ndarray] = None, agent_key: str = None,
-             rnn_hidden: Optional[Dict[str, List[np.ndarray]]] = None):
+    @tf.function
+    def call(self, observation: Dict[str, Tensor], agent_ids: Optional[Tensor] = None,
+             avail_actions: Dict[str, Tensor] = None, agent_key: str = None,
+             rnn_hidden: Optional[Dict[str, List[Tensor]]] = None):
         """
         Returns actions of the policy.
 
         Parameters:
-            observation (Dict[str, np.ndarray]): The input observations for the policies.
-            agent_ids (np.ndarray): The agents' ids (for parameter sharing).
-            avail_actions (Dict[str, np.ndarray]): Actions mask values, default is None.
+            observation (Dict[str, Tensor]): The input observations for the policies.
+            agent_ids (Tensor): The agents' ids (for parameter sharing).
+            avail_actions (Dict[str, Tensor]): Actions mask values, default is None.
             agent_key (str): Calculate actions for specified agent.
-            rnn_hidden (Optional[Dict[str, List[np.ndarray]]]): The RNN hidden states of actor representation.
+            rnn_hidden (Optional[Dict[str, List[Tensor]]]): The RNN hidden states of actor representation.
 
         Returns:
             rnn_hidden_new (Optional[Dict[str, List[Tensor]]]): The new RNN hidden states of actor representation.
@@ -107,17 +125,17 @@ class MAAC_Policy(Module):
 
         return rnn_hidden, pi_mu, pi_std
 
-    # @tf.function
-    def get_values(self, observation: Dict[str, np.ndarray], agent_ids: np.ndarray = None, agent_key: str = None,
-                   rnn_hidden: Optional[Dict[str, List[np.ndarray]]] = None):
+    @tf.function
+    def get_values(self, observation: Dict[str, Tensor], agent_ids: Tensor = None, agent_key: str = None,
+                   rnn_hidden: Optional[Dict[str, List[Tensor]]] = None):
         """
         Get critic values via critic networks.
 
         Parameters:
-            observation (Dict[str, np.ndarray]): The input observations for the policies.
-            agent_ids (np.ndarray): The agents' ids (for parameter sharing).
+            observation (Dict[str, Tensor]): The input observations for the policies.
+            agent_ids (Tensor): The agents' ids (for parameter sharing).
             agent_key (str): Calculate actions for specified agent.
-            rnn_hidden (Optional[Dict[str, List[np.ndarray]]]): The RNN hidden states of critic representation.
+            rnn_hidden (Optional[Dict[str, List[Tensor]]]): The RNN hidden states of critic representation.
 
         Returns:
             rnn_hidden_new (Optional[Dict[str, List[Tensor]]]): The new RNN hidden states of critic representation.
@@ -141,6 +159,12 @@ class MAAC_Policy(Module):
             values[key] = self.critic[key](critic_in)
 
         return rnn_hidden_new, values
+
+    @tf.function
+    def value_tot(self, values_n: Tensor, global_state=None):
+        if global_state is not None:
+            global_state = tf.convert_to_tensor(global_state)
+        return values_n if self.mixer is None else self.mixer(values_n, global_state)
 
 
 class Basic_ISAC_Policy(Module):
@@ -193,7 +217,7 @@ class Basic_ISAC_Policy(Module):
 
     def critic_trainable_variables(self, key):
         return self.critic_1_representation[key].trainable_variables + self.critic_1[key].trainable_variables + \
-               self.critic_2_representation[key].trainable_variables + self.critic_2[key].trainable_variables
+            self.critic_2_representation[key].trainable_variables + self.critic_2[key].trainable_variables
 
     def _get_actor_critic_input(self, dim_actor_rep, dim_action, dim_critic_rep, n_agents):
         """

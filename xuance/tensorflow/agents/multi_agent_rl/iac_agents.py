@@ -1,9 +1,8 @@
 import numpy as np
 from argparse import Namespace
-from operator import itemgetter
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
 from xuance.common import List, Optional, Union
-from xuance.tensorflow import Module, tf
+from xuance.tensorflow import Module
 from xuance.tensorflow.utils import NormalizeFunctions, InitializeFunctions, ActivationFunctions
 from xuance.tensorflow.policies import REGISTRY_Policy
 from xuance.tensorflow.agents import OnPolicyMARLAgents, BaseCallback
@@ -198,8 +197,6 @@ class IAC_Agents(OnPolicyMARLAgents):
             rnn_hidden_critic_new (dict): The new RNN hidden states of critic representation (if self.use_rnn=True).
             values_dict: The critic values.
         """
-        n_env = 1
-
         obs_input, agents_id, avail_actions_input = self._build_inputs([obs_dict])
         rnn_hidden_critic_new, values_dict = self.policy.get_values(observation=obs_input,
                                                                     agent_ids=agents_id,

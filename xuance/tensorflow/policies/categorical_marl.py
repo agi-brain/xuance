@@ -169,6 +169,7 @@ class MAAC_Policy(Module):
 
         return rnn_hidden_new, values
 
+    @tf.function
     def value_tot(self, values_n: Tensor, global_state=None):
         if global_state is not None:
             global_state = tf.convert_to_tensor(global_state)
