@@ -222,8 +222,11 @@ class MAPPO_Agents(IPPO_Agents):
             if self.use_rnn:
                 rnn_hidden_critic_i = {k: self.policy.critic_representation[k].get_hidden_item(
                     [i_env, ], *rnn_hidden_critic[k]) for k in self.agent_keys}
-                joint_obs = np.stack(itemgetter(*self.agent_keys)(obs_dict), axis=0).reshape([n_env, 1, -1])
-                critic_input = {k: joint_obs for k in self.agent_keys}
+                if self.use_global_state:
+                    critic_input = state.reshape([n_env, 1, -1])
+                else:
+                    joint_obs = np.stack(itemgetter(*self.agent_keys)(obs_dict), axis=0).reshape([n_env, 1, -1])
+                    critic_input = {k: joint_obs for k in self.agent_keys}
             else:
                 critic_input_array = np.concatenate([obs_dict[k].reshape(n_env, 1, -1) for k in self.agent_keys],
                                                     axis=1).reshape(n_env, -1)

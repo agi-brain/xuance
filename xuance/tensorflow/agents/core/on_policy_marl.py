@@ -1,5 +1,5 @@
-from tqdm import tqdm
 import numpy as np
+from tqdm import tqdm
 from copy import deepcopy
 from argparse import Namespace
 from operator import itemgetter
