@@ -4,10 +4,10 @@ Paper link: https://ojs.aaai.org/index.php/AAAI/article/view/11794
 Implementation: Pytorch
 """
 import torch
+from argparse import Namespace
 from torch import nn
 from torch.nn.functional import one_hot
 from xuance.common import List
-from argparse import Namespace
 from xuance.torch.learners.multi_agent_rl.iac_learner import IAC_Learner
 
 
