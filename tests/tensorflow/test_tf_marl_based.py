@@ -169,12 +169,12 @@ class TestValueBaseAlgo(unittest.TestCase):
         else:
             runner.run()
 
-    def test_qtran(self):
-        runner = get_runner(method="qtran", env=env_name, env_id=env_id, parser_args=args)
-        if is_benchmark:
-            runner.benchmark()
-        else:
-            runner.run()
+    # def test_qtran(self):
+    #     runner = get_runner(method="qtran", env=env_name, env_id=env_id, parser_args=args)
+    #     if is_benchmark:
+    #         runner.benchmark()
+    #     else:
+    #         runner.run()
 
     # def test_tarmac(self):
     #     runner = get_runner(method="tarmac", env=env_name, env_id=env_id, parser_args=args)

@@ -475,10 +475,7 @@ class OffPolicyMARLAgents(MARLAgents):
         info_train = {}
         for i_epoch in range(n_epochs):
             sample = self.memory.sample()
-            if self.use_rnn:
-                info_train = self.learner.update_rnn(sample)
-            else:
-                info_train = self.learner.update(sample)
+            info_train = self.learner.update_rnn(sample) if self.use_rnn else self.learner.update(sample)
         info_train["epsilon-greedy"] = self.e_greedy
         info_train["noise_scale"] = self.noise_scale
         return info_train
