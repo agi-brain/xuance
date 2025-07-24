@@ -3,7 +3,7 @@ from copy import deepcopy
 from gymnasium.spaces import Space, Discrete, Box
 from xuance.common import Sequence, Optional, Union, Dict, List
 from xuance.tensorflow.representations import Basic_Identical
-from xuance.tensorflow import tf, tk, tfp, Tensor, Module
+from xuance.tensorflow import tf, tk, Tensor, Module
 from .core import BasicQhead, ActorNet, CriticNet, VDN_mixer, QTRAN_base
 
 

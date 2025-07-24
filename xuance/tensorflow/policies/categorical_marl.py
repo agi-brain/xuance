@@ -343,7 +343,7 @@ class COMA_Policy(Module):
                 params.extend(self.actor_representation[k].trainable_variables)
         else:
             for k in self.model_keys:
-                params.extend(self.actor[k].trainable_variables + self.actor[k].trainable_variables)
+                params.extend(self.actor_representation[k].trainable_variables + self.actor[k].trainable_variables)
         return params
 
     @property
@@ -357,7 +357,7 @@ class COMA_Policy(Module):
     @tf.function
     def call(self, observation: Union[np.ndarray, dict], agent_ids: Union[np.ndarray, dict] = None,
              avail_actions: Union[np.ndarray, dict] = None, agent_key: str = None,
-             rnn_hidden: Optional[Dict[str, List[Tensor]]] = None, epsilon=0.0, test_mode=False, **kwargs):
+             rnn_hidden: Optional[Dict[str, List[Tensor]]] = None, **kwargs):
         """
         Returns actions of the policy.
 
@@ -367,11 +367,10 @@ class COMA_Policy(Module):
             avail_actions (Dict[str, Tensor]): Actions mask values, default is None.
             agent_key (str): Calculate actions for specified agent.
             rnn_hidden (Optional[Dict[str, List[Tensor]]]): The RNN hidden states of actor representation.
-            epsilon: The epsilon.
 
         Returns:
             rnn_hidden_new (Optional[Dict[str, List[Tensor]]]): The new RNN hidden states of actor representation.
-            act_probs (dict): The probabilities of the actions.
+            pi_logits (dict): The output of the actors.
         """
         rnn_hidden_new, pi_logits, act_probs = {}, {}, {}
         agent_list = self.model_keys if agent_key is None else [agent_key]
@@ -394,16 +393,12 @@ class COMA_Policy(Module):
 
             avail_actions_input = None if avail_actions is None else avail_actions[key]
             pi_logits[key] = self.actor[key](actor_input, avail_actions_input)
-            act_probs[key] = tf.nn.softmax(pi_logits[key], axis=-1)
 
-            if not test_mode:
-                act_probs[key] = (1 - epsilon) * act_probs[key] + epsilon * 1 / self.n_actions[key]
-
-        return rnn_hidden_new, act_probs
+        return rnn_hidden_new, pi_logits
 
     @tf.function
     def get_values(self, state: Tensor, observation: Dict[str, Tensor], actions: Dict[str, Tensor],
-                   agent_ids: Tensor = None, rnn_hidden: Optional[Dict[str, List[Tensor]]] = None, target=False):
+                   agent_ids: Tensor = None, rnn_hidden: Optional[Dict[str, List[Tensor]]] = None):
         """
         Get evaluated critic values.
 
@@ -413,7 +408,6 @@ class COMA_Policy(Module):
             actions (Dict[str, Tensor]): The input actions.
             agent_ids (Tensor): The agents' ids (for parameter sharing).
             rnn_hidden (Optional[Dict[str, List[Tensor]]]): The RNN hidden states of critic representation.
-            target: If to use target critic network to calculate the critic values.
 
         Returns:
             rnn_hidden_new (Optional[Dict[str, List[Tensor]]]): The new RNN hidden states of critic representation.
@@ -432,16 +426,10 @@ class COMA_Policy(Module):
         obs_rep = {}
         for key in self.model_keys:
             if self.use_rnn:
-                if target:
-                    outputs = self.target_critic_representation[key](observation[key], *rnn_hidden[key])
-                else:
-                    outputs = self.critic_representation[key](observation[key], *rnn_hidden[key])
+                outputs = self.critic_representation[key](observation[key], *rnn_hidden[key])
                 rnn_hidden_new[key] = (outputs['rnn_hidden'], outputs['rnn_cell'])
             else:
-                if target:
-                    outputs = self.target_critic_representation[key](observation[key])
-                else:
-                    outputs = self.critic_representation[key](observation[key])
+                outputs = self.critic_representation[key](observation[key])
                 rnn_hidden_new[key] = [None, None]
             obs_rep[key] = outputs['state']
 
@@ -478,7 +466,80 @@ class COMA_Policy(Module):
             critic_inputs.append(agent_ids)
             critic_inputs = tf.concat(critic_inputs, axis=-1)
 
-        values = self.target_critic(critic_inputs) if target else self.critic(critic_inputs)
+        values = self.critic(critic_inputs)
+        return rnn_hidden_new, values
+
+    @tf.function
+    def get_values_target(self, state: Tensor, observation: Dict[str, Tensor], actions: Dict[str, Tensor],
+                          agent_ids: Tensor = None, rnn_hidden: Optional[Dict[str, List[Tensor]]] = None):
+        """
+        Get evaluated critic values.
+
+        Parameters:
+            state: Tensor: The global state.
+            observation (Dict[str, Tensor]): The input observations for the policies.
+            actions (Dict[str, Tensor]): The input actions.
+            agent_ids (Tensor): The agents' ids (for parameter sharing).
+            rnn_hidden (Optional[Dict[str, List[Tensor]]]): The RNN hidden states of critic representation.
+
+        Returns:
+            rnn_hidden_new (Optional[Dict[str, List[Tensor]]]): The new RNN hidden states of critic representation.
+            values (dict): The evaluated critic values.
+        """
+        rnn_hidden_new, critic_input = {}, {}
+        batch_size = state.shape[0]
+        seq_len = state.shape[1] if self.use_rnn else 1
+        critic_inputs = []
+
+        if self.use_rnn:
+            critic_inputs.append(tf.tile(tf.expand_dims(state, -2), [1, 1, self.n_agents, 1]))  # batch * T * N * dim_S)
+        else:
+            critic_inputs.append(tf.tile(tf.expand_dims(state, -2), [1, self.n_agents, 1]))  # batch * N * dim_S
+
+        obs_rep = {}
+        for key in self.model_keys:
+            if self.use_rnn:
+                outputs = self.target_critic_representation[key](observation[key], *rnn_hidden[key])
+                rnn_hidden_new[key] = (outputs['rnn_hidden'], outputs['rnn_cell'])
+            else:
+                outputs = self.target_critic_representation[key](observation[key])
+                rnn_hidden_new[key] = [None, None]
+            obs_rep[key] = outputs['state']
+
+        agent_mask = tf.expand_dims((1 - tf.eye(self.n_agents, dtype=tf.float32)), axis=-1)
+        if self.use_parameter_sharing:
+            key = self.model_keys[0]
+            agent_mask = tf.reshape(tf.tile(agent_mask, [1, 1, self.n_actions[key]]), [self.n_agents, -1])
+            agent_mask = tf.expand_dims(agent_mask, 0)
+            if self.use_rnn:
+                actions_input = actions[key].reshape(batch_size, seq_len, 1, -1).repeat(1, 1, self.n_agents, 1)
+                critic_inputs.append(obs_rep[key].reshape(batch_size, self.n_agents, seq_len, -1).transpose(1, 2))
+                critic_inputs.append(actions_input * agent_mask.unsqueeze(0))
+                critic_inputs.append(agent_ids.reshape(batch_size, self.n_agents, seq_len, -1).transpose(1, 2))
+            else:
+                actions_input = tf.tile(tf.reshape(actions[key], [batch_size, 1, -1]), [1, self.n_agents, 1])
+                critic_inputs.append(tf.reshape(obs_rep[key], [batch_size, self.n_agents, -1]))
+                critic_inputs.append(actions_input * agent_mask)
+                critic_inputs.append(tf.reshape(agent_ids, [batch_size, self.n_agents, -1]))
+            critic_inputs = tf.concat(critic_inputs, axis=-1)
+        else:
+            agent_mask = tf.concat([agent_mask[i].repeat(1, self.n_actions[k])
+                                    for i, k in enumerate(self.model_keys)], axis=-1).unsqueeze(0)
+            if self.use_rnn:
+                agent_mask = agent_mask.unsqueeze(1)
+                actions_input = tf.concat(itemgetter(*self.model_keys)(actions),
+                                          axis=-1).unsqueeze(-2).repeat(1, 1, self.n_agents, 1)  # batch * T * N * A
+                agent_ids = agent_ids.reshape(batch_size, self.n_agents, seq_len, -1).transpose(1, 2)
+            else:
+                actions_input = tf.concat(itemgetter(*self.model_keys)(actions),
+                                          axis=-1).unsqueeze(1).repeat(1, self.n_agents, 1)  # batch_size * N * A
+                agent_ids = agent_ids.reshape(batch_size, self.n_agents, -1)  # batch_size * N * N
+            critic_inputs.append(tf.stack(itemgetter(*self.model_keys)(obs_rep), axis=-2))
+            critic_inputs.append(actions_input * agent_mask)
+            critic_inputs.append(agent_ids)
+            critic_inputs = tf.concat(critic_inputs, axis=-1)
+
+        values = self.target_critic(critic_inputs)
         return rnn_hidden_new, values
 
     @tf.function

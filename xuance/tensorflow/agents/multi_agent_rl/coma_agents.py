@@ -8,7 +8,6 @@ from xuance.common import List, Optional, Union
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
 from xuance.tensorflow import tf, Module, Tensor
 from xuance.tensorflow.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions
-from xuance.tensorflow.utils.distributions import Categorical
 from xuance.tensorflow.policies import REGISTRY_Policy
 from xuance.tensorflow.agents import OnPolicyMARLAgents, BaseCallback
 
@@ -135,22 +134,21 @@ class COMA_Agents(OnPolicyMARLAgents):
         rnn_hidden_critic_new, log_pi_a_dict, values_dict, actions_out = {}, {}, {}, None
 
         obs_input, agents_id, avail_actions_input = self._build_inputs(obs_dict, avail_actions_dict)
-        rnn_hidden_actor_new, pi_probs = self.policy(observation=obs_input,
-                                                     agent_ids=agents_id,
-                                                     avail_actions=avail_actions_input,
-                                                     rnn_hidden=rnn_hidden_actor,
-                                                     epsilon=self.egreedy,
-                                                     test_mode=test_mode)
+        rnn_hidden_actor_new, pi_logits = self.policy(observation=obs_input,
+                                                      agent_ids=agents_id,
+                                                      avail_actions=avail_actions_input,
+                                                      rnn_hidden=rnn_hidden_actor)
 
         if self.use_parameter_sharing:
             key = self.agent_keys[0]
-            if self.use_actions_mask:
-                pi_probs[key][Tensor(avail_actions_input[key]) == 0] = 0.0
             if test_mode:
-                actions_sample = tf.argmax(pi_probs[key], axis=-1, output_type=tf.int32)
+                actions_sample = tf.argmax(pi_logits[key], axis=-1, output_type=tf.int32)
             else:
-                pi_dists = Categorical(probs=pi_probs[key])
-                actions_sample = pi_dists.sample()
+                pi_probs = tf.nn.softmax(pi_logits[key], axis=-1)
+                pi_probs = (1 - self.egreedy) * pi_probs + self.egreedy * 1 / self.action_space[key].n
+                self.policy.actor[key].dist.set_param(probs=pi_probs)
+                pi_dists = self.policy.actor[key].dist
+                actions_sample = pi_dists.stochastic_sample()
             actions_out = tf.reshape(actions_sample, [n_env, self.n_agents])
             actions_dict = [{k: actions_out[e, i].numpy() for i, k in enumerate(self.agent_keys)}
                             for e in range(n_env)]
@@ -159,14 +157,16 @@ class COMA_Agents(OnPolicyMARLAgents):
             agents_id = tf.eye(self.n_agents).unsqueeze(0).expand(n_env, -1, -1).to(self.device)
             bs = n_env * self.n_agents
             agents_id = agents_id.reshape(bs, 1, -1) if self.use_rnn else agents_id.reshape(bs, -1)
-            if self.use_actions_mask:
-                for k in self.agent_keys:
-                    pi_probs[k][Tensor(avail_actions_input[k]) == 0] = 0.0
             if test_mode:
-                actions_sample = {k: pi_probs[k].max(dim=-1)[1] for k in self.agent_keys}
+                actions_sample = {k: pi_logits[k].max(dim=-1)[1] for k in self.agent_keys}
             else:
-                pi_dists = {k: Categorical(probs=pi_probs[k]) for k in self.agent_keys}
-                actions_sample = {k: pi_dists[k].sample() for k in self.agent_keys}
+                actions_sample = {}
+                for k in self.agent_keys:
+                    pi_probs = tf.nn.softmax(pi_logits[k], axis=-1)
+                    pi_probs = (1 - self.egreedy) * pi_probs + self.egreedy * 1 / self.action_space[k].n
+                    self.policy.actor[k].dist.set_param(probs=pi_probs)
+                    pi_dists = self.policy.actor[k].dist
+                    actions_sample[k] = pi_dists.stochastic_sample()
             actions_out = tf.stack(itemgetter(*self.agent_keys)(actions_sample), dim=-1)
             actions_dict = [{k: actions_sample[k].numpy()[e].reshape([]) for k in self.agent_keys}
                             for e in range(n_env)]
@@ -182,12 +182,11 @@ class COMA_Agents(OnPolicyMARLAgents):
             else:
                 state = tf.reshape(tf.convert_to_tensor(np.array(state)), [n_env, -1])
 
-            rnn_hidden_critic_new, values_out = self.policy.get_values(state=state,
-                                                                       observation=obs_input,
-                                                                       actions=actions_onehot,
-                                                                       agent_ids=agents_id,
-                                                                       rnn_hidden=rnn_hidden_critic,
-                                                                       target=True)
+            rnn_hidden_critic_new, values_out = self.policy.get_values_target(state=state,
+                                                                              observation=obs_input,
+                                                                              actions=actions_onehot,
+                                                                              agent_ids=agents_id,
+                                                                              rnn_hidden=rnn_hidden_critic)
             if self.use_rnn:
                 values_out = values_out.reshape(n_env, self.n_agents, -1)
                 actions_out = actions_out.reshape(n_env, self.n_agents)
@@ -255,12 +254,11 @@ class COMA_Agents(OnPolicyMARLAgents):
             actions_onehot = {k: one_hot(actions_tensor[:, i].long(), self.action_space[k].n)
                               for i, k in enumerate(self.agent_keys)}
 
-        rnn_hidden_critic_new, values_out = self.policy.get_values(state=state,
-                                                                   observation=obs_input,
-                                                                   actions=actions_onehot,
-                                                                   agent_ids=agents_id,
-                                                                   rnn_hidden=rnn_hidden_critic_i,
-                                                                   target=True)
+        rnn_hidden_critic_new, values_out = self.policy.get_values_target(state=state,
+                                                                          observation=obs_input,
+                                                                          actions=actions_onehot,
+                                                                          agent_ids=agents_id,
+                                                                          rnn_hidden=rnn_hidden_critic_i)
         if self.use_rnn:
             values_out = values_out.reshape(n_env, self.n_agents, -1)
             actions_tensor = actions_tensor.reshape(n_env, self.n_agents)

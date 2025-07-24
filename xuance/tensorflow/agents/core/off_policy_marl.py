@@ -5,8 +5,7 @@ from argparse import Namespace
 from operator import itemgetter
 from xuance.common import Optional, List, Union, MARL_OffPolicyBuffer, MARL_OffPolicyBuffer_RNN
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
-from xuance.tensorflow import Tensor, Module
-from xuance.tensorflow.utils.distributions import Categorical
+from xuance.tensorflow import Tensor, Module, tf
 from xuance.tensorflow.agents.base import MARLAgents, BaseCallback
 
 
@@ -167,7 +166,9 @@ class OffPolicyMARLAgents(MARLAgents):
         if self.e_greedy is not None:
             if np.random.rand() < self.e_greedy:
                 if self.use_actions_mask:
-                    explore_actions = [{k: Categorical(Tensor(avail_actions_dict[e][k])).sample().numpy()
+
+                    explore_actions = [{k: tf.random.categorical(Tensor(avail_actions_dict[e][k]),
+                                                                 num_samples=1).numpy()
                                         for k in self.agent_keys} for e in range(batch_size)]
                 else:
                     explore_actions = [{k: self.action_space[k].sample() for k in self.agent_keys} for _ in

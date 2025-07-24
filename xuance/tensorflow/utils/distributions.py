@@ -1,9 +1,8 @@
 import numpy as np
-from tensorflow.keras.activations import softplus
 from abc import abstractmethod
-from xuance.tensorflow import tf, Tensor, tfd
+from tensorflow.keras.activations import softplus
+from xuance.tensorflow import tf, Tensor
 
-Categorical = tfd.Categorical
 
 class Distribution:
     def __init__(self):
@@ -42,7 +41,7 @@ class CategoricalDistribution(Distribution):
 
     def set_param(self, probs=None, logits=None):
         if probs is not None:
-            self.probs = probs / probs.sum(-1, keepdims=True)
+            self.probs = probs / tf.reduce_sum(probs, axis=-1, keepdims=True)
             self.logits = tf.math.log(probs) - tf.math.log1p(-probs)
         elif logits is not None:
             self.logits = logits
