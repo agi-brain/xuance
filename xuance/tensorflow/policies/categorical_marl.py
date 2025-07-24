@@ -542,7 +542,6 @@ class COMA_Policy(Module):
         values = self.target_critic(critic_inputs)
         return rnn_hidden_new, values
 
-    @tf.function
     def copy_target(self):
         for key in self.model_keys:
             self.target_critic_representation[key].set_weights(self.critic_representation[key].get_weights())

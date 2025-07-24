@@ -37,7 +37,7 @@ class COMA_Learner(IAC_Learner):
                 'critic': tk.optimizers.Adam(self.config.learning_rate_critic)
             }
 
-    @tf.function
+    # @tf.function
     def forward_fn(self, *args):
         bs, batch_size, obs, state, actions, agent_mask, avail_actions, returns, IDs, epsilon = args
         with tf.GradientTape(persistent=True) as tape:
@@ -94,7 +94,7 @@ class COMA_Learner(IAC_Learner):
 
         return loss_coma, loss_critic
 
-    @tf.function
+    # @tf.function
     def learn(self, *inputs):
         if self.distributed_training:
             loss_coma, loss_critic = self.policy.mirrored_strategy.run(self.forward_fn, args=inputs)
