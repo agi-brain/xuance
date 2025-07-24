@@ -198,7 +198,7 @@ class Basic_ISAC_Policy(Module):
     Basic_ISAC_Policy: The basic policy for independent soft actor-critic.
 
     Args:
-        action_space (Box): The continuous action space.
+        action_space (Optional[Dict[str, Box]]): The continuous action space.
         n_agents (int): The number of agents.
         actor_representation (ModuleDict): A dict of representation modules for each agent's actor.
         critic_representation (ModuleDict): A dict of representation modules for each agent's critic.

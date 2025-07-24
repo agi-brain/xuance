@@ -1,8 +1,7 @@
 import numpy as np
 from copy import deepcopy
 from gymnasium.spaces import Box
-from xuance.common import Sequence, Optional, Callable, Union, Dict, List
-from xuance.common import Sequence, Optional, Union, Dict
+from xuance.common import Sequence, Optional, Union, Dict, List
 from xuance.tensorflow import tf, tk, Module, Tensor
 from .core import GaussianActorNet, GaussianActorNet_SAC, CriticNet
 
@@ -14,14 +13,14 @@ class MAAC_Policy(Module):
     Args:
         action_space (Box): The continuous action space.
         n_agents (int): The number of agents.
-        representation_actor (ModuleDict): A dict of representation modules for each agent's actor.
-        representation_critic (ModuleDict): A dict of representation modules for each agent's critic.
+        representation_actor (Optional[Dict[str, Module]]): A dict of representation modules for each agent's actor.
+        representation_critic (Optional[Dict[str, Module]]): A dict of representation modules for each agent's critic.
         actor_hidden_size (Sequence[int]): A list of hidden layer sizes for actor network.
         critic_hidden_size (Sequence[int]): A list of hidden layer sizes for critic network.
         normalize (Optional[ModuleType]): The layer normalization over a minibatch of inputs.
-        initialize (Optional[Callable[..., Tensor]]): The parameters initializer.
-        activation (Optional[ModuleType]): The activation function for each layer.
-        activation_action (Optional[ModuleType]): The activation of final layer to bound the actions.
+        initialize (Optional[tk.initializers.Initializer]): The parameters initializer.
+        activation (Optional[tk.layers.Layer]): The activation function for each layer.
+        activation_action (Optional[tk.layers.Layer]): The activation of final layer to bound the actions.
         use_distributed_training (bool): Whether to use multi-GPU for distributed training.
         **kwargs: Other arguments.
     """
@@ -29,8 +28,8 @@ class MAAC_Policy(Module):
     def __init__(self,
                  action_space: Optional[Dict[str, Box]],
                  n_agents: int,
-                 representation_actor: Module,
-                 representation_critic: Module,
+                 representation_actor: Optional[Dict[str, Module]],
+                 representation_critic: Optional[Dict[str, Module]],
                  mixer: Optional[Module] = None,
                  actor_hidden_size: Sequence[int] = None,
                  critic_hidden_size: Sequence[int] = None,
@@ -168,6 +167,24 @@ class MAAC_Policy(Module):
 
 
 class Basic_ISAC_Policy(Module):
+    """
+    Basic_ISAC_Policy: The basic policy for independent soft actor-critic.
+
+    Args:
+        action_space (Optional[Dict[str, Box]]): The continuous action space.
+        n_agents (int): The number of agents.
+        actor_representation (Optional[Dict[str, Module]]): A dict of representation modules for each agent's actor.
+        critic_representation (Optional[Dict[str, Module]]): A dict of representation modules for each agent's critic.
+        actor_hidden_size (Sequence[int]): A list of hidden layer sizes for actor network.
+        critic_hidden_size (Sequence[int]): A list of hidden layer sizes for critic network.
+        normalize (Optional[tk.layers.Layer]): The layer normalization over a minibatch of inputs.
+        initialize (Optional[tk.initializers.Initializer]): The parameters initializer.
+        activation (Optional[tk.layers.Layer]): The activation function for each layer.
+        activation_action (Optional[tk.layers.Layer]): The activation of final layer to bound the actions.
+        use_distributed_training (bool): Whether to use multi-GPU for distributed training.
+        **kwargs: Other arguments.
+    """
+
     def __init__(self,
                  action_space: Optional[Dict[str, Box]],
                  n_agents: int,
@@ -197,6 +214,7 @@ class Basic_ISAC_Policy(Module):
 
         self.actor, self.critic_1, self.critic_2 = {}, {}, {}
         self.target_critic_1, self.target_critic_2 = {}, {}
+        self.activation_action = activation_action
         for key in self.model_keys:
             dim_action = self.action_space[key].shape[-1]
             dim_actor_in, dim_actor_out, dim_critic_in = self._get_actor_critic_input(
@@ -243,8 +261,9 @@ class Basic_ISAC_Policy(Module):
         return dim_actor_in, dim_actor_out, dim_critic_in
 
     @tf.function
-    def call(self, observation: Dict[str, np.ndarray], agent_ids: np.ndarray = None, agent_key: str = None,
-             rnn_hidden: Optional[Dict[str, List[np.ndarray]]] = None):
+    def call(self, observation: Dict[str, Tensor], agent_ids: Tensor = None,
+                avail_actions: Dict[str, Tensor] = None, agent_key: str = None,
+                rnn_hidden: Optional[Dict[str, List[Tensor]]] = None):
         """
         Returns actions of the policy.
 
@@ -258,7 +277,7 @@ class Basic_ISAC_Policy(Module):
             rnn_hidden_new (Optional[Dict[str, List[Tensor]]]): The new hidden variables of the RNN.
             actions (Dict[Tensor]): The actions output by the policies.
         """
-        rnn_hidden_new, act_dists, actions_dict, log_action_prob = deepcopy(rnn_hidden), {}, {}, {}
+        rnn_hidden_new, actions_dict, log_action_prob = deepcopy(rnn_hidden), {}, {}
         agent_list = self.model_keys if agent_key is None else [agent_key]
         for key in agent_list:
             if self.use_rnn:
@@ -271,27 +290,34 @@ class Basic_ISAC_Policy(Module):
                 actor_in = tf.concat([outputs['state'], agent_ids], axis=-1)
             else:
                 actor_in = outputs['state']
-            act_dists = self.actor[key](actor_in)
-            dists = self.actor[key].dist
-            actions_dict[key], log_action_prob[key] = dists.activated_rsample_and_logprob()
+            pi_mu, pi_std = self.actor[key](actor_in)
+            eps = tf.random.normal(shape=tf.shape(pi_mu))  # 𝜖 ~ N(0, 1)
+            action_sampled = pi_mu + pi_std * eps  # Reparameterization trick
+            actions_dict[key] = self.activation_action(action_sampled)
+            # calculate log prob
+            log_std = tf.math.log(pi_std + 1e-8)
+            log_prob = -0.5 * (((action_sampled - pi_mu) / (pi_std + 1e-8)) ** 2 + 2.0 * log_std + tf.math.log(2.0 * np.pi))
+            correction = - 2. * (tf.math.log(2.0) - action_sampled - tk.activations.softplus(-2. * action_sampled))
+            log_prob += correction
+            log_action_prob[key] = tf.reduce_sum(log_prob, axis=-1)
         return rnn_hidden_new, actions_dict, log_action_prob
 
     @tf.function
-    def Qpolicy(self, observation: Dict[str, np.ndarray],
-                actions: Dict[str, np.ndarray],
-                agent_ids: np.ndarray = None, agent_key: str = None,
-                rnn_hidden_critic_1: Optional[Dict[str, List[np.ndarray]]] = None,
-                rnn_hidden_critic_2: Optional[Dict[str, List[np.ndarray]]] = None):
+    def Qpolicy(self, observation: Dict[str, Tensor],
+                actions: Dict[str, Tensor],
+                agent_ids: Tensor = None, agent_key: str = None,
+                rnn_hidden_critic_1: Optional[Dict[str, List[Tensor]]] = None,
+                rnn_hidden_critic_2: Optional[Dict[str, List[Tensor]]] = None):
         """
         Returns Q^policy of current observations and actions pairs.
 
         Parameters:
-            observation (Dict[np.ndarray]): The observations.
-            actions (Dict[np.ndarray]): The actions.
-            agent_ids (Dict[np.ndarray]): The agents' ids (for parameter sharing).
+            observation (Dict[Tensor]): The observations.
+            actions (Dict[Tensor]): The actions.
+            agent_ids (Dict[Tensor]): The agents' ids (for parameter sharing).
             agent_key (str): Calculate actions for specified agent.
-            rnn_hidden_critic_1 (Optional[Dict[str, List[np.ndarray]]]): The RNN hidden for critic_1 representation.
-            rnn_hidden_critic_2 (Optional[Dict[str, List[np.ndarray]]]): The RNN hidden for critic_2 representation.
+            rnn_hidden_critic_1 (Optional[Dict[str, List[Tensor]]]): The RNN hidden states for critic_1 representation.
+            rnn_hidden_critic_2 (Optional[Dict[str, List[Tensor]]]): The RNN hidden states for critic_2 representation.
 
         Returns:
             rnn_hidden_critic_new_1: The updated rnn states for critic_1_representation.
@@ -322,21 +348,21 @@ class Basic_ISAC_Policy(Module):
         return rnn_hidden_critic_new_1, rnn_hidden_critic_new_2, q_1, q_2
 
     @tf.function
-    def Qtarget(self, next_observation: Dict[str, np.ndarray],
-                next_actions: Dict[str, np.ndarray],
-                agent_ids: np.ndarray = None, agent_key: str = None,
-                rnn_hidden_critic_1: Optional[Dict[str, List[np.ndarray]]] = None,
-                rnn_hidden_critic_2: Optional[Dict[str, List[np.ndarray]]] = None):
+    def Qtarget(self, next_observation: Dict[str, Tensor],
+                next_actions: Dict[str, Tensor],
+                agent_ids: Tensor = None, agent_key: str = None,
+                rnn_hidden_critic_1: Optional[Dict[str, List[Tensor]]] = None,
+                rnn_hidden_critic_2: Optional[Dict[str, List[Tensor]]] = None):
         """
         Returns the Q^target of next observations and actions pairs.
 
         Parameters:
-            next_observation (Dict[np.ndarray]): The observations of next step.
-            next_actions (Dict[np.ndarray]): The actions of next step.
-            agent_ids (Dict[np.ndarray]): The agents' ids (for parameter sharing).
+            next_observation (Dict[Tensor]): The observations of next step.
+            next_actions (Dict[Tensor]): The actions of next step.
+            agent_ids (Dict[Tensor]): The agents' ids (for parameter sharing).
             agent_key (str): Calculate actions for specified agent.
-            rnn_hidden_critic_1 (Optional[Dict[str, List[np.ndarray]]]): The RNN hidden for critic_1 representation.
-            rnn_hidden_critic_2 (Optional[Dict[str, List[np.ndarray]]]): The RNN hidden for critic_2 representation.
+            rnn_hidden_critic_1 (Optional[Dict[str, List[Tensor]]]): The RNN hidden states for critic_1 representation.
+            rnn_hidden_critic_2 (Optional[Dict[str, List[Tensor]]]): The RNN hidden states for critic_2 representation.
 
         Returns:
             rnn_hidden_critic_new_1: The updated rnn states for critic_1_representation.
@@ -369,20 +395,20 @@ class Basic_ISAC_Policy(Module):
 
     @tf.function
     def Qaction(self, observation: Union[np.ndarray, dict],
-                actions: np.ndarray,
-                agent_ids: np.ndarray, agent_key: str = None,
-                rnn_hidden_critic_1: Optional[Dict[str, List[np.ndarray]]] = None,
-                rnn_hidden_critic_2: Optional[Dict[str, List[np.ndarray]]] = None):
+                actions: Tensor,
+                agent_ids: Tensor, agent_key: str = None,
+                rnn_hidden_critic_1: Optional[Dict[str, List[Tensor]]] = None,
+                rnn_hidden_critic_2: Optional[Dict[str, List[Tensor]]] = None):
         """
         Returns the evaluated Q-values for current observation-action pairs.
 
         Parameters:
             observation (Union[np.ndarray, dict]): The original observation.
-            actions (np.ndarray): The selected actions.
-            agent_ids (np.ndarray): The agents' ids (for parameter sharing).
+            actions (Tensor): The selected actions.
+            agent_ids (Tensor): The agents' ids (for parameter sharing).
             agent_key (str): Calculate actions for specified agent.
-            rnn_hidden_critic_1 (Optional[Dict[str, List[np.ndarray]]]): The RNN hidden for critic_1 representation.
-            rnn_hidden_critic_2 (Optional[Dict[str, List[np.ndarray]]]): The RNN hidden for critic_2 representation.
+            rnn_hidden_critic_1 (Optional[Dict[str, List[Tensor]]]): The RNN hidden states for critic_1 representation.
+            rnn_hidden_critic_2 (Optional[Dict[str, List[Tensor]]]): The RNN hidden states for critic_2 representation.
 
         Returns:
             rnn_hidden_critic_new_1: The updated rnn states for critic_1_representation.
