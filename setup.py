@@ -42,7 +42,8 @@ setup(
                   "torchvision"],
         "tensorflow": ["tensorflow==2.19.0",
                        "tf_keras==2.19.0"],
-        "mindspore": ["mindspore==2.2.0"],
+        "mindspore": ["mindspore==2.6.0",
+                      "protobuf==3.20.0"],
         "all": [
             "torch",
             "tensorflow==2.6.0",
