@@ -51,6 +51,7 @@ class MASAC_Agents(ISAC_Agents):
                 activation_action=ActivationFunctions[self.config.activation_action],
                 use_parameter_sharing=self.use_parameter_sharing, model_keys=self.model_keys,
                 use_rnn=self.use_rnn, rnn=self.config.rnn if self.use_rnn else None)
+            self.continuous_control = True
         else:
             raise AttributeError(f"{agent} currently does not support the policy named {self.config.policy}.")
 
