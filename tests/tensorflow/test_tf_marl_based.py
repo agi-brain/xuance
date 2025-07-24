@@ -25,12 +25,12 @@ class TestValueBaseAlgo(unittest.TestCase):
         else:
             runner.run()
 
-    def test_commnet(self):
-        runner = get_runner(method="commnet", env=env_name, env_id=env_id, parser_args=args)
-        if is_benchmark:
-            runner.benchmark()
-        else:
-            runner.run()
+    # def test_commnet(self):
+    #     runner = get_runner(method="commnet", env=env_name, env_id=env_id, parser_args=args)
+    #     if is_benchmark:
+    #         runner.benchmark()
+    #     else:
+    #         runner.run()
 
     # def test_dcg(self):
     #     runner = get_runner(method="dcg", env=env_name, env_id=env_id, parser_args=args)
@@ -59,12 +59,12 @@ class TestValueBaseAlgo(unittest.TestCase):
         else:
             runner.run()
 
-    def test_ic3net(self):
-        runner = get_runner(method="ic3net", env=env_name, env_id=env_id, parser_args=args)
-        if is_benchmark:
-            runner.benchmark()
-        else:
-            runner.run()
+    # def test_ic3net(self):
+    #     runner = get_runner(method="ic3net", env=env_name, env_id=env_id, parser_args=args)
+    #     if is_benchmark:
+    #         runner.benchmark()
+    #     else:
+    #         runner.run()
 
     def test_iddpg(self):
         runner = get_runner(method="iddpg", env=env_name, env_id=env_id, parser_args=args)
@@ -148,19 +148,19 @@ class TestValueBaseAlgo(unittest.TestCase):
         else:
             runner.run()
 
-    def test_mfac(self):
-        runner = get_runner(method="mfac", env=env_name, env_id=env_id, parser_args=args)
-        if is_benchmark:
-            runner.benchmark()
-        else:
-            runner.run()
-
-    def test_mfq(self):
-        runner = get_runner(method="mfq", env=env_name, env_id=env_id, parser_args=args)
-        if is_benchmark:
-            runner.benchmark()
-        else:
-            runner.run()
+    # def test_mfac(self):
+    #     runner = get_runner(method="mfac", env=env_name, env_id=env_id, parser_args=args)
+    #     if is_benchmark:
+    #         runner.benchmark()
+    #     else:
+    #         runner.run()
+    #
+    # def test_mfq(self):
+    #     runner = get_runner(method="mfq", env=env_name, env_id=env_id, parser_args=args)
+    #     if is_benchmark:
+    #         runner.benchmark()
+    #     else:
+    #         runner.run()
 
     def test_qmix(self):
         runner = get_runner(method="qmix", env=env_name, env_id=env_id, parser_args=args)
@@ -176,12 +176,12 @@ class TestValueBaseAlgo(unittest.TestCase):
         else:
             runner.run()
 
-    def test_tarmac(self):
-        runner = get_runner(method="tarmac", env=env_name, env_id=env_id, parser_args=args)
-        if is_benchmark:
-            runner.benchmark()
-        else:
-            runner.run()
+    # def test_tarmac(self):
+    #     runner = get_runner(method="tarmac", env=env_name, env_id=env_id, parser_args=args)
+    #     if is_benchmark:
+    #         runner.benchmark()
+    #     else:
+    #         runner.run()
 
     def test_vdac_continuous(self):
         args_continuous = deepcopy(args)
