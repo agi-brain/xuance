@@ -9,7 +9,7 @@ is_benchmark = False
 
 n_steps = 10000
 eval_interval = 5000
-device = 'GPU'
+device = 'CPU'
 test_mode = False
 args = Namespace(dl_toolbox='tensorflow', device=device,
                  running_steps=n_steps, eval_interval=eval_interval, test_mode=test_mode)
