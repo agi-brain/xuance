@@ -60,8 +60,8 @@ class ISAC_Learner(LearnerMAS):
         if self.use_parameter_sharing:
             key = self.model_keys[0]
             bs = batch_size * self.n_agents
-            rewards[key] = rewards[key].reshape(batch_size * self.n_agents)
-            terminals[key] = terminals[key].reshape(batch_size * self.n_agents)
+            rewards[key] = tf.reshape(rewards[key], [batch_size * self.n_agents])
+            terminals[key] = tf.reshape(terminals[key], [batch_size * self.n_agents])
         else:
             bs = batch_size
 

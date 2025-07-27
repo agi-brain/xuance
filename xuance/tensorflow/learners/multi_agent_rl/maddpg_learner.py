@@ -53,16 +53,16 @@ class MADDPG_Learner(LearnerMAS):
         if self.use_parameter_sharing:
             key = self.model_keys[0]
             bs = batch_size * self.n_agents
-            obs_joint = obs[key].reshape(batch_size, -1)
-            next_obs_joint = obs_next[key].reshape(batch_size, -1)
-            actions_joint = actions[key].reshape(batch_size, -1)
-            rewards[key] = rewards[key].reshape(batch_size * self.n_agents)
-            terminals[key] = terminals[key].reshape(batch_size * self.n_agents)
+            obs_joint = tf.reshape(obs[key], [batch_size, -1])
+            next_obs_joint = tf.reshape(obs_next[key], [batch_size, -1])
+            actions_joint = tf.reshape(actions[key], [batch_size, -1])
+            rewards[key] = tf.reshape(rewards[key], [batch_size * self.n_agents])
+            terminals[key] = tf.reshape(terminals[key], [batch_size * self.n_agents])
         else:
             bs = batch_size
-            obs_joint = np.concat(itemgetter(*self.agent_keys)(obs), axis=-1).reshape(batch_size, -1)
-            next_obs_joint = np.concat(itemgetter(*self.agent_keys)(obs_next), axis=-1).reshape(batch_size, -1)
-            actions_joint = np.concat(itemgetter(*self.agent_keys)(actions), axis=-1).reshape(batch_size, -1)
+            obs_joint = tf.reshape(tf.concat(itemgetter(*self.agent_keys)(obs), axis=-1), [batch_size, -1])
+            next_obs_joint = tf.reshape(tf.concat(itemgetter(*self.agent_keys)(obs_next), axis=-1), [batch_size, -1])
+            actions_joint = tf.reshape(tf.concat(itemgetter(*self.agent_keys)(actions), axis=-1), [batch_size, -1])
 
         # update critic
         _, actions_next = self.policy.Atarget(next_observation=obs_next, agent_ids=IDs)

@@ -50,13 +50,14 @@ class VDN_Learner(LearnerMAS):
         if self.use_parameter_sharing:
             key = self.model_keys[0]
             bs = batch_size * self.n_agents
-            rewards_tot = rewards[key].mean(axis=1).reshape(batch_size, 1)
-            terminals_tot = terminals[key].all(axis=1, keepdims=False).astype(np.float32).reshape(batch_size, 1)
+            rewards_tot = tf.reshape(tf.reduce_mean(rewards[key], axis=1), [batch_size, 1])
+            terminals_tot = tf.reshape(tf.reduce_prod(terminals[key], axis=1), [batch_size, 1])
         else:
             bs = batch_size
-            rewards_tot = np.stack(itemgetter(*self.agent_keys)(rewards), axis=1).mean(axis=-1, keepdims=True)
-            terminals_tot = np.stack(itemgetter(*self.agent_keys)(terminals),
-                                     axis=1).all(axis=1, keepdims=True).astype(np.float32)
+            rewards_tot = tf.reduce_mean(tf.stack(itemgetter(*self.agent_keys)(rewards), axis=1),
+                                         axis=-1, keepdims=True)
+            terminals_tot = tf.reduce_prod(tf.stack(itemgetter(*self.agent_keys)(terminals), axis=1),
+                                           axis=1, keepdims=True)
 
         with tf.GradientTape() as tape:
             _, _, q_eval = self.policy(observation=obs, agent_ids=IDs, avail_actions=avail_actions)

@@ -128,66 +128,69 @@ class LearnerMAS(ABC):
         if use_parameter_sharing:
             k = self.model_keys[0]
             bs = batch_size * self.n_agents
-            obs_tensor = np.stack(itemgetter(*self.agent_keys)(sample['obs']), axis=1)
-            actions_tensor = np.stack(itemgetter(*self.agent_keys)(sample['actions']), axis=1)
-            rewards_tensor = np.stack(itemgetter(*self.agent_keys)(sample['rewards']), axis=1)
-            ter_tensor = np.stack(itemgetter(*self.agent_keys)(sample['terminals']), axis=1).astype(np.float32)
-            msk_tensor = np.stack(itemgetter(*self.agent_keys)(sample['agent_mask']), axis=1).astype(np.float32)
+            obs_tensor = tf.stack(itemgetter(*self.agent_keys)(sample['obs']), axis=1)
+            actions_tensor = tf.stack(itemgetter(*self.agent_keys)(sample['actions']), axis=1)
+            rewards_tensor = tf.stack(itemgetter(*self.agent_keys)(sample['rewards']), axis=1)
+            ter_tensor = tf.cast(tf.stack(itemgetter(*self.agent_keys)(sample['terminals']), axis=1), dtype=tf.float32)
+            msk_tensor = tf.cast(tf.stack(itemgetter(*self.agent_keys)(sample['agent_mask']), axis=1), dtype=tf.float32)
             if self.use_rnn:
                 obs = {k: obs_tensor.reshape([bs, seq_length + 1, -1])}
                 if len(actions_tensor.shape) == 3:
-                    actions = {k: actions_tensor.reshape([bs, seq_length])}
+                    actions = {k: tf.reshape(actions_tensor, [bs, seq_length])}
                 elif len(actions_tensor.shape) == 4:
-                    actions = {k: actions_tensor.reshape([bs, seq_length, -1])}
+                    actions = {k: tf.reshape(actions_tensor, [bs, seq_length, -1])}
                 else:
                     raise AttributeError("Wrong actions shape.")
-                rewards = {k: rewards_tensor.reshape([batch_size, self.n_agents, seq_length])}
-                terminals = {k: ter_tensor.reshape([batch_size, self.n_agents, seq_length])}
-                agent_mask = {k: msk_tensor.reshape([bs, seq_length])}
-                IDs = np.eye(self.n_agents, dtype=np.float32)[None, :, None, :].repeat(batch_size, axis=0).repeat(
-                    seq_length + 1, axis=2).reshape(bs, seq_length + 1, self.n_agents)
+                rewards = {k: tf.reshape(rewards_tensor, [batch_size, self.n_agents, seq_length])}
+                terminals = {k: tf.reshape(ter_tensor, [batch_size, self.n_agents, seq_length])}
+                agent_mask = {k: tf.reshape(msk_tensor, [bs, seq_length])}
+                IDs = tf.reshape(tf.tile(tf.eye(self.n_agents, dtype=np.float32)[None, :, None, :],
+                                         [batch_size, 1, seq_length + 1, 1]), [bs, seq_length + 1, self.n_agents])
             else:
-                obs = {k: obs_tensor.reshape(bs, -1)}
+                obs = {k: tf.reshape(obs_tensor, [bs, -1])}
                 if len(actions_tensor.shape) == 2:
-                    actions = {k: actions_tensor.reshape(bs)}
+                    actions = {k: tf.reshape(actions_tensor, [bs])}
                 elif len(actions_tensor.shape) == 3:
-                    actions = {k: actions_tensor.reshape(bs, -1)}
+                    actions = {k: tf.reshape(actions_tensor, [bs, -1])}
                 else:
                     raise AttributeError("Wrong actions shape.")
-                rewards = {k: rewards_tensor.reshape(batch_size, self.n_agents)}
-                terminals = {k: ter_tensor.reshape(batch_size, self.n_agents)}
-                agent_mask = {k: msk_tensor.reshape(bs)}
-                obs_next = {k: np.stack(itemgetter(*self.agent_keys)(sample['obs_next']), axis=1).reshape([bs, -1])}
-                IDs = np.eye(self.n_agents, dtype=np.float32)[None].repeat(batch_size, 0).reshape(bs, self.n_agents)
+                rewards = {k: tf.reshape(rewards_tensor, [batch_size, self.n_agents])}
+                terminals = {k: tf.reshape(ter_tensor, [batch_size, self.n_agents])}
+                agent_mask = {k: tf.reshape(msk_tensor, [bs])}
+                obs_next = {k: tf.reshape(tf.stack(itemgetter(*self.agent_keys)(sample['obs_next']), axis=1), [bs, -1])}
+                IDs = tf.reshape(tf.tile(tf.eye(self.n_agents, dtype=np.float32)[None],
+                                         [batch_size, 1, 1]), [bs, self.n_agents])
 
             if use_actions_mask:
-                avail_a = np.stack(itemgetter(*self.agent_keys)(sample['avail_actions']), axis=1)
+                avail_a = tf.stack(itemgetter(*self.agent_keys)(sample['avail_actions']), axis=1)
                 if self.use_rnn:
-                    avail_actions = {k: avail_a.reshape([bs, seq_length + 1, -1]).astype(np.float32)}
+                    avail_actions = {k: tf.cast(tf.reshape(avail_a, [bs, seq_length + 1, -1]), dtype=tf.float32)}
                 else:
-                    avail_actions = {k: avail_a.reshape([bs, -1]).astype(np.float32)}
-                    avail_a_next = np.stack(itemgetter(*self.agent_keys)(sample['avail_actions_next']), axis=1)
-                    avail_actions_next = {k: avail_a_next.reshape([bs, -1]).astype(np.float32)}
+                    avail_actions = {k: tf.cast(tf.reshape(avail_a, [bs, -1]), dtype=tf.float32)}
+                    avail_a_next = tf.stack(itemgetter(*self.agent_keys)(sample['avail_actions_next']), axis=1)
+                    avail_actions_next = {k: tf.cast(tf.reshape(avail_a_next, [bs, -1]), dtype=tf.float32)}
         else:
-            obs = {k: sample['obs'][k] for k in self.agent_keys}
-            actions = {k: sample['actions'][k] for k in self.agent_keys}
-            rewards = {k: sample['rewards'][k] for k in self.agent_keys}
-            terminals = {k: sample['terminals'][k].astype(np.float32) for k in self.agent_keys}
-            agent_mask = {k: sample['agent_mask'][k].astype(np.float32) for k in self.agent_keys}
+            obs = {k: tf.convert_to_tensor(sample['obs'][k], dtype=tf.float32) for k in self.agent_keys}
+            actions = {k: tf.convert_to_tensor(sample['actions'][k], dtype=tf.float32) for k in self.agent_keys}
+            rewards = {k: tf.convert_to_tensor(sample['rewards'][k], dtype=tf.float32) for k in self.agent_keys}
+            terminals = {k: tf.convert_to_tensor(sample['terminals'][k], dtype=tf.float32) for k in self.agent_keys}
+            agent_mask = {k: tf.convert_to_tensor(sample['agent_mask'][k], dtype=tf.float32) for k in self.agent_keys}
             if not self.use_rnn:
-                obs_next = {k: sample['obs_next'][k] for k in self.agent_keys}
+                obs_next = {k: tf.convert_to_tensor(sample['obs_next'][k], dtype=tf.float32) for k in self.agent_keys}
             if use_actions_mask:
-                avail_actions = {k: sample['avail_actions'][k].astype(np.float32) for k in self.agent_keys}
+                avail_actions = {k: tf.convert_to_tensor(sample['avail_actions'][k], dtype=tf.float32)
+                                 for k in self.agent_keys}
                 if not self.use_rnn:
-                    avail_actions_next = {k: sample['avail_actions_next'][k].astype(np.float32) for k in self.model_keys}
+                    avail_actions_next = {k: tf.convert_to_tensor(sample['avail_actions_next'][k], dtype=tf.float32)
+                                          for k in self.model_keys}
 
         if use_global_state:
-            state = sample['state']
+            state = tf.convert_to_tensor(sample['state'], dtype=tf.float32)
             if not self.use_rnn:
-                state_next = sample['state_next']
+                state_next = tf.convert_to_tensor(sample['state_next'], dtype=tf.float32)
 
         if self.use_rnn:
-            filled = sample['filled'].astype(np.float32)
+            filled = tf.convert_to_tensor(sample['filled'], dtype=tf.float32)
 
         sample_Tensor = {
             'batch_size': batch_size,
