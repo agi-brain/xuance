@@ -1,6 +1,8 @@
 import numpy as np
 from copy import deepcopy
 from gymnasium.spaces import Space, Discrete, Box
+from tensorflow.python.debug.cli.base_ui import BaseUI
+
 from xuance.common import Sequence, Optional, Union, Dict, List
 from xuance.tensorflow.representations import Basic_Identical
 from xuance.tensorflow import tf, tk, Tensor, Module
@@ -42,13 +44,15 @@ class BasicQnetwork(Module):
                                                 normalize, initialize, activation)
             self.target_Qhead[key].set_weights(self.eval_Qhead[key].get_weights())
 
-    @property
-    def parameters_model(self):
-        parameters_model = {}
-        for key in self.model_keys:
-            parameters_model[key] = self.representation[key].trainable_variables + \
-                                    self.eval_Qhead[key].trainable_variables
-        return parameters_model
+    def parameters_model(self, key=None):
+        key_list = [key] if key is not None else self.model_keys
+        params = []
+        for key in key_list:
+            if isinstance(self.representation[key], Basic_Identical):
+                params.extend(self.eval_Qhead[key].trainable_variables)
+            else:
+                params.extend(self.representation[key].trainable_variables + self.eval_Qhead[key].trainable_variables)
+        return params
 
     @tf.function
     def call(self, observation: Dict[str, np.ndarray], agent_ids: np.ndarray = None,
@@ -151,6 +155,17 @@ class MixingQnetwork(BasicQnetwork):
         self.eval_Qtot = mixer[0]
         self.target_Qtot = mixer[1]
         self.target_Qtot.set_weights(self.eval_Qtot.get_weights())
+
+    @property
+    def parameters_model(self):
+        params = []
+        for key in self.model_keys:
+            if isinstance(self.representation[key], Basic_Identical):
+                params.extend(self.eval_Qhead[key].trainable_variables)
+            else:
+                params.extend(self.representation[key].trainable_variables + self.eval_Qhead[key].trainable_variables)
+        params.extend(self.eval_Qtot.trainable_variables)
+        return params
 
     @tf.function
     def Q_tot(self, individual_values: Dict[str, np.ndarray], states: Optional[np.ndarray] = None):
@@ -590,7 +605,10 @@ class Independent_DDPG_Policy(Module):
             self.target_critic[key].set_weights(self.critic[key].get_weights())
 
     def actor_trainable_variables(self, key):
-        return self.actor_representation[key].trainable_variables + self.actor[key].trainable_variables
+        if isinstance(self.actor_representation[key], Basic_Identical):
+            return self.actor[key].trainable_variables
+        else:
+            return self.actor_representation[key].trainable_variables + self.actor[key].trainable_variables
 
     def critic_trainable_variables(self, key):
         return self.critic_representation[key].trainable_variables + self.critic[key].trainable_variables

@@ -20,49 +20,21 @@ class WQMIX_Learner(LearnerMAS):
                  policy: Module,
                  callback):
         super(WQMIX_Learner, self).__init__(config, model_keys, agent_keys, policy, callback)
-        if ("macOS" in self.os_name) and ("arm" in self.os_name):  # For macOS with Apple's M-series chips.
-            self.optimizer = tk.optimizers.legacy.Adam(config.learning_rate)
-        else:
-            self.optimizer = tk.optimizers.Adam(config.learning_rate)
+        self.build_optimizer()
         self.alpha = config.alpha
         self.gamma = config.gamma
         self.sync_frequency = config.sync_frequency
         self.n_actions = {k: self.policy.action_space[k].n for k in self.model_keys}
 
-    def update(self, sample):
-        self.iterations += 1
-        info = {}
-
-        # prepare training data
-        sample_Tensor = self.build_training_data(sample=sample,
-                                                 use_parameter_sharing=self.use_parameter_sharing,
-                                                 use_actions_mask=self.use_actions_mask,
-                                                 use_global_state=True)
-        batch_size = sample_Tensor['batch_size']
-        state = sample_Tensor['state']
-        state_next = sample_Tensor['state_next']
-        obs = sample_Tensor['obs']
-        actions = sample_Tensor['actions']
-        obs_next = sample_Tensor['obs_next']
-        rewards = sample_Tensor['rewards']
-        terminals = sample_Tensor['terminals']
-        agent_mask = sample_Tensor['agent_mask']
-        avail_actions = sample_Tensor['avail_actions']
-        avail_actions_next = sample_Tensor['avail_actions_next']
-        IDs = sample_Tensor['agent_ids']
-
-        if self.use_parameter_sharing:
-            key = self.model_keys[0]
-            bs = batch_size * self.n_agents
-            rewards_tot = tf.reshape(tf.reduce_mean(rewards[key], axis=1), [batch_size, 1])
-            terminals_tot = tf.reshape(tf.reduce_prod(terminals[key], axis=1), [batch_size, 1])
+    def build_optimizer(self):
+        if ("macOS" in self.os_name) and ("arm" in self.os_name):  # For macOS with Apple's M-series chips.
+            self.optimizer = tk.optimizers.legacy.Adam(self.config.learning_rate)
         else:
-            bs = batch_size
-            rewards_tot = tf.reduce_mean(tf.stack(itemgetter(*self.agent_keys)(rewards), axis=1),
-                                         axis=-1, keepdims=True)
-            terminals_tot = tf.reduce_prod(tf.stack(itemgetter(*self.agent_keys)(terminals), axis=1),
-                                           axis=1, keepdims=True)
+            self.optimizer = tk.optimizers.Adam(self.config.learning_rate)
 
+    @tf.function
+    def forward_fn(self, bs, batch_size, state, obs, actions, rewards_tot, state_next, obs_next, terminals_tot,
+                   agent_mask, avail_actions, avail_actions_next, IDs):
         with tf.GradientTape() as tape:
             # calculate Q_tot
             _, action_max, q_eval = self.policy(observation=obs, agent_ids=IDs, avail_actions=avail_actions)
@@ -123,28 +95,74 @@ class WQMIX_Learner(LearnerMAS):
             loss_central = tk.losses.mean_squared_error(target_value, q_tot_centralized)
             loss_qmix = tf.reduce_mean(tf.stop_gradient(w) * (td_error ** 2))
             loss = loss_qmix + loss_central
-            gradients = tape.gradient(loss, self.policy.trainable_variables)
+
+            gradients = tape.gradient(loss, self.policy.parameters_model)
             if self.use_grad_clip:
-                self.optimizer.apply_gradients([
-                    (tf.clip_by_norm(grad, self.grad_clip_norm), var)
-                    for (grad, var) in zip(gradients, self.policy.trainable_variables)
-                    if grad is not None
-                ])
+                gradients, _ = tf.clip_by_global_norm(gradients, clip_norm=self.grad_clip_norm)
+                self.optimizer.apply_gradients(zip(gradients, self.policy.parameters_model))
             else:
-                self.optimizer.apply_gradients([
-                    (grad, var)
-                    for (grad, var) in zip(gradients, self.policy.trainable_variables)
-                    if grad is not None
-                ])
+                self.optimizer.apply_gradients(zip(gradients, self.policy.parameters_model))
 
-            if self.iterations % self.sync_frequency == 0:
-                self.policy.copy_target()
+        return loss_qmix, loss_central, loss, tf.math.reduce_mean(q_tot_eval)
 
-            info.update({
-                "loss_Qmix": loss_qmix.numpy(),
-                "loss_central": loss_central.numpy(),
-                "loss": loss.numpy(),
-                "predictQ": tf.math.reduce_mean(q_tot_eval).numpy()
-            })
+    @tf.function
+    def learn(self, *inputs):
+        if self.distributed_training:
+            loss_qmix, loss_central, loss, predictQ = self.policy.mirrored_strategy.run(self.forward_fn, args=inputs)
+            return (self.policy.mirrored_strategy.reduce(tf.distribute.ReduceOp.SUM, loss_qmix, axis=None),
+                    self.policy.mirrored_strategy.reduce(tf.distribute.ReduceOp.SUM, loss_central, axis=None),
+                    self.policy.mirrored_strategy.reduce(tf.distribute.ReduceOp.SUM, loss, axis=None),
+                    self.policy.mirrored_strategy.reduce(tf.distribute.ReduceOp.SUM, predictQ, axis=None))
+        else:
+            return self.forward_fn(*inputs)
+
+
+    def update(self, sample):
+        self.iterations += 1
+        info = {}
+
+        # prepare training data
+        sample_Tensor = self.build_training_data(sample=sample,
+                                                 use_parameter_sharing=self.use_parameter_sharing,
+                                                 use_actions_mask=self.use_actions_mask,
+                                                 use_global_state=True)
+        batch_size = sample_Tensor['batch_size']
+        state = sample_Tensor['state']
+        state_next = sample_Tensor['state_next']
+        obs = sample_Tensor['obs']
+        actions = sample_Tensor['actions']
+        obs_next = sample_Tensor['obs_next']
+        rewards = sample_Tensor['rewards']
+        terminals = sample_Tensor['terminals']
+        agent_mask = sample_Tensor['agent_mask']
+        avail_actions = sample_Tensor['avail_actions']
+        avail_actions_next = sample_Tensor['avail_actions_next']
+        IDs = sample_Tensor['agent_ids']
+
+        if self.use_parameter_sharing:
+            key = self.model_keys[0]
+            bs = batch_size * self.n_agents
+            rewards_tot = tf.reshape(tf.reduce_mean(rewards[key], axis=1), [batch_size, 1])
+            terminals_tot = tf.reshape(tf.reduce_prod(terminals[key], axis=1), [batch_size, 1])
+        else:
+            bs = batch_size
+            rewards_tot = tf.reduce_mean(tf.stack(itemgetter(*self.agent_keys)(rewards), axis=1),
+                                         axis=-1, keepdims=True)
+            terminals_tot = tf.reduce_prod(tf.stack(itemgetter(*self.agent_keys)(terminals), axis=1),
+                                           axis=1, keepdims=True)
+
+        loss_qmix, loss_central, loss, predictQ = self.learn(bs, batch_size, state, obs, actions, rewards_tot,
+                                                             state_next, obs_next, terminals_tot,
+                                                             agent_mask, avail_actions, avail_actions_next, IDs)
+
+        info.update({
+            "loss_Qmix": loss_qmix.numpy(),
+            "loss_central": loss_central.numpy(),
+            "loss": loss.numpy(),
+            "predictQ": predictQ.numpy()
+        })
+
+        if self.iterations % self.sync_frequency == 0:
+            self.policy.copy_target()
 
         return info

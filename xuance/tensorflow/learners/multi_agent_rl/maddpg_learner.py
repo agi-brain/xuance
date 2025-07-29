@@ -21,18 +21,20 @@ class MADDPG_Learner(LearnerMAS):
                  policy: Module,
                  callback):
         super(MADDPG_Learner, self).__init__(config, model_keys, agent_keys, policy, callback)
+        self.gamma = config.gamma
+        self.tau = config.tau
+
+    def build_optimizer(self):
         if ("macOS" in self.os_name) and ("arm" in self.os_name):  # For macOS with Apple's M-series chips.
             self.optimizer = {
-                key: {'actor': tk.optimizers.legacy.Adam(config.learning_rate_actor),
-                      'critic': tk.optimizers.legacy.Adam(config.learning_rate_critic)}
+                key: {'actor': tk.optimizers.legacy.Adam(self.config.learning_rate_actor),
+                      'critic': tk.optimizers.legacy.Adam(self.config.learning_rate_critic)}
                 for key in self.model_keys}
         else:
             self.optimizer = {
-                key: {'actor': tk.optimizers.Adam(config.learning_rate_actor),
-                      'critic': tk.optimizers.Adam(config.learning_rate_critic)}
+                key: {'actor': tk.optimizers.Adam(self.config.learning_rate_actor),
+                      'critic': tk.optimizers.Adam(self.config.learning_rate_critic)}
                 for key in self.model_keys}
-        self.gamma = config.gamma
-        self.tau = config.tau
 
     @tf.function
     def forward_fn(self, batch_size, bs, obs, obs_joint, actions, actions_joint, rewards,
