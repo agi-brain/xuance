@@ -30,7 +30,7 @@ class MASAC_Learner(ISAC_Learner):
                 actions_next_joint = tf.reshape(tf.reshape(actions_next[key], [batch_size, self.n_agents, -1]),
                                                 [batch_size, -1])
             else:
-                actions_next_joint = tf.reshape(tf.concat(itemgetter(*self.model_keys)(actions_next), -1),
+                actions_next_joint = tf.reshape(tf.stack(itemgetter(*self.model_keys)(actions_next), -1),
                                                 [batch_size, -1])
             _, _, action_q_1, action_q_2 = self.policy.Qaction(joint_observation=obs_joint, joint_actions=actions_joint,
                                                                agent_ids=IDs)
@@ -69,8 +69,8 @@ class MASAC_Learner(ISAC_Learner):
                                                     [batch_size, -1])
                 else:
                     a_joint = {k: actions_eval[k] if k == key else actions[k] for k in self.agent_keys}
-                    actions_eval_joint = tf.reshape(tf.concat(itemgetter(*self.model_keys)(a_joint),
-                                                              axis=-1), [batch_size, -1])
+                    actions_eval_joint = tf.reshape(tf.stack(itemgetter(*self.model_keys)(a_joint),
+                                                             axis=-1), [batch_size, -1])
                 _, _, policy_q_1, policy_q_2 = self.policy.Qpolicy(joint_observation=obs_joint,
                                                                    joint_actions=actions_eval_joint,
                                                                    agent_ids=IDs, agent_key=key)
