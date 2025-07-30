@@ -249,6 +249,7 @@ class SACPolicy(Module):
         self.representation_info_shape = representation.output_shapes
 
         self.use_distributed_training = use_distributed_training
+        self.activation_action = activation_action
         if self.use_distributed_training:
             self.mirrored_strategy = tf.distribute.MirroredStrategy()
             with self.mirrored_strategy.scope():
@@ -290,10 +291,8 @@ class SACPolicy(Module):
                                              critic_hidden_size, normalize, initialize, activation)
             self.target_critic_2 = CriticNet(representation.output_shapes['state'][0] + self.action_dim,
                                              critic_hidden_size, normalize, initialize, activation)
-        for ep, tp in zip(self.critic_1.variables, self.target_critic_1.variables):
-            tp.assign(ep)
-        for ep, tp in zip(self.critic_2.variables, self.target_critic_2.variables):
-            tp.assign(ep)
+        self.target_critic_1.set_weights(self.critic_1.get_weights())
+        self.target_critic_2.set_weights(self.critic_2.get_weights())
 
     @property
     def actor_trainable_variables(self):
@@ -318,92 +317,62 @@ class SACPolicy(Module):
         """
         outputs = self.actor_representation(observation)
         a_mean, a_std = self.actor(outputs['state'])
-        return outputs, a_mean, a_std
+        eps = tf.random.normal(shape=tf.shape(a_mean))  # 𝜖 ~ N(0, 1)
+        action_sampled = a_mean + a_std * eps  # Reparameterization trick
+        actions_activated = self.activation_action(action_sampled)
+        # calculate log prob
+        log_std = tf.math.log(a_std + 1e-8)
+        log_prob = -0.5 * (((action_sampled - a_mean) / (a_std + 1e-8)) ** 2 + 2.0 * log_std + tf.math.log(2.0 * np.pi))
+        correction = - 2. * (tf.math.log(2.0) - action_sampled - tk.activations.softplus(-2. * action_sampled))
+        log_prob += correction
+        log_action_prob = tf.reduce_sum(log_prob, axis=-1)
+        return outputs, actions_activated, log_action_prob
 
     @tf.function
-    def Qpolicy(self, observation: Union[np.ndarray, dict]):
+    def Qpolicy(self, observation: Union[np.ndarray, dict], actions: Union[np.ndarray, dict]):
         """
         Feedforward and calculate the log of action probabilities, and Q-values.
 
         Parameters:
-            observation: The original observation of an agent.
+            observation (Union[np.ndarray, dict]): The original observation of an agent.
+            actions (Union[np.ndarray, dict]): The actions.
 
         Returns:
-            log_action_prob: The log of action probabilities.
             q_1: The Q-value calculated by the first critic network.
             q_2: The Q-value calculated by the other critic network.
         """
-        outputs_actor = self.actor_representation(observation)
         outputs_critic_1 = self.critic_1_representation(observation)
         outputs_critic_2 = self.critic_2_representation(observation)
 
-        mu, std = self.actor(outputs_actor['state'])
-        eps = tf.random.normal(shape=tf.shape(mu))  # 𝜖 ~ N(0, 1)
-        act_pre_activated = mu + std * eps  # actions before activated
-        act_sample = self.actor.activation_action(act_pre_activated)
-        # calculate log_action_prob
-        log_std = tf.math.log(std + 1e-8)
-        log_2pi = tf.math.log(2.0 * np.pi)
-        log_prob = -0.5 * (((act_pre_activated - mu) / (std + 1e-8)) ** 2 + 2.0 * log_std + log_2pi)
-        log_prob = tf.reduce_sum(log_prob, axis=-1, keepdims=False)
-        correction = - 2. * (tf.math.log(2.0) - act_pre_activated - tk.activations.softplus(-2. * act_pre_activated))
-        log_action_prob = tf.math.reduce_sum(log_prob + correction, axis=-1)
+        critic_1_in = tf.concat([outputs_critic_1['state'], actions], axis=-1)
+        critic_2_in = tf.concat([outputs_critic_2['state'], actions], axis=-1)
 
-        q_1 = self.critic_1(tf.concat([outputs_critic_1['state'], act_sample], axis=-1))
-        q_2 = self.critic_2(tf.concat([outputs_critic_2['state'], act_sample], axis=-1))
-        return log_action_prob, q_1[:, 0], q_2[:, 0]
+        q_1 = self.critic_1(critic_1_in)
+        q_2 = self.critic_2(critic_2_in)
+        return q_1[:, 0], q_2[:, 0]
 
     @tf.function
-    def Qtarget(self, observation: Union[np.ndarray, dict]):
+    def Qtarget(self, next_observation: Union[np.ndarray, dict], next_actions: Union[np.ndarray, dict]):
         """
         Calculate the log of action probabilities and Q-values with target networks.
 
         Parameters:
-            observation: The original observation of an agent.
+            next_observation (Union[np.ndarray, dict]): The observations of next step.
+            next_actions (Union[np.ndarray, dict]): The actions of next step.
 
         Returns:
-            log_action_prob: The log of action probabilities.
             target_q: The minimum of Q-values calculated by the target critic networks.
         """
-        outputs_actor = self.actor_representation(observation)
-        outputs_critic_1 = self.target_critic_1_representation(observation)
-        outputs_critic_2 = self.target_critic_2_representation(observation)
+        outputs_critic_1 = self.target_critic_1_representation(next_observation)
+        outputs_critic_2 = self.target_critic_2_representation(next_observation)
 
-        mu, std = self.actor(outputs_actor['state'])
-        eps = tf.random.normal(shape=tf.shape(mu))  # 𝜖 ~ N(0, 1)
-        act_pre_activated = mu + std * eps  # actions before activated
-        new_act_sample = self.actor.activation_action(act_pre_activated)
-        # calculate log_action_prob
-        log_std = tf.math.log(std + 1e-8)
-        log_2pi = tf.math.log(2.0 * np.pi)
-        log_prob = -0.5 * (((act_pre_activated - mu) / (std + 1e-8)) ** 2 + 2.0 * log_std + log_2pi)
-        log_prob = tf.reduce_sum(log_prob, axis=-1, keepdims=False)
-        correction = - 2. * (tf.math.log(2.0) - act_pre_activated - tk.activations.softplus(-2. * act_pre_activated))
-        log_action_prob = tf.math.reduce_sum(log_prob + correction, axis=-1)
+        critic_1_in = tf.concat([outputs_critic_1['state'], next_actions], axis=-1)
+        critic_2_in = tf.concat([outputs_critic_2['state'], next_actions], axis=-1)
 
-        target_q_1 = self.target_critic_1(tf.concat([outputs_critic_1['state'], new_act_sample], axis=-1))
-        target_q_2 = self.target_critic_2(tf.concat([outputs_critic_2['state'], new_act_sample], axis=-1))
+        target_q_1 = self.target_critic_1(critic_1_in)
+        target_q_2 = self.target_critic_2(critic_2_in)
         target_q = tf.math.minimum(target_q_1, target_q_2)
-        return log_action_prob, target_q[:, 0]
-
-    @tf.function
-    def Qaction(self, observation: Union[np.ndarray, dict], action: Tensor):
-        """
-        Returns the evaluated Q-values for current observation-action pairs.
-
-        Parameters:
-            observation: The original observation.
-            action: The selected actions.
-
-        Returns:
-            q_1: The Q-value calculated by the first critic network.
-            q_2: The Q-value calculated by the other critic network.
-        """
-        outputs_critic_1 = self.critic_1_representation(observation)
-        outputs_critic_2 = self.critic_2_representation(observation)
-        q_1 = self.critic_1(tf.concat([outputs_critic_1['state'], action], axis=-1))
-        q_2 = self.critic_2(tf.concat([outputs_critic_2['state'], action], axis=-1))
-        return q_1[:, 0], q_2[:, 0]
+        return target_q[:, 0]
 
     @tf.function
     def soft_update(self, tau=0.005):

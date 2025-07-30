@@ -62,7 +62,8 @@ class SAC_Learner(Learner):
     @tf.function
     def actor_forward_fn(self, obs_batch):
         with tf.GradientTape() as tape:
-            log_pi, policy_q_1, policy_q_2 = self.policy.Qpolicy(obs_batch)
+            _, actions_forward, log_pi = self.policy(obs_batch)
+            policy_q_1, policy_q_2 = self.policy.Qpolicy(obs_batch, actions_forward)
             log_pi = tf.reshape(log_pi, [-1])
             policy_q = tf.reshape(tf.math.minimum(policy_q_1, policy_q_2), [-1])
             p_loss = tf.reduce_mean(self.alpha * log_pi - policy_q)
@@ -77,8 +78,9 @@ class SAC_Learner(Learner):
     @tf.function
     def critic_forward_fn(self, obs_batch, act_batch, rew_batch, next_batch, ter_batch):
         with tf.GradientTape() as tape:
-            action_q_1, action_q_2 = self.policy.Qaction(obs_batch, act_batch)
-            log_pi_next, target_q = self.policy.Qtarget(next_batch)
+            action_q_1, action_q_2 = self.policy.Qpolicy(obs_batch, act_batch)
+            _, next_actions, log_pi_next = self.policy(next_batch)
+            target_q = self.policy.Qtarget(next_batch, next_actions)
             target_q = tf.reshape(target_q, [-1])
             log_pi_next = tf.reshape(log_pi_next, [-1])
             target_value = target_q - self.alpha * log_pi_next
@@ -101,10 +103,7 @@ class SAC_Learner(Learner):
             object_value = tf.stop_gradient(log_pi + self.target_entropy)
             alpha_loss = -tf.math.reduce_mean(self.alpha_layer.log_alpha * object_value)
             gradients = tape.gradient(alpha_loss, self.alpha_layer.trainable_variables)
-            self.alpha_optimizer.apply_gradients([
-                (grad, var)
-                for (grad, var) in zip(gradients, self.alpha_layer.trainable_variables)
-                if grad is not None])
+            self.alpha_optimizer.apply_gradients(zip(gradients, self.alpha_layer.trainable_variables))
         return alpha_loss
 
     @tf.function

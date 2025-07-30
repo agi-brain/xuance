@@ -62,31 +62,33 @@ class SACDIS_Learner(Learner):
     @tf.function
     def actor_forward_fn(self, obs_batch):
         with tf.GradientTape() as tape:
-            action_prob, log_pi, policy_q_1, policy_q_2 = self.policy.Qpolicy(obs_batch)
+            _, logits = self.policy(obs_batch)
+            policy_q_1, policy_q_2 = self.policy.Qpolicy(obs_batch)
+            # calculate log_pi and action probability
+            log_prob = tf.nn.log_softmax(logits, axis=-1)
+            action_prob = tf.exp(log_prob)
+
             policy_q = tf.math.minimum(policy_q_1, policy_q_2)
-            p_loss = tf.reduce_mean(tf.reduce_sum(action_prob * (self.alpha * log_pi - policy_q), axis=-1))
+            p_loss = tf.reduce_mean(tf.reduce_sum(action_prob * (self.alpha * log_prob - policy_q), axis=-1))
             gradients = tape.gradient(p_loss, self.policy.actor_trainable_variables)
             if self.use_grad_clip:
-                self.optimizer['actor'].apply_gradients([
-                    (tf.clip_by_norm(grad, self.grad_clip_norm), var)
-                    for (grad, var) in zip(
-                        gradients, self.policy.actor_trainable_variables)
-                    if grad is not None])
+                gradients, _ = tf.clip_by_global_norm(gradients, clip_norm=self.grad_clip_norm)
+                self.optimizer['actor'].apply_gradients(zip(gradients, self.policy.actor_trainable_variables))
             else:
-                self.optimizer['actor'].apply_gradients([
-                    (grad, var)
-                    for (grad, var) in zip(
-                        gradients, self.policy.actor_trainable_variables)
-                    if grad is not None])
-        return p_loss, log_pi, policy_q
+                self.optimizer['actor'].apply_gradients(zip(gradients, self.policy.actor_trainable_variables))
+        return p_loss, log_prob, policy_q
 
     @tf.function
     def critic_forward_fn(self, obs_batch, act_batch, rew_batch, next_batch, ter_batch):
         with tf.GradientTape() as tape:
-            action_q_1, action_q_2 = self.policy.Qaction(obs_batch)
+            action_q_1, action_q_2 = self.policy.Qpolicy(obs_batch)
             action_q_1 = tf.gather(params=action_q_1, indices=act_batch, axis=-1, batch_dims=-1)
             action_q_2 = tf.gather(params=action_q_2, indices=act_batch, axis=-1, batch_dims=-1)
-            action_prob_next, log_pi_next, target_q = self.policy.Qtarget(next_batch)
+            target_q = self.policy.Qtarget(next_batch)
+            # calculate log_pi and action probability
+            _, logits_next = self.policy(next_batch)
+            log_pi_next = tf.nn.log_softmax(logits_next, axis=-1)
+            action_prob_next = tf.exp(log_pi_next)
             target_q = action_prob_next * (target_q - self.alpha * log_pi_next)
             target_q = tf.expand_dims(tf.reduce_sum(target_q, axis=1), axis=-1)
             rew = tf.expand_dims(rew_batch, axis=-1)
@@ -97,15 +99,10 @@ class SACDIS_Learner(Learner):
             q_loss = tk.losses.mean_squared_error(y_true, y_pred_1) + tk.losses.mean_squared_error(y_true, y_pred_2)
             gradients = tape.gradient(q_loss, self.policy.critic_trainable_variables)
             if self.use_grad_clip:
-                self.optimizer['critic'].apply_gradients([
-                    (tf.clip_by_norm(grad, self.grad_clip_norm), var)
-                    for (grad, var) in zip(gradients, self.policy.critic_trainable_variables)
-                    if grad is not None])
+                gradients, _ = tf.clip_by_global_norm(gradients, clip_norm=self.grad_clip_norm)
+                self.optimizer['critic'].apply_gradients(zip(gradients, self.policy.critic_trainable_variables))
             else:
-                self.optimizer['critic'].apply_gradients([
-                    (grad, var)
-                    for (grad, var) in zip(gradients, self.policy.critic_trainable_variables)
-                    if grad is not None])
+                self.optimizer['critic'].apply_gradients(zip(gradients, self.policy.critic_trainable_variables))
         return q_loss
 
     @tf.function
@@ -113,11 +110,7 @@ class SACDIS_Learner(Learner):
         with tf.GradientTape() as tape:
             alpha_loss = -tf.math.reduce_mean(self.alpha_layer.log_alpha.value() * (log_pi + self.target_entropy))
             gradients = tape.gradient(alpha_loss, self.alpha_layer.trainable_variables)
-            self.alpha_optimizer.apply_gradients([
-                (grad, var)
-                for (grad, var) in zip(gradients, self.alpha_layer.trainable_variables)
-                if grad is not None
-            ])
+            self.alpha_optimizer.apply_gradients(zip(gradients, self.alpha_layer.trainable_variables))
         return alpha_loss
 
     @tf.function

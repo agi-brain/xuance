@@ -32,7 +32,7 @@ class MASAC_Learner(ISAC_Learner):
             else:
                 actions_next_joint = tf.reshape(tf.stack(itemgetter(*self.model_keys)(actions_next), -1),
                                                 [batch_size, -1])
-            _, _, action_q_1, action_q_2 = self.policy.Qaction(joint_observation=obs_joint, joint_actions=actions_joint,
+            _, _, action_q_1, action_q_2 = self.policy.Qpolicy(joint_observation=obs_joint, joint_actions=actions_joint,
                                                                agent_ids=IDs)
             _, _, target_q = self.policy.Qtarget(joint_observation=next_obs_joint, joint_actions=actions_next_joint,
                                                  agent_ids=IDs)

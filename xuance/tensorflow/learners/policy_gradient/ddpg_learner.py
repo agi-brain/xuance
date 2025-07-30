@@ -39,20 +39,12 @@ class DDPG_Learner(Learner):
         with tf.GradientTape() as tape:
             policy_q = self.policy.Qpolicy(obs_batch)
             p_loss = -tf.reduce_mean(policy_q)
-            gradients = tape.gradient(
-                p_loss, self.policy.actor_trainable_variables)
+            gradients = tape.gradient(p_loss, self.policy.actor_trainable_variables)
             if self.use_grad_clip:
-                self.optimizer['actor'].apply_gradients([
-                    (tf.clip_by_norm(grad, self.grad_clip_norm), var)
-                    for (grad, var) in zip(
-                        gradients, self.policy.actor_trainable_variables)
-                    if grad is not None
-                ])
+                gradients, _ = tf.clip_by_global_norm(gradients, clip_norm=self.grad_clip_norm)
+                self.optimizer['actor'].apply_gradients(zip(gradients, self.policy.actor_trainable_variables))
             else:
-                self.optimizer['actor'].apply_gradients([
-                    (grad, var)
-                    for (grad, var) in zip(gradients, self.policy.actor_trainable_variables)
-                    if grad is not None])
+                self.optimizer['actor'].apply_gradients(zip(gradients, self.policy.actor_trainable_variables))
         return p_loss
 
     @tf.function
@@ -64,21 +56,12 @@ class DDPG_Learner(Learner):
             y_true = tf.reshape(tf.stop_gradient(backup), [-1])
             y_pred = tf.reshape(action_q, [-1])
             q_loss = tk.losses.mean_squared_error(y_true, y_pred)
-            gradients = tape.gradient(
-                q_loss, self.policy.critic_trainable_variables)
+            gradients = tape.gradient(q_loss, self.policy.critic_trainable_variables)
             if self.use_grad_clip:
-                self.optimizer['critic'].apply_gradients([
-                    (tf.clip_by_norm(grad, self.grad_clip_norm), var)
-                    for (grad, var) in zip(
-                        gradients, self.policy.critic_trainable_variables)
-                    if grad is not None
-                ])
+                gradients, _ = tf.clip_by_global_norm(gradients, clip_norm=self.grad_clip_norm)
+                self.optimizer['critic'].apply_gradients(zip(gradients, self.policy.critic_trainable_variables))
             else:
-                self.optimizer['critic'].apply_gradients([
-                    (grad, var)
-                    for (grad, var) in zip(gradients, self.policy.critic_trainable_variables)
-                    if grad is not None
-                ])
+                self.optimizer['critic'].apply_gradients(zip(gradients, self.policy.critic_trainable_variables))
         return q_loss, action_q
 
     @tf.function

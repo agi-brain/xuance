@@ -284,10 +284,8 @@ class SACDISPolicy(Module):
                                               critic_hidden_size, normalize, initialize, activation)
             self.target_critic_2 = BasicQhead(representation.output_shapes['state'][0], self.action_dim,
                                               critic_hidden_size, normalize, initialize, activation)
-        for ep, tp in zip(self.critic_1.variables, self.target_critic_1.variables):
-            tp.assign(ep)
-        for ep, tp in zip(self.critic_2.variables, self.target_critic_2.variables):
-            tp.assign(ep)
+        self.target_critic_1.set_weights(self.critic_1.get_weights())
+        self.target_critic_2.set_weights(self.critic_2.get_weights())
 
     @property
     def actor_trainable_variables(self):
@@ -328,19 +326,12 @@ class SACDISPolicy(Module):
             q_1: The Q-value calculated by the first critic network.
             q_2: The Q-value calculated by the other critic network.
         """
-        outputs_actor = self.actor_representation(observation)
         outputs_critic_1 = self.critic_1_representation(observation)
         outputs_critic_2 = self.critic_2_representation(observation)
 
-        act_logits = self.actor(outputs_actor['state'])
-        act_prob = tf.nn.softmax(act_logits, axis=-1)
-        z = act_prob == 0.0
-        z = tf.cast(z, dtype=tf.float32) * 1e-8
-        log_action_prob = tf.math.log(act_prob + z)
-
         q_1 = self.critic_1(outputs_critic_1['state'])
         q_2 = self.critic_2(outputs_critic_2['state'])
-        return act_prob, log_action_prob, q_1, q_2
+        return q_1, q_2
 
     @tf.function
     def Qtarget(self, observation: Union[np.ndarray, dict]):
@@ -355,38 +346,13 @@ class SACDISPolicy(Module):
             log_action_prob: The log of action probabilities.
             target_q: The minimum of Q-values calculated by the target critic networks.
         """
-        outputs_actor = self.actor_representation(observation)
         outputs_critic_1 = self.target_critic_1_representation(observation)
         outputs_critic_2 = self.target_critic_2_representation(observation)
-
-        new_act_logits = self.actor(outputs_actor['state'])
-        new_act_prob = tf.nn.softmax(new_act_logits, axis=-1)
-        z = new_act_prob == 0.0
-        z = tf.cast(z, dtype=tf.float32) * 1e-8
-        log_action_prob = tf.math.log(new_act_prob + z)
 
         target_q_1 = self.target_critic_1(outputs_critic_1['state'])
         target_q_2 = self.target_critic_2(outputs_critic_2['state'])
         target_q = tf.math.minimum(target_q_1, target_q_2)
-        return new_act_prob, log_action_prob, target_q
-
-    @tf.function
-    def Qaction(self, observation: Union[np.ndarray, dict]):
-        """
-        Returns the evaluated Q-values for current observations.
-
-        Parameters:
-            observation: The original observation.
-
-        Returns:
-            q_1: The Q-value calculated by the first critic network.
-            q_2: The Q-value calculated by the other critic network.
-        """
-        outputs_critic_1 = self.critic_1_representation(observation)
-        outputs_critic_2 = self.critic_2_representation(observation)
-        q_1 = self.critic_1(outputs_critic_1['state'])
-        q_2 = self.critic_2(outputs_critic_2['state'])
-        return q_1, q_2
+        return target_q
 
     @tf.function
     def soft_update(self, tau=0.005):

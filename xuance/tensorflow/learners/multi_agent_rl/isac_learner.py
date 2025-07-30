@@ -51,7 +51,7 @@ class ISAC_Learner(LearnerMAS):
         with tf.GradientTape(persistent=True) as tape:
             # Update critic
             _, actions_next, log_pi_next = self.policy(observation=obs_next, agent_ids=IDs)
-            _, _, action_q_1, action_q_2 = self.policy.Qaction(observation=obs, actions=actions, agent_ids=IDs)
+            _, _, action_q_1, action_q_2 = self.policy.Qpolicy(observation=obs, actions=actions, agent_ids=IDs)
             _, _, next_q = self.policy.Qtarget(next_observation=obs_next, next_actions=actions_next, agent_ids=IDs)
 
             for key in self.model_keys:
