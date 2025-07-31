@@ -5,7 +5,6 @@ https://proceedings.neurips.cc/paper/2017/file/68a9750337a418a86fe06c1991a1d64c-
 Implementation: TensorFlow 2.X
 Trick: Parameter sharing for all agents, with agents' one-hot IDs as actor-critic's inputs.
 """
-import numpy as np
 from argparse import Namespace
 from operator import itemgetter
 from xuance.common import List
@@ -21,6 +20,7 @@ class MADDPG_Learner(LearnerMAS):
                  policy: Module,
                  callback):
         super(MADDPG_Learner, self).__init__(config, model_keys, agent_keys, policy, callback)
+        self.build_optimizer()
         self.gamma = config.gamma
         self.tau = config.tau
 
@@ -36,7 +36,7 @@ class MADDPG_Learner(LearnerMAS):
                       'critic': tk.optimizers.Adam(self.config.learning_rate_critic)}
                 for key in self.model_keys}
 
-    @tf.function
+    # @tf.function
     def forward_fn(self, batch_size, bs, obs, obs_joint, actions, actions_joint, rewards,
                    obs_next, next_obs_joint, terminals, IDs, agent_mask):
         info_train = {}
@@ -100,7 +100,7 @@ class MADDPG_Learner(LearnerMAS):
             self.policy.soft_update(self.tau)
         return info_train
 
-    @tf.function
+    # @tf.function
     def learn(self, *inputs):
         if self.distributed_training:
             info_train = self.policy.mirrored_strategy.run(self.forward_fn, args=inputs)
