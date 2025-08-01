@@ -523,7 +523,7 @@ class MFQnetwork(Module):
     Args:
         action_space (Optional[Dict[str, Discrete]]): The action space, which type is gym.spaces.Discrete.
         n_agents (int): The number of agents.
-        representation (ModuleDict): A dict of the representation module for all agents.
+        representation (Optional[Dict[str, Module]]): A dict of the representation module for all agents.
         hidden_size (Sequence[int]): List of hidden units for fully connect layers.
         normalize (Optional[ModuleType]): The layer normalization over a minibatch of inputs.
         initialize (Optional[Callable[..., Tensor]]): The parameters' initializer.
@@ -535,7 +535,7 @@ class MFQnetwork(Module):
     def __init__(self,
                  action_space: Discrete,
                  n_agents: int,
-                 representation: Optional[Basic_Identical],
+                 representation: Optional[Dict[str, Module]],
                  hidden_size: Sequence[int] = None,
                  normalize: Optional[tk.layers.Layer] = None,
                  initializer: Optional[tk.initializers.Initializer] = None,
@@ -583,12 +583,12 @@ class MFQnetwork(Module):
     def parameters_model(self, key=None):
         key_list = [key] if key is not None else self.model_keys
         params = []
-        for key in key_list:
-            if isinstance(self.representation[key], Basic_Identical):
-                params.extend(self.eval_Qhead[key].trainable_variables)
+        for k in key_list:
+            if isinstance(self.representation[k], Basic_Identical):
+                params.extend(self.eval_Qhead[k].trainable_variables)
             else:
-                params.extend(self.representation[key].trainable_variables + self.eval_Qhead[key].trainable_variables)
-            params.extend(self.action_mean_embedding[key].trainable_variables)
+                params.extend(self.representation[k].trainable_variables + self.eval_Qhead[k].trainable_variables)
+            params.extend(self.action_mean_embedding[k].trainable_variables)
         return params
 
     @tf.function

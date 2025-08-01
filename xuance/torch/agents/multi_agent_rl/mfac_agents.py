@@ -89,19 +89,6 @@ class MFAC_Agents(OnPolicyMARLAgents):
                 temperature=self.config.temperature,
                 action_embedding_hidden_size=self.config.action_embedding_hidden_size)
             self.continuous_control = False
-        elif self.config.policy == "Gaussian_MFAC_Policy":
-            policy = REGISTRY_Policy["Gaussian_MFAC_Policy"](
-                action_space=self.action_space, n_agents=self.n_agents,
-                representation_actor=A_representation, representation_critic=C_representation,
-                actor_hidden_size=self.config.actor_hidden_size, critic_hidden_size=self.config.critic_hidden_size,
-                normalize=normalize_fn, initialize=initializer, activation=activation,
-                activation_action=ActivationFunctions[self.config.activation_action],
-                device=device, use_distributed_training=self.distributed_training,
-                use_parameter_sharing=self.use_parameter_sharing, model_keys=self.model_keys,
-                use_rnn=self.use_rnn, rnn=self.config.rnn if self.use_rnn else None,
-                temperature=self.config.temperature,
-                action_embedding_hidden_size=self.config.action_embedding_hidden_size)
-            self.continuous_control = True
         else:
             raise AttributeError(f"{agent} currently does not support the policy named {self.config.policy}.")
         return policy

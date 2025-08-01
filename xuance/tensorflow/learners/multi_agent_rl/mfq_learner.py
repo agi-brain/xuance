@@ -70,8 +70,8 @@ class MFQ_Learner(LearnerMAS):
 
             for key in self.model_keys:
                 mask_values = agent_mask[key]
-                q_eval_a = tf.gather(q_eval[key], tf.cast(actions[key][:, None], dtype=tf.int32),
-                                     axis=-1, batch_dims=-1)
+                q_eval_a = tf.reshape(tf.gather(q_eval[key], tf.cast(actions[key][:, None], dtype=tf.int32),
+                                                axis=-1, batch_dims=-1), [-1])
 
                 if self.use_actions_mask:
                     q_next[key][avail_actions_next[key] == 0] = -1e10

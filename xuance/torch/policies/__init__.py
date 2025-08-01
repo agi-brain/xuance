@@ -115,7 +115,7 @@ __all__ = [
     "PDQNPolicy", "MPDQNPolicy", "SPDQNPolicy", "DRQNPolicy",
     "BasicQnetwork_marl", "MFQnetwork", "MixingQnetwork", "Weighted_MixingQnetwork", "Qtran_MixingQnetwork",
     "DCG_policy", "Independent_DDPG_Policy", "MADDPG_Policy", "MATD3_Policy",
-    "MeanFieldActorCriticPolicy", "COMA_Policy", "Categorical_MAAC_Policy", "Categorical_MAAC_Policy_Share",
+    "Categorical_MFAC_Policy", "COMA_Policy", "Categorical_MAAC_Policy", "Categorical_MAAC_Policy_Share",
     "IC3Net_Policy", "CommNet_Policy", "TarMAC_Policy",
     "Categorical_ISAC", "Categorical_MASAC",
     "Gaussian_ISAC", "Gaussian_MASAC", "Gaussain_MAAC",

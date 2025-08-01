@@ -879,6 +879,32 @@ class COMA_Policy(Module):
 
 
 class MeanFieldActorCriticPolicy(Module):
+    """Mean-field actor-critic policy.
+
+        This policy maintains separate actor and critic networks for each agent type (model key),
+        embeds the mean action of neighboring agents, and produces Boltzmann policies.
+
+        Args:
+            action_space (Discrete): A mapping from model keys to discrete action spaces.
+            n_agents (int): Total number of agents in the environment.
+            representation_actor (ModuleDict): Actor state encoder modules for each model key.
+            representation_critic (ModuleDict): Critic state encoder modules for each model key.
+            actor_hidden_size (Sequence[int], optional): Hidden layer sizes for actor networks.
+            critic_hidden_size (Sequence[int], optional): Hidden layer sizes for critic networks.
+            normalize (ModuleType, optional): Normalization layer to apply after each hidden layer.
+            initialize (Callable[..., Tensor], optional): Weight initialization function.
+            activation (ModuleType, optional): Activation function class for hidden layers.
+            device (str|int|torch.device, optional): Device identifier for module placement.
+            use_distributed_training (bool): If True, wrap components in DistributedDataParallel.
+            **kwargs: Additional keyword arguments:
+                use_parameter_sharing (bool): Whether to share parameters across agent types.
+                model_keys (List[str]): Keys identifying different agent types.
+                rnn (str): RNN type, e.g., "LSTM" or "GRU".
+                use_rnn (bool): Flag indicating whether to include RNN layers.
+                action_embedding_hidden_size (Sequence[int]): Hidden sizes for action mean embedding.
+                temperature (float): Temperature parameter for Boltzmann policy.
+        """
+
     def __init__(self,
                  action_space: Discrete,
                  n_agents: int,
@@ -951,12 +977,75 @@ class MeanFieldActorCriticPolicy(Module):
             self.action_mean_embedding.parameters())
         return parameters
 
+    def forward(self, observation: Dict[str, Tensor], agent_ids: Optional[Tensor] = None,
+                avail_actions: Dict[str, Tensor] = None, agent_key: str = None,
+                rnn_hidden: Optional[Dict[str, List[Tensor]]] = None):
+        """
+        Returns actions of the policy.
+
+        Parameters:
+            observation (Dict[str, Tensor]): The input observations for the policies.
+            agent_ids (Tensor): The agents' ids (for parameter sharing).
+            avail_actions (Dict[str, Tensor]): Actions mask values, default is None.
+            agent_key (str): Calculate actions for specified agent.
+            rnn_hidden (Optional[Dict[str, List[Tensor]]]): The RNN hidden states of actor representation.
+
+        Returns:
+            rnn_hidden_new (Optional[Dict[str, List[Tensor]]]): The new RNN hidden states of actor representation.
+            pi_dists (dict): The stochastic policy distributions.
+        """
+        rnn_hidden_new, pi_logits, pi_dists = {}, {}, {}
+        agent_list = self.model_keys if agent_key is None else [agent_key]
+
+        if avail_actions is not None:
+            avail_actions = {key: Tensor(avail_actions[key]) for key in agent_list}
+
+        for key in agent_list:
+            if self.use_rnn:
+                outputs = self.actor_representation[key](observation[key], *rnn_hidden[key])
+                rnn_hidden_new[key] = (outputs['rnn_hidden'], outputs['rnn_cell'])
+            else:
+                outputs = self.actor_representation[key](observation[key])
+                rnn_hidden_new[key] = [None, None]
+
+            if self.use_parameter_sharing:
+                actor_input = torch.concat([outputs['state'], agent_ids], dim=-1)
+            else:
+                actor_input = outputs['state']
+
+            avail_actions_input = None if avail_actions is None else avail_actions[key]
+            pi_logits[key] = self.actor[key](actor_input, avail_actions_input)
+            actions_prob = self.get_boltzmann_policy(pi_logits[key])
+            pi_dists[key] = Categorical(probs=actions_prob)
+        return rnn_hidden_new, pi_dists
+
     def get_boltzmann_policy(self, q):
+        """Convert Q-values to a Boltzmann (softmax) policy distribution.
+
+        Args:
+            q (Tensor): Q-value tensor of shape [..., n_actions].
+
+        Returns:
+            Tensor: Probability distribution over actions with same shape as `q`.
+        """
         actions_prob = self.softmax(q / self.temperature)
         return actions_prob
 
     def get_mean_actions(self, actions: Dict[str, Tensor],
                          agent_mask_tensor: Tensor, batch_size: int):
+        """Compute mean one-hot action vectors of each agent's neighbors.
+
+        For each batch and agent, exclude the agent's own action and average the one-hot
+        action encodings of its alive neighbors.
+
+        Args:
+            actions (Dict[str, Tensor]): Mapping from model keys to chosen action indices of shape [batch_size * n_agents].
+            agent_mask_tensor (Tensor): Binary mask of shape [batch_size, n_agents] indicating alive (1) or dead (0) agents.
+            batch_size (int): Number of samples in the batch.
+
+        Returns:
+            Tensor: Mean one-hot action tensor of shape [batch_size, n_agents, n_actions_max].
+        """
         if self.use_parameter_sharing:
             actions_tensor = actions[self.model_keys[0]].reshape([-1, self.n_agents])
         else:
@@ -1000,48 +1089,6 @@ class MeanFieldActorCriticPolicy(Module):
             dim_actor_in += n_agents
             dim_critic_in += n_agents
         return dim_actor_in, dim_actor_out, dim_critic_in, dim_critic_out
-
-    def forward(self, observation: Dict[str, Tensor], agent_ids: Optional[Tensor] = None,
-                avail_actions: Dict[str, Tensor] = None, agent_key: str = None,
-                rnn_hidden: Optional[Dict[str, List[Tensor]]] = None):
-        """
-        Returns actions of the policy.
-
-        Parameters:
-            observation (Dict[str, Tensor]): The input observations for the policies.
-            agent_ids (Tensor): The agents' ids (for parameter sharing).
-            avail_actions (Dict[str, Tensor]): Actions mask values, default is None.
-            agent_key (str): Calculate actions for specified agent.
-            rnn_hidden (Optional[Dict[str, List[Tensor]]]): The RNN hidden states of actor representation.
-
-        Returns:
-            rnn_hidden_new (Optional[Dict[str, List[Tensor]]]): The new RNN hidden states of actor representation.
-            pi_dists (dict): The stochastic policy distributions.
-        """
-        rnn_hidden_new, pi_logits, pi_dists = {}, {}, {}
-        agent_list = self.model_keys if agent_key is None else [agent_key]
-
-        if avail_actions is not None:
-            avail_actions = {key: Tensor(avail_actions[key]) for key in agent_list}
-
-        for key in agent_list:
-            if self.use_rnn:
-                outputs = self.actor_representation[key](observation[key], *rnn_hidden[key])
-                rnn_hidden_new[key] = (outputs['rnn_hidden'], outputs['rnn_cell'])
-            else:
-                outputs = self.actor_representation[key](observation[key])
-                rnn_hidden_new[key] = [None, None]
-
-            if self.use_parameter_sharing:
-                actor_input = torch.concat([outputs['state'], agent_ids], dim=-1)
-            else:
-                actor_input = outputs['state']
-
-            avail_actions_input = None if avail_actions is None else avail_actions[key]
-            pi_logits[key] = self.actor[key](actor_input, avail_actions_input)
-            actions_prob = self.get_boltzmann_policy(pi_logits[key])
-            pi_dists[key] = Categorical(probs=actions_prob)
-        return rnn_hidden_new, pi_dists
 
     def get_values(self, observation: Dict[str, Tensor],
                    actions_mean: Dict[str, Tensor] = None,

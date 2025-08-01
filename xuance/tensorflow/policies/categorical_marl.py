@@ -3,6 +3,7 @@ from copy import deepcopy
 from operator import itemgetter
 from gymnasium.spaces import Discrete
 from xuance.common import Sequence, Optional, Union, Dict, List
+from xuance.tensorflow.representations import Basic_MLP
 from xuance.tensorflow.policies import CategoricalActorNet, ActorNet
 from xuance.tensorflow.policies.core import CriticNet, BasicQhead
 from xuance.tensorflow.utils import CategoricalDistribution
@@ -549,49 +550,228 @@ class COMA_Policy(Module):
 
 
 class MeanFieldActorCriticPolicy(Module):
+    """Mean-field actor-critic policy.
+
+        This policy maintains separate actor and critic networks for each agent type (model key),
+        embeds the mean action of neighboring agents, and produces Boltzmann policies.
+
+        Args:
+            action_space (Discrete): A mapping from model keys to discrete action spaces.
+            n_agents (int): Total number of agents in the environment.
+            representation_actor (Optional[Dict[str, Module]]): Actor state encoder modules for each model key.
+            representation_critic (Optional[Dict[str, Module]]): Critic state encoder modules for each model key.
+            actor_hidden_size (Sequence[int], optional): Hidden layer sizes for actor networks.
+            critic_hidden_size (Sequence[int], optional): Hidden layer sizes for critic networks.
+            normalize (Optional[tk.layers.Layer]): Normalization layer to apply after each hidden layer.
+            initialize (Optional[tk.initializers.Initializer]): Weight initialization function.
+            activation (Optional[tk.layers.Layer]): Activation function class for hidden layers.
+            use_distributed_training (bool): If True, wrap components in DistributedDataParallel.
+            **kwargs: Additional keyword arguments:
+                use_parameter_sharing (bool): Whether to share parameters across agent types.
+                model_keys (List[str]): Keys identifying different agent types.
+                rnn (str): RNN type, e.g., "LSTM" or "GRU".
+                use_rnn (bool): Flag indicating whether to include RNN layers.
+                action_embedding_hidden_size (Sequence[int]): Hidden sizes for action mean embedding.
+                temperature (float): Temperature parameter for Boltzmann policy.
+        """
+
     def __init__(self,
                  action_space: Discrete,
                  n_agents: int,
-                 representation: Module,
+                 representation_actor: Optional[Dict[str, Module]],
+                 representation_critic: Optional[Dict[str, Module]],
                  actor_hidden_size: Sequence[int] = None,
                  critic_hidden_size: Sequence[int] = None,
                  normalize: Optional[tk.layers.Layer] = None,
-                 initializer: Optional[tk.initializers.Initializer] = None,
+                 initialize: Optional[tk.initializers.Initializer] = None,
                  activation: Optional[tk.layers.Layer] = None,
                  use_distributed_training: bool = False,
                  **kwargs):
         super(MeanFieldActorCriticPolicy, self).__init__()
         self.is_continuous = False
-        self.action_dim = action_space.n
-        self.representation = representation
-        self.representation_info_shape = self.representation.output_shapes
-        self.actor_net = ActorNet(representation.output_shapes['state'][0], self.action_dim,
-                                  actor_hidden_size, normalize, initializer, activation)
-        self.critic_net = CriticNet(representation.output_shapes['state'][0] + self.action_dim,
-                                    critic_hidden_size, normalize, initializer, activation)
-        self.trainable_param = self.actor_net.trainable_variables + self.critic_net.trainable_variables
-        self.identical_rep = True if isinstance(self.representation, Basic_Identical) else False
-        self.pi_dist = CategoricalDistribution(self.action_dim)
+        self.action_space = action_space
+        self.n_agents = n_agents
+        self.n_actions_list = [a_space.n for a_space in self.action_space.values()]
+        self.n_actions_max = max(self.n_actions_list)
+        self.use_parameter_sharing = kwargs['use_parameter_sharing']
+        self.model_keys = kwargs['model_keys']
+        self.lstm = True if kwargs["rnn"] == "LSTM" else False
+        self.use_rnn = True if kwargs["use_rnn"] else False
+
+        self.actor_representation = representation_actor
+        self.critic_representation = representation_critic
+
+        self.dim_input_critic, self.n_actions = {}, {}
+        self.action_mean_embedding = {}
+        self.actor, self.critic = {}, {}
+        dim_action_embedding = self.n_actions_max + self.n_agents if self.use_parameter_sharing else self.n_actions_max
+        for key in self.model_keys:
+            self.n_actions[key] = self.action_space[key].n
+            dim_actor_in, dim_actor_out, dim_critic_in, dim_critic_out = self._get_actor_critic_input(
+                self.n_actions[key],
+                self.actor_representation[key].output_shapes['state'][0],
+                self.critic_representation[key].output_shapes['state'][0],
+                n_agents, )
+            dim_critic_in += kwargs['action_embedding_hidden_size'][-1]
+
+            self.action_mean_embedding[key] = Basic_MLP((dim_action_embedding,),
+                                                        kwargs['action_embedding_hidden_size'],
+                                                        normalize, initialize, activation)
+            self.actor[key] = CategoricalActorNet(dim_actor_in, dim_actor_out, actor_hidden_size,
+                                                  normalize, initialize, activation)
+            self.critic[key] = CriticNet(dim_critic_in, critic_hidden_size, normalize, initialize, activation)
+        self.temperature = kwargs['temperature']
+
+    def parameters_model(self, key=None):
+        key_list = [key] if key is not None else self.model_keys
+        params = []
+        for k in key_list:
+            if not isinstance(self.actor_representation[k], Basic_Identical):
+                params.extend(self.actor_representation[k].trainable_variables)
+            if not isinstance(self.critic_representation[k], Basic_Identical):
+                params.extend(self.critic_representation[k].trainable_variables)
+            params.extend(self.actor[k].trainable_variables + self.critic[k].trainable_variables)
+            params.extend(self.action_mean_embedding[k].trainable_variables)
+        return params
 
     @tf.function
-    def call(self, inputs: Union[np.ndarray, dict], **kwargs):
-        observations = inputs['obs']
-        IDs = inputs['ids']
-        outputs = self.representation(observations)
-        input_actor = tf.concat([outputs['state'], IDs], axis=-1)
-        act_logits = self.actor_net(input_actor)
-        self.pi_dist.set_param(logits=act_logits)
-        return outputs, self.pi_dist
+    def call(self, observation: Dict[str, Tensor], agent_ids: Optional[Tensor] = None,
+             avail_actions: Dict[str, Tensor] = None, agent_key: str = None,
+             rnn_hidden: Optional[Dict[str, List[Tensor]]] = None, **kwargs):
+        """
+        Returns actions of the policy.
 
-    def trainable_param(self):
-        params = self.actor_net.trainable_variables + self.critic_net.trainable_variables
-        if self.identical_rep:
-            return params
+        Parameters:
+            observation (Dict[str, Tensor]): The input observations for the policies.
+            agent_ids (Tensor): The agents' ids (for parameter sharing).
+            avail_actions (Dict[str, Tensor]): Actions mask values, default is None.
+            agent_key (str): Calculate actions for specified agent.
+            rnn_hidden (Optional[Dict[str, List[Tensor]]]): The RNN hidden states of actor representation.
+
+        Returns:
+            rnn_hidden_new (Optional[Dict[str, List[Tensor]]]): The new RNN hidden states of actor representation.
+            pi_dists (dict): The stochastic policy distributions.
+        """
+        rnn_hidden_new, pi_logits, pi_dists = {}, {}, {}
+        agent_list = self.model_keys if agent_key is None else [agent_key]
+
+        for key in agent_list:
+            if self.use_rnn:
+                outputs = self.actor_representation[key](observation[key], *rnn_hidden[key])
+                rnn_hidden_new[key] = (outputs['rnn_hidden'], outputs['rnn_cell'])
+            else:
+                outputs = self.actor_representation[key](observation[key])
+                rnn_hidden_new[key] = [None, None]
+
+            if self.use_parameter_sharing:
+                actor_input = tf.concat([outputs['state'], agent_ids], axis=-1)
+            else:
+                actor_input = outputs['state']
+
+            avail_actions_input = None if avail_actions is None else avail_actions[key]
+            pi_logits[key] = self.actor[key](actor_input, avail_actions_input)
+        return rnn_hidden_new, pi_logits
+
+    @tf.function
+    def get_mean_actions(self, actions: Dict[str, Tensor],
+                         agent_mask_tensor: Tensor, batch_size: int):
+        """Compute mean one-hot action vectors of each agent's neighbors.
+
+        For each batch and agent, exclude the agent's own action and average the one-hot
+        action encodings of its alive neighbors.
+
+        Args:
+            actions (Dict[str, Tensor]): Mapping from model keys to chosen action indices of shape [batch_size * n_agents].
+            agent_mask_tensor (Tensor): Binary mask of shape [batch_size, n_agents] indicating alive (1) or dead (0) agents.
+            batch_size (int): Number of samples in the batch.
+
+        Returns:
+            Tensor: Mean one-hot action tensor of shape [batch_size, n_agents, n_actions_max].
+        """
+        if self.use_parameter_sharing:
+            actions_tensor = tf.reshape(actions[self.model_keys[0]], [-1, self.n_agents])
         else:
-            return params + self.representation.trainable_variables
+            actions_tensor = tf.reshape(tf.stack(itemgetter(*self.model_keys)(actions), axis=-1), [-1, self.n_agents])
+        actions_onehot = tf.one_hot(actions_tensor, depth=self.n_actions_max)
 
-    def critic(self, observation: Tensor, actions_mean: Tensor, agent_ids: Tensor):
-        outputs = self.representation(observation)
-        critic_in = tf.concat([outputs['state'], actions_mean, agent_ids], axis=-1)
-        critic_out = tf.expand_dims(self.critic_net(critic_in), -1)
-        return critic_out
+        # count alive neighbors
+        _eyes = tf.tile(tf.eye(self.n_agents)[None], [batch_size, 1, 1])
+        agent_mask_diagonal = tf.tile(tf.expand_dims(agent_mask_tensor, axis=-1), [1, 1, self.n_agents]) * _eyes
+        agent_mask_neighbors = tf.tile(tf.expand_dims(agent_mask_tensor, axis=-1),
+                                       [1, 1, self.n_agents]) - agent_mask_diagonal
+        agent_alive_neighbors = tf.reduce_sum(agent_mask_neighbors, axis=-1, keepdims=True)
+
+        # calculate mean actions of each agent's neighbors
+        agent_mask_repeat = tf.tile(tf.expand_dims(agent_mask_tensor, axis=-1), [1, 1, self.n_actions_max])
+        actions_onehot = actions_onehot * agent_mask_repeat
+        actions_sum = tf.tile(tf.reduce_sum(actions_onehot, axis=-2, keepdims=True), [1, self.n_agents, 1])
+        actions_neighbors_sum = actions_sum - actions_onehot  # Sum of other agents' actions.
+        actions_mean_masked = actions_neighbors_sum * agent_mask_repeat / agent_alive_neighbors
+        return actions_mean_masked
+
+    @tf.function
+    def _get_actor_critic_input(self, dim_action, dim_actor_rep, dim_critic_rep, n_agents):
+        """
+        Returns the input dimensions of actor network and critic networks.
+
+        Parameters:
+            dim_action: The dimension of actions.
+            dim_actor_rep: The dimension of the output of actor representation.
+            dim_action_max: The maximum dimension of the output of actor
+            dim_critic_rep: The dimension of the output of critic representation.
+            n_agents: The number of agents.
+
+        Returns:
+            dim_actor_in: The dimension of input of the actor networks.
+            dim_actor_out: The dimension of output of the actor networks.
+            dim_critic_in: The dimension of the input of critic networks.
+            dim_critic_out: The dimension of the output of critic networks.
+        """
+        dim_actor_in, dim_actor_out = dim_actor_rep, dim_action
+        dim_critic_in, dim_critic_out = dim_critic_rep, dim_action
+        if self.use_parameter_sharing:
+            dim_actor_in += n_agents
+            dim_critic_in += n_agents
+        return dim_actor_in, dim_actor_out, dim_critic_in, dim_critic_out
+
+    @tf.function
+    def get_values(self, observation: Dict[str, Tensor],
+                   actions_mean: Dict[str, Tensor] = None,
+                   agent_ids: Tensor = None, agent_key: str = None,
+                   rnn_hidden: Optional[Dict[str, List[Tensor]]] = None):
+        """
+        Get critic values via critic networks.
+
+        Parameters:
+            observation (Dict[str, Tensor]): The input observations for the policies.
+            actions_mean (Dict[str, Tensor]): The mean actions of each agent's neighbors.
+            agent_ids (Tensor): The agents' ids (for parameter sharing).
+            agent_key (str): Calculate actions for specified agent.
+            rnn_hidden (Optional[Dict[str, List[Tensor]]]): The RNN hidden states of critic representation.
+
+        Returns:
+            rnn_hidden_new (Optional[Dict[str, List[Tensor]]]): The new RNN hidden states of critic representation.
+            values (dict): The evaluated critic values.
+        """
+        rnn_hidden_new, values = {}, {}
+        agent_list = self.model_keys if agent_key is None else [agent_key]
+
+        for key in agent_list:
+            if self.use_rnn:
+                outputs = self.critic_representation[key](observation[key], *rnn_hidden[key])
+                rnn_hidden_new[key] = (outputs['rnn_hidden'], outputs['rnn_cell'])
+            else:
+                outputs = self.critic_representation[key](observation[key])
+                rnn_hidden_new[key] = [None, None]
+
+            if self.use_parameter_sharing:
+                action_embedding_input = tf.concat([actions_mean[key], agent_ids], axis=-1)
+                act_embedding = self.action_mean_embedding[key](action_embedding_input)
+                critic_input = tf.concat([outputs['state'], act_embedding['state'], agent_ids], axis=-1)
+            else:
+                act_embedding = self.action_mean_embedding[key](actions_mean[key])
+                critic_input = tf.concat([outputs['state'], act_embedding['state']], axis=-1)
+
+            values[key] = self.critic[key](critic_input)
+
+        return rnn_hidden_new, values

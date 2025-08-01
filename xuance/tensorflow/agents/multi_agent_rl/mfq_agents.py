@@ -87,7 +87,7 @@ class MFQ_Agents(OffPolicyMARLAgents):
                 policy_type="Boltzmann",  # "Boltzmann" or "greedy"
                 action_embedding_hidden_size=self.config.action_embedding_hidden_size)
         else:
-            raise AttributeError(f"IQL currently does not support the policy named {self.config.policy}.")
+            raise AttributeError(f"MFQ currently does not support the policy named {self.config.policy}.")
 
         return policy
 
