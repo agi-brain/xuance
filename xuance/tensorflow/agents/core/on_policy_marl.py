@@ -240,7 +240,7 @@ class OnPolicyMARLAgents(MARLAgents):
                 rnn_hidden_critic_i = {key: self.policy.critic_representation[key].get_hidden_item(
                     hidden_item_index, *rnn_hidden_critic[key])}
                 obs_array = np.array(itemgetter(*self.agent_keys)(obs_dict))
-                obs_input = {key: obs_array.reshape([batch_size, -1])}
+                obs_input = {key: obs_array.reshape([batch_size, 1, -1])}
                 agents_id = np.eye(self.n_agents, dtype=np.float32)[None].repeat(n_env, 0).reshape(batch_size, 1, -1)
             else:
                 obs_input = {key: np.array([itemgetter(*self.agent_keys)(obs_dict)]).reshape(batch_size, -1)}

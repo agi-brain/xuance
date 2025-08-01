@@ -55,7 +55,8 @@ class IPPO_Learner(IAC_Learner):
                     advantages_mask = advantages[key] * mask_values
                     surrogate1 = ratio * advantages_mask
                     surrogate2 = tf.clip_by_value(ratio, 1 - self.clip_range, 1 + self.clip_range) * advantages_mask
-                    loss_a.append(-tf.reduce_mean(tf.minimum(surrogate1, surrogate2)))
+                    pg_loss = -tf.reduce_sum(tf.minimum(surrogate1, surrogate2)) / mask_values_sum
+                    loss_a.append(pg_loss)
 
                     # entropy loss
                     entropy = tf.reduce_sum(0.5 + 0.5 * log_2pi + log_std, axis=-1, keepdims=True)
@@ -74,7 +75,8 @@ class IPPO_Learner(IAC_Learner):
                     advantages_mask = advantages[key] * mask_values
                     surrogate1 = ratio * advantages_mask
                     surrogate2 = tf.clip_by_value(ratio, 1 - self.clip_range, 1 + self.clip_range) * advantages_mask
-                    loss_a.append(-tf.reduce_mean(tf.minimum(surrogate1, surrogate2)))
+                    pg_loss = -tf.reduce_sum(tf.minimum(surrogate1, surrogate2)) / mask_values_sum
+                    loss_a.append(pg_loss)
 
                     # entropy loss
                     probs = tf.exp(log_prob)
