@@ -148,12 +148,12 @@ class TestValueBaseAlgo(unittest.TestCase):
         else:
             runner.run()
 
-    # def test_mfac(self):
-    #     runner = get_runner(method="mfac", env=env_name, env_id=env_id, parser_args=args)
-    #     if is_benchmark:
-    #         runner.benchmark()
-    #     else:
-    #         runner.run()
+    def test_mfac(self):
+        runner = get_runner(method="mfac", env=env_name, env_id=env_id, parser_args=args)
+        if is_benchmark:
+            runner.benchmark()
+        else:
+            runner.run()
     #
     def test_mfq(self):
         runner = get_runner(method="mfq", env=env_name, env_id=env_id, parser_args=args)
