@@ -43,7 +43,7 @@ class MFAC_Learner(IPPO_Learner):
     def forward_fn(self, *args):
         bs, obs, actions, act_mean, values, returns, advantages, log_pi_old, agent_mask, avail_actions, IDs = args
         info_train, gradients = {}, {}
-        with tf.GradientTape(persistent=True) as tape:
+        with tf.GradientTape() as tape:
             # feedforward
             _, pi_logits_dict = self.policy(observation=obs, agent_ids=IDs, avail_actions=avail_actions)
             _, values_pred_dict = self.policy.get_values(observation=obs, actions_mean=act_mean, agent_ids=IDs)
@@ -106,12 +106,12 @@ class MFAC_Learner(IPPO_Learner):
                 })
 
             loss = sum(loss_a) + self.vf_coef * sum(loss_c) - self.ent_coef * sum(loss_e)
-            gradients = tape.gradient(loss, self.policy.trainable_variables)
+            gradients[key] = tape.gradient(loss, self.policy.trainable_variables)
             if self.use_grad_clip:
-                gradients, _ = tf.clip_by_global_norm(gradients, clip_norm=self.grad_clip_norm)
-                self.optimizer.apply_gradients(zip(gradients, self.policy.trainable_variables))
+                gradients[key], _ = tf.clip_by_global_norm(gradients[key], clip_norm=self.grad_clip_norm)
+                self.optimizer.apply_gradients(zip(gradients[key], self.policy.trainable_variables))
             else:
-                self.optimizer.apply_gradients(zip(gradients, self.policy.trainable_variables))
+                self.optimizer.apply_gradients(zip(gradients[key], self.policy.trainable_variables))
 
             info_train.update({
                 "loss": loss,

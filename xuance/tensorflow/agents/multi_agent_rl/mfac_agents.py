@@ -216,7 +216,8 @@ class MFAC_Agents(OnPolicyMARLAgents):
                 values_out[key] = values_out[key].numpy().reshape(n_env, self.n_agents)
                 values_dict = {k: values_out[key][:, i] for i, k in enumerate(self.agent_keys)}
         else:
-            pi_dists = {k: self.policy.actor[k].distribution(logits=pi_logits[k]) for k in self.agent_keys}
+            pi_dists = {k: self.policy.actor[k].distribution(logits=pi_logits[k] / self.policy.temperature)
+                        for k in self.agent_keys}
             actions_sample = {k: pi_dists[k].stochastic_sample() for k in self.agent_keys}
             actions_dict = [{k: actions_sample[k].numpy()[e].reshape([]) for k in self.agent_keys}
                             for e in range(n_env)]
