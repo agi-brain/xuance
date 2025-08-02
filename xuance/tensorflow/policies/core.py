@@ -601,16 +601,20 @@ class QMIX_FF_mixer(Module):
         self.dim_hidden = dim_hidden
         self.n_agents = n_agents
         self.dim_input = self.n_agents + self.dim_state
-        self.ff_net = tk.Sequential([tk.layers.Dense(input_shape=(self.dim_input,), units=self.dim_hidden,
-                                                     activation=tk.layers.Activation('relu')),
-                                     tk.layers.Dense(input_shape=(self.dim_hidden,), units=self.dim_hidden,
-                                                     activation=tk.layers.Activation('relu')),
-                                     tk.layers.Dense(input_shape=(self.dim_hidden,), units=self.dim_hidden,
-                                                     activation=tk.layers.Activation('relu')),
-                                     tk.layers.Dense(input_shape=(self.dim_hidden,), units=1)])
-        self.ff_net_bias = tk.Sequential([tk.layers.Dense(input_shape=(self.dim_state,), units=self.dim_hidden,
-                                                          activation=tk.layers.Activation('relu')),
-                                          tk.layers.Dense(input_shape=(self.dim_hidden,), units=1)])
+        self.ff_net = tk.Sequential([
+            tk.layers.Dense(self.dim_hidden, input_shape=(self.dim_input,)),
+            tk.layers.ReLU(),
+            tk.layers.Dense(self.dim_hidden, input_shape=(self.dim_hidden,)),
+            tk.layers.ReLU(),
+            tk.layers.Dense(self.dim_hidden, input_shape=(self.dim_hidden,)),
+            tk.layers.ReLU(),
+            tk.layers.Dense(1, input_shape=(self.dim_hidden,))
+        ])
+        self.ff_net_bias = tk.Sequential([
+            tk.layers.Dense(self.dim_hidden, input_shape=(self.dim_state,)),
+            tk.layers.ReLU(),
+            tk.layers.Dense(1, input_shape=(self.dim_hidden,))
+        ])
 
     @tf.function
     def call(self, values_n, states=None, **kwargs):
@@ -642,7 +646,6 @@ class QTRAN_base(Module):
         n_agents (int): The number of agents.
         dim_utility_hidden (int): The dimension of the utility hidden states.
         use_parameter_sharing (bool): Whether to use parameters sharing trick.
-        device: Optional[Union[str, int, torch.device]]: The calculating device.
     """
     def __init__(self,
                  dim_state: int = 0,
@@ -663,18 +666,27 @@ class QTRAN_base(Module):
         self.dim_q_input = self.dim_state + dim_utility_hidden + self.n_actions_max
         self.dim_v_input = self.dim_state
 
-        linear_Q_jt = [tk.layers.Dense(input_shape=(self.dim_q_input,), units=self.dim_hidden,
-                                       activation=tk.layers.Activation('relu')),
-                       tk.layers.Dense(input_shape=(self.dim_hidden,), units=self.dim_hidden,
-                                       activation=tk.layers.Activation('relu')),
-                       tk.layers.Dense(input_shape=(self.dim_hidden,), units=1)]
-        self.Q_jt = tk.Sequential(linear_Q_jt)
-        linear_V_jt = [tk.layers.Dense(input_shape=(self.dim_v_input,), units=self.dim_hidden,
-                                       activation=tk.layers.Activation('relu')),
-                       tk.layers.Dense(input_shape=(self.dim_hidden,), units=self.dim_hidden,
-                                       activation=tk.layers.Activation('relu')),
-                       tk.layers.Dense(input_shape=(self.dim_hidden,), units=1)]
-        self.V_jt = tk.Sequential(linear_V_jt)
+        self.Q_jt = tf.keras.Sequential([
+            tk.layers.Dense(self.dim_hidden, input_shape=(self.dim_q_input,)),
+            tk.layers.ReLU(),
+            tk.layers.Dense(self.dim_hidden, input_shape=(self.dim_hidden,)),
+            tk.layers.ReLU(),
+            tk.layers.Dense(1, input_shape=(self.dim_hidden,))
+        ])
+        self.V_jt = tf.keras.Sequential([
+            tk.layers.Dense(self.dim_hidden, input_shape=(self.dim_v_input,)),
+            tk.layers.ReLU(),
+            tk.layers.Dense(self.dim_hidden, input_shape=(self.dim_hidden,)),
+            tk.layers.ReLU(),
+            tk.layers.Dense(1, input_shape=(self.dim_hidden,))
+        ])
+        self.dim_ae_input = dim_utility_hidden + self.n_actions_max
+
+        self.action_encoding = tf.keras.Sequential([
+            tk.layers.Dense(self.dim_ae_input, input_shape=(self.dim_ae_input,)),
+            tk.layers.ReLU(),
+            tk.layers.Dense(self.dim_ae_input, input_shape=(self.dim_ae_input,))
+        ])
 
     @tf.function
     def call(self, states: Tensor, hidden_state_inputs: Tensor, actions_onehot: Tensor, **kwargs):
@@ -691,9 +703,12 @@ class QTRAN_base(Module):
             v_jt (Tensor): The evaluated joint V values.
         """
         h_state_action_input = tf.concat([hidden_state_inputs, actions_onehot], axis=-1)
-        h_state_action_encode = tf.reshape(self.action_encoding(h_state_action_input),
-                                           [-1, self.n_agents, self.dim_ae_input])
-        h_state_action_encode = h_state_action_encode.sum(axis=1)  # Sum across agents
+        input_shape = h_state_action_input.shape
+        h_state_action_input_flat = tf.reshape(h_state_action_input, (-1, input_shape[-1]))
+        h_state_action_encode_flat = self.action_encoding(h_state_action_input_flat)
+        h_state_action_encode = tf.reshape(h_state_action_encode_flat, input_shape[:-1] + [self.dim_ae_input, ])
+        h_state_action_encode = tf.reshape(h_state_action_encode, [-1, self.n_agents, self.dim_ae_input])
+        h_state_action_encode = tf.reduce_sum(h_state_action_encode, axis=1, keepdims=False)  # Sum across agents
         input_q = tf.concat([states, h_state_action_encode], axis=-1)
         input_v = states
         q_jt = self.Q_jt(input_q)
@@ -771,9 +786,12 @@ class QTRAN_alt(Module):
         """
         h_state_action_input = tf.concat([hidden_state_inputs, actions_onehot], axis=-1)
 
-        h_state_action_encode = self.action_encoding(h_state_action_input)
-        bs = tf.shape(h_state_action_encode)[0]
-        dim_h = tf.shape(h_state_action_encode)[-1]
+        input_shape = h_state_action_input.shape
+        h_state_action_input_flat = tf.reshape(h_state_action_input, (-1, input_shape[-1]))
+        h_state_action_encode_flat = self.action_encoding(h_state_action_input_flat)
+        h_state_action_encode = tf.reshape(h_state_action_encode_flat, input_shape[:-1] + [self.dim_ae_input, ])
+        bs = input_shape[0]
+        dim_h = self.dim_ae_input
 
         agent_ids = tf.eye(self.n_agents, dtype=tf.float32)
         agent_masks = 1.0 - agent_ids
@@ -784,10 +802,13 @@ class QTRAN_alt(Module):
         h_state_action_encode_masked = repeated_h_state_action_encode * repeated_agent_masks
         h_state_action_encode_sum = tf.reduce_sum(h_state_action_encode_masked, axis=2)  # sum over other agents
 
-        repeated_states = tf.tile(states[:, tf.newaxis, :], [1, self.n_agents, 1])
+        repeated_states = tf.tile(states[:, None, :], [1, self.n_agents, 1])
         input_q = tf.concat([repeated_states, h_state_action_encode_sum, repeat_agent_ids], axis=-1)
 
-        q_jt = self.Q_jt(input_q)
+        input_q_shape = input_q.shape
+        input_q_flat = tf.reshape(input_q, (-1, input_q_shape[-1]))
+        q_jt_flat = self.Q_jt(input_q_flat)
+        q_jt = tf.reshape(q_jt_flat, input_q_shape[:-1] + [q_jt_flat.shape[-1], ])
         v_jt = self.V_jt(states)
 
         return q_jt, v_jt

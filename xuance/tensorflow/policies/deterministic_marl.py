@@ -9,6 +9,21 @@ from .core import BasicQhead, ActorNet, CriticNet, VDN_mixer, QTRAN_base
 
 
 class BasicQnetwork(Module):
+    """
+    The base class to implement DQN based policy
+
+    Args:
+        action_space (Optional[Dict[str, Discrete]]): The action space, which type is gym.spaces.Discrete.
+        n_agents (int): The number of agents.
+        representation (Union[Basic_Identical, dict]): A dict of the representation module for all agents.
+        hidden_size (Sequence[int]): List of hidden units for fully connect layers.
+        normalize (Optional[tk.layers.Layer]): The layer normalization over a minibatch of inputs.
+        initialize (Optional[tk.initializers.Initializer]): The parameters' initializer.
+        activation (Optional[tk.layers.Layer]): The activation function for each layer.
+        use_distributed_training (bool): Whether to use multi-GPU for distributed training.
+        **kwargs: Other arguments.
+    """
+
     def __init__(self,
                  action_space: Optional[Dict[str, Discrete]],
                  n_agents: int,
@@ -17,6 +32,7 @@ class BasicQnetwork(Module):
                  normalize: Optional[tk.layers.Layer] = None,
                  initialize: Optional[tk.initializers.Initializer] = None,
                  activation: Optional[tk.layers.Layer] = None,
+                 use_distributed_training: bool = False,
                  **kwargs):
         super(BasicQnetwork, self).__init__()
         self.action_space = action_space
@@ -406,62 +422,285 @@ class Weighted_MixingQnetwork(MixingQnetwork):
         self.target_ff_mixer.set_weights(self.ff_mixer.get_weights())
 
 
-class Qtran_MixingQnetwork(Module):
+class Qtran_MixingQnetwork(BasicQnetwork):
+    """
+    The base class to implement weighted value-decomposition based policy.
+
+    Args:
+        action_space (Optional[Dict[str, Discrete]]): The action space, which type is gym.spaces.Discrete.
+        n_agents (int): The number of agents.
+        representation (ModuleDict): A dict of the representation module for all agents.
+        mixer (Module): The mixer module that mix together the individual values to the total value.
+        qtran_mixer (Module): The feedforward mixer module that mix together the individual values to the total value.
+        hidden_size (Sequence[int]): List of hidden units for fully connect layers.
+        normalize (Optional[ModuleType]): The layer normalization over a minibatch of inputs.
+        initialize (Optional[Callable[..., Tensor]]): The parameters initializer.
+        activation (Optional[ModuleType]): The activation function for each layer.
+        use_distributed_training (bool): Whether to use multi-GPU for distributed training.
+        **kwargs: Other arguments.
+    """
     def __init__(self,
-                 action_space: Discrete,
+                 action_space: Optional[Dict[str, Discrete]],
                  n_agents: int,
-                 representation: Optional[Basic_Identical],
+                 representation: Union[Basic_Identical, dict],
                  mixer: Optional[VDN_mixer] = None,
-                 qtran_mixer: Optional[QTRAN_base] = None,
+                 qtran_mixer: Module = None,
                  hidden_size: Sequence[int] = None,
                  normalize: Optional[tk.layers.Layer] = None,
-                 initializer: Optional[tk.initializers.Initializer] = None,
+                 initialize: Optional[tk.initializers.Initializer] = None,
                  activation: Optional[tk.layers.Layer] = None,
-                 device: str = "cpu:0",
+                 use_distributed_training: bool = False,
                  **kwargs):
-        super(Qtran_MixingQnetwork, self).__init__()
-        self.action_dim = action_space.n
-        self.representation = representation
-        self.target_representation = deepcopy(self.representation)
-        self.representation_info_shape = self.representation.output_shapes
-        self.obs_dim = self.representation.input_shapes[0]
-        self.hidden_state_dim = self.representation.output_shapes['state'][0]
-        self.n_agents = n_agents
-        self.lstm = True if kwargs["rnn"] == "LSTM" else False
-        self.use_rnn = True if kwargs["use_rnn"] else False
-        self.eval_Qhead = BasicQhead(self.representation.output_shapes['state'][0], self.action_dim, n_agents,
-                                     hidden_size, normalize, initializer, activation, device)
-        self.target_Qhead = BasicQhead(self.representation.output_shapes['state'][0], self.action_dim, n_agents,
-                                       hidden_size, normalize, initializer, activation, device)
+        super(Qtran_MixingQnetwork, self).__init__(action_space, n_agents, representation, hidden_size,
+                                                   normalize, initialize, activation, use_distributed_training,
+                                                   **kwargs)
+        self.n_actions_list = [a_space.n for a_space in action_space.values()]
+        self.n_actions_max = max(self.n_actions_list)
         self.qtran_net = qtran_mixer
-        self.target_qtran_net = qtran_mixer
+        self.target_qtran_net = deepcopy(self.qtran_net)
         self.q_tot = mixer
-        self.target_Qhead.set_weights(self.eval_Qhead.get_weights())
-        self.target_qtran_net.set_weights(self.qtran_net.get_weights())
+
+    @property
+    def parameters_model(self):
+        params = []
+        for key in self.model_keys:
+            if isinstance(self.representation[key], Basic_Identical):
+                params.extend(self.eval_Qhead[key].trainable_variables)
+            else:
+                params.extend(self.representation[key].trainable_variables + self.eval_Qhead[key].trainable_variables)
+        params.extend(self.qtran_net.trainable_variables + self.q_tot.trainable_variables)
+        return params
 
     @tf.function
-    def call(self, inputs: Union[np.ndarray, dict], *rnn_hidden, **kwargs):
-        observations = tf.reshape(inputs['obs'], [-1, self.obs_dim])
-        IDs = tf.reshape(inputs['ids'], [-1, self.n_agents])
-        outputs = self.representation(observations)
-        q_inputs = tf.concat([outputs['state'], IDs], axis=-1)
-        evalQ = tf.reshape(self.eval_Qhead(q_inputs), [-1, self.n_agents, self.action_dim])
-        argmax_action = tf.argmax(evalQ, axis=-1)
-        return tf.reshape(outputs['state'], [-1, self.n_agents, self.hidden_state_dim]), argmax_action, evalQ
+    def call(self, observation: Dict[str, np.ndarray], agent_ids: np.ndarray = None,
+                avail_actions: Dict[str, np.ndarray] = None, agent_key: str = None,
+                rnn_hidden: Optional[Dict[str, List[np.ndarray]]] = None, **kwargs):
+        """
+        Returns actions of the policy.
 
-    def target_Q(self, inputs: Union[np.ndarray, dict]):
-        observations = tf.reshape(inputs['obs'], [-1, self.obs_dim])
-        IDs = tf.reshape(inputs['ids'], [-1, self.n_agents])
-        outputs = self.target_representation(observations)
-        q_inputs = tf.concat([outputs['state'], IDs], axis=-1)
-        return tf.reshape(outputs['state'], [-1, self.n_agents, self.hidden_state_dim]), self.target_Qhead(q_inputs)
+        Parameters:
+            observation (Dict[str, np.ndarray]): The input observations for the policies.
+            agent_ids (np.ndarray): The agents' ids (for parameter sharing).
+            avail_actions (Dict[str, np.ndarray]): Actions mask values, default is None.
+            agent_key (str): Calculate actions for specified agent.
+            rnn_hidden (Optional[Dict[str, List[np.ndarray]]]): The hidden variables of the RNN.
+
+        Returns:
+            rnn_hidden_new (Optional[Dict[str, List[np.ndarray]]]): The new hidden variables of the RNN.
+            rep_hidden_state (Dict[str, Tensor]): The hidden states.
+            argmax_action (Dict[str, Tensor]): The actions output by the policies.
+            evalQ (Dict[str, Tensor])： The evaluations of observation-action pairs.
+        """
+        rnn_hidden_new, argmax_action, evalQ = {}, {}, {}
+        agent_list = self.model_keys if agent_key is None else [agent_key]
+        rep_hidden_state = {}
+
+        for key in agent_list:
+            if self.use_rnn:
+                outputs = self.representation[key](observation[key], *rnn_hidden[key])
+                rnn_hidden_new[key] = (outputs['rnn_hidden'], outputs['rnn_cell'])
+            else:
+                outputs = self.representation[key](observation[key])
+                rnn_hidden_new[key] = [None, None]
+
+            if self.use_parameter_sharing:
+                q_inputs = tf.concat([outputs['state'], agent_ids], axis=-1)
+            else:
+                q_inputs = outputs['state']
+            rep_hidden_state[key] = outputs['state']
+
+            evalQ[key] = self.eval_Qhead[key](q_inputs)
+
+            if avail_actions is not None:
+                evalQ_detach = tf.stop_gradient(evalQ[key].clone())
+                evalQ_detach[avail_actions[key] == 0] = -1e10
+                argmax_action[key] = tf.argmax(evalQ_detach, axis=-1)
+            else:
+                argmax_action[key] = tf.argmax(evalQ[key], axis=-1)
+
+        return rnn_hidden_new, rep_hidden_state, argmax_action, evalQ
+
+    @tf.function
+    def Qtarget(self, observation: Dict[str, Tensor], agent_ids: Dict[str, Tensor],
+                agent_key: str = None,
+                rnn_hidden: Optional[Dict[str, List[Tensor]]] = None):
+        """
+        Returns the Q^target of next observations and actions pairs.
+
+        Parameters:
+            observation (Dict[Tensor]): The observations.
+            agent_ids (Dict[Tensor]): The agents' ids (for parameter sharing).
+            agent_key (str): Calculate actions for specified agent.
+            rnn_hidden (Optional[Dict[str, List[Tensor]]]): The hidden variables of the RNN.
+
+        Returns:
+            rnn_hidden_new (Optional[Dict[str, List[Tensor]]]): The new hidden variables of the RNN.
+            rep_hidden_state (Dict[str, Tensor]): The hidden states.
+            q_target: The evaluations of Q^target.
+        """
+        rnn_hidden_new, q_target, rep_hidden_state = {}, {}, {}
+        agent_list = self.model_keys if agent_key is None else [agent_key]
+        for key in agent_list:
+            if self.use_rnn:
+                outputs = self.target_representation[key](observation[key], *rnn_hidden[key])
+                rnn_hidden_new[key] = (outputs['rnn_hidden'], outputs['rnn_cell'])
+            else:
+                outputs = self.target_representation[key](observation[key])
+                rnn_hidden_new[key] = [None, None]
+
+            if self.use_parameter_sharing:
+                q_inputs = tf.concat([outputs['state'], agent_ids], axis=-1)
+            else:
+                q_inputs = outputs['state']
+            rep_hidden_state[key] = outputs['state']
+
+            q_target[key] = self.target_Qhead[key](q_inputs)
+
+        return rnn_hidden_new, rep_hidden_state, q_target
+
+    @tf.function
+    def Q_tot(self, individual_values: Dict[str, Tensor], states: Optional[Tensor] = None):
+        """
+        Returns the total Q values.
+
+        Parameters:
+            individual_values (Dict[str, Tensor]): The individual Q values of all agents.
+            states (Optional[Tensor]): The global states if necessary, default is None.
+
+        Returns:
+            evalQ_tot (Tensor): The evaluated total Q values for the multi-agent team.
+        """
+        if self.use_parameter_sharing:
+            """
+            From dict to tensor. For example:
+                individual_values: {'agent_0': batch * n_agents * 1} -> 
+                individual_inputs: batch * n_agents * 1
+            """
+            individual_inputs = tf.reshape(individual_values[self.model_keys[0]], [-1, self.n_agents, 1])
+        else:
+            """
+            From dict to tensor. For example: 
+                individual_values: {'agent_0': batch * 1, 'agent_1': batch * 1, 'agent_2': batch * 1} -> 
+                individual_inputs: batch * 2 * 1
+            """
+            individual_inputs = tf.reshape(tf.concat([individual_values[k] for k in self.model_keys],
+                                                     axis=-1), [-1, self.n_agents, 1])
+
+        eval_Q_tot = self.q_tot(individual_inputs, states)
+        return eval_Q_tot
+
+    @tf.function
+    def Q_tran(self, states: Tensor, hidden_states: Dict[str, Tensor], actions: Dict[str, Tensor],
+               agent_mask: Dict[str, Tensor] = None, avail_actions: Dict[str, Tensor] = None):
+        """
+        Returns the total Q values.
+
+        Parameters:
+            states (Tensor): The global states.
+            hidden_states (Dict[str, Tensor]): The hidden states.
+            actions (Dict[str, Tensor]): The executed actions.
+            agent_mask (Dict[str, Tensor]): Agent mask values, default is None.
+            avail_actions (Dict[str, Tensor]): Actions mask values, default is None.
+
+        Returns:
+            q_jt (Tensor): The evaluated joint Q values.
+            v_jt (Tensor): The evaluated joint V values.
+        """
+        seq_len = states.shape[1] if self.use_rnn else 1
+        batch_size = states.shape[0]
+        if self.use_parameter_sharing:
+            key = self.model_keys[0]
+            dim_hidden_state = hidden_states[key].shape[-1]
+            actions_onehot = tf.one_hot(tf.cast(actions[key], dype=tf.int32), depth=self.action_space[key].n)
+            if self.use_rnn:
+                actions_onehot = tf.reshape(actions_onehot, [batch_size, self.n_agents, seq_len, -1])
+                hidden_states_input = tf.reshape(hidden_states[key], [-1, self.n_agents, seq_len, dim_hidden_state])
+            else:
+                actions_onehot = tf.reshape(actions_onehot, [batch_size, self.n_agents, -1])
+                hidden_states_input = tf.reshape(hidden_states[key], [-1, self.n_agents, dim_hidden_state])
+
+            if avail_actions is not None:
+                actions_onehot *= avail_actions[key]
+            if agent_mask is not None:
+                if self.use_rnn:
+                    agent_mask = tf.tile(tf.reshape(agent_mask[key], [batch_size, self.n_agents, seq_len, 1]),
+                                         [1, 1, 1, dim_hidden_state])
+                else:
+                    agent_mask = tf.tile(tf.reshape(agent_mask[key], [batch_size, self.n_agents, 1]),
+                                         [1, 1, dim_hidden_state])
+                hidden_states_input = hidden_states_input * agent_mask
+            if self.use_rnn:
+                states = tf.reshape(states, [batch_size * seq_len, -1])
+                hidden_states_input = tf.reshape(tf.transpose(hidden_states_input, perm=[1, 2]),
+                                                 [-1, self.n_agents, dim_hidden_state])
+                actions_onehot = tf.reshape(tf.transpose(actions_onehot, perm=[1, 2]),
+                                            [-1, self.n_agents, self.n_actions_max])
+        else:
+            hidden_states_input = tf.concat([hidden_states[k][:, None] for k in self.model_keys], axis=1)
+            actions_onehot = tf.concat([tf.one_hot(tf.cast(actions[k], dtype=tf.int32),
+                                                   depth=self.n_actions_max)[:, None] for k in self.model_keys], axis=1)
+        q_jt, v_jt = self.qtran_net(states, hidden_states_input, actions_onehot)
+        return q_jt, v_jt
+
+    @tf.function
+    def Q_tran_target(self, states: Tensor, hidden_states: Dict[str, Tensor], actions: Dict[str, Tensor],
+                      agent_mask: Dict[str, Tensor] = None, avail_actions: Dict[str, Tensor] = None):
+        """
+        Returns the total Q values.
+
+        Parameters:
+            states (Tensor): The global states.
+            hidden_states (Dict[str, Tensor]): The hidden states.
+            actions (Dict[str, Tensor]): The executed actions.
+            agent_mask (Dict[str, Tensor]): Agent mask values, default is None.
+            avail_actions (Dict[str, Tensor]): Actions mask values, default is None.
+
+        Returns:
+            q_jt (Tensor): The evaluated joint Q values.
+            v_jt (Tensor): The evaluated joint V values.
+        """
+        seq_len = states.shape[1] if self.use_rnn else 1
+        batch_size = states.shape[0]
+        if self.use_parameter_sharing:
+            key = self.model_keys[0]
+            dim_hidden_state = hidden_states[key].shape[-1]
+            actions_onehot = tf.one_hot(tf.cast(actions[key], dtype=tf.int32), depth=self.action_space[key].n)
+            if self.use_rnn:
+                actions_onehot = tf.reshape(actions_onehot, [batch_size, self.n_agents, seq_len, -1])
+                hidden_states_input = tf.reshape(hidden_states[key], [-1, self.n_agents, seq_len, dim_hidden_state])
+            else:
+                actions_onehot = tf.reshape(actions_onehot, [batch_size, self.n_agents, -1])
+                hidden_states_input = tf.reshape(hidden_states[key], [-1, self.n_agents, dim_hidden_state])
+
+            if avail_actions is not None:
+                actions_onehot *= avail_actions[key]
+            if agent_mask is not None:
+                if self.use_rnn:
+                    agent_mask = tf.tile(tf.reshape(agent_mask[key], [batch_size, self.n_agents, seq_len, 1]),
+                                         [1, 1, 1, dim_hidden_state])
+                else:
+                    agent_mask = tf.tile(tf.reshape(agent_mask[key], [batch_size, self.n_agents, 1]),
+                                         [1, 1, dim_hidden_state])
+                hidden_states_input = hidden_states_input * agent_mask
+            if self.use_rnn:
+                states = tf.reshape(states, [batch_size * seq_len, -1])
+                hidden_states_input = tf.reshape(tf.transpose(hidden_states_input, perm=[1, 2]),
+                                                 [-1, self.n_agents, dim_hidden_state])
+                actions_onehot = tf.reshape(tf.transpose(actions_onehot, perm=[1, 2]),
+                                            [-1, self.n_agents, self.n_actions_max])
+        else:
+            hidden_states_input = tf.concat([hidden_states[k][:, None] for k in self.model_keys], axis=1)
+            actions_onehot = tf.concat([tf.one_hot(tf.cast(actions[k], dtype=tf.int32),
+                                                   depth=self.n_actions_max)[:, None] for k in self.model_keys], axis=1)
+        q_jt, v_jt = self.target_qtran_net(states, hidden_states_input, actions_onehot)
+        return q_jt, v_jt
 
     def copy_target(self):
         for key in self.model_keys:
             if not isinstance(self.representation[key], Basic_Identical):
                 self.target_representation[key].set_weights(self.representation[key].get_weights())
             self.target_Qhead[key].set_weights(self.eval_Qhead[key].get_weights())
-            self.target_qtran_net[key].set_weights(self.qtran_net[key].get_weights())
+        self.target_qtran_net.set_weights(self.qtran_net.get_weights())
 
 
 class DCG_policy(Module):

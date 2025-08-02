@@ -68,7 +68,7 @@ class QTRAN_Agents(OffPolicyMARLAgents):
                 use_parameter_sharing=self.use_parameter_sharing, model_keys=self.model_keys,
                 use_rnn=self.use_rnn, rnn=self.config.rnn if self.use_rnn else None)
         else:
-            raise AttributeError(f"QMIX currently does not support the policy named {self.config.policy}.")
+            raise AttributeError(f"QTRAN currently does not support the policy named {self.config.policy}.")
 
         return policy
 
