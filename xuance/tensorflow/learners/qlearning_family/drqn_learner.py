@@ -30,6 +30,7 @@ class DRQN_Learner(Learner):
         self.gamma = config.gamma
         self.sync_frequency = config.sync_frequency
         self.n_actions = self.policy.action_dim
+        self.mse_loss = tk.losses.MeanSquaredError()
 
     @tf.function
     def forward_fn(self, batch_size, obs_batch, act_batch, rew_batch, ter_batch):
@@ -48,7 +49,7 @@ class DRQN_Learner(Learner):
 
             targetQ = tf.reshape(targetQ, [-1])
             predictQ = tf.reshape(predictQ, [-1])
-            loss = tk.losses.mean_squared_error(targetQ, predictQ)
+            loss = self.mse_loss(targetQ, predictQ)
             gradients = tape.gradient(loss, self.policy.trainable_variables)
             if self.use_grad_clip:
                 self.optimizer.apply_gradients([

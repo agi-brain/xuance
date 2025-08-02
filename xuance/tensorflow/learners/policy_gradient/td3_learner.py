@@ -34,6 +34,7 @@ class TD3_Learner(Learner):
         self.tau = config.tau
         self.gamma = config.gamma
         self.actor_update_delay = config.actor_update_delay
+        self.mse_loss = tk.losses.MeanSquaredError()
 
     @tf.function
     def actor_forward_fn(self, obs_batch):
@@ -62,7 +63,7 @@ class TD3_Learner(Learner):
             next_q = tf.reshape(self.policy.Qtarget(next_batch), [-1])
             target_q = rew_batch + self.gamma * (1 - ter_batch) * next_q
             target_q = tf.stop_gradient(tf.reshape(target_q, [-1]))
-            q_loss = tk.losses.mean_squared_error(target_q, action_q_A) + tk.losses.mean_squared_error(target_q, action_q_B)
+            q_loss = self.mse_loss(target_q, action_q_A) + self.mse_loss(target_q, action_q_B)
             gradients = tape.gradient(q_loss, self.policy.critic_trainable_variables)
             if self.use_grad_clip:
                 self.optimizer['critic'].apply_gradients([

@@ -30,6 +30,7 @@ class PPOCLIP_Learner(Learner):
         self.vf_coef = config.vf_coef
         self.ent_coef = config.ent_coef
         self.clip_range = config.clip_range
+        self.mse_loss = tk.losses.MeanSquaredError()
         self.is_continuous = self.policy.is_continuous
 
     @tf.function
@@ -57,7 +58,7 @@ class PPOCLIP_Learner(Learner):
             surrogate1 = tf.clip_by_value(ratio, 1.0 - self.clip_range, 1.0 + self.clip_range) * adv_batch
             surrogate2 = adv_batch * ratio
             a_loss = -tf.reduce_mean(tf.math.minimum(surrogate1, surrogate2))
-            c_loss = tk.losses.mean_squared_error(ret_batch, v_pred)
+            c_loss = self.mse_loss(ret_batch, v_pred)
             e_loss = tf.reduce_mean(entropy)
             loss = a_loss - self.ent_coef * e_loss + self.vf_coef * c_loss
             gradients = tape.gradient(loss, self.policy.trainable_variables)

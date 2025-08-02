@@ -28,6 +28,7 @@ class A2C_Learner(Learner):
                 self.optimizer = tk.optimizers.Adam(config.learning_rate)
         self.vf_coef = config.vf_coef
         self.ent_coef = config.ent_coef
+        self.mse_loss = tk.losses.MeanSquaredError()
         self.is_continuous = self.policy.is_continuous
 
     @tf.function
@@ -52,7 +53,7 @@ class A2C_Learner(Learner):
                 entropy = -tf.reduce_sum(probs * log_prob, axis=-1, keepdims=True)
 
             a_loss = -tf.reduce_mean(adv_batch * log_prob_a)
-            c_loss = tk.losses.mean_squared_error(ret_batch, v_pred)
+            c_loss = self.mse_loss(ret_batch, v_pred)
             e_loss = tf.reduce_mean(entropy)
 
             loss = a_loss - self.ent_coef * e_loss + self.vf_coef * c_loss

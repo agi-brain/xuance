@@ -23,6 +23,7 @@ class VDN_Learner(LearnerMAS):
         self.gamma = config.gamma
         self.sync_frequency = config.sync_frequency
         self.n_actions = {k: self.policy.action_space[k].n for k in self.model_keys}
+        self.mse_loss = tk.losses.MeanSquaredError()
 
     def build_optimizer(self):
         if ("macOS" in self.os_name) and ("arm" in self.os_name):  # For macOS with Apple's M-series chips.
@@ -63,7 +64,7 @@ class VDN_Learner(LearnerMAS):
             q_tot_eval = tf.reshape(q_tot_eval, [-1])
 
             # calculate the loss function
-            loss = tk.losses.mean_squared_error(tf.stop_gradient(q_tot_target), q_tot_eval)
+            loss = self.mse_loss(tf.stop_gradient(q_tot_target), q_tot_eval)
 
         gradients = tape.gradient(loss, self.policy.parameters_model)
         if self.use_grad_clip:

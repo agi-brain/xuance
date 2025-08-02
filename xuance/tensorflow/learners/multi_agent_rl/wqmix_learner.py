@@ -25,6 +25,7 @@ class WQMIX_Learner(LearnerMAS):
         self.gamma = config.gamma
         self.sync_frequency = config.sync_frequency
         self.n_actions = {k: self.policy.action_space[k].n for k in self.model_keys}
+        self.mse_loss = tk.losses.MeanSquaredError()
 
     def build_optimizer(self):
         if ("macOS" in self.os_name) and ("arm" in self.os_name):  # For macOS with Apple's M-series chips.
@@ -92,7 +93,7 @@ class WQMIX_Learner(LearnerMAS):
             td_error = tf.reshape(td_error, [batch_size])
             w = tf.reshape(w, [batch_size])
 
-            loss_central = tk.losses.mean_squared_error(target_value, q_tot_centralized)
+            loss_central = self.mse_loss(target_value, q_tot_centralized)
             loss_qmix = tf.reduce_mean(tf.stop_gradient(w) * (td_error ** 2))
             loss = loss_qmix + loss_central
 

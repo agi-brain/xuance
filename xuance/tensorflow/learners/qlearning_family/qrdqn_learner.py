@@ -29,6 +29,7 @@ class QRDQN_Learner(Learner):
                 self.optimizer = tk.optimizers.Adam(config.learning_rate)
         self.gamma = config.gamma
         self.sync_frequency = config.sync_frequency
+        self.mse_loss = tk.losses.MeanSquaredError()
 
     @tf.function
     def forward_fn(self, obs_batch, act_batch, next_batch, rew_batch, ter_batch):
@@ -42,7 +43,7 @@ class QRDQN_Learner(Learner):
             target_quantile = tf.expand_dims(rew_batch, 1) + self.gamma * target_quantile * (
                         1 - tf.expand_dims(ter_batch, 1))
             target_quantile = tf.stop_gradient(target_quantile)
-            loss = tk.losses.mean_squared_error(tf.reshape(target_quantile, [-1, ]),
+            loss = self.mse_loss(tf.reshape(target_quantile, [-1, ]),
                                                 tf.reshape(current_quantile, [-1, ]))
             gradients = tape.gradient(loss, self.policy.trainable_variables)
             if self.use_grad_clip:

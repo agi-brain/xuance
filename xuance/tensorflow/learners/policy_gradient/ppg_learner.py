@@ -33,6 +33,7 @@ class PPG_Learner(Learner):
         self.kl_beta = config.kl_beta
         self.policy_iterations = 0
         self.value_iterations = 0
+        self.mse_loss = tk.losses.MeanSquaredError()
         self.is_continuous = self.policy.is_continuous
 
     @tf.function
@@ -81,7 +82,7 @@ class PPG_Learner(Learner):
             else:
                 _, _, v_pred, _ = self.policy(obs_batch)
 
-            loss = tk.losses.mean_squared_error(ret_batch, v_pred)
+            loss = self.mse_loss(ret_batch, v_pred)
             gradients = tape.gradient(loss, self.policy.trainable_variables)
 
             if self.use_grad_clip:
@@ -109,9 +110,9 @@ class PPG_Learner(Learner):
                 p = tf.math.exp(log_p)  # P(a)
                 kl = tf.reduce_sum(p * (log_p - log_q), axis=-1)
 
-            aux_loss = tk.losses.mean_squared_error(tf.stop_gradient(v), aux_v)
+            aux_loss = self.mse_loss(tf.stop_gradient(v), aux_v)
             kl_loss = tf.reduce_mean(kl)
-            value_loss = tk.losses.mean_squared_error(ret_batch, v)
+            value_loss = self.mse_loss(ret_batch, v)
 
             loss = aux_loss + self.kl_beta * kl_loss + value_loss
             gradients = tape.gradient(loss, self.policy.trainable_variables)

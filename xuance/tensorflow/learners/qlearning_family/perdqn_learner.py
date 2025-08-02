@@ -29,6 +29,7 @@ class PerDQN_Learner(Learner):
                 self.optimizer = tk.optimizers.Adam(config.learning_rate)
         self.gamma = config.gamma
         self.sync_frequency = config.sync_frequency
+        self.mse_loss = tk.losses.MeanSquaredError()
 
     @tf.function
     def forward_fn(self, obs_batch, act_batch, next_batch, rew_batch, ter_batch):
@@ -41,7 +42,7 @@ class PerDQN_Learner(Learner):
             predictQ = tf.math.reduce_sum(evalQ * tf.one_hot(act_batch, evalQ.shape[1]), axis=-1)
 
             td_error = targetQ - predictQ
-            loss = tk.losses.mean_squared_error(targetQ, predictQ)
+            loss = self.mse_loss(targetQ, predictQ)
             gradients = tape.gradient(loss, self.policy.trainable_variables)
             if self.use_grad_clip:
                 self.optimizer.apply_gradients([

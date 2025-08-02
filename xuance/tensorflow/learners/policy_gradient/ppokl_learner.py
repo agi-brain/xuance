@@ -32,6 +32,7 @@ class PPOKL_Learner(Learner):
         self.ent_coef = config.ent_coef
         self.target_kl = config.target_kl
         self.kl_coef = config.kl_coef
+        self.mse_loss = tk.losses.MeanSquaredError()
         self.is_continuous = self.policy.is_continuous
 
     @tf.function
@@ -70,7 +71,7 @@ class PPOKL_Learner(Learner):
             ratio = tf.math.exp(log_prob_a - old_log_prob_a)
             kl = tf.reduce_mean(kl)
             a_loss = -tf.reduce_mean(ratio * adv_batch) + self.kl_coef * kl
-            c_loss = tk.losses.mean_squared_error(ret_batch, v_pred)
+            c_loss = self.mse_loss(ret_batch, v_pred)
             e_loss = tf.reduce_mean(entropy)
 
             loss = a_loss - self.ent_coef * e_loss + self.vf_coef * c_loss

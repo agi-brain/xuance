@@ -41,6 +41,7 @@ class SACDIS_Learner(Learner):
         self.gamma = config.gamma
         self.alpha = config.alpha
         self.use_automatic_entropy_tuning = config.use_automatic_entropy_tuning
+        self.mse_loss = tk.losses.MeanSquaredError()
         if self.use_automatic_entropy_tuning:
             self.target_entropy = -float(policy.action_space.n)
             if self.distributed_training:
@@ -96,7 +97,7 @@ class SACDIS_Learner(Learner):
             y_true = tf.stop_gradient(tf.reshape(backup, [-1]))
             y_pred_1 = tf.reshape(action_q_1, [-1])
             y_pred_2 = tf.reshape(action_q_2, [-1])
-            q_loss = tk.losses.mean_squared_error(y_true, y_pred_1) + tk.losses.mean_squared_error(y_true, y_pred_2)
+            q_loss = self.mse_loss(y_true, y_pred_1) + self.mse_loss(y_true, y_pred_2)
             gradients = tape.gradient(q_loss, self.policy.critic_trainable_variables)
             if self.use_grad_clip:
                 gradients, _ = tf.clip_by_global_norm(gradients, clip_norm=self.grad_clip_norm)

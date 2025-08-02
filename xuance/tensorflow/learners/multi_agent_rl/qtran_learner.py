@@ -6,9 +6,6 @@ Implementation: TensorFlow 2.X
 """
 from argparse import Namespace
 from operator import itemgetter
-
-from torch.distributed.algorithms.ddp_comm_hooks.powerSGD_hook import batched_powerSGD_hook
-
 from xuance.common import List
 from xuance.tensorflow import tf, tk, Module
 from xuance.tensorflow.learners import LearnerMAS
@@ -25,7 +22,7 @@ class QTRAN_Learner(LearnerMAS):
         self.build_optimizer()
         self.n_actions = {k: self.policy.action_space[k].n for k in self.model_keys}
         self.sync_frequency = config.sync_frequency
-        self.mse_loss = tf.keras.losses.MeanSquaredError()
+        self.mse_loss = tk.losses.MeanSquaredError()
 
     def build_optimizer(self):
         if ("macOS" in self.os_name) and ("arm" in self.os_name):  # For macOS with Apple's M-series chips.

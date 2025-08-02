@@ -19,6 +19,7 @@ class SPDQN_Learner(Learner):
         self.tau = tau
         self.gamma = gamma
         super(SPDQN_Learner, self).__init__(policy, optimizers, device, model_dir)
+        self.mse_loss = tk.losses.MeanSquaredError()
 
     def update(self, obs_batch, act_batch, rew_batch, next_batch, terminal_batch):
         self.iterations += 1
@@ -42,7 +43,7 @@ class SPDQN_Learner(Learner):
                 eval_q = tf.gather(eval_qs, tf.reshape(disact_batch, [-1, 1]), axis=-1, batch_dims=-1)
                 y_true = tf.reshape(tf.stop_gradient(target_q), [-1])
                 y_pred = tf.reshape(eval_q, [-1])
-                q_loss = tk.losses.mean_squared_error(y_true, y_pred)
+                q_loss = self.mse_loss(y_true, y_pred)
 
                 gradients = tape.gradient(q_loss, self.policy.qnetwork.trainable_variables)
                 self.optimizer[1].apply_gradients([

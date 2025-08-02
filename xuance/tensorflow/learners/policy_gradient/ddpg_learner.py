@@ -33,6 +33,7 @@ class DDPG_Learner(Learner):
                                   'critic': tk.optimizers.Adam(config.learning_rate_critic)}
         self.tau = config.tau
         self.gamma = config.gamma
+        self.mse_loss = tk.losses.MeanSquaredError()
 
     @tf.function
     def actor_forward_fn(self, obs_batch):
@@ -55,7 +56,7 @@ class DDPG_Learner(Learner):
             backup = rew_batch + (1 - ter_batch) * self.gamma * next_q
             y_true = tf.reshape(tf.stop_gradient(backup), [-1])
             y_pred = tf.reshape(action_q, [-1])
-            q_loss = tk.losses.mean_squared_error(y_true, y_pred)
+            q_loss = self.mse_loss(y_true, y_pred)
             gradients = tape.gradient(q_loss, self.policy.critic_trainable_variables)
             if self.use_grad_clip:
                 gradients, _ = tf.clip_by_global_norm(gradients, clip_norm=self.grad_clip_norm)

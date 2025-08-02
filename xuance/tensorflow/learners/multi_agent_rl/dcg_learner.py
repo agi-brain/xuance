@@ -24,6 +24,7 @@ class DCG_Learner(LearnerMAS):
         self.dim_hidden_state = policy.representation.output_shapes['state'][0]
         self.sync_frequency = sync_frequency
         super(DCG_Learner, self).__init__(config, policy, optimizer, device, model_dir)
+        self.mse_loss = tk.losses.MeanSquaredError()
 
     def get_hidden_states(self, obs_n, *rnn_hidden, use_target_net=False):
         if self.use_rnn:
@@ -145,7 +146,7 @@ class DCG_Learner(LearnerMAS):
                 # calculate the loss function
                 y_true = tf.stop_gradient(tf.reshape(q_target, [-1]))
                 y_pred = tf.reshape(q_eval_a, [-1])
-                loss = tk.losses.mean_squared_error(y_true, y_pred)
+                loss = self.mse_loss(y_true, y_pred)
                 gradients = tape.gradient(loss, self.policy.trainable_variables)
                 self.optimizer.apply_gradients([
                     (grad, var)
