@@ -81,11 +81,11 @@ class MFAC_Learner(IPPO_Learner):
             advantages_mask = advantages[key].detach() * mask_values
             surrogate1 = ratio * advantages_mask
             surrogate2 = torch.clip(ratio, 1 - self.clip_range, 1 + self.clip_range) * advantages_mask
-            loss_a.append(-torch.min(surrogate1, surrogate2).mean())
+            loss_a.append(-torch.min(surrogate1, surrogate2).sum() / mask_values.sum())
 
             # entropy loss
             entropy = pi_dists_dict[key].entropy().reshape(bs) * mask_values
-            loss_e.append(entropy.mean())
+            loss_e.append(entropy.sum() / mask_values.sum())
 
             # critic loss
             value_pred_i = value_pred_dict[key].reshape(bs)
