@@ -36,7 +36,7 @@ class MADDPG_Learner(LearnerMAS):
                       'critic': tk.optimizers.Adam(self.config.learning_rate_critic)}
                 for key in self.model_keys}
 
-    # @tf.function
+    @tf.function
     def forward_fn(self, batch_size, bs, obs, obs_joint, actions, actions_joint, rewards,
                    obs_next, next_obs_joint, terminals, IDs, agent_mask):
         info_train = {}
@@ -100,7 +100,7 @@ class MADDPG_Learner(LearnerMAS):
             self.policy.soft_update(self.tau)
         return info_train
 
-    # @tf.function
+    @tf.function
     def learn(self, *inputs):
         if self.distributed_training:
             info_train = self.policy.mirrored_strategy.run(self.forward_fn, args=inputs)

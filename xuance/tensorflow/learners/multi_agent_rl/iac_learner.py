@@ -154,7 +154,7 @@ class IAC_Learner(LearnerMAS):
         }
         return sample_Tensor
 
-    @tf.function
+    # @tf.function
     def forward_fn(self, *args):
         bs, obs, actions, agent_mask, avail_actions, values, returns, advantages, IDs = args
         with tf.GradientTape() as tape:
@@ -236,7 +236,7 @@ class IAC_Learner(LearnerMAS):
 
         return loss, loss_a, loss_c, loss_e, values_pred_dict
 
-    @tf.function
+    # @tf.function
     def learn(self, *inputs):
         if self.distributed_training:
             loss, a_loss, c_loss, e_loss, v_pred = self.policy.mirrored_strategy.run(self.forward_fn, args=inputs)

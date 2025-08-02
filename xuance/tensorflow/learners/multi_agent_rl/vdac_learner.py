@@ -22,7 +22,7 @@ class VDAC_Learner(IAC_Learner):
         super(VDAC_Learner, self).__init__(config, model_keys, agent_keys, policy, callback)
         self.use_global_state = True if self.policy.mixer == "QMIX" else False
 
-    @tf.function
+    # @tf.function
     def forward_fn(self, *args):
         batch_size, bs, state, obs, actions, agent_mask, avail_actions, values, returns, advantages, IDs = args
         with tf.GradientTape() as tape:
@@ -121,7 +121,7 @@ class VDAC_Learner(IAC_Learner):
 
         return loss, loss_a, loss_c, loss_e, values_pred_dict
 
-    @tf.function
+    # @tf.function
     def learn(self, *inputs):
         if self.distributed_training:
             loss, a_loss, c_loss, e_loss, v_pred = self.policy.mirrored_strategy.run(self.forward_fn, args=inputs)
