@@ -183,13 +183,13 @@ def get_runner(method,
         print("Deep learning toolbox: MindSpore.")
         if device != "Auto":
             if device in ["cpu", "CPU"]:
-                ms.set_context(device_target="CPU")
+                ms.set_device(device_target="CPU")
             elif device in ["gpu", "GPU"]:
-                ms.set_context(device_target="GPU")
+                ms.set_device(device_target="GPU")
             else:
-                ms.set_context(device_target=device)  # Other devices like Ascend.
+                ms.set_device(device_target=device)  # Other devices like Ascend.
         # ms.set_context(mode=ms.GRAPH_MODE)  # Graph mode (静态图模式，加速)
-        # ms.set_context(mode=ms.PYNATIVE_MODE)  # Pynative mode (动态图模式)
+        ms.set_context(mode=ms.PYNATIVE_MODE)  # Pynative mode (动态图模式)
 
     elif dl_toolbox == "tensorflow":
         from xuance.tensorflow.runners import REGISTRY_Runner
@@ -355,7 +355,7 @@ def set_device(dl_toolbox: str, expected_device: str):
                 print("WARNING: CUDA for PyTorch is not available, set the device as 'cpu'.")
                 device = "cpu"
         return device
-    if dl_toolbox == 'tensorflow':
+    if dl_toolbox == "tensorflow":
         os.environ["TF_USE_LEGACY_KERAS"] = "1"  # Configure TensorFlow to use the legacy Keras 2 for tf.keras imports.
         if expected_device == "GPU" or expected_device == "gpu":
             import tensorflow as tf
@@ -363,18 +363,19 @@ def set_device(dl_toolbox: str, expected_device: str):
                 print("WARNING: GPU for Tensorflow2 is not available, set the device as 'cpu'.")
                 device = "CPU"
         return device
-    if dl_toolbox == 'mindspore':
+    if dl_toolbox == "mindspore":
         import mindspore.context as context
+        import mindspore as ms
         if expected_device == "GPU":
-            context.set_context(device_target="GPU")
-            device_num = context.get_auto_parallel_context("device_num")
-            if device_num == 0:
+            try:
+                ms.set_context(device_target="GPU")
+            except:
                 print("WARNING: GPU for MindSpore is not available, set the device as 'CPU'.")
                 device = "CPU"
         elif expected_device == "Ascend":
-            context.set_context(device_target="Ascend")
-            device_num = context.get_auto_parallel_context("device_num")
-            if device_num == 0:
+            try:
+                ms.set_context(device_target="Ascend")
+            except:
                 print("WARNING: Ascend for MindSpore is not available, set the device as 'CPU'.")
                 device = "CPU"
         return device
