@@ -349,36 +349,51 @@ def set_device(dl_toolbox: str, expected_device: str):
     """
     device = expected_device
     if dl_toolbox == "torch":
-        if "cuda" in expected_device:
+        if ("cuda" in expected_device) or (expected_device.upper() == "GPU"):
             import torch
             if not torch.cuda.is_available():
                 print("WARNING: CUDA for PyTorch is not available, set the device as 'cpu'.")
                 device = "cpu"
-        return device
+            elif expected_device.upper() == "GPU":
+                print(f"WARNING: the device name {expected_device} is invalid, set the device as 'cuda:0'.")
+                device = "cuda:0"
+        elif expected_device.upper() == "CPU":
+            device = "cpu"
+        else:
+            print(f"WARNING: the device name {expected_device} is invalid, set the device as 'cpu'.")
+            device = "cpu"
     if dl_toolbox == "tensorflow":
         os.environ["TF_USE_LEGACY_KERAS"] = "1"  # Configure TensorFlow to use the legacy Keras 2 for tf.keras imports.
-        if expected_device == "GPU" or expected_device == "gpu":
+        if expected_device.upper() == "GPU":
             import tensorflow as tf
             if len(tf.config.list_physical_devices('GPU')) == 0:
-                print("WARNING: GPU for Tensorflow2 is not available, set the device as 'cpu'.")
                 device = "CPU"
-        return device
+                print("WARNING: GPU for Tensorflow2 is not available, set the device as 'CPU'.")
+        elif expected_device.upper() == "CPU":
+            device = "CPU"
+        else:
+            device = "CPU"
+            print(f"WARNING: the device name {expected_device} is invalid, set the device as 'CPU'.")
     if dl_toolbox == "mindspore":
-        import mindspore.context as context
         import mindspore as ms
-        if expected_device == "GPU":
+        if expected_device.upper() == "GPU":
             try:
                 ms.set_context(device_target="GPU")
             except:
-                print("WARNING: GPU for MindSpore is not available, set the device as 'CPU'.")
                 device = "CPU"
-        elif expected_device == "Ascend":
+                print("WARNING: GPU for MindSpore is not available, set the device as 'CPU'.")
+        elif expected_device.upper() == "ASCEND":
             try:
                 ms.set_context(device_target="Ascend")
             except:
-                print("WARNING: Ascend for MindSpore is not available, set the device as 'CPU'.")
                 device = "CPU"
-        return device
+                print("WARNING: Ascend for MindSpore is not available, set the device as 'CPU'.")
+        elif expected_device.upper() == "CPU":
+            device = "CPU"
+        else:
+            device = "CPU"
+            print(f"WARNING: the device name {expected_device} is invalid, set the device as 'CPU'.")
+    return device
 
 
 def discount_cumsum(x, discount=0.99):
