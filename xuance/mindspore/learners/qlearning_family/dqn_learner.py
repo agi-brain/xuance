@@ -3,11 +3,10 @@ Deep Q-Network (DQN)
 Paper link: https://www.nature.com/articles/nature14236
 Implementation: MindSpore
 """
-from xuance.mindspore import ms, Module, Tensor, optim
-from xuance.mindspore.learners import Learner
 from argparse import Namespace
-from mindspore.ops import OneHot
-from mindspore.nn import MSELoss
+from mindspore import nn
+from xuance.mindspore import ms, ops, Module, Tensor, optim
+from xuance.mindspore.learners import Learner
 
 
 class DQN_Learner(Learner):
@@ -20,9 +19,10 @@ class DQN_Learner(Learner):
                                                      total_iters=self.config.running_steps)
         self.gamma = config.gamma
         self.sync_frequency = config.sync_frequency
-        self.mse_loss = MSELoss()
-        self.one_hot = OneHot()
-        self.n_actions = self.policy.action_dim
+        self.mse_loss = nn.MSELoss()
+        self.gather = ops.Gather(batch_dims=-1)
+        self.n_actions = int(self.policy.action_dim)
+        self.on_value, self.off_value = Tensor(1.0, ms.float32), Tensor(0.0, ms.float32)
         # Get gradient function
         self.grad_fn = ms.value_and_grad(self.forward_fn, None, self.optimizer.parameters, has_aux=True)
         self.policy.set_train()
@@ -33,8 +33,7 @@ class DQN_Learner(Learner):
         targetQ = targetQ.max(axis=-1)
         targetQ = rew_batch + self.gamma * (1 - ter_batch) * targetQ
 
-        predict_Q = (evalQ * self.one_hot(act_batch.astype(ms.int32), evalQ.shape[1],
-                                          Tensor(1.0), Tensor(0.0))).sum(axis=-1)
+        predict_Q = self.gather(evalQ, act_batch, axis=-1).reshape(-1)
         loss = self.mse_loss(logits=predict_Q, labels=targetQ)
 
         return loss, predict_Q
@@ -42,7 +41,7 @@ class DQN_Learner(Learner):
     def update(self, **samples):
         self.iterations += 1
         obs_batch = Tensor(samples['obs'])
-        act_batch = Tensor(samples['actions'])
+        act_batch = Tensor(samples['actions'].reshape(-1, 1), dtype=ms.int32)
         rew_batch = Tensor(samples['rewards'])
         next_batch = Tensor(samples['obs_next'])
         ter_batch = Tensor(samples['terminals'])

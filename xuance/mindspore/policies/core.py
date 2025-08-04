@@ -1,7 +1,6 @@
-import mindspore as ms
 import mindspore.nn as nn
 from xuance.common import Sequence, Optional, Callable, Union
-from xuance.mindspore import Tensor, Module, ops
+from xuance.mindspore import Tensor, Module, ms, ops
 from xuance.mindspore.utils import ModuleType, mlp_block, gru_block, lstm_block
 from xuance.mindspore.utils import CategoricalDistribution, DiagGaussianDistribution, ActivatedDiagGaussianDistribution
 
@@ -12,7 +11,7 @@ class BasicQhead(Module):
                  action_dim: int,
                  hidden_sizes: Sequence[int],
                  normalize: Optional[ModuleType] = None,
-                 initialize: Optional[Callable[..., ms.Tensor]] = None,
+                 initialize: Optional[Callable[..., Tensor]] = None,
                  activation: Optional[ModuleType] = None):
         super(BasicQhead, self).__init__()
         layers = []
@@ -23,7 +22,7 @@ class BasicQhead(Module):
         layers.extend(mlp_block(input_shape[0], action_dim, None, None, None)[0])
         self.model = nn.SequentialCell(*layers)
 
-    def construct(self, x: ms.tensor):
+    def construct(self, x: Tensor):
         return self.model(x)
 
 
@@ -33,7 +32,7 @@ class DuelQhead(Module):
                  action_dim: int,
                  hidden_sizes: Sequence[int],
                  normalize: Optional[ModuleType] = None,
-                 initialize: Optional[Callable[..., ms.Tensor]] = None,
+                 initialize: Optional[Callable[..., Tensor]] = None,
                  activation: Optional[ModuleType] = None
                  ):
         super(DuelQhead, self).__init__()
@@ -56,7 +55,7 @@ class DuelQhead(Module):
 
         self._mean = ms.ops.ReduceMean(keep_dims=True)
 
-    def construct(self, x: ms.tensor):
+    def construct(self, x: Tensor):
         v = self.v_model(x)
         a = self.a_model(x)
         q = v + (a - self._mean(a))
@@ -70,7 +69,7 @@ class C51Qhead(Module):
                  atom_num: int,
                  hidden_sizes: Sequence[int],
                  normalize: Optional[ModuleType] = None,
-                 initialize: Optional[Callable[..., ms.Tensor]] = None,
+                 initialize: Optional[Callable[..., Tensor]] = None,
                  activation: Optional[ModuleType] = None
                  ):
         super(C51Qhead, self).__init__()
@@ -85,7 +84,7 @@ class C51Qhead(Module):
         self.model = nn.SequentialCell(*layers)
         self._softmax = ms.ops.Softmax(axis=-1)
 
-    def construct(self, x: ms.tensor):
+    def construct(self, x: Tensor):
         dist_logits = self.model(x).reshape([-1, self.action_dim, self.atom_num])
         dist_probs = self._softmax(dist_logits)
         return dist_probs
@@ -98,7 +97,7 @@ class QRDQNhead(Module):
                  atom_num: int,
                  hidden_sizes: Sequence[int],
                  normalize: Optional[ModuleType] = None,
-                 initialize: Optional[Callable[..., ms.Tensor]] = None,
+                 initialize: Optional[Callable[..., Tensor]] = None,
                  activation: Optional[ModuleType] = None
                  ):
         super(QRDQNhead, self).__init__()
@@ -112,7 +111,7 @@ class QRDQNhead(Module):
         layers.extend(mlp_block(input_shape[0], action_dim * atom_num, None, None, None)[0])
         self.model = nn.SequentialCell(*layers)
 
-    def construct(self, x: ms.tensor):
+    def construct(self, x: Tensor):
         return self.model(x).reshape([-1, self.action_dim, self.atom_num])
 
 
@@ -139,7 +138,7 @@ class BasicRecurrent(Module):
         fc_layer = mlp_block(kwargs["recurrent_hidden_size"], kwargs["action_dim"], None, None, None)[0]
         self.model = nn.SequentialCell(*fc_layer)
 
-    def construct(self, x: ms.tensor, h: ms.tensor, c: ms.tensor = None):
+    def construct(self, x: Tensor, h: Tensor, c: Tensor = None):
         # self.rnn_layer.flatten_parameters()
         if self.lstm:
             output, (hn, cn) = self.rnn_layer(Tensor(x), (Tensor(h), Tensor(c)))
@@ -167,7 +166,7 @@ class ActorNet(Module):
                  action_dim: int,
                  hidden_sizes: Sequence[int],
                  normalize: Optional[ModuleType] = None,
-                 initialize: Optional[Callable[..., ms.Tensor]] = None,
+                 initialize: Optional[Callable[..., Tensor]] = None,
                  activation: Optional[ModuleType] = None,
                  activation_action: Optional[ModuleType] = None):
         super(ActorNet, self).__init__()
@@ -179,7 +178,7 @@ class ActorNet(Module):
         layers.extend(mlp_block(input_shape[0], action_dim, None, activation_action, initialize)[0])
         self.model = nn.SequentialCell(*layers)
 
-    def construct(self, x: ms.tensor):
+    def construct(self, x: Tensor):
         """
         Returns the output of the actor.
         Parameters:
@@ -205,7 +204,7 @@ class CategoricalActorNet(Module):
                  action_dim: int,
                  hidden_sizes: Sequence[int],
                  normalize: Optional[ModuleType] = None,
-                 initialize: Optional[Callable[..., ms.Tensor]] = None,
+                 initialize: Optional[Callable[..., Tensor]] = None,
                  activation: Optional[ModuleType] = None):
         super(CategoricalActorNet, self).__init__()
         layers = []
@@ -281,7 +280,7 @@ class GaussianActorNet(Module):
                  action_dim: int,
                  hidden_sizes: Sequence[int],
                  normalize: Optional[ModuleType] = None,
-                 initialize: Optional[Callable[..., ms.Tensor]] = None,
+                 initialize: Optional[Callable[..., Tensor]] = None,
                  activation: Optional[ModuleType] = None,
                  activation_action: Optional[ModuleType] = None):
         super(GaussianActorNet, self).__init__()
@@ -296,7 +295,7 @@ class GaussianActorNet(Module):
         self.logstd = ms.Parameter(-self._ones((action_dim,), ms.float32))
         self.dist = DiagGaussianDistribution(action_dim)
 
-    def construct(self, x: ms.Tensor):
+    def construct(self, x: Tensor):
         """
         Returns the stochastic distribution over the continuous action space.
         Parameters:
@@ -314,7 +313,7 @@ class CriticNet(Module):
                  state_dim: int,
                  hidden_sizes: Sequence[int],
                  normalize: Optional[ModuleType] = None,
-                 initialize: Optional[Callable[..., ms.Tensor]] = None,
+                 initialize: Optional[Callable[..., Tensor]] = None,
                  activation: Optional[ModuleType] = None
                  ):
         super(CriticNet, self).__init__()
@@ -326,7 +325,7 @@ class CriticNet(Module):
         layers.extend(mlp_block(input_shape[0], 1, None, None, None)[0])
         self.model = nn.SequentialCell(*layers)
 
-    def construct(self, x: ms.Tensor):
+    def construct(self, x: Tensor):
         return self.model(x)
 
 

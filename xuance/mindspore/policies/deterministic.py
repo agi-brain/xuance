@@ -1,9 +1,9 @@
-import mindspore.nn as nn
 import numpy as np
+import mindspore.nn as nn
 from copy import deepcopy
 from gymnasium.spaces import Space, Discrete
 from xuance.common import Sequence, Optional, Callable, Union
-from xuance.mindspore import ms, Module, Tensor, ops
+from xuance.mindspore import ms, ops, Module, Tensor
 from xuance.mindspore.utils import ModuleType
 from .core import BasicQhead, BasicRecurrent, DuelQhead, C51Qhead, QRDQNhead, ActorNet, CriticNet
 
@@ -27,13 +27,13 @@ class BasicQnetwork(Module):
 
     def construct(self, observation: Tensor):
         outputs = self.representation(observation)
-        evalQ = self.eval_Qhead(outputs['state'])
+        evalQ = self.eval_Qhead(outputs)
         argmax_action = evalQ.argmax(axis=-1)
         return outputs, argmax_action, evalQ
 
     def target(self, observation: Tensor):
         outputs_target = self.target_representation(observation)
-        targetQ = self.target_Qhead(outputs_target['state'])
+        targetQ = self.target_Qhead(outputs_target)
         argmax_action = targetQ.argmax(axis=-1)
         return outputs_target, argmax_action, targetQ
 

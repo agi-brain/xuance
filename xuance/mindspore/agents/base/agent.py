@@ -10,7 +10,7 @@ from gymnasium.spaces import Dict, Space
 from torch.utils.tensorboard import SummaryWriter
 from xuance.common import get_time_string, create_directory, RunningMeanStd, space2shape, EPS, Optional, Union
 from xuance.environment import DummyVecEnv, SubprocVecEnv
-from xuance.mindspore import REGISTRY_Representation, REGISTRY_Learners, Module
+from xuance.mindspore import REGISTRY_Representation, REGISTRY_Learners, Module, ms
 from xuance.mindspore.utils import InitializeFunctions, NormalizeFunctions, ActivationFunctions
 
 
@@ -34,6 +34,7 @@ class Agent(ABC):
         self.start_training = config.start_training if hasattr(config, "start_training") else 1
         self.training_frequency = config.training_frequency if hasattr(config, "start_training") else 1
         self.n_epochs = config.n_epochs if hasattr(config, "n_epochs") else 1
+        self.static_graph = getattr(config, "static_graph", False)
         self.device = config.device
 
         # Environment attributes.
@@ -93,6 +94,12 @@ class Agent(ABC):
         self.log_dir = log_dir
 
         # Prepare necessary components.
+        if self.config.static_graph:
+            ms.set_context(mode=ms.GRAPH_MODE)  # Static graph mode (accelerating the calculation)
+            print("Running mode: Static Graph. (Also known as Graph mode)")
+        else:
+            ms.set_context(mode=ms.PYNATIVE_MODE)  # Dynamic graph mode (default mode)
+            print("Running mode: Dynamic Graph.")
         self.policy: Optional[Module] = None
         self.learner: Optional[Module] = None
         self.memory: Optional[object] = None

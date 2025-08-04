@@ -181,15 +181,7 @@ def get_runner(method,
         from xuance.mindspore.runners import REGISTRY_Runner
         import mindspore as ms
         print("Deep learning toolbox: MindSpore.")
-        if device != "Auto":
-            if device in ["cpu", "CPU"]:
-                ms.set_device(device_target="CPU")
-            elif device in ["gpu", "GPU"]:
-                ms.set_device(device_target="GPU")
-            else:
-                ms.set_device(device_target=device)  # Other devices like Ascend.
-        # ms.set_context(mode=ms.GRAPH_MODE)  # Graph mode (静态图模式，加速)
-        ms.set_context(mode=ms.PYNATIVE_MODE)  # Pynative mode (动态图模式)
+        ms.set_device(device_target=device)  # Set the calculating device.
 
     elif dl_toolbox == "tensorflow":
         from xuance.tensorflow.runners import REGISTRY_Runner

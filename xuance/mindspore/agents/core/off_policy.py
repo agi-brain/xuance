@@ -4,7 +4,7 @@ from copy import deepcopy
 from argparse import Namespace
 from xuance.common import Optional, Union, DummyOffPolicyBuffer, DummyOffPolicyBuffer_Atari
 from xuance.environment import DummyVecEnv, SubprocVecEnv
-from xuance.mindspore import Module
+from xuance.mindspore import Module, Tensor
 from xuance.mindspore.agents.base import Agent
 
 
@@ -95,7 +95,7 @@ class OffPolicyAgent(Agent):
             dists: The policy distributions.
             log_pi: Log of stochastic actions.
         """
-        _, actions_output, _ = self.policy(observations)
+        _, actions_output, _ = self.policy(Tensor(observations))
         if test_mode:
             actions = actions_output.asnumpy()
         else:
