@@ -20,7 +20,7 @@ class VDAC_Learner(IAC_Learner):
                  policy: Module,
                  callback):
         super(VDAC_Learner, self).__init__(config, model_keys, agent_keys, policy, callback)
-        self.use_global_state = True if self.policy.mixer == "QMIX" else False
+        self.use_global_state = True if config.mixer == "QMIX" else getattr(config, "use_global_state", False)
 
     # @tf.function
     def forward_fn(self, *args):

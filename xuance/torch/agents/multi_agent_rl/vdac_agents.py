@@ -50,7 +50,6 @@ class VDAC_Agents(OnPolicyMARLAgents):
         # create mixer
         if self.mixer == "VDN":
             mixer = VDN_mixer()
-            self.use_global_state = False
         elif self.mixer == "QMIX":
             dim_state = self.state_space.shape[-1]
             mixer = QMIX_mixer(dim_state, self.config.hidden_dim_mixing_net, self.config.hidden_dim_hyper_net,
@@ -58,7 +57,6 @@ class VDAC_Agents(OnPolicyMARLAgents):
             self.use_global_state = True
         elif self.mixer == "Independent":
             mixer = None
-            self.use_global_state = False
         else:
             raise AttributeError(f"Mixer named {self.mixer} is not supported in XuanCe!")
 
