@@ -34,7 +34,7 @@ class Agent(ABC):
         self.start_training = config.start_training if hasattr(config, "start_training") else 1
         self.training_frequency = config.training_frequency if hasattr(config, "start_training") else 1
         self.n_epochs = config.n_epochs if hasattr(config, "n_epochs") else 1
-        self.static_graph = getattr(config, "static_graph", False)
+        self.static_graph = getattr(config, "static_graph", True)
         self.device = config.device
 
         # Environment attributes.
@@ -94,7 +94,7 @@ class Agent(ABC):
         self.log_dir = log_dir
 
         # Prepare necessary components.
-        if self.config.static_graph:
+        if self.static_graph:
             ms.set_context(mode=ms.GRAPH_MODE)  # Static graph mode (accelerating the calculation)
             print("Running mode: Static Graph. (Also known as Graph mode)")
         else:
