@@ -22,7 +22,6 @@ class DQN_Learner(Learner):
         self.mse_loss = nn.MSELoss()
         self.gather = ops.Gather(batch_dims=-1)
         self.n_actions = int(self.policy.action_dim)
-        self.on_value, self.off_value = Tensor(1.0, ms.float32), Tensor(0.0, ms.float32)
         # Get gradient function
         self.grad_fn = ms.value_and_grad(self.forward_fn, None, self.optimizer.parameters, has_aux=True)
         self.policy.set_train()

@@ -35,7 +35,8 @@ class DDQN_Learner(Learner):
     def forward_fn(self, obs_batch, act_batch, next_batch, rew_batch, ter_batch):
         with tf.GradientTape() as tape:
             _, _, evalQ = self.policy(obs_batch)
-            _, targetA, targetQ = self.policy.target(next_batch)
+            _, targetA, _ = self.policy(next_batch)
+            _, _, targetQ = self.policy.target(next_batch)
 
             targetA = tf.one_hot(targetA, targetQ.shape[1])
             targetQ = tf.reduce_sum(targetQ * targetA, axis=-1)

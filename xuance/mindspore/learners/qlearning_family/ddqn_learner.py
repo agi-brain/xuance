@@ -3,11 +3,10 @@ DQN with Double Q-learning (Double DQN)
 Paper link: https://ojs.aaai.org/index.php/AAAI/article/view/10295
 Implementation: MindSpore
 """
-from xuance.mindspore import ms, Module, Tensor, optim
-from xuance.mindspore.learners import Learner
 from argparse import Namespace
-from mindspore.ops import OneHot
-from mindspore.nn import MSELoss
+from mindspore import nn
+from xuance.mindspore import ms, ops, Module, Tensor, optim
+from xuance.mindspore.learners import Learner
 
 
 class DDQN_Learner(Learner):
@@ -20,35 +19,36 @@ class DDQN_Learner(Learner):
                                                      total_iters=self.config.running_steps)
         self.gamma = config.gamma
         self.sync_frequency = config.sync_frequency
-        self.mse_loss = MSELoss()
-        self.one_hot = OneHot()
+        self.mse_loss = nn.MSELoss()
+        self.gather = ops.Gather(batch_dims=-1)
         self.n_actions = self.policy.action_dim
         # Get gradient function
         self.grad_fn = ms.value_and_grad(self.forward_fn, None, self.optimizer.parameters, has_aux=True)
         self.policy.set_train()
 
-    def forward_fn(self, x, a, label):
-        _, _, _evalQ = self.policy(x)
-        _predict_Q = (_evalQ * self.one_hot(a.astype(ms.int32), _evalQ.shape[1], Tensor(1.0), Tensor(0.0))).sum(
-            axis=-1)
-        loss = self.mse_loss(_predict_Q, label)
-        return loss, _predict_Q
+    def forward_fn(self, obs_batch, act_batch, next_batch, rew_batch, ter_batch):
+        _, _, evalQ = self.policy(obs_batch)
+        _, targetA, _ = self.policy(next_batch)
+        _, _, targetQ = self.policy.target(next_batch)
+
+        targetQ = self.gather(targetQ, targetA.reshape(-1, 1), axis=-1).reshape(-1)
+        targetQ = rew_batch + self.gamma * (1 - ter_batch) * targetQ
+
+        predict_Q = self.gather(evalQ, act_batch, axis=-1).reshape(-1)
+        loss = self.mse_loss(predict_Q, targetQ)
+
+        return loss, predict_Q
 
     def update(self, **samples):
         self.iterations += 1
         obs_batch = Tensor(samples['obs'])
-        act_batch = Tensor(samples['actions'])
+        act_batch = Tensor(samples['actions'].reshape(-1, 1), dtype=ms.int32)
         rew_batch = Tensor(samples['rewards'])
         next_batch = Tensor(samples['obs_next'])
         ter_batch = Tensor(samples['terminals'])
 
-        _, targetA, targetQ = self.policy.target(next_batch)
 
-        targetA = self.one_hot(targetA, targetQ.shape[1], Tensor(1.0), Tensor(0.0))
-        targetQ = (targetQ * targetA).sum(axis=-1)
-        targetQ = rew_batch + self.gamma * (1 - ter_batch) * targetQ
-
-        (loss, predictQ), grads = self.grad_fn(obs_batch, act_batch, targetQ)
+        (loss, predictQ), grads = self.grad_fn(obs_batch, act_batch, next_batch, rew_batch, ter_batch)
         self.optimizer(grads)
 
         # hard update for target network
