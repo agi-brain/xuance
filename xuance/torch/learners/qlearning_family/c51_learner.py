@@ -22,12 +22,12 @@ class C51_Learner(Learner):
                                                            total_iters=self.total_iters)
         self.gamma = config.gamma
         self.sync_frequency = config.sync_frequency
-        self.one_hot = nn.functional.one_hot
+        self.atom_num = self.policy.atom_num
 
     def update(self, **samples):
         self.iterations += 1
         obs_batch = torch.as_tensor(samples['obs'], device=self.device)
-        act_batch = torch.as_tensor(samples['actions'], device=self.device)
+        act_batch = torch.as_tensor(samples['actions'].reshape(-1, 1, 1), device=self.device, dtype=torch.int64)
         next_batch = torch.as_tensor(samples['obs_next'], device=self.device)
         rew_batch = torch.as_tensor(samples['rewards'], device=self.device)
         ter_batch = torch.as_tensor(samples['terminals'], dtype=torch.float, device=self.device)
@@ -38,8 +38,8 @@ class C51_Learner(Learner):
         _, _, evalZ = self.policy(obs_batch)
         _, targetA, targetZ = self.policy.target(next_batch)
 
-        current_dist = (evalZ * self.one_hot(act_batch.long(), evalZ.shape[1]).unsqueeze(-1)).sum(1)
-        target_dist = (targetZ * self.one_hot(targetA.detach(), evalZ.shape[1]).unsqueeze(-1)).sum(1).detach()
+        current_dist = evalZ.gather(1, act_batch.expand([-1, -1, self.atom_num])).squeeze(1)
+        target_dist = targetZ.gather(1, targetA.reshape([-1, 1, 1]).expand([-1, -1, self.atom_num])).squeeze(1).detach()
 
         current_supports = self.policy.supports
         next_supports = rew_batch.unsqueeze(1) + self.gamma * self.policy.supports * (1 - ter_batch.unsqueeze(1))

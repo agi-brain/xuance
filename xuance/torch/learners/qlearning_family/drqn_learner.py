@@ -23,7 +23,6 @@ class DRQN_Learner(Learner):
         self.gamma = config.gamma
         self.sync_frequency = config.sync_frequency
         self.mse_loss = nn.MSELoss()
-        self.one_hot = nn.functional.one_hot
         self.n_actions = self.policy.action_dim
 
     def update(self, **samples):
@@ -43,13 +42,11 @@ class DRQN_Learner(Learner):
         _, targetA, targetQ, _ = self.policy.target(obs_batch[:, 1:], *target_rnn_hidden)
         # targetQ = targetQ.max(dim=-1).values
 
-        targetA = self.one_hot(targetA, targetQ.shape[-1])
-        targetQ = (targetQ * targetA).sum(dim=-1)
-
+        predictQ = evalQ.gather(-1, act_batch.unsqueeze(-1)).squeeze(-1)
+        targetQ = targetQ.gather(-1, targetA.unsqueeze(-1)).squeeze(-1)
         targetQ = rew_batch + self.gamma * (1 - ter_batch) * targetQ
-        predictQ = (evalQ * self.one_hot(act_batch.long(), evalQ.shape[-1])).sum(dim=-1)
 
-        loss = self.mse_loss(predictQ, targetQ)
+        loss = self.mse_loss(predictQ, targetQ.detach())
         self.optimizer.zero_grad()
         loss.backward()
         if self.use_grad_clip:

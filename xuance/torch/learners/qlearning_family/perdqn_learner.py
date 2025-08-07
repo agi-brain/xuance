@@ -26,13 +26,12 @@ class PerDQN_Learner(Learner):
         self.gamma = config.gamma
         self.sync_frequency = config.sync_frequency
         self.mse_loss = nn.MSELoss()
-        self.one_hot = nn.functional.one_hot
         self.n_actions = self.policy.action_dim
 
     def update(self, **samples):
         self.iterations += 1
         obs_batch = torch.as_tensor(samples['obs'], device=self.device)
-        act_batch = torch.as_tensor(samples['actions'], device=self.device)
+        act_batch = torch.as_tensor(samples['actions'], device=self.device, dtype=torch.int64)
         next_batch = torch.as_tensor(samples['obs_next'], device=self.device)
         rew_batch = torch.as_tensor(samples['rewards'], device=self.device)
         ter_batch = torch.as_tensor(samples['terminals'], dtype=torch.float, device=self.device)
@@ -42,12 +41,13 @@ class PerDQN_Learner(Learner):
 
         _, _, evalQ = self.policy(obs_batch)
         _, _, targetQ = self.policy.target(next_batch)
+
+        predictQ = evalQ.gather(-1, act_batch.unsqueeze(-1)).squeeze(-1)
         targetQ = targetQ.max(dim=-1).values
         targetQ = rew_batch + self.gamma * (1 - ter_batch) * targetQ
-        predictQ = (evalQ * self.one_hot(act_batch.long(), evalQ.shape[1])).sum(dim=-1)
 
         td_error = targetQ - predictQ
-        loss = self.mse_loss(predictQ, targetQ)
+        loss = self.mse_loss(predictQ, targetQ.detach())
         self.optimizer.zero_grad()
         loss.backward()
         if self.use_grad_clip:

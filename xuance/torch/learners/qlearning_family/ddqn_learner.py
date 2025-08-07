@@ -23,13 +23,12 @@ class DDQN_Learner(Learner):
         self.gamma = config.gamma
         self.sync_frequency = config.sync_frequency
         self.mse_loss = nn.MSELoss()
-        self.one_hot = nn.functional.one_hot
         self.n_actions = self.policy.action_dim
 
     def update(self, **samples):
         self.iterations += 1
         obs_batch = torch.as_tensor(samples['obs'], device=self.device)
-        act_batch = torch.as_tensor(samples['actions'], device=self.device)
+        act_batch = torch.as_tensor(samples['actions'].reshape([-1, 1]), device=self.device, dtype=torch.int64)
         next_batch = torch.as_tensor(samples['obs_next'], device=self.device)
         rew_batch = torch.as_tensor(samples['rewards'], device=self.device)
         ter_batch = torch.as_tensor(samples['terminals'], dtype=torch.float, device=self.device)
@@ -41,12 +40,11 @@ class DDQN_Learner(Learner):
         _, targetA, _ = self.policy(next_batch)
         _, _, targetQ = self.policy.target(next_batch)
 
-        targetA = self.one_hot(targetA, targetQ.shape[-1])
-        targetQ = (targetQ * targetA).sum(dim=-1)
+        predictQ = evalQ.gather(-1, act_batch).reshape(-1)
+        targetQ = targetQ.gather(-1, targetA.reshape([-1, 1])).reshape(-1)
         targetQ = rew_batch + self.gamma * (1 - ter_batch) * targetQ
-        predictQ = (evalQ * self.one_hot(act_batch.long(), evalQ.shape[1])).sum(dim=-1)
 
-        loss = self.mse_loss(predictQ, targetQ)
+        loss = self.mse_loss(predictQ, targetQ.detach())
         self.optimizer.zero_grad()
         loss.backward()
         if self.use_grad_clip:
