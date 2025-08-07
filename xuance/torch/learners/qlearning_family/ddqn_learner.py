@@ -28,7 +28,7 @@ class DDQN_Learner(Learner):
     def update(self, **samples):
         self.iterations += 1
         obs_batch = torch.as_tensor(samples['obs'], device=self.device)
-        act_batch = torch.as_tensor(samples['actions'].reshape([-1, 1]), device=self.device, dtype=torch.int64)
+        act_batch = torch.as_tensor(samples['actions'], dtype=torch.int64, device=self.device)
         next_batch = torch.as_tensor(samples['obs_next'], device=self.device)
         rew_batch = torch.as_tensor(samples['rewards'], device=self.device)
         ter_batch = torch.as_tensor(samples['terminals'], dtype=torch.float, device=self.device)
@@ -40,8 +40,8 @@ class DDQN_Learner(Learner):
         _, targetA, _ = self.policy(next_batch)
         _, _, targetQ = self.policy.target(next_batch)
 
-        predictQ = evalQ.gather(-1, act_batch).reshape(-1)
-        targetQ = targetQ.gather(-1, targetA.reshape([-1, 1])).reshape(-1)
+        predictQ = evalQ.gather(-1, act_batch.unsqueeze(-1)).squeeze(-1)
+        targetQ = targetQ.gather(-1, targetA.unsqueeze(-1)).squeeze(-1)
         targetQ = rew_batch + self.gamma * (1 - ter_batch) * targetQ
 
         loss = self.mse_loss(predictQ, targetQ.detach())

@@ -28,7 +28,7 @@ class DQN_Learner(Learner):
     def update(self, **samples):
         self.iterations += 1
         obs_batch = torch.as_tensor(samples['obs'], device=self.device)
-        act_batch = torch.as_tensor(samples['actions'].reshape([-1, 1]), device=self.device, dtype=torch.int64)
+        act_batch = torch.as_tensor(samples['actions'], dtype=torch.int64, device=self.device)
         next_batch = torch.as_tensor(samples['obs_next'], device=self.device)
         rew_batch = torch.as_tensor(samples['rewards'], device=self.device)
         ter_batch = torch.as_tensor(samples['terminals'], dtype=torch.float, device=self.device)
@@ -39,7 +39,7 @@ class DQN_Learner(Learner):
         _, _, evalQ = self.policy(obs_batch)
         _, _, targetQ = self.policy.target(next_batch)
 
-        predictQ = evalQ.gather(-1, act_batch).reshape(-1)
+        predictQ = evalQ.gather(-1, act_batch.unsqueeze(-1)).squeeze(-1)
         targetQ = targetQ.max(dim=-1).values
         targetQ = rew_batch + self.gamma * (1 - ter_batch) * targetQ
 

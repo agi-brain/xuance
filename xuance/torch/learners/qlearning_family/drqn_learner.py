@@ -28,7 +28,7 @@ class DRQN_Learner(Learner):
     def update(self, **samples):
         self.iterations += 1
         obs_batch = torch.as_tensor(samples['obs'], device=self.device)
-        act_batch = torch.as_tensor(samples['actions'], device=self.device)
+        act_batch = torch.as_tensor(samples['actions'], dtype=torch.int64, device=self.device)
         rew_batch = torch.as_tensor(samples['rewards'], device=self.device)
         ter_batch = torch.as_tensor(samples['terminals'], dtype=torch.float, device=self.device)
         batch_size = samples['batch_size']
