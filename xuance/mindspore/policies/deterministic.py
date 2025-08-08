@@ -751,17 +751,19 @@ class DRQNPolicy(Module):
         self.target_Qhead = deepcopy(self.eval_Qhead)
         self._zeroslike = ms.ops.ZerosLike()
 
-    def construct(self, observation: Union[np.ndarray, dict], *rnn_hidden: Tensor):
+    def construct(self, observation: Tensor, *rnn_hidden: Tensor):
         if self.cnn:
             obs_shape = observation.shape
             outputs = self.representation(observation.reshape((-1,) + obs_shape[-3:]))
-            outputs['state'] = outputs['state'].reshape(obs_shape[0:-3] + (-1,))
+            outputs = outputs.reshape(obs_shape[0:-3] + (-1,))
         else:
-            outputs = self.representation(observation)
+            observation_shape = observation.shape
+            outputs = self.representation(observation.reshape([-1, observation_shape[-1]]))
+            outputs = outputs.reshape(observation_shape[:-1] + (-1, ))
         if self.lstm:
-            hidden_states, cell_states, evalQ = self.eval_Qhead(outputs['state'], rnn_hidden[0], rnn_hidden[1])
+            hidden_states, cell_states, evalQ = self.eval_Qhead(outputs, rnn_hidden[0], rnn_hidden[1])
         else:
-            hidden_states, evalQ = self.eval_Qhead(outputs['state'], rnn_hidden[0])
+            hidden_states, evalQ = self.eval_Qhead(outputs, rnn_hidden[0])
             cell_states = None
         argmax_action = evalQ[:, -1].argmax(axis=-1)
         return outputs, argmax_action, evalQ, (hidden_states, cell_states)
@@ -770,13 +772,13 @@ class DRQNPolicy(Module):
         if self.cnn:
             obs_shape = observation.shape
             outputs = self.representation(observation.reshape((-1,) + obs_shape[-3:]))
-            outputs['state'] = outputs['state'].reshape(obs_shape[0:-3] + (-1,))
+            outputs = outputs.reshape(obs_shape[0:-3] + (-1,))
         else:
             outputs = self.representation(observation)
         if self.lstm:
-            hidden_states, cell_states, targetQ = self.target_Qhead(outputs['state'], rnn_hidden[0], rnn_hidden[1])
+            hidden_states, cell_states, targetQ = self.target_Qhead(outputs, rnn_hidden[0], rnn_hidden[1])
         else:
-            hidden_states, targetQ = self.target_Qhead(outputs['state'], rnn_hidden[0])
+            hidden_states, targetQ = self.target_Qhead(outputs, rnn_hidden[0])
             cell_states = None
         argmax_action = targetQ.argmax(axis=-1)
         return outputs, argmax_action, targetQ, (hidden_states, cell_states)

@@ -3,7 +3,7 @@ from tqdm import tqdm
 from copy import deepcopy
 from argparse import Namespace
 from xuance.environment import DummyVecEnv, SubprocVecEnv
-from xuance.mindspore import Module
+from xuance.mindspore import Module, Tensor
 from xuance.mindspore.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions
 from xuance.mindspore.policies import REGISTRY_Policy
 from xuance.mindspore.agents import OffPolicyAgent
@@ -68,7 +68,11 @@ class DRQN_Agent(OffPolicyAgent):
         return policy
 
     def action(self, obs, egreedy=0.0, rnn_hidden=None):
-        _, argmax_action, _, rnn_hidden_next = self.policy(obs[:, np.newaxis], *rnn_hidden)
+        if self.lstm:
+            rnn_hidden = (Tensor(rnn_hidden[0]), Tensor(rnn_hidden[1]))
+        else:
+            rnn_hidden = Tensor(rnn_hidden)
+        _, argmax_action, _, rnn_hidden_next = self.policy(Tensor(obs[:, None]), *rnn_hidden)
         random_action = np.random.choice(self.action_space.n, self.n_envs)
         if np.random.rand() < egreedy:
             actions = random_action

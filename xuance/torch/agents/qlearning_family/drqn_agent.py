@@ -72,7 +72,7 @@ class DRQN_Agent(OffPolicyAgent):
         return policy
 
     def action(self, obs, egreedy=0.0, rnn_hidden=None):
-        _, argmax_action, _, rnn_hidden_next = self.policy(obs[:, np.newaxis], *rnn_hidden)
+        _, argmax_action, _, rnn_hidden_next = self.policy(obs[:, None], *rnn_hidden)
         random_action = np.random.choice(self.action_space.n, self.n_envs)
         if np.random.rand() < egreedy:
             actions = random_action
