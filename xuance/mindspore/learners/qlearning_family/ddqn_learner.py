@@ -35,7 +35,7 @@ class DDQN_Learner(Learner):
         targetQ = rew_batch + self.gamma * (1 - ter_batch) * targetQ
 
         predict_Q = self.gather(evalQ, act_batch, axis=-1).reshape(-1)
-        loss = self.mse_loss(predict_Q, targetQ)
+        loss = self.mse_loss(logits=predict_Q, labels=ops.stop_gradient(targetQ))
 
         return loss, predict_Q
 

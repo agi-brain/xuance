@@ -38,7 +38,7 @@ class DRQN_Learner(Learner):
         targetQ = self.gather(targetQ, targetA.unsqueeze(-1), axis=-1).squeeze(-1)
         targetQ = rew_batch + self.gamma * (1 - ter_batch) * targetQ
 
-        loss = self.mse_loss(predict_Q, targetQ)
+        loss = self.mse_loss(logits=predict_Q, labels=ops.stop_gradient(targetQ))
         return loss, predict_Q
 
     def update(self, **samples):
