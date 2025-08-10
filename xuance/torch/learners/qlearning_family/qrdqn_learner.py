@@ -38,12 +38,10 @@ class QRDQN_Learner(Learner):
                                              next_obs=next_batch, rew=rew_batch, termination=ter_batch)
 
         _, _, evalZ = self.policy(obs_batch)
-        _, targetA, targetZ = self.policy(next_batch)
+        _, targetA, targetZ = self.policy.target(next_batch)
 
-        current_quantile = evalZ.gather(1, act_batch.expand(
-            [-1, -1, self.quantile_num])).squeeze(1)
-        target_quantile = targetZ.gather(1, targetA.reshape([-1, 1, 1]).expand(
-            [-1, -1, self.quantile_num])).squeeze(1).detach()
+        current_quantile = evalZ.gather(1, act_batch.expand([-1, -1, self.quantile_num])).squeeze(1)
+        target_quantile = targetZ.gather(1, targetA.reshape([-1, 1, 1]).expand([-1, -1, self.quantile_num])).squeeze(1)
         target_quantile = rew_batch.unsqueeze(1) + self.gamma * target_quantile * (1 - ter_batch.unsqueeze(1))
 
         loss = self.mse_loss(target_quantile.detach(), current_quantile)

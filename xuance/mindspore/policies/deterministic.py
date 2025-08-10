@@ -52,9 +52,9 @@ class DuelQnetwork(Module):
     The policy for deep dueling Q-networks.
 
     Args:
-        action_space (Discrete): The action space, which type is gym.spaces.Discrete.
-        representation (Module): The representation module.
-        hidden_size: List of hidden units for fully connect layers.
+        action_space (Space): The action space, which type is gym.spaces.Discrete.
+        representation (ModuleType): The representation module.
+        hidden_size (Sequence[int]): List of hidden units for fully connect layers.
         normalize (Optional[ModuleType]): The layer normalization over a minibatch of inputs.
         initialize (Optional[Callable[..., Tensor]]): The parameters initializer.
         activation (Optional[ModuleType]): The activation function for each layer.
@@ -160,6 +160,22 @@ class NoisyQnetwork(Module):
 
 
 class C51Qnetwork(Module):
+    """
+    The policy for C51 distributional deep Q-networks.
+
+    Args:
+        action_space (Discrete): The action space, which type is gym.spaces.Discrete.
+        atom_num (int): The number of atoms.
+        v_min (float): The lower bound of value distribution.
+        v_max (float): The upper bound of value distribution.
+        representation (ModuleType): The representation module.
+        hidden_size (Sequence[int]): List of hidden units for fully connect layers.
+        normalize (Optional[ModuleType]): The layer normalization over a minibatch of inputs.
+        initialize (Optional[Callable[..., Tensor]]): The parameters initializer.
+        activation (Optional[ModuleType]): The activation function for each layer.
+        use_distributed_training (bool): Whether to use multi-GPU for distributed training.
+    """
+
     def __init__(self,
                  action_space: Discrete,
                  atom_num: int,
@@ -169,8 +185,8 @@ class C51Qnetwork(Module):
                  hidden_size: Sequence[int] = None,
                  normalize: Optional[ModuleType] = None,
                  initialize: Optional[Callable[..., Tensor]] = None,
-                 activation: Optional[ModuleType] = None
-                 ):
+                 activation: Optional[ModuleType] = None,
+                 use_distributed_training: bool = False):
         super(C51Qnetwork, self).__init__()
         self.action_dim = action_space.n
         self.atom_num = atom_num
@@ -190,15 +206,37 @@ class C51Qnetwork(Module):
         self.deltaz = (v_max - v_min) / (atom_num - 1)
 
     def construct(self, observation: Union[np.ndarray, dict]):
+        """
+        Returns the output of the representation, greedy actions, and the evaluated Z-values.
+
+        Parameters:
+            observation: The original observation input.
+
+        Returns:
+            outputs: The hidden state output by the representation.
+            argmax_action: The greedy actions.
+            eval_Z: The evaluated Z-values.
+        """
         outputs = self.representation(observation)
-        eval_Z = self.eval_Zhead(outputs['state'])
+        eval_Z = self.eval_Zhead(outputs)
         eval_Q = (self.supports * eval_Z).sum(-1)
         argmax_action = eval_Q.argmax(axis=-1)
         return outputs, argmax_action, eval_Z
 
     def target(self, observation: Union[np.ndarray, dict]):
+        """
+        Returns the output of the representation, greedy actions, and the evaluated Z-values via target networks.
+
+        Parameters:
+            observation: The original observation input.
+
+        Returns:
+            outputs_target: The hidden state output by the representation.
+            argmax_action: The greedy actions from target networks.
+            target_Z: The evaluated Z-values output by target Z-network.
+        """
         outputs = self.target_representation(observation)
-        target_Z = self.target_Zhead(outputs['state'])
+        target_Z = self.target_Zhead(outputs)
         target_Q = (self.supports * target_Z).sum(-1)
         argmax_action = target_Q.argmax(dim=-1)
         return outputs, argmax_action, target_Z
@@ -211,6 +249,20 @@ class C51Qnetwork(Module):
 
 
 class QRDQN_Network(Module):
+    """
+    The policy for quantile regression deep Q-networks.
+
+    Args:
+        action_space (Discrete): The action space, which type is gym.spaces.Discrete.
+        quantile_num (int): The number of quantiles.
+        representation (ModuleType): The representation module.
+        hidden_size (Sequence[int]): List of hidden units for fully connect layers.
+        normalize (Optional[ModuleType]): The layer normalization over a minibatch of inputs.
+        initialize (Optional[Callable[..., Tensor]]): The parameters initializer.
+        activation (Optional[ModuleType]): The activation function for each layer.
+        use_distributed_training (bool): Whether to use multi-GPU for distributed training.
+    """
+
     def __init__(self,
                  action_space: Discrete,
                  quantile_num: int,
@@ -218,8 +270,8 @@ class QRDQN_Network(Module):
                  hidden_size: Sequence[int] = None,
                  normalize: Optional[ModuleType] = None,
                  initialize: Optional[Callable[..., Tensor]] = None,
-                 activation: Optional[ModuleType] = None
-                 ):
+                 activation: Optional[ModuleType] = None,
+                 use_distributed_training: bool = False):
         super(QRDQN_Network, self).__init__()
         self.action_dim = action_space.n
         self.quantile_num = quantile_num
@@ -234,15 +286,37 @@ class QRDQN_Network(Module):
         self._mean = ms.ops.ReduceMean()
 
     def construct(self, observation: Tensor):
+        """
+        Returns the output of the representation, greedy actions, and the evaluated Z-values.
+
+        Parameters:
+            observation: The original observation input.
+
+        Returns:
+            outputs: The hidden state output by the representation.
+            argmax_action: The greedy actions.
+            eval_Z: The evaluated Z-values.
+        """
         outputs = self.representation(observation)
-        evalZ = self.eval_Zhead(outputs['state'])
+        evalZ = self.eval_Zhead(outputs)
         evalQ = self._mean(evalZ, -1)
         argmax_action = evalQ.argmax(axis=-1)
         return outputs, argmax_action, evalZ
 
     def target(self, observation: Tensor):
+        """
+        Returns the output of the representation, greedy actions, and the evaluated Z-values via target networks.
+
+        Parameters:
+            observation: The original observation input.
+
+        Returns:
+            outputs_target: The hidden state output by the representation.
+            argmax_action: The greedy actions from target networks.
+            target_Z: The evaluated Z-values output by target Z-network.
+        """
         outputs = self.target_representation(observation)
-        target_Z = self.target_Zhead(outputs['state'])
+        target_Z = self.target_Zhead(outputs)
         target_Q = self._mean(target_Z, -1)
         argmax_action = target_Q.argmax(axis=-1)
         return outputs, argmax_action, target_Z

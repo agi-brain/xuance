@@ -3,11 +3,10 @@ DQN with Quantile Regression (QRDQN)
 Paper link: https://ojs.aaai.org/index.php/AAAI/article/view/11791
 Implementation: MindSpore
 """
-from xuance.mindspore import ms, Module, Tensor, optim
-from xuance.mindspore.learners import Learner
 from argparse import Namespace
-from mindspore.ops import OneHot, ExpandDims, ReduceSum
-from mindspore.nn import MSELoss
+from mindspore import nn
+from xuance.mindspore import ms, ops, Module, Tensor, optim
+from xuance.mindspore.learners import Learner
 
 
 class QRDQN_Learner(Learner):
@@ -20,40 +19,34 @@ class QRDQN_Learner(Learner):
                                                      total_iters=self.config.running_steps)
         self.gamma = config.gamma
         self.sync_frequency = config.sync_frequency
-        self.mse_loss = MSELoss()
-        self.one_hot = OneHot()
+        self.mse_loss = nn.MSELoss()
+        self.gather = ops.Gather(batch_dims=-1)
         self.n_actions = self.policy.action_dim
         # Get gradient function
         self.grad_fn = ms.value_and_grad(self.forward_fn, None, self.optimizer.parameters, has_aux=True)
         self.policy.set_train()
 
-        self.on_value = Tensor(1.0, ms.float32)
-        self.off_value = Tensor(0.0, ms.float32)
-        self._unsqueeze = ExpandDims()
-        self._sum = ReduceSum()
+    def forward_fn(self, obs_batch, act_batch, next_batch, rew_batch, ter_batch):
+        _, _, evalZ = self.policy(obs_batch)
+        _, targetA, targetZ = self.policy.target(next_batch)
 
-    def forward_fn(self, x, a, target_quantile):
-        _, _, evalZ = self.policy(x)
-        current_quantile = self._sum(evalZ * self._unsqueeze(self.one_hot(a.astype(ms.int32), evalZ.shape[1],
-                                                                          self.on_value, self.off_value), -1), 1)
-        loss = self.mse_loss(target_quantile, current_quantile)
+        current_quantile = self.gather(evalZ, act_batch, axis=1).squeeze(1)
+        target_quantile = self.gather(targetZ, targetA.unsqueeze(-1), axis=1).squeeze(1)
+        target_quantile = rew_batch.unsqueeze(1) + self.gamma * target_quantile * (1 - ter_batch.unsqueeze(1))
+
+        loss = self.mse_loss(logits=current_quantile, labels=ops.stop_gradient(target_quantile))
+
         return loss, evalZ
 
     def update(self, **samples):
         self.iterations += 1
         obs_batch = Tensor(samples['obs'])
-        act_batch = Tensor(samples['actions'])
+        act_batch = Tensor(samples['actions'].reshape(-1, 1), dtype=ms.int32)
         rew_batch = Tensor(samples['rewards'])
         next_batch = Tensor(samples['obs_next'])
         ter_batch = Tensor(samples['terminals'])
 
-        _, targetA, targetZ = self.policy(next_batch)
-        target_quantile = self._sum(targetZ * self._unsqueeze(self.one_hot(targetA.astype(ms.int32), targetZ.shape[1],
-                                                                           self.on_value, self.off_value), -1), 1)
-        target_quantile = self._unsqueeze(rew_batch, 1) + self.gamma * target_quantile * (
-                    1 - self._unsqueeze(ter_batch, 1))
-
-        (loss, evalZ), grads = self.grad_fn(obs_batch, act_batch, target_quantile)
+        (loss, evalZ), grads = self.grad_fn(obs_batch, act_batch, next_batch, rew_batch, ter_batch)
         self.optimizer(grads)
 
         # hard update for target network

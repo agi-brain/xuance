@@ -3,11 +3,10 @@ Distributional Reinforcement Learning (C51DQN)
 Paper link: http://proceedings.mlr.press/v70/bellemare17a/bellemare17a.pdf
 Implementation: MindSpore
 """
-from xuance.mindspore import ms, Module, Tensor, optim
-from xuance.mindspore.learners import Learner
 from argparse import Namespace
-from mindspore.ops import OneHot, Log, BatchMatMul, ExpandDims, Squeeze, ReduceSum, Abs, ReduceMean, clip_by_value
-from mindspore.nn import MSELoss
+from mindspore import nn
+from xuance.mindspore import ms, ops, Module, Tensor, optim
+from xuance.mindspore.learners import Learner
 
 
 class C51_Learner(Learner):
@@ -20,58 +19,41 @@ class C51_Learner(Learner):
                                                      total_iters=self.config.running_steps)
         self.gamma = config.gamma
         self.sync_frequency = config.sync_frequency
-        self.mse_loss = MSELoss()
-        self.one_hot = OneHot()
+        self.mse_loss = nn.MSELoss()
+        self.gather = ops.Gather(batch_dims=-1)
         self.n_actions = self.policy.action_dim
         # Get gradient function
         self.grad_fn = ms.value_and_grad(self.forward_fn, None, self.optimizer.parameters, has_aux=True)
         self.policy.set_train()
-        self._log = Log()
-        self._bmm = BatchMatMul()
-        self._unsqueeze = ExpandDims()
-        self._squeeze = Squeeze(1)
-        self._sum = ReduceSum()
-        self._mean = ReduceMean()
-        self.on_value = Tensor(1.0, ms.float32)
-        self.off_value = Tensor(0.0, ms.float32)
-        self.clamp_min_value = Tensor(0.0, ms.float32)
-        self.clamp_max_value = Tensor(1.0, ms.float32)
-        self._abs = Abs()
-        self._unsqueeze = ExpandDims()
 
-    def forward_fn(self, x, a, projection, target_a, target_z):
-        _, _, evalZ = self.policy(x)
+    def forward_fn(self, obs_batch, act_batch, next_batch, rew_batch, ter_batch):
+        _, _, evalZ = self.policy(obs_batch)
+        _, targetA, targetZ = self.policy.target(next_batch)
 
-        current_dist = self._sum(evalZ * self._unsqueeze(self.one_hot(a.astype(ms.int32), evalZ.shape[1],
-                                                                      self.on_value, self.off_value), -1), 1)
-        target_dist = self._sum(target_z * self._unsqueeze(self.one_hot(target_a.astype(ms.int32), evalZ.shape[1],
-                                                                        self.on_value, self.off_value), -1), 1)
+        current_dist = self.gather(evalZ, act_batch, axis=1).squeeze(1)
+        target_dist = self.gather(targetZ, targetA.unsqueeze(-1), axis=1).squeeze(1)
 
-        target_dist = self._squeeze(self._bmm(self._unsqueeze(target_dist, 1),
-                                              clip_by_value(projection, self.clamp_min_value, self.clamp_max_value)))
-        loss = -self._mean(self._sum((target_dist * self._log(current_dist + 1e-8)), 1))
+        current_supports = self.policy.supports
+        next_supports = rew_batch.unsqueeze(1) + self.gamma * self.policy.supports * (1 - ter_batch.unsqueeze(1))
+        next_supports = ops.clamp(next_supports, self.policy.v_min, self.policy.v_max)
+
+        projection = 1 - ops.abs((next_supports.unsqueeze(-1) - current_supports.unsqueeze(0))) / self.policy.deltaz
+        target_dist = ops.bmm(target_dist.unsqueeze(1), ops.clamp(projection, 0, 1)).squeeze(1)
+        target_dist = ops.stop_gradient(target_dist)
+
+        loss = -ops.mean(ops.sum(target_dist * ops.log(current_dist + 1e-8), dim=1))
 
         return loss, evalZ
 
     def update(self, **samples):
         self.iterations += 1
         obs_batch = Tensor(samples['obs'])
-        act_batch = Tensor(samples['actions'])
+        act_batch = Tensor(samples['actions'].reshape(-1, 1), dtype=ms.int32)
         rew_batch = Tensor(samples['rewards'])
         next_batch = Tensor(samples['obs_next'])
         ter_batch = Tensor(samples['terminals'])
 
-        _, targetA, targetZ = self.policy(next_batch)
-
-        current_supports = self.policy.supports
-        next_supports = self._unsqueeze(rew_batch, 1) + self.gamma * self.policy.supports * (
-                    1 - self._unsqueeze(ter_batch, -1))
-        next_supports = clip_by_value(next_supports, Tensor(self.policy.v_min, ms.float32),
-                                      Tensor(self.policy.v_max, ms.float32))
-        projection = 1 - self._abs(
-            (self._unsqueeze(next_supports, -1) - self._unsqueeze(current_supports, 0))) / self.policy.deltaz
-
-        (loss, evalZ), grads = self.grad_fn(obs_batch, act_batch, projection, targetA, targetZ)
+        (loss, evalZ), grads = self.grad_fn(obs_batch, act_batch, next_batch, rew_batch, ter_batch)
         self.optimizer(grads)
 
         # hard update for target network
