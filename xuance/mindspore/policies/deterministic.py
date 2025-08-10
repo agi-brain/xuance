@@ -48,14 +48,26 @@ class BasicQnetwork(Module):
 
 
 class DuelQnetwork(Module):
+    """
+    The policy for deep dueling Q-networks.
+
+    Args:
+        action_space (Discrete): The action space, which type is gym.spaces.Discrete.
+        representation (Module): The representation module.
+        hidden_size: List of hidden units for fully connect layers.
+        normalize (Optional[ModuleType]): The layer normalization over a minibatch of inputs.
+        initialize (Optional[Callable[..., Tensor]]): The parameters initializer.
+        activation (Optional[ModuleType]): The activation function for each layer.
+        use_distributed_training (bool): Whether to use multi-GPU for distributed training.
+    """
     def __init__(self,
                  action_space: Space,
                  representation: ModuleType,
                  hidden_size: Sequence[int] = None,
                  normalize: Optional[ModuleType] = None,
                  initialize: Optional[Callable[..., Tensor]] = None,
-                 activation: Optional[ModuleType] = None
-                 ):
+                 activation: Optional[ModuleType] = None,
+                 use_distributed_training: bool = False):
         super(DuelQnetwork, self).__init__()
         self.action_dim = action_space.n
         self.representation = representation
@@ -67,15 +79,15 @@ class DuelQnetwork(Module):
 
     def construct(self, observation: Tensor):
         outputs = self.representation(observation)
-        evalQ = self.eval_Qhead(outputs['state'])
+        evalQ = self.eval_Qhead(outputs)
         argmax_action = evalQ.argmax(axis=-1)
         return outputs, argmax_action, evalQ
 
     def target(self, observation: Tensor):
-        outputs = self.target_representation(observation)
-        targetQ = self.target_Qhead(outputs['state'])
+        outputs_target = self.target_representation(observation)
+        targetQ = self.target_Qhead(outputs_target)
         argmax_action = targetQ.argmax(axis=-1)
-        return outputs, argmax_action, targetQ
+        return outputs_target, argmax_action, targetQ
 
     def trainable_params(self, recurse=True):
         return self.representation.trainable_params() + self.eval_Qhead.trainable_params()
