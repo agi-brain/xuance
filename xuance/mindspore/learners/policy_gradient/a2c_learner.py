@@ -2,10 +2,10 @@
 Advantage Actor-Critic (A2C)
 Implementation: MindSpore
 """
-from xuance.mindspore import ms, Module, Tensor, optim
-from xuance.mindspore.learners import Learner
 from argparse import Namespace
-from mindspore.nn import MSELoss
+from mindspore import nn
+from xuance.mindspore import ms, ops, Module, Tensor, optim
+from xuance.mindspore.learners import Learner
 
 
 class A2C_Learner(Learner):
@@ -16,7 +16,7 @@ class A2C_Learner(Learner):
         self.optimizer = optim.Adam(params=self.policy.trainable_params(), lr=self.config.learning_rate, eps=1e-5)
         self.scheduler = optim.lr_scheduler.LinearLR(self.optimizer, start_factor=1.0, end_factor=self.end_factor_lr_decay,
                                                      total_iters=self.config.running_steps)
-        self.mse_loss = MSELoss()
+        self.mse_loss = nn.MSELoss()
         self._mean = ms.ops.ReduceMean(keep_dims=True)
         self.vf_coef = config.vf_coef
         self.ent_coef = config.ent_coef
@@ -24,11 +24,11 @@ class A2C_Learner(Learner):
         self.grad_fn = ms.value_and_grad(self.forward_fn, None, self.optimizer.parameters, has_aux=True)
         self.policy.set_train()
 
-    def forward_fn(self, x, a, adv, r):
-        _, a_dist, v_pred = self.policy(x)
-        log_prob = a_dist.log_prob(a)
-        loss_a = -self._mean(adv * log_prob)
-        loss_c = self.mse_loss(logits=v_pred, labels=r)
+    def forward_fn(self, obs_batch, act_batch, adv_batch, ret_batch):
+        _, a_dist, v_pred = self.policy(obs_batch)
+        log_prob = a_dist.log_prob(act_batch)
+        loss_a = -self._mean(adv_batch * log_prob)
+        loss_c = self.mse_loss(logits=v_pred, labels=ret_batch)
         loss_e = self._mean(a_dist.entropy())
         loss = loss_a - self.ent_coef * loss_e + self.vf_coef * loss_c
 
