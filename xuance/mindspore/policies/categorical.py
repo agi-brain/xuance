@@ -19,6 +19,7 @@ class ActorPolicy(Module):
         normalize (Optional[ModuleType]): The layer normalization over a minibatch of inputs.
         initialize (Optional[Callable[..., Tensor]]): The parameters initializer.
         activation (Optional[ModuleType]): The activation function for each layer.
+        use_distributed_training (bool): Whether to use multi-GPU for distributed training.
     """
     def __init__(self,
                  action_space: Discrete,
@@ -26,8 +27,8 @@ class ActorPolicy(Module):
                  actor_hidden_size: Sequence[int] = None,
                  normalize: Optional[ModuleType] = None,
                  initialize: Optional[Callable[..., Tensor]] = None,
-                 activation: Optional[ModuleType] = None
-                 ):
+                 activation: Optional[ModuleType] = None,
+                 use_distributed_training: bool = False):
         super(ActorPolicy, self).__init__()
         self.action_dim = action_space.n
         self.representation = representation
@@ -36,8 +37,18 @@ class ActorPolicy(Module):
                               normalize, initialize, activation)
 
     def construct(self, observation: Tensor):
+        """
+        Returns the hidden states, action distribution.
+
+        Parameters:
+            observation: The original observation of agent.
+
+        Returns:
+            outputs: The outputs of representation.
+            a_dist: The distribution of actions output by actor.
+        """
         outputs = self.representation(observation)
-        a = self.actor(outputs['state'])
+        a = self.actor(outputs)
         return outputs, a, None
     
     
@@ -53,6 +64,7 @@ class ActorCriticPolicy(Module):
         normalize (Optional[ModuleType]): The layer normalization over a minibatch of inputs.
         initialize (Optional[Callable[..., Tensor]]): The parameters initializer.
         activation (Optional[ModuleType]): The activation function for each layer.
+        use_distributed_training (bool): Whether to use multi-GPU for distributed training.
     """
     def __init__(self,
                  action_space: Discrete,
@@ -61,7 +73,8 @@ class ActorCriticPolicy(Module):
                  critic_hidden_size: Sequence[int] = None,
                  normalize: Optional[ModuleType] = None,
                  initialize: Optional[Callable[..., Tensor]] = None,
-                 activation: Optional[ModuleType] = None):
+                 activation: Optional[ModuleType] = None,
+                 use_distributed_training: bool = False):
         super(ActorCriticPolicy, self).__init__()
         self.action_dim = action_space.n
         self.representation = representation
@@ -84,8 +97,8 @@ class ActorCriticPolicy(Module):
             value: The state values output by critic.
         """
         outputs = self.representation(observation)
-        a_dist = self.actor(outputs['state'])
-        value = self.critic(outputs['state'])[:, 0]
+        a_dist = self.actor(outputs)
+        value = self.critic(outputs)[:, 0]
         return outputs, a_dist, value
 
 
@@ -101,7 +114,7 @@ class PPGActorCritic(Module):
         normalize (Optional[ModuleType]): The layer normalization over a minibatch of inputs.
         initialize (Optional[Callable[..., Tensor]]): The parameters initializer.
         activation (Optional[ModuleType]): The activation function for each layer.
-        device (Optional[Union[str, int, torch.device]]): The calculating device.
+        use_distributed_training (bool): Whether to use multi-GPU for distributed training.
     """
     def __init__(self,
                  action_space: Discrete,
@@ -110,8 +123,8 @@ class PPGActorCritic(Module):
                  critic_hidden_size: Sequence[int] = None,
                  normalize: Optional[ModuleType] = None,
                  initialize: Optional[Callable[..., Tensor]] = None,
-                 activation: Optional[ModuleType] = None
-                 ):
+                 activation: Optional[ModuleType] = None,
+                 use_distributed_training: bool = False):
         super(PPGActorCritic, self).__init__()
         self.action_dim = action_space.n
         self.actor_representation = representation
@@ -142,10 +155,10 @@ class PPGActorCritic(Module):
         policy_outputs = self.actor_representation(observation)
         critic_outputs = self.critic_representation(observation)
         aux_critic_outputs = self.aux_critic_representation(observation)
-        a_dist = self.actor(policy_outputs['state'])
-        value = self.critic(critic_outputs['state'])[:, 0]
-        aux_value = self.aux_critic(aux_critic_outputs['state'])[:, 0]
-        return policy_outputs, a_dist, value, aux_value
+        a_dist = self.actor(policy_outputs)
+        value = self.critic(critic_outputs)
+        aux_value = self.aux_critic(aux_critic_outputs)
+        return policy_outputs, a_dist, value[:, 0], aux_value[:, 0]
 
 
 class SACDISPolicy(Module):
@@ -160,6 +173,7 @@ class SACDISPolicy(Module):
         normalize (Optional[ModuleType]): The layer normalization over a minibatch of inputs.
         initialize (Optional[Callable[..., Tensor]]): The parameters initializer.
         activation (Optional[ModuleType]): The activation function for each layer.
+        use_distributed_training (bool): Whether to use multi-GPU for distributed training.
     """
     def __init__(self,
                  action_space: Discrete,
@@ -168,7 +182,8 @@ class SACDISPolicy(Module):
                  critic_hidden_size: Sequence[int],
                  normalize: Optional[ModuleType] = None,
                  initialize: Optional[Callable[..., Tensor]] = None,
-                 activation: Optional[ModuleType] = None):
+                 activation: Optional[ModuleType] = None,
+                 use_distributed_training: bool = False):
         super(SACDISPolicy, self).__init__()
         self.action_dim = action_space.n
         self.representation_info_shape = representation.output_shapes
@@ -204,7 +219,7 @@ class SACDISPolicy(Module):
             act_sample: The sampled actions from the distribution output by the actor.
         """
         outputs = self.actor_representation(observation)
-        act_dist = self.actor(outputs['state'])
+        act_dist = self.actor(outputs)
         act_samples = act_dist.stochastic_sample()
         return outputs, act_samples
 
@@ -225,14 +240,14 @@ class SACDISPolicy(Module):
         outputs_critic_1 = self.critic_1_representation(observation)
         outputs_critic_2 = self.critic_2_representation(observation)
 
-        act_dist = self.actor(outputs_actor['state'])
+        act_dist = self.actor(outputs_actor)
         act_prob = act_dist.probs
         z = act_prob == 0.0
         z = z.float() * 1e-8
         log_action_prob = ops.log(act_prob + z)
 
-        q_1 = self.critic_1(outputs_critic_1['state'])
-        q_2 = self.critic_2(outputs_critic_2['state'])
+        q_1 = self.critic_1(outputs_critic_1)
+        q_2 = self.critic_2(outputs_critic_2)
         return act_prob, log_action_prob, q_1, q_2
 
     def Qtarget(self, observation: Union[Tensor, dict]):
@@ -251,14 +266,14 @@ class SACDISPolicy(Module):
         outputs_critic_1 = self.target_critic_1_representation(observation)
         outputs_critic_2 = self.target_critic_2_representation(observation)
 
-        new_act_dist = self.actor(outputs_actor['state'])
+        new_act_dist = self.actor(outputs_actor)
         new_act_prob = new_act_dist.probs
         z = new_act_prob == 0.0
         z = z.float() * 1e-8  # avoid log(0)
         log_action_prob = ops.log(new_act_prob + z)
 
-        target_q_1 = self.target_critic_1(outputs_critic_1['state'])
-        target_q_2 = self.target_critic_2(outputs_critic_2['state'])
+        target_q_1 = self.target_critic_1(outputs_critic_1)
+        target_q_2 = self.target_critic_2(outputs_critic_2)
         target_q = ops.minimum(target_q_1, target_q_2)
         return new_act_prob, log_action_prob, target_q
 
@@ -275,8 +290,8 @@ class SACDISPolicy(Module):
         """
         outputs_critic_1 = self.critic_1_representation(observation)
         outputs_critic_2 = self.critic_2_representation(observation)
-        q_1 = self.critic_1(outputs_critic_1['state'])
-        q_2 = self.critic_2(outputs_critic_2['state'])
+        q_1 = self.critic_1(outputs_critic_1)
+        q_2 = self.critic_2(outputs_critic_2)
         return q_1, q_2
 
     def soft_update(self, tau=0.005):

@@ -17,7 +17,6 @@ class A2C_Learner(Learner):
         self.scheduler = optim.lr_scheduler.LinearLR(self.optimizer, start_factor=1.0, end_factor=self.end_factor_lr_decay,
                                                      total_iters=self.config.running_steps)
         self.mse_loss = nn.MSELoss()
-        self._mean = ms.ops.ReduceMean(keep_dims=True)
         self.vf_coef = config.vf_coef
         self.ent_coef = config.ent_coef
         # Get gradient function
@@ -27,9 +26,9 @@ class A2C_Learner(Learner):
     def forward_fn(self, obs_batch, act_batch, adv_batch, ret_batch):
         _, a_dist, v_pred = self.policy(obs_batch)
         log_prob = a_dist.log_prob(act_batch)
-        loss_a = -self._mean(adv_batch * log_prob)
+        loss_a = -ops.mean(adv_batch * log_prob)
         loss_c = self.mse_loss(logits=v_pred, labels=ret_batch)
-        loss_e = self._mean(a_dist.entropy())
+        loss_e = ops.mean(a_dist.entropy())
         loss = loss_a - self.ent_coef * loss_e + self.vf_coef * loss_c
 
         return loss, loss_a, loss_e, loss_c, v_pred
