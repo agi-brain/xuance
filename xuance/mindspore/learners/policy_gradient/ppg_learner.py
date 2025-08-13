@@ -6,7 +6,7 @@ Implementation: MindSpore
 from xuance.mindspore import ms, Module, Tensor, optim
 from xuance.mindspore.learners import Learner
 from argparse import Namespace
-from xuance.mindspore.utils.operations import merge_distributions
+from xuance.mindspore.utils import merge_distributions
 from mindspore.nn import MSELoss
 
 

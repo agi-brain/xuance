@@ -30,7 +30,9 @@ class ActorPolicy(Module):
                  activation: Optional[ModuleType] = None,
                  use_distributed_training: bool = False):
         super(ActorPolicy, self).__init__()
+        self.is_continuous = False
         self.action_dim = action_space.n
+
         self.representation = representation
         self.representation_info_shape = self.representation.output_shapes
         self.actor = ActorNet(representation.output_shapes['state'][0], self.action_dim, actor_hidden_size,
@@ -45,11 +47,11 @@ class ActorPolicy(Module):
 
         Returns:
             outputs: The outputs of representation.
-            a_dist: The distribution of actions output by actor.
+            logits: The categorical logits for the actor distribution.
         """
         outputs = self.representation(observation)
-        a = self.actor(outputs)
-        return outputs, a, None
+        logits = self.actor(outputs)
+        return outputs, logits, None
     
     
 class ActorCriticPolicy(Module):
@@ -76,7 +78,9 @@ class ActorCriticPolicy(Module):
                  activation: Optional[ModuleType] = None,
                  use_distributed_training: bool = False):
         super(ActorCriticPolicy, self).__init__()
+        self.is_continuous = False
         self.action_dim = action_space.n
+
         self.representation = representation
         self.representation_info_shape = self.representation.output_shapes
         self.actor = ActorNet(representation.output_shapes['state'][0], self.action_dim, actor_hidden_size,
@@ -93,13 +97,13 @@ class ActorCriticPolicy(Module):
 
         Returns:
             outputs: The outputs of representation.
-            a_dist: The distribution of actions output by actor.
+            logits: The categorical logits for the actor distribution.
             value: The state values output by critic.
         """
         outputs = self.representation(observation)
-        a_dist = self.actor(outputs)
+        logits = self.actor(outputs)
         value = self.critic(outputs)[:, 0]
-        return outputs, a_dist, value
+        return outputs, logits, value
 
 
 class PPGActorCritic(Module):
@@ -126,7 +130,9 @@ class PPGActorCritic(Module):
                  activation: Optional[ModuleType] = None,
                  use_distributed_training: bool = False):
         super(PPGActorCritic, self).__init__()
+        self.is_continuous = False
         self.action_dim = action_space.n
+
         self.actor_representation = representation
         self.critic_representation = deepcopy(representation)
         self.aux_critic_representation = deepcopy(representation)
@@ -148,17 +154,17 @@ class PPGActorCritic(Module):
 
         Returns:
             policy_outputs: The outputs of actor representation.
-            a_dist: The distribution of actions output by actor.
+            a_logits: The categorical logits for the actor distribution.
             value: The state values output by critic.
             aux_value: The auxiliary values output by aux_critic.
         """
         policy_outputs = self.actor_representation(observation)
         critic_outputs = self.critic_representation(observation)
         aux_critic_outputs = self.aux_critic_representation(observation)
-        a_dist = self.actor(policy_outputs)
-        value = self.critic(critic_outputs)
-        aux_value = self.aux_critic(aux_critic_outputs)
-        return policy_outputs, a_dist, value[:, 0], aux_value[:, 0]
+        a_logits = self.actor(policy_outputs)
+        value = self.critic(critic_outputs)[:, 0]
+        aux_value = self.aux_critic(aux_critic_outputs)[:, 0]
+        return policy_outputs, a_logits, value, aux_value
 
 
 class SACDISPolicy(Module):
@@ -185,6 +191,8 @@ class SACDISPolicy(Module):
                  activation: Optional[ModuleType] = None,
                  use_distributed_training: bool = False):
         super(SACDISPolicy, self).__init__()
+        self.is_continuous = False
+        self.action_space = action_space
         self.action_dim = action_space.n
         self.representation_info_shape = representation.output_shapes
 
@@ -216,12 +224,11 @@ class SACDISPolicy(Module):
 
         Returns:
             outputs: The outputs of the actor representation.
-            act_sample: The sampled actions from the distribution output by the actor.
+            logits: The distribution of actions output by actor.
         """
         outputs = self.actor_representation(observation)
-        act_dist = self.actor(outputs)
-        act_samples = act_dist.stochastic_sample()
-        return outputs, act_samples
+        logits = self.actor(outputs)
+        return outputs, logits
 
     def Qpolicy(self, observation: Union[Tensor, dict]):
         """

@@ -129,6 +129,7 @@ class ActorCriticPolicy(Module):
         Returns:
             outputs: The outputs of representation.
             a_mean: The mean variable of the gaussian distribution.
+            a_std: The standard deviation of the gaussian distribution.
             value: The state values output by critic.
         """
         outputs = self.representation(observation)

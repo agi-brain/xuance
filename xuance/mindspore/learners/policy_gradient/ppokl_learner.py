@@ -5,8 +5,7 @@ Implementation: MindSpore
 """
 from xuance.mindspore import ms, Module, Tensor, optim
 from xuance.mindspore.learners import Learner
-from xuance.mindspore.utils import clip_grads
-from xuance.mindspore.utils.operations import merge_distributions
+from xuance.mindspore.utils import clip_grads, merge_distributions
 from argparse import Namespace
 from mindspore.nn import MSELoss
 

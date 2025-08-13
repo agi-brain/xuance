@@ -76,9 +76,15 @@ class OnPolicyAgent(Agent):
             dists: The policy distributions.
             log_pi: Log of stochastic actions.
         """
-        _, policy_dists, values = self.policy(Tensor(observations))
+        if self.policy.is_continuous:
+            _, mu, std, values = self.policy(Tensor(observations))
+            policy_dists = self.policy.actor.distribution(mu=mu, std=std)
+        else:
+            _, logits, values = self.policy(Tensor(observations))
+            policy_dists = self.policy.actor.distribution(logits=logits)
         actions = policy_dists.stochastic_sample()
         log_pi = policy_dists.log_prob(actions).asnumpy() if return_logpi else None
+
         dists = split_distributions(policy_dists) if return_dists else None
         actions = actions.asnumpy()
         if values is None:

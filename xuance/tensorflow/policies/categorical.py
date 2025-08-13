@@ -59,7 +59,7 @@ class ActorPolicy(Module):
 
         Returns:
             outputs: The outputs of representation.
-            a_dist: The distribution of actions output by actor.
+            logits: The categorical logits for the actor distribution.
         """
         outputs = self.representation(observation)
         logits = self.actor(outputs['state'])
@@ -123,7 +123,7 @@ class ActorCriticPolicy(Module):
 
         Returns:
             outputs: The outputs of representation.
-            a_dist: The distribution of actions output by actor.
+            logits: The categorical logits for the actor distribution.
             value: The state values output by critic.
         """
         outputs = self.representation(observation)
@@ -201,7 +201,7 @@ class PPGActorCritic(Module):
 
         Returns:
             policy_outputs: The outputs of actor representation.
-            a_dist: The distribution of actions output by actor.
+            a_logits: The distribution of actions output by actor.
             value: The state values output by critic.
             aux_value: The auxiliary values output by aux_critic.
         """
