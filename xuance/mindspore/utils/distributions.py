@@ -7,11 +7,11 @@ from xuance.mindspore import ms, ops, Tensor
 def split_distributions(distribution):
     return_list = []
     if isinstance(distribution, CategoricalDistribution):
-        shape = distribution.probs.shape
-        probs = distribution.probs.view(-1, shape[-1])
-        for prob in probs:
-            dist = CategoricalDistribution(probs.shape[-1])
-            dist.set_param(prob.unsqueeze(0))
+        shape = distribution.logits.shape
+        logits = distribution.logits.view(-1, shape[-1])
+        for logit in logits:
+            dist = CategoricalDistribution(logit.shape[-1])
+            dist.set_param(logits=ops.stop_gradient(logit.unsqueeze(0)))
             return_list.append(dist)
     elif isinstance(distribution, DiagGaussianDistribution):
         shape = distribution.mu.shape
@@ -28,10 +28,10 @@ def split_distributions(distribution):
 
 def merge_distributions(distribution_list):
     if isinstance(distribution_list[0], CategoricalDistribution):
-        probs = ms.ops.concat([dist.probs for dist in distribution_list], 0)
-        action_dim = probs.shape[-1]
+        logits = ops.concat([dist.logits for dist in distribution_list], 0)
+        action_dim = logits.shape[-1]
         dist = CategoricalDistribution(action_dim)
-        dist.set_param(probs)
+        dist.set_param(logits=ops.stop_gradient(logits))
         return dist
     elif isinstance(distribution_list[0], DiagGaussianDistribution):
         shape = distribution_list.shape
@@ -87,13 +87,14 @@ class CategoricalDistribution(Distribution):
     def set_param(self, probs=None, logits=None):
         if probs is not None:
             self.distribution = Categorical(probs=probs)
-            self.probs = probs
+            logits = ops.log(probs) - ops.log1p(-probs)
         elif logits is not None:
             probs = ops.softmax(logits, axis=-1)
             self.distribution = Categorical(probs=probs)
-            self.logits = logits
         else:
             raise RuntimeError("Failed to setup distributions without given probs or logits.")
+        self.probs = probs
+        self.logits = logits
 
     def get_param(self):
         return self.logits

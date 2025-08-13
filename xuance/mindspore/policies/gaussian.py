@@ -36,6 +36,7 @@ class ActorPolicy(Module):
         self.is_continuous = True
         self.action_dim = action_space.shape[0]
 
+        self.representation = representation
         self.representation_info_shape = self.representation.output_shapes
         self.actor = ActorNet(representation.output_shapes['state'][0], self.action_dim, actor_hidden_size,
                               normalize, initialize, activation, activation_action)
@@ -163,16 +164,17 @@ class PPGActorCritic(Module):
 
         Returns:
             policy_outputs: The outputs of actor representation.
-            a_dist: The distribution of actions output by actor.
+            a_mean: The mean variable of the gaussian distribution.
+            a_std: The standard deviation of the gaussian distribution.
             value: The state values output by critic.
             aux_value: The auxiliary values output by aux_critic.
         """
         policy_outputs = self.actor_representation(observation)
         critic_outputs = self.critic_representation(observation)
-        a_dist = self.actor(policy_outputs['state'])
-        value = self.critic(critic_outputs['state'])[:, 0]
-        aux_value = self.aux_critic(policy_outputs['state'])[:, 0]
-        return policy_outputs, a_dist, value, aux_value
+        a_mean, a_std = self.actor(policy_outputs)
+        value = self.critic(critic_outputs)[:, 0]
+        aux_value = self.aux_critic(policy_outputs)[:, 0]
+        return policy_outputs, a_mean, a_std, value, aux_value
 
 
 class SACPolicy(Module):
@@ -238,7 +240,7 @@ class SACPolicy(Module):
             act_sample: The sampled actions from the distribution output by the actor.
         """
         outputs = self.actor_representation(observation)
-        act_dist = self.actor(outputs['state'])
+        act_dist = self.actor(outputs)
         act_sample = act_dist.activated_rsample()
         return outputs, act_sample
 
@@ -258,11 +260,11 @@ class SACPolicy(Module):
         outputs_critic_1 = self.critic_1_representation(observation)
         outputs_critic_2 = self.critic_2_representation(observation)
 
-        act_dist = self.actor(outputs_actor['state'])
+        act_dist = self.actor(outputs_actor)
         act_sample, log_action_prob = act_dist.activated_rsample_and_logprob()
 
-        q_1 = self.critic_1(ops.cat([outputs_critic_1['state'], act_sample], axis=-1))
-        q_2 = self.critic_2(ops.cat([outputs_critic_2['state'], act_sample], axis=-1))
+        q_1 = self.critic_1(ops.cat([outputs_critic_1, act_sample], axis=-1))
+        q_2 = self.critic_2(ops.cat([outputs_critic_2, act_sample], axis=-1))
         return log_action_prob, q_1, q_2
 
     def Qtarget(self, observation: Union[Tensor, dict]):
@@ -280,11 +282,11 @@ class SACPolicy(Module):
         outputs_critic_1 = self.target_critic_1_representation(observation)
         outputs_critic_2 = self.target_critic_2_representation(observation)
 
-        new_act_dist = self.actor(outputs_actor['state'])
+        new_act_dist = self.actor(outputs_actor)
         new_act_sample, log_action_prob = new_act_dist.activated_rsample_and_logprob()
 
-        target_q_1 = self.target_critic_1(ops.cat([outputs_critic_1['state'], new_act_sample], axis=-1))
-        target_q_2 = self.target_critic_2(ops.cat([outputs_critic_2['state'], new_act_sample], axis=-1))
+        target_q_1 = self.target_critic_1(ops.cat([outputs_critic_1, new_act_sample], axis=-1))
+        target_q_2 = self.target_critic_2(ops.cat([outputs_critic_2, new_act_sample], axis=-1))
         target_q = ops.minimum(target_q_1, target_q_2)
         return log_action_prob, target_q
 
@@ -302,8 +304,8 @@ class SACPolicy(Module):
         """
         outputs_critic_1 = self.critic_1_representation(observation)
         outputs_critic_2 = self.critic_2_representation(observation)
-        q_1 = self.critic_1(ops.cat([outputs_critic_1['state'], action], axis=-1))
-        q_2 = self.critic_2(ops.cat([outputs_critic_2['state'], action], axis=-1))
+        q_1 = self.critic_1(ops.cat([outputs_critic_1, action], axis=-1))
+        q_2 = self.critic_2(ops.cat([outputs_critic_2, action], axis=-1))
         return q_1, q_2
 
     def soft_update(self, tau=0.005):

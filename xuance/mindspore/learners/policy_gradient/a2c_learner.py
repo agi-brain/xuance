@@ -16,10 +16,10 @@ class A2C_Learner(Learner):
         self.optimizer = optim.Adam(params=self.policy.trainable_params(), lr=self.config.learning_rate, eps=1e-5)
         self.scheduler = optim.lr_scheduler.LinearLR(self.optimizer, start_factor=1.0, end_factor=self.end_factor_lr_decay,
                                                      total_iters=self.config.running_steps)
-        self.mse_loss = nn.MSELoss()
-        self.softmax = nn.Softmax(axis=-1)
         self.vf_coef = config.vf_coef
         self.ent_coef = config.ent_coef
+        self.mse_loss = nn.MSELoss()
+        self.softmax = nn.Softmax(axis=-1)
         self.is_continuous = self.policy.is_continuous
         self.a_dist = msd.Normal(dtype=ms.float32) if self.is_continuous else msd.Categorical()
         # Get gradient function

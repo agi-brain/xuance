@@ -4,7 +4,7 @@ from copy import deepcopy
 from argparse import Namespace
 from xuance.common import Union
 from xuance.environment import DummyVecEnv, SubprocVecEnv
-from xuance.mindspore import Module
+from xuance.mindspore import Module, Tensor
 from xuance.mindspore.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions
 from xuance.mindspore.policies import REGISTRY_Policy
 from xuance.mindspore.agents import OnPolicyAgent
@@ -76,7 +76,13 @@ class PPG_Agent(OnPolicyAgent):
             dists: The policy distributions.
             log_pi: Log of stochastic actions.
         """
-        _, policy_dists, values, _ = self.policy(observations)
+        if self.policy.is_continuous:
+            _, mu, std, values, _ = self.policy(Tensor(observations))
+            policy_dists = self.policy.actor.distribution(mu=mu, std=std)
+        else:
+            _, logits, values, _ = self.policy(Tensor(observations))
+            policy_dists = self.policy.actor.distribution(logits=logits)
+
         actions = policy_dists.stochastic_sample()
         log_pi = policy_dists.log_prob(actions) if return_logpi else None
         dists = split_distributions(policy_dists) if return_dists else None
