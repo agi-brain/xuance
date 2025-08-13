@@ -1,6 +1,5 @@
 import random
 import numpy as np
-from .distributions import CategoricalDistribution, DiagGaussianDistribution
 from xuance.tensorflow import tf, tk, Module, Tensor
 
 
@@ -44,59 +43,6 @@ def assign_from_flat_params(flat_params: Tensor, model: Module) -> Module:
         param.data.copy_(flat_params[prev_ind:prev_ind + flat_size].view(param.size()))
         prev_ind += flat_size
     return model
-
-
-def split_distributions(distribution):
-    return_list = []
-    if isinstance(distribution, CategoricalDistribution):
-        shape = distribution.logits.shape
-        logits = tf.reshape(distribution.logits, [-1, shape[-1]])
-        for logit in logits:
-            dist = CategoricalDistribution(logits.shape[-1])
-            dist.set_param(logits=tf.stop_gradient(tf.expand_dims(logit, 0)))
-            return_list.append(dist)
-    elif isinstance(distribution, DiagGaussianDistribution):
-        shape = distribution.mu.shape
-        means = tf.reshape(distribution.mu, [-1, shape[-1]])
-        std = distribution.std
-        for mu in means:
-            dist = DiagGaussianDistribution(shape[-1])
-            dist.set_param(mu, std)
-            return_list.append(dist)
-    else:
-        raise NotImplementedError
-    return np.array(return_list).reshape(shape[:-1])
-
-
-def merge_distributions(distribution_list):
-    if isinstance(distribution_list[0], CategoricalDistribution):
-        logits = tf.concat([dist.logits for dist in distribution_list], axis=0)
-        action_dim = logits.shape[-1]
-        dist = CategoricalDistribution(action_dim)
-        dist.set_param(logits=tf.stop_gradient(logits))
-        return dist
-    elif isinstance(distribution_list[0], DiagGaussianDistribution):
-        shape = distribution_list.shape
-        distribution_list = distribution_list.reshape([-1])
-        mu = tf.concat([dist.mu for dist in distribution_list], axis=0)
-        std = tf.concat([dist.std for dist in distribution_list], axis=0)
-        action_dim = distribution_list[0].mu.shape[-1]
-        dist = DiagGaussianDistribution(action_dim)
-        mu = tf.reshape(mu, shape + (action_dim,))
-        std = tf.reshape(std, shape + (action_dim,))
-        dist.set_param(mu=mu, std=std)
-        return dist
-    elif isinstance(distribution_list[0, 0], CategoricalDistribution):
-        shape = distribution_list.shape
-        distribution_list = distribution_list.reshape([-1])
-        logits = tf.concat([dist.logits for dist in distribution_list], axis=0)
-        action_dim = logits.shape[-1]
-        dist = CategoricalDistribution(action_dim)
-        logits = tf.reshape(logits, shape + (action_dim, ))
-        dist.set_param(tf.stop_gradient(logits))
-        return dist
-    else:
-        pass
 
 
 class MyLinearLR(tk.optimizers.schedules.LearningRateSchedule):

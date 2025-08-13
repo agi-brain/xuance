@@ -48,52 +48,6 @@ def assign_from_flat_params(flat_params: ms.Tensor, model: nn.Cell) -> nn.Cell:
     return model
 
 
-def split_distributions(distribution):
-    _unsqueeze = ExpandDims()
-    return_list = []
-    if isinstance(distribution, CategoricalDistribution):
-        shape = distribution.probs.shape
-        probs = distribution.probs.view(-1,shape[-1])
-        for prob in probs:
-            dist = CategoricalDistribution(probs.shape[-1])
-            dist.set_param(_unsqueeze(prob, 0))
-            return_list.append(dist)
-    elif isinstance(distribution, DiagGaussianDistribution):
-        shape = distribution.mu.shape
-        means = distribution.mu.view(-1, shape[-1])
-        std = distribution.std
-        for mu in means:
-            dist = DiagGaussianDistribution(shape[-1])
-            dist.set_param(mu, std)
-            return_list.append(dist)
-    else:
-        raise NotImplementedError
-    return np.array(return_list).reshape(shape[:-1])
-
-
-def merge_distributions(distribution_list):
-    cat = Concat(axis=0)
-    if isinstance(distribution_list[0], CategoricalDistribution):
-        probs = ms.ops.concat([dist.probs for dist in distribution_list], 0)
-        action_dim = probs.shape[-1]
-        dist = CategoricalDistribution(action_dim)
-        dist.set_param(probs)
-        return dist
-    elif isinstance(distribution_list[0], DiagGaussianDistribution):
-        shape = distribution_list.shape
-        distribution_list = distribution_list.reshape([-1])
-        mu = cat([dist.mu for dist in distribution_list])
-        std = cat([dist.std for dist in distribution_list])
-        action_dim = distribution_list[0].mu.shape[-1]
-        dist = DiagGaussianDistribution(action_dim)
-        mu = mu.view(shape + (action_dim,))
-        std = std.view(shape + (action_dim,))
-        dist.set_param(mu, std)
-        return dist
-    else:
-        raise NotImplementedError
-
-
 def clip_grads(grads, low, high):
     new_grads = ()
     for grad in grads:

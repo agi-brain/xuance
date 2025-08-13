@@ -1,8 +1,8 @@
 from .layers import tk, ModuleType, mlp_block, cnn_block, pooling_block, gru_block, lstm_block
-from .distributions import Distribution, CategoricalDistribution, DiagGaussianDistribution, \
-    ActivatedDiagGaussianDistribution
-from .operations import update_linear_decay, set_seed, get_flat_params, assign_from_flat_params, assign_from_flat_grads, \
-    merge_distributions, split_distributions
+from .distributions import (merge_distributions, split_distributions,
+                            Distribution, CategoricalDistribution,
+                            DiagGaussianDistribution, ActivatedDiagGaussianDistribution)
+from .operations import update_linear_decay, set_seed, get_flat_params, assign_from_flat_params, assign_from_flat_grads
 from .value_norm import ValueNorm
 
 ActivationFunctions = {
