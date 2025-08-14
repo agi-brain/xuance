@@ -96,7 +96,7 @@ class PPG_Learner(Learner):
         if self.is_continuous:
             act_batch = Tensor(samples['actions'], dtype=ms.float32)
         else:
-            act_batch = Tensor(samples['actions'][:, None], dtype=ms.int32)
+            act_batch = Tensor(samples['actions'], dtype=ms.int32)
         old_dist = merge_distributions(samples['aux_batch']['old_dist'])
         old_log_prob_batch = ops.stop_gradient(old_dist.log_prob(act_batch))
 
