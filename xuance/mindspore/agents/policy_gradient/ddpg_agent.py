@@ -2,7 +2,7 @@ import numpy as np
 from argparse import Namespace
 from xuance.common import Optional, Union
 from xuance.environment import DummyVecEnv, SubprocVecEnv
-from xuance.mindspore import Module
+from xuance.mindspore import Module, Tensor
 from xuance.mindspore.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions
 from xuance.mindspore.policies import REGISTRY_Policy
 from xuance.mindspore.agents import OffPolicyAgent
@@ -59,7 +59,7 @@ class DDPG_Agent(OffPolicyAgent):
         Returns:
             actions: The actions to be executed.
         """
-        _, actions_output = self.policy(observations)
+        _, actions_output = self.policy(Tensor(observations))
         if test_mode:
             actions = actions_output.numpy()
         else:

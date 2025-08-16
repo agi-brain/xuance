@@ -387,29 +387,29 @@ class DDPGPolicy(Module):
             act: The actions calculated by the actor.
         """
         outputs = self.actor_representation(observation)
-        act = self.actor(outputs['state'])
+        act = self.actor(outputs)
         return outputs, act
 
     def Qtarget(self, observation: Union[np.ndarray, dict]):
         """Returns the evaluated Q-values via target networks."""
         outputs_actor = self.target_actor_representation(observation)
         outputs_critic = self.target_critic_representation(observation)
-        act = self.target_actor(outputs_actor['state'])
-        q_ = self.target_critic(ops.concat([outputs_critic['state'], act], axis=-1))
+        act = self.target_actor(outputs_actor)
+        q_ = self.target_critic(ops.concat([outputs_critic, act], axis=-1))
         return q_
 
     def Qaction(self, observation: Union[np.ndarray, dict], action: Tensor):
         """Returns the evaluated Q-values of state-action pairs."""
         outputs = self.critic_representation(observation)
-        q = self.critic(ops.concat([outputs['state'], action], axis=-1))
+        q = self.critic(ops.concat([outputs, action], axis=-1))
         return q
 
     def Qpolicy(self, observation: Union[np.ndarray, dict]):
         """Returns the evaluated Q-values by calculating actions via actor networks."""
         outputs_actor = self.actor_representation(observation)
-        act = self.actor(outputs_actor['state'])
+        act = self.actor(outputs_actor)
         outputs_critic = self.critic_representation(observation)
-        q_eval = self.critic(ops.concat([outputs_critic['state'], act], axis=-1))
+        q_eval = self.critic(ops.concat([outputs_critic, act], axis=-1))
         return q_eval
 
     def soft_update(self, tau=0.005):
@@ -488,7 +488,7 @@ class TD3Policy(Module):
             act: The actions calculated by the actor.
         """
         outputs = self.actor_representation(observation)
-        act = self.actor(outputs['state'])
+        act = self.actor(outputs)
         return outputs, act
 
     def Qtarget(self, observation: Union[Tensor, dict]):
@@ -496,12 +496,12 @@ class TD3Policy(Module):
         outputs_actor = self.target_actor_representation(observation)
         outputs_critic_A = self.target_critic_A_representation(observation)
         outputs_critic_B = self.target_critic_B_representation(observation)
-        act = self.target_actor(outputs_actor['state'])
+        act = self.target_actor(outputs_actor)
         noise = (ops.randn_like(act) * 0.2).clamp(-0.5, 0.5)
         act = (act + noise).clamp(-1, 1)
 
-        qa = self.target_critic_A(ops.concat([outputs_critic_A['state'], act], axis=-1))
-        qb = self.target_critic_B(ops.concat([outputs_critic_B['state'], act], axis=-1))
+        qa = self.target_critic_A(ops.concat([outputs_critic_A, act], axis=-1))
+        qb = self.target_critic_B(ops.concat([outputs_critic_B, act], axis=-1))
         min_q = ops.minimum(qa, qb)
         return min_q
 
@@ -509,8 +509,8 @@ class TD3Policy(Module):
         """Returns the evaluated Q-values of state-action pairs."""
         outputs_critic_A = self.critic_A_representation(observation)
         outputs_critic_B = self.critic_B_representation(observation)
-        q_eval_a = self.critic_A(ops.concat([outputs_critic_A['state'], action], axis=-1))
-        q_eval_b = self.critic_B(ops.concat([outputs_critic_B['state'], action], axis=-1))
+        q_eval_a = self.critic_A(ops.concat([outputs_critic_A, action], axis=-1))
+        q_eval_b = self.critic_B(ops.concat([outputs_critic_B, action], axis=-1))
         return q_eval_a, q_eval_b
 
     def Qpolicy(self, observation: Union[Tensor, dict]):
@@ -518,9 +518,9 @@ class TD3Policy(Module):
         outputs_actor = self.actor_representation(observation)
         outputs_critic_A = self.critic_A_representation(observation)
         outputs_critic_B = self.critic_B_representation(observation)
-        act = self.actor(outputs_actor['state'])
-        q_eval_a = self.critic_A(ops.concat([outputs_critic_A['state'], act], axis=-1)).unsqueeze(dim=1)
-        q_eval_b = self.critic_B(ops.concat([outputs_critic_B['state'], act], axis=-1)).unsqueeze(dim=1)
+        act = self.actor(outputs_actor)
+        q_eval_a = self.critic_A(ops.concat([outputs_critic_A, act], axis=-1)).unsqueeze(dim=1)
+        q_eval_b = self.critic_B(ops.concat([outputs_critic_B, act], axis=-1)).unsqueeze(dim=1)
         return (q_eval_a + q_eval_b) / 2.0
 
     def soft_update(self, tau=0.005):
