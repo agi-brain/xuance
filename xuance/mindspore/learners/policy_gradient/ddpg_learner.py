@@ -42,8 +42,10 @@ class DDPG_Learner(Learner):
 
     def forward_fn_critic(self, obs_batch, act_batch, next_batch, rew_batch, ter_batch):
         target_q = self.policy.Qtarget(next_batch)
+        target_q = target_q.squeeze(-1)
         backup = rew_batch + (1 - ter_batch) * self.gamma * target_q
         action_q = self.policy.Qaction(obs_batch, act_batch)
+        action_q = action_q.squeeze(-1)
         loss_q = self.mse_loss(logits=action_q, labels=ops.stop_gradient(backup))
         return loss_q, action_q
 
