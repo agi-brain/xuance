@@ -97,8 +97,8 @@ class PPG_Learner(Learner):
             act_batch = Tensor(samples['actions'], dtype=ms.float32)
         else:
             act_batch = Tensor(samples['actions'], dtype=ms.int32)
-        old_dist = merge_distributions(samples['aux_batch']['old_dist'])
-        old_log_prob_batch = ops.stop_gradient(old_dist.log_prob(act_batch))
+        old_dists = merge_distributions(samples['aux_batch']['old_dist'])
+        old_log_prob_batch = ops.stop_gradient(old_dists.log_prob(act_batch))
 
         (loss, a_loss, e_loss, ratio), grads = self.grad_fn_policy(obs_batch, act_batch, adv_batch, old_log_prob_batch)
         self.optimizer(grads)

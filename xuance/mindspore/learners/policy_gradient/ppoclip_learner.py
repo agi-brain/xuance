@@ -61,8 +61,8 @@ class PPOCLIP_Learner(Learner):
         else:
             act_batch = Tensor(samples['actions'], dtype=ms.int32)
 
-        (loss, a_loss, c_loss, e_loss, v_pred, ratio), grads = self.grad_fn(obs_batch, act_batch, old_log_prob_batch,
-                                                                            adv_batch, ret_batch)
+        (loss, a_loss, c_loss, e_loss, v_pred, ratio), grads = self.grad_fn(obs_batch, act_batch, ret_batch,
+                                                                            adv_batch, old_log_prob_batch)
         if self.use_grad_clip:
             grads = ops.clip_by_norm(grads, self.grad_clip_norm)
         self.optimizer(grads)

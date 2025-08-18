@@ -82,15 +82,14 @@ class CategoricalDistribution(Distribution):
     def __init__(self, action_dim: int):
         super(CategoricalDistribution, self).__init__()
         self.action_dim = action_dim
+        self.distribution = Categorical()
         self.probs, self.logits = None, None
 
     def set_param(self, probs=None, logits=None):
         if probs is not None:
-            self.distribution = Categorical(probs=probs)
             logits = ops.log(probs) - ops.log1p(-probs)
         elif logits is not None:
             probs = ops.softmax(logits, axis=-1)
-            self.distribution = Categorical(probs=probs)
         else:
             raise RuntimeError("Failed to setup distributions without given probs or logits.")
         self.probs = probs
@@ -100,13 +99,13 @@ class CategoricalDistribution(Distribution):
         return self.logits
 
     def log_prob(self, x):
-        return self.distribution.log_prob(value=Tensor(x))
+        return self.distribution.log_prob(value=Tensor(x), probs=self.probs)
 
     def entropy(self):
-        return self.distribution.entropy()
+        return self.distribution.entropy(probs=self.probs)
 
     def stochastic_sample(self):
-        return self.distribution.sample()
+        return self.distribution.sample(probs=self.probs)
 
     def deterministic_sample(self):
         return self.argmax(self.distribution.probs)
@@ -132,10 +131,10 @@ class DiagGaussianDistribution(Distribution):
         return self.mu, self.std
 
     def log_prob(self, x: ms.Tensor):
-        return self.distribution.log_prob(value=Tensor(x)).sum(-1)
+        return self.distribution.log_prob(value=Tensor(x), mean=self.mu, sd=self.std).sum(-1)
 
     def entropy(self):
-        return self.distribution.entropy().sum(-1)
+        return self.distribution.entropy(mean=self.mu, sd=self.std).sum(-1)
 
     def stochastic_sample(self):
         return self.distribution.sample()
