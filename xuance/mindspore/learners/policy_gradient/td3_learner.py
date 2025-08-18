@@ -37,7 +37,7 @@ class TD3_Learner(Learner):
         self.policy.set_train()
 
     def forward_fn_actor(self, obs_batch):
-        policy_q = self.policy.Qpolicy(obs_batch)
+        policy_q = self.policy.Qpolicy(obs_batch).reshape([-1])
         loss_p = -ops.mean(policy_q)
         return loss_p, policy_q
 
