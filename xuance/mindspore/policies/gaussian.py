@@ -1,7 +1,7 @@
 from copy import deepcopy
 from gymnasium.spaces import Space
 from xuance.common import Sequence, Optional, Callable, Union
-from xuance.mindspore import Module, Tensor, ops
+from xuance.mindspore import Module, Tensor, ms, ops, msd
 from xuance.mindspore.utils import ModuleType
 from .core import GaussianActorNet as ActorNet
 from .core import CriticNet, GaussianActorNet_SAC
@@ -209,6 +209,8 @@ class SACPolicy(Module):
         self.action_dim = action_space.shape[0]
         self.representation_info_shape = representation.output_shapes
 
+        self.activation_action = activation_action()
+        self.p_dist = msd.Normal(dtype=ms.float32)
         self.actor_representation = representation
         self.actor = GaussianActorNet_SAC(representation.output_shapes['state'][0], self.action_dim, actor_hidden_size,
                                           normalize, initialize, activation, activation_action)
@@ -240,9 +242,11 @@ class SACPolicy(Module):
             act_sample: The sampled actions from the distribution output by the actor.
         """
         outputs = self.actor_representation(observation)
-        act_dist = self.actor(outputs)
-        act_sample = act_dist.activated_rsample()
-        return outputs, act_sample
+        a_mean, a_std = self.actor(outputs)
+        action_sampled = self.p_dist.sample(mean=a_mean, sd=a_std)
+        actions_activated = self.activation_action(action_sampled)
+        log_action_prob = self.p_dist.log_prob(value=actions_activated, mean=a_mean, sd=a_std)
+        return outputs, actions_activated, log_action_prob
 
     def Qpolicy(self, observation: Union[Tensor, dict]):
         """
@@ -260,8 +264,10 @@ class SACPolicy(Module):
         outputs_critic_1 = self.critic_1_representation(observation)
         outputs_critic_2 = self.critic_2_representation(observation)
 
-        act_dist = self.actor(outputs_actor)
-        act_sample, log_action_prob = act_dist.activated_rsample_and_logprob()
+        a_mean, a_std = self.actor(outputs_actor)
+        action_sampled = self.p_dist.sample(mean=a_mean, sd=a_std)
+        act_sample = self.activation_action(action_sampled)
+        log_action_prob = self.p_dist.log_prob(value=act_sample, mean=a_mean, sd=a_std)
 
         q_1 = self.critic_1(ops.cat([outputs_critic_1, act_sample], axis=-1))
         q_2 = self.critic_2(ops.cat([outputs_critic_2, act_sample], axis=-1))
@@ -282,8 +288,10 @@ class SACPolicy(Module):
         outputs_critic_1 = self.target_critic_1_representation(observation)
         outputs_critic_2 = self.target_critic_2_representation(observation)
 
-        new_act_dist = self.actor(outputs_actor)
-        new_act_sample, log_action_prob = new_act_dist.activated_rsample_and_logprob()
+        new_act_mean, new_act_std = self.actor(outputs_actor)
+        action_sampled = self.p_dist.sample(mean=new_act_mean, sd=new_act_std)
+        new_act_sample = self.activation_action(action_sampled)
+        log_action_prob = self.p_dist.log_prob(value=new_act_sample, mean=new_act_mean, sd=new_act_std)
 
         target_q_1 = self.target_critic_1(ops.cat([outputs_critic_1, new_act_sample], axis=-1))
         target_q_2 = self.target_critic_2(ops.cat([outputs_critic_2, new_act_sample], axis=-1))

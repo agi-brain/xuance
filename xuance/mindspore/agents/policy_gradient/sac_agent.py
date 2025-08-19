@@ -3,7 +3,7 @@ from argparse import Namespace
 from xuance.common import Optional
 from xuance.common import Union
 from xuance.environment import DummyVecEnv, SubprocVecEnv
-from xuance.mindspore import Module
+from xuance.mindspore import Module, Tensor
 from xuance.mindspore.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions
 from xuance.mindspore.policies import REGISTRY_Policy
 from xuance.mindspore.agents import OffPolicyAgent
@@ -25,7 +25,7 @@ class SAC_Agent(OffPolicyAgent):
 
         self.policy = self._build_policy()  # build policy
         self.memory = self._build_memory()  # build memory
-        self.learner = self._build_learner(self.config, self.policy, -np.prod(self.action_space.shape).item())
+        self.learner = self._build_learner(self.config, self.policy)
 
     def _build_policy(self) -> Module:
         normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None
@@ -66,6 +66,11 @@ class SAC_Agent(OffPolicyAgent):
             dists: The policy distributions.
             log_pi: Log of stochastic actions.
         """
-        _, actions_output = self.policy(observations)
-        actions = actions_output.numpy()
+        if self.policy.is_continuous:
+            _, act_sample, _ = self.policy(Tensor(observations))
+        else:
+            _, logits = self.policy(Tensor(observations))
+            policy_dists = self.policy.actor.distribution(logits=logits)
+            act_sample = policy_dists.stochastic_sample()
+        actions = act_sample.asnumpy()
         return {"actions": actions}

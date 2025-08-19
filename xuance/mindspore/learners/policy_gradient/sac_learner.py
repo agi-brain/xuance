@@ -3,19 +3,18 @@ Soft Actor-Critic with continuous action spaces (SAC)
 Paper link: http://proceedings.mlr.press/v80/haarnoja18b/haarnoja18b.pdf
 Implementation: MindSpore
 """
-from xuance.mindspore import ms, Module, Tensor, optim, ops
+import numpy as np
+from argparse import Namespace
+from mindspore import nn
+from xuance.mindspore import ms, ops, Module, Tensor, optim
 from xuance.mindspore.learners import Learner
 from xuance.mindspore.utils import clip_grads
-from xuance.common import Optional
-from argparse import Namespace
-from mindspore.nn import MSELoss
 
 
 class SAC_Learner(Learner):
     def __init__(self,
                  config: Namespace,
-                 policy: Module,
-                 target_entropy: Optional[float] = None):
+                 policy: Module):
         super(SAC_Learner, self).__init__(config, policy)
         self.optimizer = {
             'actor': optim.Adam(params=self.policy.actor_parameters, lr=self.config.learning_rate, eps=1e-5),
@@ -27,14 +26,14 @@ class SAC_Learner(Learner):
             'critic': optim.lr_scheduler.LinearLR(self.optimizer['critic'], start_factor=1.0, end_factor=self.end_factor_lr_decay,
                                                   total_iters=self.config.running_steps)
         }
-        self.mse_loss = MSELoss()
+        self.mse_loss = nn.MSELoss()
         self._ones = ops.Ones()
         self.tau = config.tau
         self.gamma = config.gamma
         self.alpha = config.alpha
         self.use_automatic_entropy_tuning = config.use_automatic_entropy_tuning
         if self.use_automatic_entropy_tuning:
-            self.target_entropy = target_entropy
+            self.target_entropy = -np.prod(policy.action_space.shape).item()
             self.log_alpha = ms.Parameter(-self._ones(1, ms.float32))
             self.alpha = ops.exp(self.log_alpha)
             self.alpha_optimizer = optim.Adam(params=[self.log_alpha], lr=config.learning_rate_actor)
@@ -49,33 +48,34 @@ class SAC_Learner(Learner):
         self.policy.set_train()
 
     def forward_fn_alpha(self, log_pi):
-        alpha_loss = -(self.log_alpha * (log_pi + self.target_entropy)).mean()
+        alpha_loss = -ops.mean(self.log_alpha * (log_pi + self.target_entropy))
         return alpha_loss, self.log_alpha
 
     def forward_fn_actor(self, x):
         log_pi, policy_q_1, policy_q_2 = self.policy.Qpolicy(x)
         policy_q = ops.minimum(policy_q_1, policy_q_2).reshape([-1])
-        loss_a = (self.alpha * log_pi.reshape([-1]) - policy_q).mean()
+        loss_a = ops.mean(self.alpha * log_pi.reshape([-1]) - policy_q)
         return loss_a, log_pi, policy_q
 
-    def forward_fn_critic(self, x, a, backup):
-        action_q_1, action_q_2 = self.policy.Qaction(x, a)
-        loss_q = self.mse_loss(logits=action_q_1, labels=backup) + self.mse_loss(logits=action_q_2, labels=backup)
+    def forward_fn_critic(self, obs_batch, act_batch, rew_batch, next_batch, ter_batch):
+        action_q_1, action_q_2 = self.policy.Qaction(obs_batch, act_batch)
+        log_pi_next, target_q = self.policy.Qtarget(next_batch)
+        target_value = target_q - self.alpha * log_pi_next.reshape([-1])
+        backup = rew_batch + (1 - ter_batch) * self.gamma * target_value
+        loss_q_1 = self.mse_loss(logits=action_q_1, labels=ops.stop_gradient(backup))
+        loss_q_2 = self.mse_loss(logits=action_q_2, labels=ops.stop_gradient(backup))
+        loss_q = loss_q_1 + loss_q_2
         return loss_q, action_q_1, action_q_2
 
     def update(self, **samples):
         self.iterations += 1
-        obs_batch = Tensor(samples['obs'])
-        act_batch = Tensor(samples['actions'])
-        rew_batch = Tensor(samples['rewards'])
-        next_batch = Tensor(samples['obs_next'])
-        ter_batch = Tensor(samples['terminals'])
+        obs_batch = Tensor(samples['obs'], dtype=ms.float32)
+        act_batch = Tensor(samples['actions'], dtype=ms.float32)
+        rew_batch = Tensor(samples['rewards'], dtype=ms.float32)
+        next_batch = Tensor(samples['obs_next'], dtype=ms.float32)
+        ter_batch = Tensor(samples['terminals'], dtype=ms.float32)
 
-        log_pi_next, target_q = self.policy.Qtarget(next_batch)
-        target_value = target_q - self.alpha * log_pi_next.reshape([-1])
-        backup = rew_batch + (1 - ter_batch) * self.gamma * target_value
-
-        (q_loss, _, _), grads_critic = self.grad_fn_critic(obs_batch, act_batch, backup)
+        (q_loss, _, _), grads_critic = self.grad_fn_critic(obs_batch, act_batch, rew_batch, next_batch, ter_batch)
         if self.use_grad_clip:
             grads_critic = clip_grads(grads_critic, Tensor(-self.grad_clip_norm), Tensor(self.grad_clip_norm))
         self.optimizer['critic'](grads_critic)
