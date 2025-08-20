@@ -247,8 +247,8 @@ class SACDISPolicy(Module):
         outputs_critic_1 = self.critic_1_representation(observation)
         outputs_critic_2 = self.critic_2_representation(observation)
 
-        act_dist = self.actor(outputs_actor)
-        act_prob = act_dist.probs
+        logits = self.actor(outputs_actor)
+        act_prob = ops.softmax(logits, axis=-1)
         z = act_prob == 0.0
         z = z.float() * 1e-8
         log_action_prob = ops.log(act_prob + z)
@@ -273,8 +273,8 @@ class SACDISPolicy(Module):
         outputs_critic_1 = self.target_critic_1_representation(observation)
         outputs_critic_2 = self.target_critic_2_representation(observation)
 
-        new_act_dist = self.actor(outputs_actor)
-        new_act_prob = new_act_dist.probs
+        new_logits = self.actor(outputs_actor)
+        new_act_prob = ops.softmax(new_logits, axis=-1)
         z = new_act_prob == 0.0
         z = z.float() * 1e-8  # avoid log(0)
         log_action_prob = ops.log(new_act_prob + z)

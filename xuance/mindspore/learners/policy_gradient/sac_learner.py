@@ -8,7 +8,6 @@ from argparse import Namespace
 from mindspore import nn
 from xuance.mindspore import ms, ops, Module, Tensor, optim
 from xuance.mindspore.learners import Learner
-from xuance.mindspore.utils import clip_grads
 
 
 class SAC_Learner(Learner):
@@ -60,10 +59,11 @@ class SAC_Learner(Learner):
     def forward_fn_critic(self, obs_batch, act_batch, rew_batch, next_batch, ter_batch):
         action_q_1, action_q_2 = self.policy.Qaction(obs_batch, act_batch)
         log_pi_next, target_q = self.policy.Qtarget(next_batch)
-        target_value = target_q - self.alpha * log_pi_next.reshape([-1])
+        target_q = target_q.reshape([-1])
+        target_value = target_q - self.alpha * log_pi_next
         backup = rew_batch + (1 - ter_batch) * self.gamma * target_value
-        loss_q_1 = self.mse_loss(logits=action_q_1, labels=ops.stop_gradient(backup))
-        loss_q_2 = self.mse_loss(logits=action_q_2, labels=ops.stop_gradient(backup))
+        loss_q_1 = self.mse_loss(logits=action_q_1.reshape([-1]), labels=ops.stop_gradient(backup))
+        loss_q_2 = self.mse_loss(logits=action_q_2.reshape([-1]), labels=ops.stop_gradient(backup))
         loss_q = loss_q_1 + loss_q_2
         return loss_q, action_q_1, action_q_2
 
@@ -77,12 +77,12 @@ class SAC_Learner(Learner):
 
         (q_loss, _, _), grads_critic = self.grad_fn_critic(obs_batch, act_batch, rew_batch, next_batch, ter_batch)
         if self.use_grad_clip:
-            grads_critic = clip_grads(grads_critic, Tensor(-self.grad_clip_norm), Tensor(self.grad_clip_norm))
+            grads_critic = ops.clip_by_norm(grads_critic, self.grad_clip_norm)
         self.optimizer['critic'](grads_critic)
 
         (p_loss, log_pi, policy_q), grads_actor = self.grad_fn_actor(obs_batch)
         if self.use_grad_clip:
-            grads_actor = clip_grads(grads_actor, Tensor(-self.grad_clip_norm), Tensor(self.grad_clip_norm))
+            grads_actor = ops.clip_by_norm(grads_actor, self.grad_clip_norm)
         self.optimizer['actor'](grads_actor)
 
         if self.use_automatic_entropy_tuning:

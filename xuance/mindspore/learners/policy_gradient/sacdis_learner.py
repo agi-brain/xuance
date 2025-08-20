@@ -3,19 +3,17 @@ Soft Actor-Critic with discrete action spaces (SAC-Discrete)
 Paper link: https://arxiv.org/pdf/1910.07207.pdf
 Implementation: MindSpore
 """
-from xuance.common import Optional
-from xuance.mindspore import ms, Module, Tensor, optim, ops
-from xuance.mindspore.learners import Learner
-from xuance.mindspore.utils import clip_grads
+import numpy as np
 from argparse import Namespace
-from mindspore.nn import MSELoss
+from mindspore import nn
+from xuance.mindspore import ms, ops, Module, Tensor, optim
+from xuance.mindspore.learners import Learner
 
 
 class SACDIS_Learner(Learner):
     def __init__(self,
                  config: Namespace,
-                 policy: Module,
-                 target_entropy: Optional[float] = None):
+                 policy: Module):
         super(SACDIS_Learner, self).__init__(config, policy)
         self.optimizer = {
             'actor': optim.Adam(params=self.policy.actor_parameters, lr=self.config.learning_rate, eps=1e-5),
@@ -27,14 +25,14 @@ class SACDIS_Learner(Learner):
             'critic': optim.lr_scheduler.LinearLR(self.optimizer['critic'], start_factor=1.0, end_factor=self.end_factor_lr_decay,
                                                   total_iters=self.config.running_steps)
         }
-        self.mse_loss = MSELoss()
+        self.mse_loss = nn.MSELoss()
         self._ones = ops.Ones()
         self.tau = config.tau
         self.gamma = config.gamma
         self.alpha = config.alpha
         self.use_automatic_entropy_tuning = config.use_automatic_entropy_tuning
         if self.use_automatic_entropy_tuning:
-            self.target_entropy = target_entropy
+            self.target_entropy = -np.prod(self.action_space.n).item()
             self.log_alpha = ms.Parameter(-self._ones(1, ms.float32))
             self.alpha = ops.exp(self.log_alpha)
             self.alpha_optimizer = optim.Adam(params=[self.log_alpha], lr=config.learning_rate_actor)
@@ -58,11 +56,18 @@ class SACDIS_Learner(Learner):
         p_loss = (action_prob * (self.alpha * log_pi - policy_q)).sum(axis=1).mean()
         return p_loss, log_pi, policy_q
 
-    def forward_fn_critic(self, obs_batch, act_batch, backup):
+    def forward_fn_critic(self, obs_batch, act_batch, rew_batch, next_batch, ter_batch):
         action_q_1, action_q_2 = self.policy.Qaction(obs_batch)
+        action_prob_next, log_pi_next, target_q = self.policy.Qtarget(next_batch)
+        target_q = action_prob_next * (target_q - self.alpha * log_pi_next)
+        target_q = target_q.sum(axis=1)
+        backup = rew_batch + (1 - ter_batch) * self.gamma * target_q
+
         action_q_1 = ops.gather(action_q_1, act_batch.long(), axis=-1, batch_dims=-1)
         action_q_2 = ops.gather(action_q_2, act_batch.long(), axis=-1, batch_dims=-1)
-        q_loss = self.mse_loss(action_q_1, backup) + self.mse_loss(action_q_2, backup)
+        q_loss_1 = self.mse_loss(action_q_1.reshape([-1]), backup)
+        q_loss_2 = self.mse_loss(action_q_2.reshape([-1]), backup)
+        q_loss = q_loss_1 + q_loss_2
         return q_loss, action_q_1, action_q_2
 
     def update(self, **samples):
@@ -71,22 +76,17 @@ class SACDIS_Learner(Learner):
         act_batch = Tensor(samples['actions'])
         rew_batch = Tensor(samples['rewards'])
         next_batch = Tensor(samples['obs_next'])
-        ter_batch = Tensor(samples['terminals']).reshape(-1, 1)
+        ter_batch = Tensor(samples['terminals'])
         act_batch = ops.expand_dims(act_batch, -1)
 
-        action_prob_next, log_pi_next, target_q = self.policy.Qtarget(next_batch)
-        target_q = action_prob_next * (target_q - self.alpha * log_pi_next)
-        target_q = ops.expand_dims(target_q.sum(axis=1), -1)
-        backup = rew_batch + (1 - ter_batch) * self.gamma * target_q
-
-        (q_loss, _, _), grads_critic = self.grad_fn_critic(obs_batch, act_batch, backup)
+        (q_loss, _, _), grads_critic = self.grad_fn_critic(obs_batch, act_batch, rew_batch, next_batch, ter_batch)
         if self.use_grad_clip:
-            grads_critic = clip_grads(grads_critic, Tensor(-self.grad_clip_norm), Tensor(self.grad_clip_norm))
+            grads_critic = ops.clip_by_norm(grads_critic, self.grad_clip_norm)
         self.optimizer['critic'](grads_critic)
 
         (p_loss, log_pi, policy_q), grads_actor = self.grad_fn_actor(obs_batch)
         if self.use_grad_clip:
-            grads_actor = clip_grads(grads_actor, Tensor(-self.grad_clip_norm), Tensor(self.grad_clip_norm))
+            grads_actor = ops.clip_by_norm(grads_actor, self.grad_clip_norm)
         self.optimizer['actor'](grads_actor)
 
         if self.use_automatic_entropy_tuning:
