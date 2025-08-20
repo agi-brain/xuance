@@ -13,7 +13,6 @@ from .policy_gradient import PDQN_Agent
 from .policy_gradient import MPDQN_Agent
 from .policy_gradient import SPDQN_Agent
 from .policy_gradient import SAC_Agent
-from .policy_gradient import SACDIS_Agent
 from .qlearning_family import DQN_Agent
 from .qlearning_family import DuelDQN_Agent
 from .qlearning_family import DDQN_Agent
@@ -50,7 +49,6 @@ REGISTRY_Agents = {
     "PPG": PPG_Agent,
     "DDPG": DDPG_Agent,
     "SAC": SAC_Agent,
-    "SACDIS": SACDIS_Agent,
     "TD3": TD3_Agent,
     "DQN": DQN_Agent,
     "Duel_DQN": DuelDQN_Agent,
@@ -95,7 +93,7 @@ __all__ = [
     "REGISTRY_Agents",
 
     "PG_Agent", "A2C_Agent", "PPOCLIP_Agent", "PPOKL_Agent", "PPG_Agent", "DDPG_Agent", "TD3_Agent", "PDQN_Agent",
-    "MPDQN_Agent", "SPDQN_Agent", "SAC_Agent", "SACDIS_Agent", "DQN_Agent", "DuelDQN_Agent", "DDQN_Agent",
+    "MPDQN_Agent", "SPDQN_Agent", "SAC_Agent", "DQN_Agent", "DuelDQN_Agent", "DDQN_Agent",
     "NoisyDQN_Agent", "C51_Agent", "QRDQN_Agent", "PerDQN_Agent", "DRQN_Agent",
 
     "IQL_Agents", "VDN_Agents", "QMIX_Agents", "WQMIX_Agents", "QTRAN_Agents", "DCG_Agents", "VDAC_Agents",

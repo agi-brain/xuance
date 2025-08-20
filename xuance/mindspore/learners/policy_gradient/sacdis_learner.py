@@ -65,8 +65,8 @@ class SACDIS_Learner(Learner):
 
         action_q_1 = ops.gather(action_q_1, act_batch.long(), axis=-1, batch_dims=-1)
         action_q_2 = ops.gather(action_q_2, act_batch.long(), axis=-1, batch_dims=-1)
-        q_loss_1 = self.mse_loss(action_q_1.reshape([-1]), backup)
-        q_loss_2 = self.mse_loss(action_q_2.reshape([-1]), backup)
+        q_loss_1 = self.mse_loss(action_q_1.reshape([-1]), ops.stop_gradient(backup))
+        q_loss_2 = self.mse_loss(action_q_2.reshape([-1]), ops.stop_gradient(backup))
         q_loss = q_loss_1 + q_loss_2
         return q_loss, action_q_1, action_q_2
 
