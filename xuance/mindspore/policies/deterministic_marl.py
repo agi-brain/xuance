@@ -85,9 +85,9 @@ class BasicQnetwork(Module):
                 rnn_hidden_new[key] = [None, None]
 
             if self.use_parameter_sharing:
-                q_inputs = ops.cat([outputs['state'], agent_ids], axis=-1)
+                q_inputs = ops.cat([outputs, agent_ids], axis=-1)
             else:
-                q_inputs = outputs['state']
+                q_inputs = outputs
 
             evalQ[key] = self.eval_Qhead[key](q_inputs)
 
@@ -126,9 +126,9 @@ class BasicQnetwork(Module):
                 outputs = self.target_representation[key](observation[key])
                 rnn_hidden_new[key] = None
             if self.use_parameter_sharing:
-                q_inputs = ops.cat([outputs['state'], agent_ids], axis=-1)
+                q_inputs = ops.cat([outputs, agent_ids], axis=-1)
             else:
-                q_inputs = outputs['state']
+                q_inputs = outputs
             q_target[key] = self.target_Qhead[key](q_inputs)
         return rnn_hidden_new, q_target
 

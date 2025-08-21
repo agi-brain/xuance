@@ -200,10 +200,10 @@ class MARLAgents(ABC):
 
         if self.use_parameter_sharing:
             key = self.agent_keys[0]
-            obs_array = np.array([itemgetter(*self.agent_keys)(data) for data in obs_dict])
+            obs_array = Tensor([itemgetter(*self.agent_keys)(data) for data in obs_dict])
             agents_id = Tensor(np.eye(self.n_agents, dtype=np.float32)[None].repeat(batch_size, axis=0))
-            avail_actions_array = np.array([itemgetter(*self.agent_keys)(data)
-                                            for data in avail_actions_dict]) if self.use_actions_mask else None
+            avail_actions_array = Tensor([itemgetter(*self.agent_keys)(data)
+                                          for data in avail_actions_dict]) if self.use_actions_mask else None
             if self.use_rnn:
                 obs_input = {key: obs_array.reshape([bs, 1, -1])}
                 agents_id = agents_id.reshape(bs, 1, -1)
@@ -217,16 +217,16 @@ class MARLAgents(ABC):
         else:
             agents_id = None
             if self.use_rnn:
-                obs_input = {k: np.stack([data[k] for data in obs_dict]).reshape([bs, 1, -1]) for k in
+                obs_input = {k: ops.stack([data[k] for data in obs_dict]).reshape([bs, 1, -1]) for k in
                              self.agent_keys}
                 if self.use_actions_mask:
                     avail_actions_input = {
-                        k: np.stack([data[k] for data in avail_actions_dict]).reshape([bs, 1, -1])
+                        k: ops.stack([data[k] for data in avail_actions_dict]).reshape([bs, 1, -1])
                         for k in self.agent_keys}
             else:
-                obs_input = {k: np.stack([data[k] for data in obs_dict]).reshape(bs, -1) for k in self.agent_keys}
+                obs_input = {k: ops.stack([data[k] for data in obs_dict]).reshape(bs, -1) for k in self.agent_keys}
                 if self.use_actions_mask:
-                    avail_actions_input = {k: np.array([data[k] for data in avail_actions_dict]).reshape([bs, -1])
+                    avail_actions_input = {k: ops.stack([data[k] for data in avail_actions_dict]).reshape([bs, -1])
                                            for k in self.agent_keys}
         return obs_input, agents_id, avail_actions_input
 

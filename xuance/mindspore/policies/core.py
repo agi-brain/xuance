@@ -517,10 +517,9 @@ class VDN_mixer(Module):
 
     def __init__(self):
         super(VDN_mixer, self).__init__()
-        self._sum = ms.ops.ReduceSum(axis=1, keep_dims=False)
 
     def construct(self, values_n, states=None):
-        return self._sum(values_n)
+        return ops.reduce_sum(values_n, axis=1)
 
 
 class QMIX_mixer(Module):
