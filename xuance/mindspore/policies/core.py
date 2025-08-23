@@ -83,8 +83,6 @@ class DuelQhead(Module):
         self.a_model = nn.SequentialCell(*a_layers)
         self.v_model = nn.SequentialCell(*v_layers)
 
-        self._mean = ms.ops.ReduceMean(axis=-1, keep_dims=True)
-
     def construct(self, x: Tensor):
         """
         Returns the dueling Q-values.
@@ -96,7 +94,7 @@ class DuelQhead(Module):
         """
         v = self.v_model(x)
         a = self.a_model(x)
-        q = v + (a - self._mean(a))
+        q = v + (a - ops.reduce_mean(a, axis=-1, keepdims=True))
         return q
 
 
@@ -143,7 +141,7 @@ class C51Qhead(Module):
         Returns:
             dist_probs: The probability distribution of the discrete actions.
         """
-        dist_logits = self.model(x).reshape([-1, self.action_dim, self.atom_num])
+        dist_logits = self.model(x).reshape([-1, self.n_actions, self.atom_num])
         dist_probs = self._softmax(dist_logits)
         return dist_probs
 
@@ -190,7 +188,7 @@ class QRDQNhead(Module):
         Returns:
             quantiles: The quantiles of the action distribution.
         """
-        quantiles = self.model(x).reshape([-1, self.action_dim, self.atom_num])
+        quantiles = self.model(x).reshape([-1, self.n_actions, self.atom_num])
         return quantiles
 
 

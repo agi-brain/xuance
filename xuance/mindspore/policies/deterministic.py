@@ -138,14 +138,14 @@ class NoisyQnetwork(Module):
 
     def construct(self, observation: Tensor):
         outputs = self.representation(observation)
-        evalQ = self.eval_Qhead(outputs['state'])
+        evalQ = self.eval_Qhead(outputs)
         argmax_action = evalQ.argmax(axis=-1)
         return outputs, argmax_action, evalQ
 
     def target(self, observation: Tensor):
         outputs = self.target_representation(observation)
         self.noisy_parameters(is_target=True)
-        targetQ = self.target_Qhead(outputs['state'])
+        targetQ = self.target_Qhead(outputs)
         argmax_action = targetQ.argmax(axis=-1)
         return outputs, argmax_action, targetQ
 

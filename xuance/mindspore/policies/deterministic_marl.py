@@ -291,9 +291,9 @@ class Weighted_MixingQnetwork(MixingQnetwork):
                 rnn_hidden_new[key] = [None, None]
 
             if self.use_parameter_sharing:
-                q_inputs = ops.cat([outputs['state'], agent_ids], axis=-1)
+                q_inputs = ops.cat([outputs, agent_ids], axis=-1)
             else:
-                q_inputs = outputs['state']
+                q_inputs = outputs
 
             evalQ_cent[key] = self.eval_Qhead_centralized[key](q_inputs)
 
@@ -326,9 +326,9 @@ class Weighted_MixingQnetwork(MixingQnetwork):
                 rnn_hidden_new[key] = [None, None]
 
             if self.use_parameter_sharing:
-                q_inputs = ops.cat([outputs['state'], agent_ids], axis=-1)
+                q_inputs = ops.cat([outputs, agent_ids], axis=-1)
             else:
-                q_inputs = outputs['state']
+                q_inputs = outputs
 
             q_target_cent[key] = self.target_Qhead_centralized[key](q_inputs)
 
@@ -443,7 +443,7 @@ class Qtran_MixingQnetwork(Module):
         else:
             outputs = self.representation(observation)
             rnn_hidden = None
-        q_inputs = self._concat([outputs['state'], agent_ids])
+        q_inputs = self._concat([outputs, agent_ids])
         evalQ = self.eval_Qhead(q_inputs)
         if avail_actions is not None:
             evalQ_detach = deepcopy(evalQ)
@@ -451,7 +451,7 @@ class Qtran_MixingQnetwork(Module):
             argmax_action = evalQ_detach.argmax(axis=-1, keepdim=False)
         else:
             argmax_action = evalQ.argmax(axis=-1, keepdim=False)
-        return rnn_hidden, outputs['state'], argmax_action, evalQ
+        return rnn_hidden, outputs, argmax_action, evalQ
 
     def target_Q(self, observation: Tensor, agent_ids: Tensor, *rnn_hidden: Tensor):
         if self.use_rnn:
@@ -460,8 +460,8 @@ class Qtran_MixingQnetwork(Module):
         else:
             outputs = self.target_representation(observation)
             rnn_hidden = None
-        q_inputs = self._concat([outputs['state'], agent_ids])
-        return rnn_hidden, outputs['state'], self.target_Qhead(q_inputs)
+        q_inputs = self._concat([outputs, agent_ids])
+        return rnn_hidden, outputs, self.target_Qhead(q_inputs)
 
     def copy_target(self):
         for ep, tp in zip(self.representation.trainable_params(), self.target_representation.trainable_params()):
@@ -512,7 +512,7 @@ class DCG_policy(Module):
         else:
             outputs = self.representation(observation)
             rnn_hidden = None
-        q_inputs = self._concat([outputs['state'], agent_ids])
+        q_inputs = self._concat([outputs, agent_ids])
         evalQ = self.eval_Qhead(q_inputs)
         if avail_actions is not None:
             evalQ_detach = deepcopy(evalQ)
@@ -556,7 +556,7 @@ class MFQnetwork(Module):
 
     def construct(self, observation: Tensor, actions_mean: Tensor, agent_ids: Tensor):
         outputs = self.representation(observation)
-        q_inputs = self._concat([outputs['state'], actions_mean, agent_ids])
+        q_inputs = self._concat([outputs, actions_mean, agent_ids])
         evalQ = self.eval_Qhead(q_inputs)
         argmax_action = evalQ.argmax(axis=-1)
         return outputs, argmax_action, evalQ
@@ -566,7 +566,7 @@ class MFQnetwork(Module):
 
     def target_Q(self, observation: Tensor, actions_mean: Tensor, agent_ids: Tensor):
         outputs = self.representation(observation)
-        q_inputs = self._concat([outputs['state'], actions_mean, agent_ids])
+        q_inputs = self._concat([outputs, actions_mean, agent_ids])
         return self.target_Qhead(q_inputs)
 
     def copy_target(self):
@@ -680,9 +680,9 @@ class Independent_DDPG_Policy(Module):
                 outputs = self.actor_representation[key](observation[key])
 
             if self.use_parameter_sharing:
-                actor_in = ops.cat([outputs['state'], agent_ids], axis=-1)
+                actor_in = ops.cat([outputs, agent_ids], axis=-1)
             else:
-                actor_in = outputs['state']
+                actor_in = outputs
             actions[key] = self.actor[key](actor_in)
         return rnn_hidden_new, actions
 
@@ -714,9 +714,9 @@ class Independent_DDPG_Policy(Module):
                 outputs = self.critic_representation[key](observation[key])
 
             if self.use_parameter_sharing:
-                critic_in = ops.cat([outputs['state'], agent_ids], axis=-1)
+                critic_in = ops.cat([outputs, agent_ids], axis=-1)
             else:
-                critic_in = outputs['state']
+                critic_in = outputs
             q_eval[key] = self.critic[key](ops.cat([critic_in, actions[key]], axis=-1))
         return rnn_hidden_new, q_eval
 
@@ -747,9 +747,9 @@ class Independent_DDPG_Policy(Module):
                 outputs = self.target_critic_representation[key](next_observation[key])
 
             if self.use_parameter_sharing:
-                critic_in = ops.cat([outputs['state'], agent_ids], axis=-1)
+                critic_in = ops.cat([outputs, agent_ids], axis=-1)
             else:
-                critic_in = outputs['state']
+                critic_in = outputs
             q_target[key] = self.target_critic[key](ops.cat([critic_in, next_actions[key]], axis=-1))
         return rnn_hidden_new, q_target
 
@@ -780,9 +780,9 @@ class Independent_DDPG_Policy(Module):
                 outputs = self.target_actor_representation[key](next_observation[key])
 
             if self.use_parameter_sharing:
-                actor_in = ops.cat([outputs['state'], agent_ids], axis=-1)
+                actor_in = ops.cat([outputs, agent_ids], axis=-1)
             else:
-                actor_in = outputs['state']
+                actor_in = outputs
             next_actions[key] = self.target_actor[key](actor_in)
         return rnn_hidden_new, next_actions
 

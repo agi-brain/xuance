@@ -104,9 +104,9 @@ class MAAC_Policy(Module):
                 outputs = self.actor_representation[key](observation[key])
 
             if self.use_parameter_sharing:
-                actor_in = ops.cat([outputs['state'], agent_ids], axis=-1)
+                actor_in = ops.cat([outputs, agent_ids], axis=-1)
             else:
-                actor_in = outputs['state']
+                actor_in = outputs
             pi_dists[key] = self.actor[key](actor_in)
 
         return rnn_hidden, pi_dists
@@ -137,9 +137,9 @@ class MAAC_Policy(Module):
                 outputs = self.critic_representation[key](observation[key])
 
             if self.use_parameter_sharing:
-                critic_in = ops.cat([outputs['state'], agent_ids], axis=-1)
+                critic_in = ops.cat([outputs, agent_ids], axis=-1)
             else:
-                critic_in = outputs['state']
+                critic_in = outputs
 
             values[key] = self.critic[key](critic_in)
 
@@ -257,9 +257,9 @@ class Basic_ISAC_Policy(Module):
                 outputs = self.actor_representation[key](observation[key])
 
             if self.use_parameter_sharing:
-                actor_in = ops.cat([outputs['state'], agent_ids], axis=-1)
+                actor_in = ops.cat([outputs, agent_ids], axis=-1)
             else:
-                actor_in = outputs['state']
+                actor_in = outputs
             act_dists = self.actor[key](actor_in)
             actions_dict[key], log_action_prob[key] = act_dists.activated_rsample_and_logprob()
         return rnn_hidden_new, actions_dict, log_action_prob

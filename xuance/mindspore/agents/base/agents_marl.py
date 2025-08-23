@@ -217,16 +217,18 @@ class MARLAgents(ABC):
         else:
             agents_id = None
             if self.use_rnn:
-                obs_input = {k: ops.stack([data[k] for data in obs_dict]).reshape([bs, 1, -1]) for k in
-                             self.agent_keys}
+                obs_input = {k: Tensor(np.stack([data[k] for data in obs_dict]).reshape([bs, 1, -1]))
+                             for k in self.agent_keys}
                 if self.use_actions_mask:
                     avail_actions_input = {
-                        k: ops.stack([data[k] for data in avail_actions_dict]).reshape([bs, 1, -1])
+                        k: Tensor(np.stack([data[k] for data in avail_actions_dict]).reshape([bs, 1, -1]))
                         for k in self.agent_keys}
             else:
-                obs_input = {k: ops.stack([data[k] for data in obs_dict]).reshape(bs, -1) for k in self.agent_keys}
+                obs_input = {k: Tensor(np.stack([data[k] for data in obs_dict]).reshape(bs, -1))
+                             for k in self.agent_keys}
                 if self.use_actions_mask:
-                    avail_actions_input = {k: ops.stack([data[k] for data in avail_actions_dict]).reshape([bs, -1])
+                    avail_actions_input = {k: Tensor(np.stack([data[k]
+                                                               for data in avail_actions_dict]).reshape([bs, -1]))
                                            for k in self.agent_keys}
         return obs_input, agents_id, avail_actions_input
 

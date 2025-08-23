@@ -47,7 +47,7 @@ class MAAC_Policy(nn.Cell):
         else:
             outputs = self.representation(observation)
             rnn_hidden = None
-        actor_input = self._concat([outputs['state'], agent_ids])
+        actor_input = self._concat([outputs, agent_ids])
         act_logits = self.actor(actor_input)
         if avail_actions is not None:
             act_logits[avail_actions == 0] = -1e10
@@ -62,15 +62,15 @@ class MAAC_Policy(nn.Cell):
         if self.use_rnn:
             batch_size, n_agent, episode_length, dim_obs = tuple(shape_obs)
             outputs = self.representation_critic(critic_in.reshape(-1, episode_length, dim_obs), *rnn_hidden)
-            outputs['state'] = outputs['state'].view(batch_size, n_agent, episode_length, -1)
+            outputs = outputs.view(batch_size, n_agent, episode_length, -1)
             rnn_hidden = (outputs['rnn_hidden'], outputs['rnn_cell'])
         else:
             batch_size, n_agent, dim_obs = tuple(shape_obs)
             outputs = self.representation_critic(critic_in.reshape(-1, dim_obs))
-            outputs['state'] = outputs['state'].view(batch_size, n_agent, -1)
+            outputs = outputs.view(batch_size, n_agent, -1)
             rnn_hidden = None
         # get critic values
-        critic_in = self._concat([outputs['state'], agent_ids])
+        critic_in = self._concat([outputs, agent_ids])
         v = self.critic(critic_in)
         return rnn_hidden, v
 
@@ -121,12 +121,12 @@ class MAAC_Policy_Share(MAAC_Policy):
             sequence_length = observation.shape[1]
             outputs = self.representation(observation, *rnn_hidden)
             rnn_hidden = (outputs['rnn_hidden'], outputs['rnn_cell'])
-            representated_state = outputs['state'].view(batch_size, self.n_agents, sequence_length, -1)
+            representated_state = outputs.view(batch_size, self.n_agents, sequence_length, -1)
             actor_critic_input = self._concat([representated_state, agent_ids])
         else:
             outputs = self.representation(observation)
             rnn_hidden = None
-            actor_critic_input = self._concat([outputs['state'], agent_ids])
+            actor_critic_input = self._concat([outputs, agent_ids])
         act_logits = self.actor(actor_critic_input)
         if avail_actions is not None:
             act_logits[avail_actions == 0] = -1e10
@@ -198,7 +198,7 @@ class COMA_Policy(nn.Cell):
         else:
             outputs = self.representation(observation)
             rnn_hidden = None
-        actor_input = self._concat([outputs['state'], agent_ids])
+        actor_input = self._concat([outputs, agent_ids])
         act_logits = self.actor(actor_input)
         act_probs = self._softmax(act_logits)
         act_probs = (1 - epsilon) * act_probs + epsilon * 1 / self.action_dim
@@ -241,11 +241,11 @@ class MeanFieldActorCriticPolicy(nn.Cell):
 
     def construct(self, observation: ms.Tensor, agent_ids: ms.Tensor):
         outputs = self.representation(observation)
-        input_actor = self._concat([outputs['state'], agent_ids])
+        input_actor = self._concat([outputs, agent_ids])
         act_dist = self.actor(input_actor)
         return outputs, act_dist
 
     def get_values(self, observation: ms.Tensor, actions_mean: ms.Tensor, agent_ids: ms.Tensor):
         outputs = self.representation(observation)
-        critic_in = self._concat([outputs['state'], actions_mean, agent_ids])
+        critic_in = self._concat([outputs, actions_mean, agent_ids])
         return self.critic(critic_in)
