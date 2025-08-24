@@ -82,6 +82,7 @@ class DuelQhead(Module):
 
         self.a_model = nn.SequentialCell(*a_layers)
         self.v_model = nn.SequentialCell(*v_layers)
+        self.reduce_mean = ops.ReduceMean(keep_dims=True)
 
     def construct(self, x: Tensor):
         """
@@ -94,7 +95,7 @@ class DuelQhead(Module):
         """
         v = self.v_model(x)
         a = self.a_model(x)
-        q = v + (a - ops.reduce_mean(a, axis=-1, keepdims=True))
+        q = v + (a - self.reduce_mean(a, axis=-1))
         return q
 
 
