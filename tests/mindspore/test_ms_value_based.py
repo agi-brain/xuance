@@ -2,6 +2,7 @@
 
 from argparse import Namespace
 from xuance import get_runner
+from copy import deepcopy
 import unittest
 
 is_benchmark = False
@@ -39,7 +40,9 @@ class TestValueBaseAlgo(unittest.TestCase):
             runner.run()
 
     def test_drqn(self):
-        runner = get_runner(method="drqn", env=env_name, env_id=env_id, parser_args=args)
+        args_drqn = deepcopy(args)
+        args_drqn.static_graph = False
+        runner = get_runner(method="drqn", env=env_name, env_id=env_id, parser_args=args_drqn)
         if is_benchmark:
             runner.benchmark()
         else:
@@ -53,7 +56,9 @@ class TestValueBaseAlgo(unittest.TestCase):
             runner.run()
 
     def test_noisydqn(self):
-        runner = get_runner(method="noisydqn", env=env_name, env_id=env_id, parser_args=args)
+        args_noisydqn = deepcopy(args)
+        args_noisydqn.static_graph = False
+        runner = get_runner(method="noisydqn", env=env_name, env_id=env_id, parser_args=args_noisydqn)
         if is_benchmark:
             runner.benchmark()
         else:
