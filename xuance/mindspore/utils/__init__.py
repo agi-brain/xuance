@@ -23,6 +23,7 @@ ActivationFunctions = {
     "softmax": nn.Softmax,
     "softmax2d": nn.Softmax2d,
     "elu": nn.ELU,
+    "None": None
 }
 
 NormalizeFunctions = {

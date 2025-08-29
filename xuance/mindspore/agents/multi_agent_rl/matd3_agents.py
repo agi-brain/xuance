@@ -31,6 +31,8 @@ class MATD3_Agents(IDDPG_Agents):
         normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None
         initializer = InitializeFunctions[self.config.initialize] if hasattr(self.config, "initialize") else None
         activation = ActivationFunctions[self.config.activation]
+        if self.config.activation_action == "sigmoid":
+            self.config.activation_action = "None"
 
         # build representations
         A_representation = self._build_representation(self.config.representation, self.observation_space, self.config)
