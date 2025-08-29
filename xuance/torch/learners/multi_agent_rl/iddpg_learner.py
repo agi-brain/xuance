@@ -81,7 +81,7 @@ class IDDPG_Learner(LearnerMAS):
             if self.scheduler[key]['actor'] is not None:
                 self.scheduler[key]['actor'].step()
 
-            # updata critic
+            # update critic
             q_eval_a = q_eval[key].reshape(bs)
             q_next_i = q_next[key].reshape(bs)
             q_target = rewards[key] + (1 - terminals[key]) * self.gamma * q_next_i
@@ -172,7 +172,7 @@ class IDDPG_Learner(LearnerMAS):
             if self.scheduler[key]['actor'] is not None:
                 self.scheduler[key]['actor'].step()
 
-            # updata critic
+            # update critic
             q_eval_a = q_eval[key].reshape(bs_rnn, seq_len)
             q_next_i = q_next[key][:, 1:].reshape(bs_rnn, seq_len)
             q_target = rewards[key] + (1 - terminals[key]) * self.gamma * q_next_i

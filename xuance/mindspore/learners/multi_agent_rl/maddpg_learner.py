@@ -110,7 +110,7 @@ class MADDPG_Learner(LearnerMAS):
 
         for key in self.model_keys:
             mask_values = agent_mask[key]
-            # updata critic
+            # update critic
             q_next_i = q_next[key].reshape(bs)
             q_target = rewards[key] + (1 - terminals[key]) * self.gamma * q_next_i
             (loss_c, q_eval_a), grads_critic = self.grad_fn_critic[key](obs_joint, actions_joint, IDs, mask_values,

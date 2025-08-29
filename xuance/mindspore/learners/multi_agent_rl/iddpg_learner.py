@@ -46,7 +46,7 @@ class IDDPG_Learner(LearnerMAS):
         _, actions_eval = self.policy(observation=obs, agent_ids=ids, agent_key=agent_key)
         _, q_policy = self.policy.Qpolicy(observation=obs, actions=actions_eval, agent_ids=ids, agent_key=agent_key)
         q_policy_i = q_policy[agent_key].reshape(-1)
-        loss_a = -(q_policy_i * mask_values).sum() / mask_values.sum()
+        loss_a = -ops.reduce_sum(q_policy_i * mask_values) / mask_values.sum()
         return loss_a, q_policy_i
 
     def forward_fn_critic(self, obs, actions, ids, mask_values, q_target, agent_key):
@@ -87,7 +87,7 @@ class IDDPG_Learner(LearnerMAS):
         for key in self.model_keys:
             mask_values = agent_mask[key]
 
-            # updata critic
+            # update critic
             q_next_i = q_next[key].reshape(bs)
             q_target = rewards[key] + (1 - terminals[key]) * self.gamma * q_next_i
             (loss_c, q_eval_a), grads_critic = self.grad_fn_critic[key](obs, actions, IDs, mask_values, q_target, key)
