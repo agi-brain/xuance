@@ -24,7 +24,7 @@ class MAAC_Policy(Module):
         actor_hidden_size (Sequence[int]): A list of hidden layer sizes for actor network.
         critic_hidden_size (Sequence[int]): A list of hidden layer sizes for critic network.
         normalize (Optional[ModuleType]): The layer normalization over a minibatch of inputs.
-        initialize (Optional[Callable[..., Tensor]]): The parameters initializer.
+        initializer (Optional[Callable[..., Tensor]]): The parameters initializer.
         activation (Optional[ModuleType]): The activation function for each layer.
         use_distributed_training (bool): Whether to use multi-GPU for distributed training.
         **kwargs: The other args.

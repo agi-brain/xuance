@@ -4,10 +4,10 @@ from argparse import Namespace
 from operator import itemgetter
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
 from xuance.common import List, Optional, Union
-from xuance.torch import Module
-from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
-from xuance.torch.policies import REGISTRY_Policy
-from xuance.torch.agents import OnPolicyMARLAgents
+from xuance.mindspore import Module
+from xuance.mindspore.utils import NormalizeFunctions, ActivationFunctions
+from xuance.mindspore.policies import REGISTRY_Policy
+from xuance.mindspore.agents import OnPolicyMARLAgents
 
 
 class IAC_Agents(OnPolicyMARLAgents):
@@ -37,7 +37,6 @@ class IAC_Agents(OnPolicyMARLAgents):
         normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None
         initializer = torch.nn.init.orthogonal_
         activation = ActivationFunctions[self.config.activation]
-        device = self.device
         agent = self.config.agent
 
         # build representations
@@ -51,7 +50,7 @@ class IAC_Agents(OnPolicyMARLAgents):
                 representation_actor=A_representation, representation_critic=C_representation,
                 actor_hidden_size=self.config.actor_hidden_size, critic_hidden_size=self.config.critic_hidden_size,
                 normalize=normalize_fn, initialize=initializer, activation=activation,
-                device=device, use_distributed_training=self.distributed_training,
+                use_distributed_training=self.distributed_training,
                 use_parameter_sharing=self.use_parameter_sharing, model_keys=self.model_keys,
                 use_rnn=self.use_rnn, rnn=self.config.rnn if self.use_rnn else None)
             self.continuous_control = False
@@ -62,7 +61,7 @@ class IAC_Agents(OnPolicyMARLAgents):
                 actor_hidden_size=self.config.actor_hidden_size, critic_hidden_size=self.config.critic_hidden_size,
                 normalize=normalize_fn, initialize=initializer, activation=activation,
                 activation_action=ActivationFunctions[self.config.activation_action],
-                device=device, use_distributed_training=self.distributed_training,
+                use_distributed_training=self.distributed_training,
                 use_parameter_sharing=self.use_parameter_sharing, model_keys=self.model_keys,
                 use_rnn=self.use_rnn, rnn=self.config.rnn if self.use_rnn else None)
             self.continuous_control = True

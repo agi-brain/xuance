@@ -25,6 +25,7 @@ class MARLAgents(ABC):
         self.use_parameter_sharing = config.use_parameter_sharing
         self.use_actions_mask = config.use_actions_mask if hasattr(config, "use_actions_mask") else False
         self.use_global_state = config.use_global_state if hasattr(config, "use_global_state") else False
+        self.distributed_training = getattr(config, "distributed_training", False)
 
         self.gamma = config.gamma
         self.start_training = config.start_training if hasattr(config, "start_training") else 1

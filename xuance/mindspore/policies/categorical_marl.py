@@ -11,33 +11,90 @@ from xuance.mindspore import Tensor, Module, ModuleDict
 
 
 class MAAC_Policy(nn.Cell):
+    """
+    MAAC_Policy: Multi-Agent Actor-Critic Policy with categorical policies.
+
+    Args:
+        action_space (Optional[Dict[str, Discrete]]): The discrete action space.
+        n_agents (int): The number of agents.
+        representation_actor (dict): A dict of representation modules for each agent's actor.
+        representation_critic (dict): A dict of representation modules for each agent's critic.
+        mixer (Module): The mixer module that mix together the individual values to the total value.
+        actor_hidden_size (Sequence[int]): A list of hidden layer sizes for actor network.
+        critic_hidden_size (Sequence[int]): A list of hidden layer sizes for critic network.
+        normalize (Optional[ModuleType]): The layer normalization over a minibatch of inputs.
+        initializer (Optional[Callable[..., Tensor]]): The parameters initializer.
+        activation (Optional[ModuleType]): The activation function for each layer.
+        use_distributed_training (bool): Whether to use multi-GPU for distributed training.
+        **kwargs: The other args.
+    """
+
     def __init__(self,
                  action_space: Discrete,
                  n_agents: int,
-                 representation: ModuleDict,
+                 representation_actor: Dict[str, Module],
+                 representation_critic: Dict[str, Module],
                  mixer: Optional[VDN_mixer] = None,
                  actor_hidden_size: Sequence[int] = None,
                  critic_hidden_size: Sequence[int] = None,
                  normalize: Optional[ModuleType] = None,
-                 initialize: Optional[Callable[..., ms.Tensor]] = None,
+                 initializer: Optional[Callable[..., ms.Tensor]] = None,
                  activation: Optional[ModuleType] = None,
+                 use_distributed_training: bool = False,
                  **kwargs):
         super(MAAC_Policy, self).__init__()
-        self.action_dim = action_space.n
+        self.is_continuous = False
+        self.action_space = action_space
         self.n_agents = n_agents
-        self.representation = representation[0]
-        self.representation_critic = representation[1]
-        self.representation_info_shape = self.representation.output_shapes
+        self.use_parameter_sharing = kwargs['use_parameter_sharing']
+        self.model_keys = kwargs['model_keys']
         self.lstm = True if kwargs["rnn"] == "LSTM" else False
         self.use_rnn = True if kwargs["use_rnn"] else False
-        self.actor = ActorNet(self.representation.output_shapes['state'][0], self.action_dim, n_agents,
-                              actor_hidden_size, normalize, initialize, kwargs['gain'], activation)
-        self.critic = CriticNet(self.representation.output_shapes['state'][0], n_agents, critic_hidden_size,
-                                normalize, initialize, activation)
+
+        self.actor_representation = representation_actor
+        self.critic_representation = representation_critic
+
+        self.dim_input_critic, self.n_actions = {}, {}
+        self.actor, self.critic = {}, {}
+        for key in self.model_keys:
+            self.n_actions[key] = self.action_space[key].n
+            dim_actor_in, dim_actor_out, dim_critic_in, dim_critic_out = self._get_actor_critic_input(
+                self.n_actions[key],
+                self.actor_representation[key].output_shapes['state'][0],
+                self.critic_representation[key].output_shapes['state'][0], n_agents)
+
+            self.actor[key] = CategoricalActorNet(dim_actor_in, dim_actor_out, actor_hidden_size,
+                                                  normalize, initializer, activation)
+            self.critic[key] = CriticNet(dim_critic_in, critic_hidden_size, normalize, initializer, activation)
+
+        self.mixer = mixer
         self.mixer = mixer
         self._concat = ms.ops.Concat(axis=-1)
         self.expand_dims = ms.ops.ExpandDims()
         self._softmax = nn.Softmax(axis=-1)
+
+    def _get_actor_critic_input(self, dim_action, dim_actor_rep, dim_critic_rep, n_agents):
+        """
+        Returns the input dimensions of actor network and critic networks.
+
+        Parameters:
+            dim_action: The dimension of actions.
+            dim_actor_rep: The dimension of the output of actor representation.
+            dim_critic_rep: The dimension of the output of critic representation.
+            n_agents: The number of agents.
+
+        Returns:
+            dim_actor_in: The dimension of input of the actor networks.
+            dim_actor_out: The dimension of output of the actor networks.
+            dim_critic_in: The dimension of the input of critic networks.
+            dim_critic_out: The dimension of the output of critic networks.
+        """
+        dim_actor_in, dim_actor_out = dim_actor_rep, dim_action
+        dim_critic_in, dim_critic_out = dim_critic_rep, dim_action
+        if self.use_parameter_sharing:
+            dim_actor_in += n_agents
+            dim_critic_in += n_agents
+        return dim_actor_in, dim_actor_out, dim_critic_in, dim_critic_out
 
     def construct(self, observation: ms.Tensor, agent_ids: ms.Tensor,
                   *rnn_hidden: ms.Tensor, avail_actions=None):

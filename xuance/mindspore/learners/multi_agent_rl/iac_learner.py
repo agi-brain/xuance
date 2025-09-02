@@ -4,14 +4,13 @@ Paper link: https://ojs.aaai.org/index.php/AAAI/article/view/11794
 Implementation: Pytorch
 """
 import numpy as np
-import torch
-from torch import nn
 from argparse import Namespace
 from operator import itemgetter
+from mindspore.nn import MSELoss, HuberLoss
 from xuance.common import Optional, List
-from xuance.torch import Tensor
-from xuance.torch.utils import ValueNorm
-from xuance.torch.learners import LearnerMAS
+from xuance.mindspore import ms, Module, Tensor, optim, ops
+from xuance.mindspore.utils import ValueNorm
+from xuance.mindspore.learners import LearnerMAS
 
 
 class IAC_Learner(LearnerMAS):
@@ -19,27 +18,26 @@ class IAC_Learner(LearnerMAS):
                  config: Namespace,
                  model_keys: List[str],
                  agent_keys: List[str],
-                 policy: nn.Module):
+                 policy: Module):
         super(IAC_Learner, self).__init__(config, model_keys, agent_keys, policy)
         self.build_optimizer()
         self.use_value_clip, self.value_clip_range = config.use_value_clip, config.value_clip_range
         self.use_huber_loss, self.huber_delta = config.use_huber_loss, config.huber_delta
         self.use_value_norm = config.use_value_norm
         self.vf_coef, self.ent_coef = config.vf_coef, config.ent_coef
-        self.mse_loss = nn.MSELoss()
-        self.huber_loss = nn.HuberLoss(reduction="none", delta=self.huber_delta)
+        self.mse_loss = MSELoss()
+        self.huber_loss = HuberLoss(reduction="none", delta=self.huber_delta)
         if self.use_value_norm:
             self.value_normalizer = {key: ValueNorm(1).to(self.device) for key in self.model_keys}
         else:
             self.value_normalizer = None
 
     def build_optimizer(self):
-        self.optimizer = torch.optim.Adam(self.policy.parameters_model, lr=self.learning_rate, eps=1e-5,
-                                          weight_decay=self.config.weight_decay)
-        self.scheduler = torch.optim.lr_scheduler.LinearLR(self.optimizer,
-                                                           start_factor=1.0,
-                                                           end_factor=self.end_factor_lr_decay,
-                                                           total_iters=self.config.running_steps)
+        self.optimizer = optim.Adam(params=self.policy.trainable_params(), lr=self.config.learning_rate, eps=1e-5)
+        self.scheduler = optim.lr_scheduler.LinearLR(self.optimizer,
+                                                     start_factor=1.0,
+                                                     end_factor=self.end_factor_lr_decay,
+                                                     total_iters=self.config.running_steps)
 
     def build_training_data(self, sample: Optional[dict],
                             use_parameter_sharing: Optional[bool] = False,
