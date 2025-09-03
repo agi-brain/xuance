@@ -68,10 +68,16 @@ class MAAC_Policy(nn.Cell):
             self.critic[key] = CriticNet(dim_critic_in, critic_hidden_size, normalize, initializer, activation)
 
         self.mixer = mixer
-        self.mixer = mixer
         self._concat = ms.ops.Concat(axis=-1)
         self.expand_dims = ms.ops.ExpandDims()
         self._softmax = nn.Softmax(axis=-1)
+
+    def trainable_params(self, recurse=True):
+        params = self.mixer.trainable_params() if self.mixer is not None else []
+        for key in self.model_keys:
+            params = params + self.actor_representation[key].trainable_params() + self.critic_representation[
+                key].trainable_params() + self.actor[key].trainable_params() + self.critic[key].trainable_params()
+        return params
 
     def _get_actor_critic_input(self, dim_action, dim_actor_rep, dim_critic_rep, n_agents):
         """
