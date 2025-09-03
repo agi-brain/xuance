@@ -13,7 +13,9 @@ Agents
 ```
 
 - [**DRL**](agents/drl.rst)
+- [**MBRL**](agents/mbrl.rst)
 - [**MARL**](agents/marl.rst)
+- [**CRL**](agents/crl.rst)
 - [**Base Agent**](agents/base.rst)
 - [**Core Agent**](agents/core.rst)
 
