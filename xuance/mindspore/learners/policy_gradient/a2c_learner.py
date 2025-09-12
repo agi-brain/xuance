@@ -14,7 +14,9 @@ class A2C_Learner(Learner):
                  policy: Module):
         super(A2C_Learner, self).__init__(config, policy)
         self.optimizer = optim.Adam(params=self.policy.trainable_params(), lr=self.config.learning_rate, eps=1e-5)
-        self.scheduler = optim.lr_scheduler.LinearLR(self.optimizer, start_factor=1.0, end_factor=self.end_factor_lr_decay,
+        self.scheduler = optim.lr_scheduler.LinearLR(self.optimizer,
+                                                     start_factor=1.0,
+                                                     end_factor=self.end_factor_lr_decay,
                                                      total_iters=self.config.running_steps)
         self.vf_coef = config.vf_coef
         self.ent_coef = config.ent_coef

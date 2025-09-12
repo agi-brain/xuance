@@ -8,7 +8,7 @@ from argparse import Namespace
 from operator import itemgetter
 from mindspore.nn import MSELoss, HuberLoss
 from xuance.common import Optional, List
-from xuance.mindspore import ms, Module, Tensor, optim, ops
+from xuance.mindspore import Module, Tensor, optim
 from xuance.mindspore.utils import ValueNorm
 from xuance.mindspore.learners import LearnerMAS
 
@@ -61,6 +61,21 @@ class IAC_Learner(LearnerMAS):
         if use_parameter_sharing:
             k = self.model_keys[0]
             bs = batch_size * self.n_agents
+            if self.n_agents == 1:
+                obs_tensor = Tensor(sample['obs'][k])
+                actions_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['actions']), axis=1)).to(
+                    self.device)
+                values_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['values']), axis=1)).to(self.device)
+                returns_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['returns']), axis=1)).to(
+                    self.device)
+                advantages_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['advantages']), 1)).to(
+                    self.device)
+                log_pi_old_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['log_pi_old']), 1)).to(
+                    self.device)
+                ter_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['terminals']), 1)).float().to(
+                    self.device)
+                msk_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['agent_mask']), 1)).float().to(
+                    self.device)
             obs_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['obs']), axis=1)).to(self.device)
             actions_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['actions']), axis=1)).to(self.device)
             values_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['values']), axis=1)).to(self.device)
