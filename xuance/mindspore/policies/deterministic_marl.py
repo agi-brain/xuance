@@ -1,10 +1,13 @@
 import mindspore as ms
+from PIL.ImageMode import ModeDescriptor
 from mindspore.nn.probability.distribution import Categorical
 from copy import deepcopy
 from gymnasium.spaces import Discrete, Box
+from torch.nn import ModuleList
+
 from xuance.common import Sequence, Optional, Callable, Dict, List
 from xuance.mindspore.utils import ModuleType
-from xuance.mindspore import Tensor, Module, ops
+from xuance.mindspore import Tensor, Module, ModuleDict, ops
 from .core import BasicQhead, ActorNet, CriticNet, VDN_mixer, QTRAN_base, QMIX_FF_mixer
 
 
@@ -12,7 +15,7 @@ class BasicQnetwork(Module):
     def __init__(self,
                  action_space: Optional[Dict[str, Discrete]],
                  n_agents: int,
-                 representation: Dict[str, Module],
+                 representation: ModuleType,
                  hidden_size: Sequence[int] = None,
                  normalize: Optional[ModuleType] = None,
                  initialize: Optional[Callable[..., Tensor]] = None,
@@ -31,7 +34,7 @@ class BasicQnetwork(Module):
         self.target_representation = deepcopy(self.representation)
 
         self.dim_input_Q, self.n_actions = {}, {}
-        self.eval_Qhead, self.target_Qhead = {}, {}
+        self.eval_Qhead, self.target_Qhead = ModuleDict(), ModuleDict()
         for key in self.model_keys:
             self.n_actions[key] = self.action_space[key].n
             self.dim_input_Q[key] = self.representation_info_shape[key]['state'][0]
@@ -146,7 +149,7 @@ class MixingQnetwork(BasicQnetwork):
     def __init__(self,
                  action_space: Optional[Dict[str, Discrete]],
                  n_agents: int,
-                 representation: Dict[str, Module],
+                 representation: ModuleDict,
                  mixer: Optional[VDN_mixer] = None,
                  hidden_size: Sequence[int] = None,
                  normalize: Optional[ModuleType] = None,
@@ -159,9 +162,7 @@ class MixingQnetwork(BasicQnetwork):
         self.target_Qtot = deepcopy(self.eval_Qtot)
 
     def trainable_params(self, recurse=True):
-        params = self.eval_Qtot.trainable_params()
-        for key in self.model_keys:
-            params = params + self.representation[key].trainable_params() + self.eval_Qhead[key].trainable_params()
+        params = self.eval_Qtot.trainable_params() + self.representation.trainable_params() + self.eval_Qhead.trainable_params()
         return params
 
     def Q_tot(self, individual_values: Dict[str, Tensor], states: Optional[Tensor] = None):
@@ -603,8 +604,8 @@ class Independent_DDPG_Policy(Module):
         self.target_actor_representation = deepcopy(self.actor_representation)
         self.target_critic_representation = deepcopy(self.critic_representation)
 
-        self.actor, self.target_actor = {}, {}
-        self.critic, self.target_critic = {}, {}
+        self.actor, self.target_actor = ModuleDict(), ModuleDict()
+        self.critic, self.target_critic = ModuleDict(), ModuleDict()
         for key in self.model_keys:
             dim_action = self.action_space[key].shape[-1]
             dim_actor_in, dim_actor_out, dim_critic_in = self._get_actor_critic_input(
@@ -616,6 +617,11 @@ class Independent_DDPG_Policy(Module):
             self.critic[key] = CriticNet(dim_critic_in, critic_hidden_size, normalize, initialize, activation)
             self.target_actor[key] = deepcopy(self.actor[key])
             self.target_critic[key] = deepcopy(self.critic[key])
+            # update parameters name
+            self.actor_representation[key].update_parameters_name(key + '_rep_actor_')
+            self.critic_representation[key].update_parameters_name(key + '_rep_critic_')
+            self.actor[key].update_parameters_name(key + '_actor_')
+            self.critic[key].update_parameters_name(key + '_critic_')
 
     @property
     def parameters_actor(self):
@@ -968,9 +974,9 @@ class MATD3_Policy(MADDPG_Policy, Module):
         self.target_critic_A_representation = deepcopy(self.critic_A_representation)
         self.target_critic_B_representation = deepcopy(self.critic_B_representation)
 
-        self.actor, self.target_actor = {}, {}
-        self.critic_A, self.critic_B = {}, {}
-        self.target_critic_A, self.target_critic_B = {}, {}
+        self.actor, self.target_actor = ModuleDict(), ModuleDict()
+        self.critic_A, self.critic_B = ModuleDict(), ModuleDict()
+        self.target_critic_A, self.target_critic_B = ModuleDict(), ModuleDict()
         for key in self.model_keys:
             dim_action = self.action_space[key].shape[-1]
             dim_actor_in, dim_actor_out, dim_critic_in = self._get_actor_critic_input(
@@ -985,6 +991,9 @@ class MATD3_Policy(MADDPG_Policy, Module):
             self.target_critic_A[key] = deepcopy(self.critic_A[key])
             self.target_critic_B[key] = deepcopy(self.critic_B[key])
             # Update parameters name
+            self.actor_representation[key].update_parameters_name(key + '_rep_actor_')
+            self.critic_A_representation[key].update_parameters_name(key + '_rep_critic_A_')
+            self.critic_B_representation[key].update_parameters_name(key + '_rep_critic_B_')
             self.actor[key].update_parameters_name(key + '_actor_')
             self.critic_A[key].update_parameters_name(key + '_critic_A_')
             self.critic_B[key].update_parameters_name(key + '_critic_B_')

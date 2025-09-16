@@ -33,7 +33,7 @@ class IAC_Learner(LearnerMAS):
             self.value_normalizer = None
 
     def build_optimizer(self):
-        self.optimizer = optim.Adam(params=self.policy.trainable_params(), lr=self.config.learning_rate, eps=1e-5)
+        self.optimizer = optim.Adam(params=self.policy.parameters_model, lr=self.config.learning_rate, eps=1e-5)
         self.scheduler = optim.lr_scheduler.LinearLR(self.optimizer,
                                                      start_factor=1.0,
                                                      end_factor=self.end_factor_lr_decay,

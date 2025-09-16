@@ -10,7 +10,7 @@ from gymnasium.spaces import Space
 from torch.utils.tensorboard import SummaryWriter
 from xuance.common import get_time_string, create_directory, space2shape, Optional, List, Dict, Union
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
-from xuance.mindspore import Tensor, Module, REGISTRY_Representation, REGISTRY_Learners, ops
+from xuance.mindspore import Tensor, Module, ModuleDict, REGISTRY_Representation, REGISTRY_Learners, ops
 from xuance.mindspore.learners import learner
 from xuance.mindspore.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions
 
@@ -148,7 +148,7 @@ class MARLAgents(ABC):
         """
 
         # build representations
-        representation = {}
+        representation = ModuleDict()
         for key in self.model_keys:
             if self.use_rnn:
                 hidden_sizes = {'fc_hidden_sizes': self.config.fc_hidden_sizes,

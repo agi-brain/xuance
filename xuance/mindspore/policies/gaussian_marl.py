@@ -46,6 +46,11 @@ class MAAC_Policy(Module):
             self.actor[key] = GaussianActorNet(dim_actor_in, dim_actor_out, actor_hidden_size,
                                                normalize, initialize, activation, activation_action)
             self.critic[key] = CriticNet(dim_critic_in, critic_hidden_size, normalize, initialize, activation)
+            # Update parameters' name
+            self.actor_representation[key].update_parameters_name(key + '_rep_actor_')
+            self.critic_representation[key].update_parameters_name(key + '_rep_critic_')
+            self.actor[key].update_parameters_name(key + '_actor_')
+            self.critic[key].update_parameters_name(key + '_critic_')
 
     @property
     def parameters_model(self):
@@ -185,6 +190,9 @@ class Basic_ISAC_Policy(Module):
             self.critic_1[key] = CriticNet(dim_critic_in, critic_hidden_size, normalize, initialize, activation)
             self.critic_2[key] = CriticNet(dim_critic_in, critic_hidden_size, normalize, initialize, activation)
             # Update parameters name
+            self.actor_representation[key].update_parameters_name(key + '_rep_actor_')
+            self.critic_1_representation[key].update_parameters_name(key + '_rep_critic_1_')
+            self.critic_2_representation[key].update_parameters_name(key + '_rep_critic_2_')
             self.actor[key].update_parameters_name(key + '_actor_')
             self.critic_1[key].update_parameters_name(key + '_critic_1_')
             self.critic_2[key].update_parameters_name(key + '_critic_2_')

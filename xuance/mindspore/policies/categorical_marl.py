@@ -10,7 +10,7 @@ from xuance.mindspore.utils import ModuleType, CategoricalDistribution
 from xuance.mindspore import Tensor, Module, ModuleDict
 
 
-class MAAC_Policy(nn.Cell):
+class MAAC_Policy(Module):
     """
     MAAC_Policy: Multi-Agent Actor-Critic Policy with categorical policies.
 
@@ -32,8 +32,8 @@ class MAAC_Policy(nn.Cell):
     def __init__(self,
                  action_space: Discrete,
                  n_agents: int,
-                 representation_actor: Dict[str, Module],
-                 representation_critic: Dict[str, Module],
+                 representation_actor: ModuleDict,
+                 representation_critic: ModuleDict,
                  mixer: Optional[VDN_mixer] = None,
                  actor_hidden_size: Sequence[int] = None,
                  critic_hidden_size: Sequence[int] = None,
@@ -55,7 +55,7 @@ class MAAC_Policy(nn.Cell):
         self.critic_representation = representation_critic
 
         self.dim_input_critic, self.n_actions = {}, {}
-        self.actor, self.critic = {}, {}
+        self.actor, self.critic = ModuleDict(), ModuleDict()
         for key in self.model_keys:
             self.n_actions[key] = self.action_space[key].n
             dim_actor_in, dim_actor_out, dim_critic_in, dim_critic_out = self._get_actor_critic_input(
@@ -66,18 +66,24 @@ class MAAC_Policy(nn.Cell):
             self.actor[key] = CategoricalActorNet(dim_actor_in, dim_actor_out, actor_hidden_size,
                                                   normalize, initializer, activation)
             self.critic[key] = CriticNet(dim_critic_in, critic_hidden_size, normalize, initializer, activation)
+            # update parameters name
+            self.actor_representation[key].update_parameters_name(key + '_rep_actor_')
+            self.critic_representation[key].update_parameters_name(key + '_rep_critic_')
+            self.actor[key].update_parameters_name(key + '_actor_')
+            self.critic[key].update_parameters_name(key + '_critic_')
 
         self.mixer = mixer
         self._concat = ms.ops.Concat(axis=-1)
         self.expand_dims = ms.ops.ExpandDims()
         self._softmax = nn.Softmax(axis=-1)
 
-    def trainable_params(self, recurse=True):
-        params = self.mixer.trainable_params() if self.mixer is not None else []
-        for key in self.model_keys:
-            params = params + self.actor_representation[key].trainable_params() + self.critic_representation[
-                key].trainable_params() + self.actor[key].trainable_params() + self.critic[key].trainable_params()
-        return params
+    @property
+    def parameters_model(self):
+        parameters = self.actor_representation.trainable_params() + self.actor.trainable_params() + \
+                     self.critic_representation.trainable_params() + self.critic.trainable_params()
+        if self.mixer is not None:
+            parameters = parameters + self.mixer.trainable_params()
+        return parameters
 
     def _get_actor_critic_input(self, dim_action, dim_actor_rep, dim_critic_rep, n_agents):
         """
