@@ -7,7 +7,7 @@ import numpy as np
 from argparse import Namespace
 from operator import itemgetter
 from xuance.common import List
-from xuance.tensorflow import tf, tk, Module
+from xuance.tensorflow import tk, Module
 from xuance.tensorflow import tf
 from xuance.tensorflow.learners.multi_agent_rl.iac_learner import IAC_Learner
 
