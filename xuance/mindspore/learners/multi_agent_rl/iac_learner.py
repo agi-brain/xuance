@@ -8,8 +8,8 @@ from argparse import Namespace
 from operator import itemgetter
 from mindspore.nn import MSELoss, HuberLoss
 from xuance.common import Optional, List
-from xuance.mindspore import ops, Module, Tensor, optim
-from xuance.mindspore.utils import ValueNorm
+from xuance.mindspore import ms, nn, msd, ops, Module, Tensor, optim
+from xuance.mindspore.utils import ValueNorm, clip_grads
 from xuance.mindspore.learners import LearnerMAS
 
 
@@ -27,10 +27,21 @@ class IAC_Learner(LearnerMAS):
         self.vf_coef, self.ent_coef = config.vf_coef, config.ent_coef
         self.mse_loss = MSELoss()
         self.huber_loss = HuberLoss(reduction="none", delta=self.huber_delta)
+        self.softmax = nn.Softmax(axis=-1)
+        self.is_continuous = self.policy.is_continuous
         if self.use_value_norm:
             self.value_normalizer = {key: ValueNorm(1).to(self.device) for key in self.model_keys}
         else:
             self.value_normalizer = None
+
+        if self.is_continuous:
+            self.pi_dist = {k: msd.Normal(dtype=ms.float32) for k in self.model_keys}
+        else:
+            self.pi_dist = {k: msd.Categorical() for k in self.model_keys}
+
+        # Get gradient function
+        self.grad_fn = ms.value_and_grad(self.forward_fn, None, self.optimizer.parameters, has_aux=True)
+        self.policy.set_train()
 
     def build_optimizer(self):
         self.optimizer = optim.Adam(params=self.policy.parameters_model, lr=self.config.learning_rate, eps=1e-5)
@@ -70,14 +81,15 @@ class IAC_Learner(LearnerMAS):
                 log_pi_old_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['log_pi_old']), 1))
                 ter_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['terminals']), 1)).float()
                 msk_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['agent_mask']), 1)).float()
-            obs_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['obs']), axis=1))
-            actions_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['actions']), axis=1))
-            values_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['values']), axis=1))
-            returns_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['returns']), axis=1))
-            advantages_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['advantages']), 1))
-            log_pi_old_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['log_pi_old']), 1))
-            ter_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['terminals']), 1)).float()
-            msk_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['agent_mask']), 1)).float()
+            else:
+                obs_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['obs']), axis=1))
+                actions_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['actions']), axis=1))
+                values_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['values']), axis=1))
+                returns_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['returns']), axis=1))
+                advantages_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['advantages']), 1))
+                log_pi_old_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['log_pi_old']), 1))
+                ter_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['terminals']), 1)).float()
+                msk_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['agent_mask']), 1)).float()
             if self.use_rnn:
                 obs = {k: obs_tensor.reshape(bs, seq_length, -1)}
                 if len(actions_tensor.shape) == 3:
@@ -108,8 +120,7 @@ class IAC_Learner(LearnerMAS):
                 log_pi_old = {k: log_pi_old_tensor.reshape(bs)}
                 terminals = {k: ter_tensor.reshape(bs)}
                 agent_mask = {k: msk_tensor.reshape(bs)}
-                IDs = ops.eye(self.n_agents).unsqueeze(0).expand(
-                    batch_size, -1, -1).reshape(bs, self.n_agents)
+                IDs = ops.repeat_elements(ops.eye(self.n_agents), rep=batch_size, axis=0).reshape(bs, self.n_agents)
 
             if use_actions_mask:
                 avail_a = np.stack(itemgetter(*self.agent_keys)(sample['avail_actions']), axis=1)
@@ -154,6 +165,71 @@ class IAC_Learner(LearnerMAS):
         }
         return sample_Tensor
 
+    def forward_fn(self, bs, obs, actions, agent_mask, avail_actions, values, returns, advantages, IDs):
+        value_pred = {}
+        pi_dist_mu, pi_dist_std, pi_dist_logits = {}, {}, {}
+
+        # feedforward
+        if self.is_continuous:
+            _, pi_dist_mu, pi_dist_std = self.policy(observation=obs, agent_ids=IDs, avail_actions=avail_actions)
+        else:
+            _, pi_dist_logits = self.policy(observation=obs, agent_ids=IDs, avail_actions=avail_actions)
+
+        _, values_pred_dict = self.policy.get_values(observation=obs, agent_ids=IDs)
+
+        loss_a, loss_e, loss_c = [], [], []
+        for key in self.model_keys:
+            mask_values = agent_mask[key]
+            # policy gradient loss
+            if self.is_continuous:
+                log_pi = self.pi_dist[key]._log_prob(value=actions[key], mean=pi_dist_mu[key], sd=pi_dist_std[key])
+                entropy = self.pi_dist[key]._entropy(mean=pi_dist_mu[key], sd=pi_dist_std[key])
+            else:
+                probs = self.softmax(pi_dist_logits[key])
+                log_pi = self.pi_dist[key]._log_prob(value=actions[key], probs=probs)
+                entropy = self.pi_dist[key].entropy(probs=probs)
+
+            pg_loss = -((ops.stop_gradient(advantages[key]) * log_pi) * mask_values).sum() / mask_values.sum()
+            loss_a.append(pg_loss)
+
+            # entropy loss
+            entropy_loss = (entropy * mask_values).sum() / mask_values.sum()
+            loss_e.append(entropy_loss)
+
+            # value loss
+            value_pred_i = values_pred_dict[key].reshape(bs)
+            value_target = returns[key].reshape(bs)
+            values_i = values[key].reshape(bs)
+            if self.use_value_clip:
+                value_clipped = values_i + (value_pred_i - values_i).clamp(-self.value_clip_range,
+                                                                           self.value_clip_range)
+                if self.use_value_norm:
+                    self.value_normalizer[key].update(value_target.reshape(bs, 1))
+                    value_target = self.value_normalizer[key].normalize(value_target.reshape(bs, 1)).reshape(bs)
+                if self.use_huber_loss:
+                    loss_v = self.huber_loss(value_pred_i, value_target)
+                    loss_v_clipped = self.huber_loss(value_clipped, value_target)
+                else:
+                    loss_v = (value_pred_i - value_target) ** 2
+                    loss_v_clipped = (value_clipped - value_target) ** 2
+                loss_c_ = ops.maximum(loss_v, loss_v_clipped) * mask_values
+                loss_c.append(loss_c_.sum() / mask_values.sum())
+            else:
+                if self.use_value_norm:
+                    self.value_normalizer[key].update(value_target)
+                    value_target = self.value_normalizer[key].normalize(value_target)
+                if self.use_huber_loss:
+                    loss_v = self.huber_loss(value_pred_i, value_target) * mask_values
+                else:
+                    loss_v = ((value_pred_i - value_target) ** 2) * mask_values
+                loss_c.append(loss_v.sum() / mask_values.sum())
+
+            value_pred.update({
+                f"predict_value/{key}": value_pred_i.mean().asnumpy()
+            })
+
+        return loss_a, loss_e, loss_c, value_pred
+
     def update(self, sample):
         self.iterations += 1
         info = {}
@@ -175,74 +251,24 @@ class IAC_Learner(LearnerMAS):
         bs = batch_size * self.n_agents if self.use_parameter_sharing else batch_size
 
         # feedforward
-        _, pi_dist_dict = self.policy(observation=obs, agent_ids=IDs, avail_actions=avail_actions)
-        _, values_pred_dict = self.policy.get_values(observation=obs, agent_ids=IDs)
-
-        loss_a, loss_e, loss_c = [], [], []
-        for key in self.model_keys:
-            mask_values = agent_mask[key]
-            # policy gradient loss
-            log_pi = pi_dist_dict[key].log_prob(actions[key])
-            pg_loss = -((advantages[key].detach() * log_pi) * mask_values).sum() / mask_values.sum()
-            loss_a.append(pg_loss)
-
-            # entropy loss
-            entropy = pi_dist_dict[key].entropy()
-            entropy_loss = (entropy * mask_values).sum() / mask_values.sum()
-            loss_e.append(entropy_loss)
-
-            # value loss
-            value_pred_i = values_pred_dict[key].reshape(bs)
-            value_target = returns[key].reshape(bs)
-            values_i = values[key].reshape(bs)
-            if self.use_value_clip:
-                value_clipped = values_i + (value_pred_i - values_i).clamp(-self.value_clip_range,
-                                                                           self.value_clip_range)
-                if self.use_value_norm:
-                    self.value_normalizer[key].update(value_target.reshape(bs, 1))
-                    value_target = self.value_normalizer[key].normalize(value_target.reshape(bs, 1)).reshape(bs)
-                if self.use_huber_loss:
-                    loss_v = self.huber_loss(value_pred_i, value_target)
-                    loss_v_clipped = self.huber_loss(value_clipped, value_target)
-                else:
-                    loss_v = (value_pred_i - value_target) ** 2
-                    loss_v_clipped = (value_clipped - value_target) ** 2
-                loss_c_ = torch.max(loss_v, loss_v_clipped) * mask_values
-                loss_c.append(loss_c_.sum() / mask_values.sum())
-            else:
-                if self.use_value_norm:
-                    self.value_normalizer[key].update(value_target)
-                    value_target = self.value_normalizer[key].normalize(value_target)
-                if self.use_huber_loss:
-                    loss_v = self.huber_loss(value_pred_i, value_target) * mask_values
-                else:
-                    loss_v = ((value_pred_i - value_target) ** 2) * mask_values
-                loss_c.append(loss_v.sum() / mask_values.sum())
-
-            info.update({
-                f"predict_value/{key}": value_pred_i.mean().item()
-            })
-
+        (loss_a, loss_e, loss_c, value_pred), grads = self.grad_fn(bs, obs, actions, agent_mask, avail_actions,
+                                                                   values, returns, advantages, IDs)
         # Total loss
         loss = sum(loss_a) + self.vf_coef * sum(loss_c) - self.ent_coef * sum(loss_e)
-        self.optimizer.zero_grad()
-        loss.backward()
         if self.use_grad_clip:
-            grad_norm = torch.nn.utils.clip_grad_norm_(self.policy.parameters_model, self.grad_clip_norm)
-            info["gradient_norm"] = grad_norm.item()
-        self.optimizer.step()
-        if self.scheduler is not None:
-            self.scheduler.step()
+            grads = clip_grads(grads, Tensor(-self.grad_clip_norm), Tensor(self.grad_clip_norm))
+        self.optimizer(grads)  # backpropagation
 
-        # Logger
-        lr = self.optimizer.state_dict()['param_groups'][0]['lr']
+        self.scheduler.step()  # update learning rate
+        lr = self.scheduler.get_last_lr()[0]
 
         info.update({
-            "learning_rate": lr,
-            "pg_loss": sum(loss_a).item(),
-            "vf_loss": sum(loss_c).item(),
-            "entropy_loss": sum(loss_e).item(),
-            "loss": loss.item(),
+            "learning_rate": lr.asnumpy(),
+            "pg_loss": sum(loss_a).asnumpy(),
+            "vf_loss": sum(loss_c).asnumpy(),
+            "entropy_loss": sum(loss_e).asnumpy(),
+            "loss": loss.asnumpy(),
         })
+        info.update(value_pred)
 
         return info

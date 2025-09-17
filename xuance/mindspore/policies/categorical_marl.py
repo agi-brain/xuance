@@ -637,8 +637,8 @@ class MeanFieldActorCriticPolicy(Module):
         return params
 
     def construct(self, observation: Dict[str, Tensor], agent_ids: Optional[Tensor] = None,
-             avail_actions: Dict[str, Tensor] = None, agent_key: str = None,
-             rnn_hidden: Optional[Dict[str, List[Tensor]]] = None, **kwargs):
+                  avail_actions: Dict[str, Tensor] = None, agent_key: str = None,
+                  rnn_hidden: Optional[Dict[str, List[Tensor]]] = None, **kwargs):
         """
         Returns actions of the policy.
 
