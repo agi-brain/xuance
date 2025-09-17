@@ -178,7 +178,7 @@ class IAC_Learner(LearnerMAS):
             else:
                 probs = self.softmax(pi_dist_logits[key])
                 log_pi = self.pi_dist[key]._log_prob(value=actions[key], probs=probs)
-                entropy = self.pi_dist[key].entropy(probs=probs)
+                entropy = self.pi_dist[key].entropy(probs=probs + 1e-20)
 
             pg_loss = -(ops.stop_gradient(advantages[key]) * log_pi * mask_values).sum() / mask_values.sum()
             loss_a.append(pg_loss)
