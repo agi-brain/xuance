@@ -3,11 +3,10 @@ from copy import deepcopy
 from operator import itemgetter
 from gymnasium.spaces import Discrete
 from xuance.common import Sequence, Optional, Union, Dict, List
-from xuance.tensorflow.representations import Basic_MLP
 from xuance.tensorflow.policies import CategoricalActorNet, ActorNet
 from xuance.tensorflow.policies.core import CriticNet, BasicQhead
 from xuance.tensorflow.utils import CategoricalDistribution
-from xuance.tensorflow.representations import Basic_Identical
+from xuance.tensorflow.representations import Basic_Identical, Basic_MLP
 from xuance.tensorflow import tf, tk, Tensor, Module
 
 
@@ -109,7 +108,7 @@ class MAAC_Policy(Module):
 
         Returns:
             rnn_hidden_new (Optional[Dict[str, List[Tensor]]]): The new RNN hidden states of actor representation.
-            pi_dists (dict): The stochastic policy distributions.
+            pi_logits (dict): The logits of stochastic policy distributions.
         """
         rnn_hidden_new, pi_logits = {}, {}
         agent_list = self.model_keys if agent_key is None else [agent_key]
@@ -552,28 +551,28 @@ class COMA_Policy(Module):
 class MeanFieldActorCriticPolicy(Module):
     """Mean-field actor-critic policy.
 
-        This policy maintains separate actor and critic networks for each agent type (model key),
-        embeds the mean action of neighboring agents, and produces Boltzmann policies.
+    This policy maintains separate actor and critic networks for each agent type (model key),
+    embeds the mean action of neighboring agents, and produces Boltzmann policies.
 
-        Args:
-            action_space (Discrete): A mapping from model keys to discrete action spaces.
-            n_agents (int): Total number of agents in the environment.
-            representation_actor (Optional[Dict[str, Module]]): Actor state encoder modules for each model key.
-            representation_critic (Optional[Dict[str, Module]]): Critic state encoder modules for each model key.
-            actor_hidden_size (Sequence[int], optional): Hidden layer sizes for actor networks.
-            critic_hidden_size (Sequence[int], optional): Hidden layer sizes for critic networks.
-            normalize (Optional[tk.layers.Layer]): Normalization layer to apply after each hidden layer.
-            initialize (Optional[tk.initializers.Initializer]): Weight initialization function.
-            activation (Optional[tk.layers.Layer]): Activation function class for hidden layers.
-            use_distributed_training (bool): If True, wrap components in DistributedDataParallel.
-            **kwargs: Additional keyword arguments:
-                use_parameter_sharing (bool): Whether to share parameters across agent types.
-                model_keys (List[str]): Keys identifying different agent types.
-                rnn (str): RNN type, e.g., "LSTM" or "GRU".
-                use_rnn (bool): Flag indicating whether to include RNN layers.
-                action_embedding_hidden_size (Sequence[int]): Hidden sizes for action mean embedding.
-                temperature (float): Temperature parameter for Boltzmann policy.
-        """
+    Args:
+        action_space (Discrete): A mapping from model keys to discrete action spaces.
+        n_agents (int): Total number of agents in the environment.
+        representation_actor (Optional[Dict[str, Module]]): Actor state encoder modules for each model key.
+        representation_critic (Optional[Dict[str, Module]]): Critic state encoder modules for each model key.
+        actor_hidden_size (Sequence[int], optional): Hidden layer sizes for actor networks.
+        critic_hidden_size (Sequence[int], optional): Hidden layer sizes for critic networks.
+        normalize (Optional[tk.layers.Layer]): Normalization layer to apply after each hidden layer.
+        initialize (Optional[tk.initializers.Initializer]): Weight initialization function.
+        activation (Optional[tk.layers.Layer]): Activation function class for hidden layers.
+        use_distributed_training (bool): If True, wrap components in DistributedDataParallel.
+        **kwargs: Additional keyword arguments:
+            use_parameter_sharing (bool): Whether to share parameters across agent types.
+            model_keys (List[str]): Keys identifying different agent types.
+            rnn (str): RNN type, e.g., "LSTM" or "GRU".
+            use_rnn (bool): Flag indicating whether to include RNN layers.
+            action_embedding_hidden_size (Sequence[int]): Hidden sizes for action mean embedding.
+            temperature (float): Temperature parameter for Boltzmann policy.
+    """
 
     def __init__(self,
                  action_space: Discrete,

@@ -8,7 +8,7 @@ from argparse import Namespace
 from operator import itemgetter
 from mindspore.nn import MSELoss, HuberLoss
 from xuance.common import Optional, List
-from xuance.mindspore import Module, Tensor, optim
+from xuance.mindspore import ops, Module, Tensor, optim
 from xuance.mindspore.utils import ValueNorm
 from xuance.mindspore.learners import LearnerMAS
 
@@ -63,27 +63,21 @@ class IAC_Learner(LearnerMAS):
             bs = batch_size * self.n_agents
             if self.n_agents == 1:
                 obs_tensor = Tensor(sample['obs'][k])
-                actions_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['actions']), axis=1)).to(
-                    self.device)
-                values_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['values']), axis=1)).to(self.device)
-                returns_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['returns']), axis=1)).to(
-                    self.device)
-                advantages_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['advantages']), 1)).to(
-                    self.device)
-                log_pi_old_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['log_pi_old']), 1)).to(
-                    self.device)
-                ter_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['terminals']), 1)).float().to(
-                    self.device)
-                msk_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['agent_mask']), 1)).float().to(
-                    self.device)
-            obs_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['obs']), axis=1)).to(self.device)
-            actions_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['actions']), axis=1)).to(self.device)
-            values_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['values']), axis=1)).to(self.device)
-            returns_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['returns']), axis=1)).to(self.device)
-            advantages_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['advantages']), 1)).to(self.device)
-            log_pi_old_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['log_pi_old']), 1)).to(self.device)
-            ter_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['terminals']), 1)).float().to(self.device)
-            msk_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['agent_mask']), 1)).float().to(self.device)
+                actions_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['actions']), axis=1))
+                values_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['values']), axis=1))
+                returns_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['returns']), axis=1))
+                advantages_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['advantages']), 1))
+                log_pi_old_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['log_pi_old']), 1))
+                ter_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['terminals']), 1)).float()
+                msk_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['agent_mask']), 1)).float()
+            obs_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['obs']), axis=1))
+            actions_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['actions']), axis=1))
+            values_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['values']), axis=1))
+            returns_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['returns']), axis=1))
+            advantages_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['advantages']), 1))
+            log_pi_old_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['log_pi_old']), 1))
+            ter_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['terminals']), 1)).float()
+            msk_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['agent_mask']), 1)).float()
             if self.use_rnn:
                 obs = {k: obs_tensor.reshape(bs, seq_length, -1)}
                 if len(actions_tensor.shape) == 3:
@@ -98,8 +92,8 @@ class IAC_Learner(LearnerMAS):
                 log_pi_old = {k: log_pi_old_tensor.reshape(bs, seq_length)}
                 terminals = {k: ter_tensor.reshape(bs, seq_length)}
                 agent_mask = {k: msk_tensor.reshape(bs, seq_length)}
-                IDs = torch.eye(self.n_agents).unsqueeze(1).unsqueeze(0).expand(
-                    batch_size, -1, seq_length, -1).reshape(bs, seq_length, self.n_agents).to(self.device)
+                IDs = ops.eye(self.n_agents).unsqueeze(1).unsqueeze(0).expand(
+                    batch_size, -1, seq_length, -1).reshape(bs, seq_length, self.n_agents)
             else:
                 obs = {k: obs_tensor.reshape(bs, -1)}
                 if len(actions_tensor.shape) == 2:
@@ -114,33 +108,33 @@ class IAC_Learner(LearnerMAS):
                 log_pi_old = {k: log_pi_old_tensor.reshape(bs)}
                 terminals = {k: ter_tensor.reshape(bs)}
                 agent_mask = {k: msk_tensor.reshape(bs)}
-                IDs = torch.eye(self.n_agents).unsqueeze(0).expand(
-                    batch_size, -1, -1).reshape(bs, self.n_agents).to(self.device)
+                IDs = ops.eye(self.n_agents).unsqueeze(0).expand(
+                    batch_size, -1, -1).reshape(bs, self.n_agents)
 
             if use_actions_mask:
                 avail_a = np.stack(itemgetter(*self.agent_keys)(sample['avail_actions']), axis=1)
                 if self.use_rnn:
-                    avail_actions = {k: Tensor(avail_a.reshape([bs, seq_length, -1])).float().to(self.device)}
+                    avail_actions = {k: Tensor(avail_a.reshape([bs, seq_length, -1])).float()}
                 else:
-                    avail_actions = {k: Tensor(avail_a.reshape([bs, -1])).float().to(self.device)}
+                    avail_actions = {k: Tensor(avail_a.reshape([bs, -1])).float()}
 
         else:
-            obs = {k: Tensor(sample['obs'][k]).to(self.device) for k in self.agent_keys}
-            actions = {k: Tensor(sample['actions'][k]).to(self.device) for k in self.agent_keys}
-            values = {k: Tensor(sample['values'][k]).to(self.device) for k in self.agent_keys}
-            returns = {k: Tensor(sample['returns'][k]).to(self.device) for k in self.agent_keys}
-            advantages = {k: Tensor(sample['advantages'][k]).to(self.device) for k in self.agent_keys}
-            log_pi_old = {k: Tensor(sample['log_pi_old'][k]).to(self.device) for k in self.agent_keys}
-            terminals = {k: Tensor(sample['terminals'][k]).float().to(self.device) for k in self.agent_keys}
-            agent_mask = {k: Tensor(sample['agent_mask'][k]).float().to(self.device) for k in self.agent_keys}
+            obs = {k: Tensor(sample['obs'][k]) for k in self.agent_keys}
+            actions = {k: Tensor(sample['actions'][k]) for k in self.agent_keys}
+            values = {k: Tensor(sample['values'][k]) for k in self.agent_keys}
+            returns = {k: Tensor(sample['returns'][k]) for k in self.agent_keys}
+            advantages = {k: Tensor(sample['advantages'][k]) for k in self.agent_keys}
+            log_pi_old = {k: Tensor(sample['log_pi_old'][k]) for k in self.agent_keys}
+            terminals = {k: Tensor(sample['terminals'][k]).float() for k in self.agent_keys}
+            agent_mask = {k: Tensor(sample['agent_mask'][k]).float() for k in self.agent_keys}
             if use_actions_mask:
-                avail_actions = {k: Tensor(sample['avail_actions'][k]).float().to(self.device) for k in self.agent_keys}
+                avail_actions = {k: Tensor(sample['avail_actions'][k]).float() for k in self.agent_keys}
 
         if use_global_state:
-            state = Tensor(sample['state']).to(self.device)
+            state = Tensor(sample['state'])
 
         if self.use_rnn:
-            filled = Tensor(sample['filled']).float().to(self.device)
+            filled = Tensor(sample['filled']).float()
 
         sample_Tensor = {
             'batch_size': batch_size,
