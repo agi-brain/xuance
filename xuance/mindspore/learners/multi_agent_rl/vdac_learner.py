@@ -3,79 +3,143 @@ Value Decomposition Actor-Critic (VDAC)
 Paper link: https://ojs.aaai.org/index.php/AAAI/article/view/17353
 Implementation: MindSpore
 """
-from xuance.mindspore import ms, Module, Tensor, optim
-from xuance.mindspore.learners import LearnerMAS
-from xuance.common import List
 from argparse import Namespace
-from xuance.torch.utils.operations import update_linear_decay
+from xuance.common import List
+from xuance.mindspore import ops, Module, Tensor
+from xuance.mindspore.utils import clip_grads
+from xuance.mindspore.learners.multi_agent_rl.iac_learner import IAC_Learner
 
 
-class VDAC_Learner(LearnerMAS):
-    class PolicyNetWithLossCell(Module):
-        def __init__(self, backbone, vf_coef, ent_coef):
-            super(VDAC_Learner.PolicyNetWithLossCell, self).__init__()
-            self._backbone = backbone
-            self._vf_coef = vf_coef
-            self._ent_coef = ent_coef
-            self.loss_c = nn.MSELoss()
-
-        def construct(self, o, s, a, adv, ret, ids, agt_mask):
-            _, act_probs, v_pred = self._backbone(o, ids)
-            v_pred_tot = self._backbone.value_tot(v_pred * agt_mask, s)
-            log_prob = self._backbone.actor.log_prob(value=a, probs=act_probs).reshape(adv.shape)
-            entropy = self._backbone.actor.entropy(probs=act_probs).reshape(agt_mask.shape) * agt_mask
-
-            loss_a = -(adv * log_prob * agt_mask).mean()
-            loss_c = self.loss_c(logits=v_pred_tot, labels=ret)
-            loss_e = entropy.mean()
-
-            loss = loss_a + self._vf_coef * loss_c - self._ent_coef * loss_e
-            return loss
-
+class VDAC_Learner(IAC_Learner):
     def __init__(self,
                  config: Namespace,
                  model_keys: List[str],
                  agent_keys: List[str],
                  policy: Module):
-        self.gamma = gamma
-        self.clip_range = config.clip_range
-        self.use_linear_lr_decay = config.use_linear_lr_decay
-        self.use_grad_clip, self.grad_clip_norm = config.use_grad_clip, config.grad_clip_norm
-        self.use_value_norm = config.use_value_norm
-        self.vf_coef, self.ent_coef = config.vf_coef, config.ent_coef
-        self.mse_loss = nn.MSELoss()
         super(VDAC_Learner, self).__init__(config, model_keys, agent_keys, policy)
-        self.loss_net = self.PolicyNetWithLossCell(policy, config.vf_coef, config.ent_coef)
-        self.policy_train = TrainOneStepCellWithGradClip(self.loss_net, optimizer,
-                                                         clip_type=config.clip_type, clip_value=config.grad_clip_norm)
-        self.policy_train.set_train()
-        self.lr = config.learning_rate
-        self.end_factor_lr_decay = config.end_factor_lr_decay
+        self.use_global_state = True if config.mixer == "QMIX" else getattr(config, "use_global_state", False)
 
-    def lr_decay(self, i_step):
-        if self.use_linear_lr_decay:
-            update_linear_decay(self.optimizer, i_step, self.running_steps, self.lr, self.end_factor_lr_decay)
+    def forward_fn(self, *args):
+        bs, batch_size, state, obs, actions, agent_mask, avail_actions, values, returns, advantages, IDs = args
+        value_pred = {}
+        pi_dist_mu, pi_dist_std, pi_dist_logits = {}, {}, {}
+
+        # feedforward
+        if self.is_continuous:
+            _, pi_dist_mu, pi_dist_std = self.policy(observation=obs, agent_ids=IDs, avail_actions=avail_actions)
+        else:
+            _, pi_dist_logits = self.policy(observation=obs, agent_ids=IDs, avail_actions=avail_actions)
+
+        _, values_pred_individual = self.policy.get_values(observation=obs, agent_ids=IDs)
+
+        if self.use_parameter_sharing:
+            values_n = values_pred_individual[self.model_keys[0]].reshape(batch_size, self.n_agents)
+        else:
+            values_n = self.get_joint_input(values_pred_individual)
+        if self.config.mixer == "VDN":
+            values_tot = self.policy.value_tot(values_n)
+        elif self.config.mixer == "QMIX":
+            values_tot = self.policy.value_tot(values_n, state)
+        else:
+            raise NotImplementedError("Mixer not implemented.")
+        if self.use_parameter_sharing:
+            values_tot = ops.repeat_elements(values_tot.reshape(batch_size, 1), rep=self.n_agents, axis=1).reshape(bs)
+        values_pred_dict = {k: values_tot for k in self.model_keys}
+
+        loss_a, loss_e, loss_c = [], [], []
+        for key in self.model_keys:
+            mask_values = agent_mask[key]
+            # policy gradient loss
+            if self.is_continuous:
+                log_pi = self.pi_dist[key]._log_prob(value=actions[key], mean=pi_dist_mu[key], sd=pi_dist_std[key])
+                entropy = self.pi_dist[key]._entropy(mean=pi_dist_mu[key], sd=pi_dist_std[key])
+            else:
+                probs = self.softmax(pi_dist_logits[key])
+                log_pi = self.pi_dist[key]._log_prob(value=actions[key], probs=probs)
+                entropy = self.pi_dist[key].entropy(probs=probs)
+
+            pg_loss = -(ops.stop_gradient(advantages[key]) * log_pi * mask_values).sum() / mask_values.sum()
+            loss_a.append(pg_loss)
+
+            # entropy loss
+            entropy_loss = (entropy * mask_values).sum() / mask_values.sum()
+            loss_e.append(entropy_loss)
+
+            # value loss
+            value_pred_i = values_pred_dict[key].reshape(bs)
+            value_target = returns[key].reshape(bs)
+            values_i = values[key].reshape(bs)
+            if self.use_value_clip:
+                value_clipped = values_i + (value_pred_i - values_i).clamp(-self.value_clip_range,
+                                                                           self.value_clip_range)
+                if self.use_value_norm:
+                    self.value_normalizer[key].update(value_target.reshape(bs, 1))
+                    value_target = self.value_normalizer[key].normalize(value_target.reshape(bs, 1)).reshape(bs)
+                if self.use_huber_loss:
+                    loss_v = self.huber_loss(value_pred_i, value_target)
+                    loss_v_clipped = self.huber_loss(value_clipped, value_target)
+                else:
+                    loss_v = (value_pred_i - value_target) ** 2
+                    loss_v_clipped = (value_clipped - value_target) ** 2
+                loss_c_ = ops.maximum(loss_v, loss_v_clipped) * mask_values
+                loss_c.append(loss_c_.sum() / mask_values.sum())
+            else:
+                if self.use_value_norm:
+                    self.value_normalizer[key].update(value_target)
+                    value_target = self.value_normalizer[key].normalize(value_target)
+                if self.use_huber_loss:
+                    loss_v = self.huber_loss(value_pred_i, value_target) * mask_values
+                else:
+                    loss_v = ((value_pred_i - value_target) ** 2) * mask_values
+                loss_c.append(loss_v.sum() / mask_values.sum())
+
+            value_pred.update({
+                f"predict_value/{key}": value_pred_i.mean().asnumpy()
+            })
+
+        return loss_a, loss_e, loss_c, value_pred
 
     def update(self, sample):
         self.iterations += 1
-        state = Tensor(sample['state'])
-        obs = Tensor(sample['obs'])
-        actions = Tensor(sample['actions'])
-        returns = Tensor(sample['values']).mean(axis=1)
-        advantages = Tensor(sample['advantages'])
-        agent_mask = Tensor(sample['agent_mask']).view(-1, self.n_agents, 1)
-        batch_size = obs.shape[0]
-        IDs = ops.broadcast_to(self.expand_dims(self.eye(self.n_agents, self.n_agents, ms.float32), 0),
-                               (batch_size, -1, -1))
+        info = {}
 
-        loss = self.policy_train(obs, state, actions, advantages, returns, IDs, agent_mask)
+        # prepare training data
+        sample_Tensor = self.build_training_data(sample=sample,
+                                                 use_parameter_sharing=self.use_parameter_sharing,
+                                                 use_actions_mask=self.use_actions_mask,
+                                                 use_global_state=self.use_global_state)
+        batch_size = sample_Tensor['batch_size']
+        state = sample_Tensor['state']
+        obs = sample_Tensor['obs']
+        actions = sample_Tensor['actions']
+        agent_mask = sample_Tensor['agent_mask']
+        avail_actions = sample_Tensor['avail_actions']
+        values = sample_Tensor['values']
+        returns = sample_Tensor['returns']
+        advantages = sample_Tensor['advantages']
+        IDs = sample_Tensor['agent_ids']
 
-        # Logger
-        lr = self.scheduler(self.iterations).asnumpy()
+        bs = batch_size * self.n_agents if self.use_parameter_sharing else batch_size
 
-        info = {
-            "learning_rate": lr,
-            "loss": loss.asnumpy()
-        }
+        # feedforward
+        (loss_a, loss_e, loss_c, value_pred), grads = self.grad_fn(bs, batch_size, state, obs, actions, agent_mask,
+                                                                   avail_actions, values, returns, advantages, IDs)
+        # Total loss
+        loss = sum(loss_a) + self.vf_coef * sum(loss_c) - self.ent_coef * sum(loss_e)
+        if self.use_grad_clip:
+            grads = clip_grads(grads, Tensor(-self.grad_clip_norm), Tensor(self.grad_clip_norm))
+        self.optimizer(grads)  # backpropagation
+
+        self.scheduler.step()  # update learning rate
+        lr = self.scheduler.get_last_lr()[0]
+
+        info.update({
+            "learning_rate": lr.asnumpy(),
+            "pg_loss": sum(loss_a).asnumpy(),
+            "vf_loss": sum(loss_c).asnumpy(),
+            "entropy_loss": sum(loss_e).asnumpy(),
+            "loss": loss.asnumpy(),
+        })
+        info.update(value_pred)
 
         return info

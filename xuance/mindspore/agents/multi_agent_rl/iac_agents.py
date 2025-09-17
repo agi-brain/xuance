@@ -5,7 +5,7 @@ from operator import itemgetter
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
 from xuance.common import List, Optional, Union
 from xuance.mindspore import Module
-from xuance.mindspore.utils import NormalizeFunctions, ActivationFunctions
+from xuance.mindspore.utils import NormalizeFunctions, InitializeFunctions, ActivationFunctions
 from xuance.mindspore.policies import REGISTRY_Policy
 from xuance.mindspore.agents import OnPolicyMARLAgents
 
@@ -35,7 +35,7 @@ class IAC_Agents(OnPolicyMARLAgents):
             policy (torch.nn.Module): A dict of policies.
         """
         normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None
-        initializer = torch.nn.init.orthogonal_
+        initializer = InitializeFunctions[self.config.initialize] if hasattr(self.config, "initialize") else None
         activation = ActivationFunctions[self.config.activation]
         agent = self.config.agent
 

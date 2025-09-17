@@ -72,24 +72,14 @@ class IAC_Learner(LearnerMAS):
         if use_parameter_sharing:
             k = self.model_keys[0]
             bs = batch_size * self.n_agents
-            if self.n_agents == 1:
-                obs_tensor = Tensor(sample['obs'][k])
-                actions_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['actions']), axis=1))
-                values_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['values']), axis=1))
-                returns_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['returns']), axis=1))
-                advantages_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['advantages']), 1))
-                log_pi_old_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['log_pi_old']), 1))
-                ter_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['terminals']), 1)).float()
-                msk_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['agent_mask']), 1)).float()
-            else:
-                obs_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['obs']), axis=1))
-                actions_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['actions']), axis=1))
-                values_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['values']), axis=1))
-                returns_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['returns']), axis=1))
-                advantages_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['advantages']), 1))
-                log_pi_old_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['log_pi_old']), 1))
-                ter_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['terminals']), 1)).float()
-                msk_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['agent_mask']), 1)).float()
+            obs_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['obs']), axis=1))
+            actions_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['actions']), axis=1))
+            values_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['values']), axis=1))
+            returns_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['returns']), axis=1))
+            advantages_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['advantages']), 1))
+            log_pi_old_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['log_pi_old']), 1))
+            ter_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['terminals']), 1)).float()
+            msk_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['agent_mask']), 1)).float()
             if self.use_rnn:
                 obs = {k: obs_tensor.reshape(bs, seq_length, -1)}
                 if len(actions_tensor.shape) == 3:
@@ -165,7 +155,8 @@ class IAC_Learner(LearnerMAS):
         }
         return sample_Tensor
 
-    def forward_fn(self, bs, obs, actions, agent_mask, avail_actions, values, returns, advantages, IDs):
+    def forward_fn(self, *args):
+        bs, obs, actions, agent_mask, avail_actions, values, returns, advantages, IDs = args
         value_pred = {}
         pi_dist_mu, pi_dist_std, pi_dist_logits = {}, {}, {}
 
@@ -189,7 +180,7 @@ class IAC_Learner(LearnerMAS):
                 log_pi = self.pi_dist[key]._log_prob(value=actions[key], probs=probs)
                 entropy = self.pi_dist[key].entropy(probs=probs)
 
-            pg_loss = -((ops.stop_gradient(advantages[key]) * log_pi) * mask_values).sum() / mask_values.sum()
+            pg_loss = -(ops.stop_gradient(advantages[key]) * log_pi * mask_values).sum() / mask_values.sum()
             loss_a.append(pg_loss)
 
             # entropy loss
