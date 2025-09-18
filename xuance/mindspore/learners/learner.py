@@ -207,6 +207,15 @@ class LearnerMAS(ABC):
         }
         return sample_Tensor
 
+    def get_joint_input(self, input_tensor, output_shape=None):
+        if self.n_agents == 1:
+            joint_tensor = itemgetter(*self.agent_keys)(input_tensor)
+        else:
+            joint_tensor = ops.cat(itemgetter(*self.agent_keys)(input_tensor), axis=-1)
+        if output_shape is not None:
+            joint_tensor = joint_tensor.reshape(output_shape)
+        return joint_tensor
+
     @abstractmethod
     def update(self, *args):
         raise NotImplementedError

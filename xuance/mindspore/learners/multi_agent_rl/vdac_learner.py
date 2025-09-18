@@ -56,7 +56,7 @@ class VDAC_Learner(IAC_Learner):
             else:
                 probs = self.softmax(pi_dist_logits[key])
                 log_pi = self.pi_dist[key]._log_prob(value=actions[key], probs=probs)
-                entropy = self.pi_dist[key].entropy(probs=probs + 1e-20)
+                entropy = self.pi_dist[key].entropy(probs=probs)
 
             pg_loss = -(ops.stop_gradient(advantages[key]) * log_pi * mask_values).sum() / mask_values.sum()
             loss_a.append(pg_loss)
@@ -75,6 +75,7 @@ class VDAC_Learner(IAC_Learner):
                 if self.use_value_norm:
                     self.value_normalizer[key].update(value_target.reshape(bs, 1))
                     value_target = self.value_normalizer[key].normalize(value_target.reshape(bs, 1)).reshape(bs)
+                value_target = ops.stop_gradient(value_target)
                 if self.use_huber_loss:
                     loss_v = self.huber_loss(value_pred_i, value_target)
                     loss_v_clipped = self.huber_loss(value_clipped, value_target)
@@ -87,6 +88,7 @@ class VDAC_Learner(IAC_Learner):
                 if self.use_value_norm:
                     self.value_normalizer[key].update(value_target)
                     value_target = self.value_normalizer[key].normalize(value_target)
+                value_target = ops.stop_gradient(value_target)
                 if self.use_huber_loss:
                     loss_v = self.huber_loss(value_pred_i, value_target) * mask_values
                 else:

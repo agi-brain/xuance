@@ -110,7 +110,7 @@ class IAC_Learner(LearnerMAS):
                 log_pi_old = {k: log_pi_old_tensor.reshape(bs)}
                 terminals = {k: ter_tensor.reshape(bs)}
                 agent_mask = {k: msk_tensor.reshape(bs)}
-                IDs = ops.repeat_elements(ops.eye(self.n_agents), rep=batch_size, axis=0).reshape(bs, self.n_agents)
+                IDs = Tensor(np.eye(self.n_agents, dtype=np.float32)[None].repeat(batch_size, axis=0).reshape(bs, -1))
 
             if use_actions_mask:
                 avail_a = np.stack(itemgetter(*self.agent_keys)(sample['avail_actions']), axis=1)
@@ -178,7 +178,7 @@ class IAC_Learner(LearnerMAS):
             else:
                 probs = self.softmax(pi_dist_logits[key])
                 log_pi = self.pi_dist[key]._log_prob(value=actions[key], probs=probs)
-                entropy = self.pi_dist[key].entropy(probs=probs + 1e-20)
+                entropy = self.pi_dist[key].entropy(probs=probs)
 
             pg_loss = -(ops.stop_gradient(advantages[key]) * log_pi * mask_values).sum() / mask_values.sum()
             loss_a.append(pg_loss)
