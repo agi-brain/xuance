@@ -1,0 +1,71 @@
+dl_toolbox: "torch"  # The deep learning toolbox. Choices: "torch", "mindspore", "tensorlayer"
+project_name: "XuanCe_New_MARL_Algorithm"
+logger: "tensorboard"  # Choices: tensorboard, wandb.
+wandb_user_name: "your_user_name"
+render: True
+render_mode: 'rgb_array' # Choices: 'human', 'rgb_array'.
+fps: 30
+test_mode: False
+device: "cuda:0"  # Choose an calculating device. PyTorch: "cpu", "cuda:0"; TensorFlow: "cpu"/"CPU", "gpu"/"GPU"; MindSpore: "CPU", "GPU", "Ascend", "Davinci".
+distributed_training: False  # Whether to use multi-GPU for distributed training.
+master_port: '12355'  # The master port for current experiment when use distributed training.
+
+agent: "MyMARLAgents"
+env_name: "mpe"  # Name of the environment (Multi-Particle Environment).
+env_id: "simple_spread_v3"  # Environment ID for multi-agent tasks.
+env_seed: 1
+continuous_action: False  # Discrete action space for Q-learning based methods.
+learner: "MyMARLLearner"
+policy: "MyMARLPolicy"  # Custom multi-agent policy
+representation: "Basic_MLP"
+vectorize: "SubprocVecMultiAgentEnv"  # Multi-agent vectorized environment
+
+# Neural network architecture
+representation_hidden_size: [64, 64]  # Hidden sizes for representation network
+q_hidden_size: [64, 64]  # Hidden sizes for Q-network
+activation: 'relu'  # Activation function
+
+# Multi-agent specific settings
+use_parameter_sharing: True  # If to use parameter sharing for all agents' policies
+use_actions_mask: False  # If to use actions mask for unavailable actions
+use_global_state: False  # If to use global state to replace merged observations
+
+# Training parameters
+seed: 1
+parallels: 16  # The number of environments to run in parallel
+buffer_size: 50000  # Size of replay buffer
+batch_size: 256  # Batch size for training
+learning_rate: 0.001  # Learning rate
+gamma: 0.99  # Discount factor
+
+# Exploration parameters (epsilon-greedy)
+start_greedy: 1.0  # Initial epsilon value
+end_greedy: 0.05  # Final epsilon value
+decay_step_greedy: 500000  # Steps to decay epsilon
+
+# Training settings
+sync_frequency: 100  # Frequency to update target networks
+training_frequency: 1  # Training frequency
+running_steps: 2000000  # Total training steps
+start_training: 5000  # Steps before starting training
+
+# Normalization and regularization
+use_grad_clip: True  # Gradient clipping
+grad_clip_norm: 10.0  # Max gradient norm
+use_obsnorm: False  # Observation normalization
+use_rewnorm: False  # Reward normalization
+obsnorm_range: 5
+rewnorm_range: 5
+normalize: "LayerNorm"  # Layer normalization
+weight_decay: 0.0
+
+# Network initialization
+initialize: "orthogonal"  # Network initializer
+gain: 1.0  # Gain value for network initialization
+
+# Evaluation and logging
+test_steps: 50000
+eval_interval: 100000  # Evaluation interval
+test_episode: 10  # Episodes for testing
+log_dir: "./logs/my_marl_agent/"
+model_dir: "./models/my_marl_agent/"
