@@ -1,14 +1,13 @@
+from operator import itemgetter
 import mindspore as ms
-from PIL.ImageMode import ModeDescriptor
-from mindspore.nn.probability.distribution import Categorical
 from copy import deepcopy
+from mindspore.nn.probability.distribution import Categorical
 from gymnasium.spaces import Discrete, Box
-from torch.nn import ModuleList
-
 from xuance.common import Sequence, Optional, Callable, Dict, List
 from xuance.mindspore.utils import ModuleType
 from xuance.mindspore import Tensor, Module, ModuleDict, ops
 from .core import BasicQhead, ActorNet, CriticNet, VDN_mixer, QTRAN_base, QMIX_FF_mixer
+from xuance.mindspore.representations import Basic_MLP
 
 
 class BasicQnetwork(Module):
@@ -536,6 +535,21 @@ class DCG_policy(Module):
 
 
 class MFQnetwork(Module):
+    """
+    The base class to implement Mean Field Reinforcement Learning - MFQ.
+
+    Args:
+        action_space (Optional[Dict[str, Discrete]]): The action space, which type is gym.spaces.Discrete.
+        n_agents (int): The number of agents.
+        representation (ModuleDict): A dict of the representation module for all agents.
+        hidden_size (Sequence[int]): List of hidden units for fully connect layers.
+        normalize (Optional[ModuleType]): The layer normalization over a minibatch of inputs.
+        initialize (Optional[Callable[..., Tensor]]): The parameters' initializer.
+        activation (Optional[ModuleType]): The activation function for each layer.
+        use_distributed_training (bool): Whether to use multi-GPU for distributed training.
+        **kwargs: Other arguments.
+    """
+
     def __init__(self,
                  action_space: Discrete,
                  n_agents: int,
@@ -543,34 +557,191 @@ class MFQnetwork(Module):
                  hidden_size: Sequence[int] = None,
                  normalize: Optional[ModuleType] = None,
                  initialize: Optional[Callable[..., Tensor]] = None,
-                 activation: Optional[ModuleType] = None):
+                 activation: Optional[ModuleType] = None,
+                 use_distributed_training: bool = False,
+                 **kwargs):
         super(MFQnetwork, self).__init__()
-        self.action_dim = action_space.n
+        self.action_space = action_space
+        self.n_agents = n_agents
+        self.n_actions_list = [a_space.n for a_space in self.action_space.values()]
+        self.n_actions_max = int(max(self.n_actions_list))
+        self.use_parameter_sharing = kwargs['use_parameter_sharing']
+        self.model_keys = kwargs['model_keys']
+        self.representation_info_shape = {key: representation[key].output_shapes for key in self.model_keys}
+        self.lstm = True if kwargs["rnn"] == "LSTM" else False
+        self.use_rnn = True if kwargs["use_rnn"] else False
+        # The choice of policy: Boltzmann policy or greedy policy. (Default is 'greedy')
+        self.policy_type = kwargs['policy_type']
+
         self.representation = representation
-        self.representation_info_shape = self.representation.output_shapes
+        self.target_representation = deepcopy(self.representation)
 
-        self.eval_Qhead = BasicQhead(self.representation.output_shapes['state'][0] + self.action_dim, self.action_dim,
-                                     n_agents, hidden_size, normalize, initialize, activation)
-        self.target_Qhead = deepcopy(self.eval_Qhead)
-        self._concat = ms.ops.Concat(axis=-1)
-        self._dist = Categorical(dtype=ms.float32)
+        self.dim_input_action_embedding, self.dim_input_Q, self.n_actions = {}, {}, {}
+        self.action_mean_embedding = ModuleDict()
+        self.eval_Qhead, self.target_Qhead, self.target_action_mean_embedding = ModuleDict(), ModuleDict(), ModuleDict()
+        for key in self.model_keys:
+            self.dim_input_action_embedding[key] = self.n_actions_max
+            self.dim_input_Q[key] = self.representation_info_shape[key]['state'][0] + \
+                                    kwargs['action_embedding_hidden_size'][-1]
+            self.n_actions[key] = self.action_space[key].n
+            if self.use_parameter_sharing:
+                self.dim_input_action_embedding[key] += self.n_agents
+                self.dim_input_Q[key] += self.n_agents
+            self.action_mean_embedding[key] = Basic_MLP((self.dim_input_action_embedding[key],),
+                                                        kwargs['action_embedding_hidden_size'],
+                                                        normalize, initialize, activation)
+            self.eval_Qhead[key] = BasicQhead(self.dim_input_Q[key], self.n_actions[key], hidden_size,
+                                              normalize, initialize, activation)
+            self.target_action_mean_embedding[key] = deepcopy(self.action_mean_embedding[key])
+            self.target_Qhead[key] = deepcopy(self.eval_Qhead[key])
+            # update parameters name
+            self.representation[key].update_parameters_name(key + '_rep_')
+            self.action_mean_embedding[key].update_parameters_name(key + '_act_embedding_')
+            self.eval_Qhead[key].update_parameters_name(key + '_eval_Qhead_')
+        self.softmax = ops.Softmax(axis=-1)
+        self.temperature = kwargs['temperature']
 
-    def construct(self, observation: Tensor, actions_mean: Tensor, agent_ids: Tensor):
-        outputs = self.representation(observation)
-        q_inputs = self._concat([outputs, actions_mean, agent_ids])
-        evalQ = self.eval_Qhead(q_inputs)
-        argmax_action = evalQ.argmax(axis=-1)
-        return outputs, argmax_action, evalQ
+    @property
+    def parameters_model(self):
+        parameters_model = {}
+        for key in self.model_keys:
+            parameters_model[key] = self.representation[key].trainable_params() + self.action_mean_embedding[
+                key].trainable_params() + self.eval_Qhead[key].trainable_params()
+        return parameters_model
 
-    def sample_actions(self, logits: Tensor):
-        return self._dist.sample(probs=logits).astype(ms.int32)
+    def construct(self, observation: Dict[str, Tensor], agent_ids: Tensor = None,
+                actions_mean: Dict[str, Tensor] = None,
+                avail_actions: Dict[str, Tensor] = None, agent_key: str = None,
+                rnn_hidden: Optional[Dict[str, List[Tensor]]] = None):
+        """
+        Returns actions of the policy.
 
-    def target_Q(self, observation: Tensor, actions_mean: Tensor, agent_ids: Tensor):
-        outputs = self.representation(observation)
-        q_inputs = self._concat([outputs, actions_mean, agent_ids])
-        return self.target_Qhead(q_inputs)
+        Parameters:
+            observation (Dict[Tensor]): The input observations for the policies.
+            agent_ids (Tensor): The agents' ids (for parameter sharing).
+            actions_mean (Dict[str, Tensor]): The mean actions of each agent's neighbors.
+            avail_actions (Dict[str, Tensor]): Actions mask values, default is None.
+            agent_key (str): Calculate actions for specified agent.
+            rnn_hidden (Optional[Dict[str, List[Tensor]]]): The hidden variables of the RNN.
+
+        Returns:
+            rnn_hidden_new (Optional[Dict[str, List[Tensor]]]): The new hidden variables of the RNN.
+            argmax_action (Dict[str, Tensor]): The actions output by the policies.
+            evalQ (Dict[str, Tensor])： The evaluations of observation-action pairs.
+        """
+        rnn_hidden_new, actions, evalQ = {}, {}, {}
+        agent_list = self.model_keys if agent_key is None else [agent_key]
+
+        actions_mean = {key: Tensor(actions_mean[key]) for key in agent_list}
+        if avail_actions is not None:
+            avail_actions = {key: Tensor(avail_actions[key]) for key in agent_list}
+
+        for key in agent_list:
+            if self.use_rnn:
+                outputs = self.representation[key](observation[key], *rnn_hidden[key])
+                rnn_hidden_new[key] = (outputs['rnn_hidden'], outputs['rnn_cell'])
+            else:
+                outputs = self.representation[key](observation[key])
+                rnn_hidden_new[key] = [None, None]
+
+            # mean actions embedding
+            if self.use_parameter_sharing:
+                action_embedding_input = ops.cat([actions_mean[key], agent_ids], axis=-1)
+                act_embedding = self.action_mean_embedding[key](action_embedding_input)
+                q_inputs = ops.cat([outputs, act_embedding, agent_ids], axis=-1)
+            else:
+                act_embedding = self.action_mean_embedding[key](actions_mean[key])
+                q_inputs = ops.cat([outputs, act_embedding], axis=-1)
+
+            evalQ[key] = self.eval_Qhead[key](q_inputs)
+
+            evalQ_detach = ops.stop_gradient(deepcopy(evalQ[key]))
+            if avail_actions is not None:
+                evalQ_detach[avail_actions[key] == 0] = -1e10
+
+            if self.policy_type == "Boltzmann":
+                actions_prob = self.get_boltzmann_policy(evalQ_detach)
+                actions[key] = Categorical(probs=actions_prob).sample()
+            elif self.policy_type == "greedy":
+                actions[key] = evalQ_detach.argmax(axis=-1, keepdim=False)
+            else:
+                raise NotImplementedError
+
+        return rnn_hidden_new, actions, evalQ
+
+    def get_boltzmann_policy(self, q):
+        actions_prob = self.softmax(q / self.temperature)
+        return actions_prob
+
+    def get_mean_actions(self, actions: Dict[str, Tensor],
+                         agent_mask_tensor: Tensor, batch_size: int):
+        if self.use_parameter_sharing:
+            actions_tensor = actions[self.model_keys[0]].reshape([-1, self.n_agents])
+        else:
+            actions_tensor = ops.stack(itemgetter(*self.model_keys)(actions), axis=-1).reshape([-1, self.n_agents])
+        actions_onehot = ops.one_hot(actions_tensor, depth=self.n_actions_max)
+
+        # count alive neighbors
+        _eyes = ops.repeat_elements(ops.eye(self.n_agents).unsqueeze(0), rep=batch_size, axis=0)
+        agent_mask_diagonal = ops.repeat_elements(agent_mask_tensor.unsqueeze(-1), rep=self.n_agents, axis=2) * _eyes
+        agent_mask_neighbors = ops.repeat_elements(agent_mask_tensor.unsqueeze(-1),
+                                                   rep=self.n_agents, axis=2) - agent_mask_diagonal
+        agent_alive_neighbors = agent_mask_neighbors.sum(axis=-1, keepdims=True)
+
+        # calculate mean actions of each agent's neighbors
+        agent_mask_repeat = ops.repeat_elements(agent_mask_tensor.unsqueeze(-1), rep=self.n_actions_max, axis=2)
+        actions_onehot = actions_onehot * agent_mask_repeat
+        actions_sum = ops.repeat_elements(actions_onehot.sum(axis=-2, keepdims=True), rep=self.n_agents, axis=1)
+        actions_neighbors_sum = actions_sum - actions_onehot  # Sum of other agents' actions.
+        actions_mean_masked = actions_neighbors_sum * agent_mask_repeat / agent_alive_neighbors
+        return actions_mean_masked
+
+    def Qtarget(self, observation: Dict[str, Tensor], actions_mean: Dict[str, Tensor],
+                agent_ids: Dict[str, Tensor],
+                agent_key: str = None,
+                rnn_hidden: Optional[Dict[str, List[Tensor]]] = None):
+        """
+        Returns the Q^target of next observations and actions pairs.
+
+        Parameters:
+            observation (Dict[Tensor]): The observations.
+            actions_mean (Dict[str, Tensor]): The mean of each agent's neighbors.
+            agent_ids (Dict[Tensor]): The agents' ids (for parameter sharing).
+            agent_key (str): Calculate actions for specified agent.
+            rnn_hidden (Optional[Dict[str, List[Tensor]]]): The hidden variables of the RNN.
+
+        Returns:
+            rnn_hidden_new (Optional[Dict[str, List[Tensor]]]): The new hidden variables of the RNN.
+            q_target: The evaluations of Q^target.
+        """
+        rnn_hidden_new, q_target = {}, {}
+        agent_list = self.model_keys if agent_key is None else [agent_key]
+        actions_mean = {key: Tensor(actions_mean[key]) for key in agent_list}
+        for key in agent_list:
+            if self.use_rnn:
+                outputs = self.target_representation[key](observation[key], *rnn_hidden[key])
+                rnn_hidden_new[key] = (outputs['rnn_hidden'], outputs['rnn_cell'])
+            else:
+                outputs = self.target_representation[key](observation[key])
+                rnn_hidden_new[key] = None
+
+            # mean actions embedding
+            if self.use_parameter_sharing:
+                input_embedding = ops.cat([actions_mean[key], agent_ids], axis=-1)
+                act_embedding = self.target_action_mean_embedding[key](input_embedding)
+                q_inputs = ops.cat([outputs, act_embedding, agent_ids], axis=-1)
+            else:
+                act_embedding = self.target_action_mean_embedding[key](actions_mean[key])
+                q_inputs = ops.cat([outputs, act_embedding], axis=-1)
+
+            q_target[key] = self.target_Qhead[key](q_inputs)
+        return rnn_hidden_new, q_target
 
     def copy_target(self):
+        for ep, tp in zip(self.representation.trainable_params(), self.target_representation.trainable_params()):
+            tp.assign_value(ep)
+        for ep, tp in zip(self.action_mean_embedding.trainable_params(), self.target_action_mean_embedding.trainable_params()):
+            tp.assign_value(ep)
         for ep, tp in zip(self.eval_Qhead.trainable_params(), self.target_Qhead.trainable_params()):
             tp.assign_value(ep)
 

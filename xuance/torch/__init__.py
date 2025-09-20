@@ -1,3 +1,4 @@
+import torch.nn as nn
 from torch import Tensor
 from torch.nn import Module, ModuleDict
 from torch.nn.parallel import DistributedDataParallel
@@ -7,6 +8,7 @@ from xuance.torch.learners import REGISTRY_Learners
 from xuance.torch.agents import REGISTRY_Agents
 
 __all__ = [
+    "nn",
     "Tensor",
     "Module",
     "ModuleDict",

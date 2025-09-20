@@ -34,8 +34,8 @@ class IQL_Learner(LearnerMAS):
         _, _, q_eval = self.policy(observation=obs, agent_ids=ids, avail_actions=avail_actions,
                                    agent_key=agent_key, rnn_hidden=rnn_hidden)
         q_eval_a = q_eval[agent_key].gather(actions[agent_key].astype(ms.int32).unsqueeze(-1), axis=-1, batch_dims=-1)
-        td_error = (q_eval_a.reshape(-1) - q_target) * agt_mask[agent_key]
-        loss = (td_error ** 2).sum() / agt_mask[agent_key].sum()
+        td_error = (q_eval_a.reshape(-1) - q_target) * agt_mask
+        loss = (td_error ** 2).sum() / agt_mask.sum()
         return loss, q_eval_a
 
     def update(self, sample):
@@ -67,6 +67,8 @@ class IQL_Learner(LearnerMAS):
         _, q_next = self.policy.Qtarget(observation=obs_next, agent_ids=IDs)
 
         for key in self.model_keys:
+            mask_values = agent_mask[key]
+
             if self.use_actions_mask:
                 q_next[key][avail_actions_next[key] == 0] = -1e10
 
@@ -78,7 +80,7 @@ class IQL_Learner(LearnerMAS):
 
             q_target = rewards[key] + (1 - terminals[key]) * self.gamma * q_next_a
 
-            (loss, q_eval_a), grads = self.grad_fn[key](obs, actions, agent_mask, avail_actions, IDs, q_target, key)
+            (loss, q_eval_a), grads = self.grad_fn[key](obs, actions, mask_values, avail_actions, IDs, q_target, key)
             if self.use_grad_clip:
                 grads = clip_grads(grads, Tensor(-self.grad_clip_norm), Tensor(self.grad_clip_norm))
             self.optimizer[key](grads)

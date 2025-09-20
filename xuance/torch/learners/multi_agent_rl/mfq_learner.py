@@ -7,9 +7,9 @@ Implementation: Pytorch
 import torch
 import numpy as np
 from operator import itemgetter
-from torch import nn, Tensor
+from xuance.torch import nn, Tensor, Module
 from xuance.torch.learners import LearnerMAS
-from xuance.common import List, Optional, Union
+from xuance.common import List, Optional
 from argparse import Namespace
 
 
@@ -18,7 +18,7 @@ class MFQ_Learner(LearnerMAS):
                  config: Namespace,
                  model_keys: List[str],
                  agent_keys: List[str],
-                 policy: nn.Module,
+                 policy: Module,
                  callback):
         super(MFQ_Learner, self).__init__(config, model_keys, agent_keys, policy, callback)
         self.optimizer = {key: torch.optim.Adam(self.policy.parameters_model[key], config.learning_rate, eps=1e-5)
@@ -31,7 +31,6 @@ class MFQ_Learner(LearnerMAS):
         self.gamma = config.gamma
         self.sync_frequency = config.sync_frequency
         self.n_actions = {k: self.policy.action_space[k].n for k in self.model_keys}
-        self.mse_loss = nn.MSELoss()
         self.policy_type = self.policy.policy_type
 
     def build_actions_mean_input(self, sample: Optional[dict], use_parameter_sharing: Optional[bool] = False):
