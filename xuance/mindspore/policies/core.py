@@ -725,13 +725,13 @@ class QTRAN_alt(Module):
         self.dim_state = dim_state
         self.action_space = action_space
         self.n_actions_list = [a_space.n for a_space in action_space.values()]
-        self.n_actions_max = max(self.n_actions_list)
-        self.dim_hidden = dim_hidden
+        self.n_actions_max = int(max(self.n_actions_list))
+        self.dim_hidden = int(dim_hidden)
         self.n_agents = n_agents
         self.use_parameter_sharing = use_parameter_sharing
 
-        self.dim_q_input = self.dim_state + dim_utility_hidden + self.n_actions_max + self.n_agents
-        self.dim_v_input = self.dim_state
+        self.dim_q_input = int(self.dim_state + dim_utility_hidden + self.n_actions_max + self.n_agents)
+        self.dim_v_input = int(self.dim_state)
 
         self.Q_jt = nn.SequentialCell(nn.Dense(self.dim_q_input, self.dim_hidden),
                                       nn.ReLU(),
@@ -743,7 +743,7 @@ class QTRAN_alt(Module):
                                       nn.Dense(self.dim_hidden, self.dim_hidden),
                                       nn.ReLU(),
                                       nn.Dense(self.dim_hidden, 1))
-        self.dim_ae_input = dim_utility_hidden + self.n_actions_max
+        self.dim_ae_input = int(dim_utility_hidden + self.n_actions_max)
         self.action_encoding = nn.SequentialCell(nn.Dense(self.dim_ae_input, self.dim_ae_input),
                                                  nn.ReLU(),
                                                  nn.Dense(self.dim_ae_input, self.dim_ae_input))
@@ -765,13 +765,15 @@ class QTRAN_alt(Module):
         bs, dim_h = h_state_action_encode.shape[0], h_state_action_encode.shape[-1]
         agent_ids = ops.eye(self.n_agents, dtype=ms.float32)
         agent_masks = (1 - agent_ids)
-        repeat_agent_ids = agent_ids.unsqueeze(0).repeat(bs, 1, 1)
-        repeated_agent_masks = agent_masks.unsqueeze(0).unsqueeze(-1).repeat(bs, 1, 1, dim_h)
-        repeated_h_state_action_encode = h_state_action_encode.unsqueeze(2).repeat(1, 1, self.n_agents, 1)
+        repeat_agent_ids = ops.repeat_elements(agent_ids.unsqueeze(0), rep=bs, axis=0)
+        repeated_agent_masks = ops.repeat_elements(agent_masks.unsqueeze(0).unsqueeze(-1), rep=bs, axis=0)
+        repeated_agent_masks = ops.repeat_elements(repeated_agent_masks, rep=dim_h, axis=-1)
+        repeated_h_state_action_encode = ops.repeat_elements(h_state_action_encode.unsqueeze(2),
+                                                             rep=self.n_agents, axis=2)
         h_state_action_encode = repeated_h_state_action_encode * repeated_agent_masks
         h_state_action_encode = h_state_action_encode.sum(axis=2)  # Sum across other agents
 
-        repeated_states = states.unsqueeze(1).repeat(1, self.n_agents, 1)
+        repeated_states = ops.repeat_elements(states.unsqueeze(1), rep=self.n_agents, axis=1)
         input_q = ops.cat([repeated_states, h_state_action_encode, repeat_agent_ids], axis=-1)
         input_v = states
         q_jt = self.Q_jt(input_q)

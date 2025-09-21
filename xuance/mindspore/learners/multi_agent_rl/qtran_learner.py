@@ -91,11 +91,10 @@ class QTRAN_Learner(LearnerMAS):
         elif self.config.agent == "QTRAN_alt":
             # -- TD Loss -- (Computed for all agents)
             q_count, v_joint = self.policy.Q_tran(state, hidden_state, actions, agent_mask)
-            actions_choosen = itemgetter(*self.model_keys)(actions)
-            actions_choosen = actions_choosen.reshape(-1, self.n_agents, 1)
+            actions_choosen = ops.stack(itemgetter(*self.model_keys)(actions), axis=0).reshape(-1, self.n_agents, 1)
             q_joint_choosen = q_count.gather(-1, actions_choosen.long()).reshape(-1, self.n_agents)
             q_next_count, _ = self.policy.Q_tran_target(state_next, hidden_state_next, actions_next_greedy, agent_mask)
-            actions_next_choosen = itemgetter(*self.model_keys)(actions_next_greedy)
+            actions_next_choosen = ops.stack(itemgetter(*self.model_keys)(actions_next_greedy), axis=0)
             actions_next_choosen = actions_next_choosen.reshape(-1, self.n_agents, 1)
             q_joint_next_choosen = q_next_count.gather(-1, actions_next_choosen.long()).reshape(-1, self.n_agents)
 
@@ -105,7 +104,7 @@ class QTRAN_Learner(LearnerMAS):
             # -- Opt Loss -- (Computed for all agents)
             q_tot_greedy = self.policy.Q_tot(q_eval_greedy_a)
             q_joint_greedy_hat, _ = self.policy.Q_tran(state, hidden_state, actions_greedy, agent_mask)
-            actions_greedy_current = itemgetter(*self.model_keys)(actions_greedy)
+            actions_greedy_current = ops.stack(itemgetter(*self.model_keys)(actions_greedy), axis=0)
             actions_greedy_current = actions_greedy_current.reshape(-1, self.n_agents, 1)
             q_joint_greedy_hat_all = q_joint_greedy_hat.gather(
                 -1, actions_greedy_current.long()).reshape(-1, self.n_agents)
@@ -113,16 +112,17 @@ class QTRAN_Learner(LearnerMAS):
             loss_opt = ops.mean(error_opt ** 2)  # Opt loss
 
             # -- Nopt Loss --
-            q_eval_count = itemgetter(*self.model_keys)(q_eval).reshape(batch_size * self.n_agents, -1)
-            q_sums = itemgetter(*self.model_keys)(q_eval_a).reshape(-1, self.n_agents)
-            q_sums_repeat = q_sums.unsqueeze(dim=1).repeat(1, self.n_agents, 1)
+            q_eval_count = ops.stack(itemgetter(*self.model_keys)(q_eval),
+                                     axis=0).reshape(batch_size * self.n_agents, -1)
+            q_sums = ops.stack(itemgetter(*self.model_keys)(q_eval_a), axis=0).reshape(-1, self.n_agents)
+            q_sums_repeat = ops.repeat_elements(q_sums.unsqueeze(1), rep=self.n_agents, axis=1)
             agent_mask_diag = ops.repeat_elements((1 - ops.eye(self.n_agents, dtype=ms.float32)).unsqueeze(0),
                                                   rep=batch_size, axis=0)
             q_sum_mask = (q_sums_repeat * agent_mask_diag).sum(axis=-1)
             q_count_for_nopt = q_count.view(batch_size * self.n_agents, -1)
-            v_joint_repeated = v_joint.repeat(1, self.n_agents).view(-1, 1)
+            v_joint_repeated = ops.repeat_elements(v_joint, rep=self.n_agents, axis=1).reshape(-1, 1)
             error_nopt = q_eval_count + q_sum_mask.view(-1, 1) - ops.stop_gradient(q_count_for_nopt) + v_joint_repeated
-            error_nopt_min = ops.min(error_nopt, axis=-1)
+            error_nopt_min, _ = ops.min(error_nopt, axis=-1)
             loss_nopt = ops.mean(error_nopt_min ** 2)  # NOPT loss
 
             info["Q_joint"] = q_joint_choosen.mean().asnumpy()
