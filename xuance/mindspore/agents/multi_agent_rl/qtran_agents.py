@@ -1,104 +1,108 @@
-import numpy as np
-from tqdm import tqdm
 from argparse import Namespace
-from xuance.common import Union, DummyOffPolicyBuffer, DummyOffPolicyBuffer_Atari
+from xuance.common import List, Optional, Union
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
-from xuance.mindspore import ms, Module
-from xuance.mindspore.agents import MARLAgents
-from xuance.mindspore.learners import DQN_Learner
+from xuance.mindspore import Module
+from xuance.mindspore.utils import NormalizeFunctions, InitializeFunctions, ActivationFunctions
+from xuance.mindspore.policies import REGISTRY_Policy, QTRAN_base, QTRAN_alt, VDN_mixer
+from xuance.mindspore.agents import OffPolicyMARLAgents
 
 
-class QTRAN_Agents(MARLAgents):
+class QTRAN_Agents(OffPolicyMARLAgents):
+    """The implementation of QTRAN agents.
+
+    Args:
+        config: the Namespace variable that provides hyperparameters and other settings.
+        envs: the vectorized environments.
+    """
+
     def __init__(self,
                  config: Namespace,
-                 envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv],
-                 device: str = "cpu:0"):
-        self.gamma = config.gamma
-        self.start_greedy, self.end_greedy = config.start_greedy, config.end_greedy
-        self.egreedy = self.start_greedy
-        self.delta_egreedy = (self.start_greedy - self.end_greedy) / config.decay_step_greedy
+                 envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv]):
+        super(QTRAN_Agents, self).__init__(config, envs)
+        self.state_space = envs.state_space
+        self.use_global_state = True
 
-        if config.state_space is not None:
-            config.dim_state, state_shape = config.state_space.shape, config.state_space.shape
-        else:
-            config.dim_state, state_shape = None, None
+        # build policy, optimizers, schedulers
+        self.policy = self._build_policy()  # build policy
+        self.memory = self._build_memory()  # build memory
+        self.learner = self._build_learner(self.config, self.model_keys, self.agent_keys, self.policy)
 
-        input_representation = get_repre_in(config)
-        self.use_rnn = config.use_rnn
-        if self.use_rnn:
-            kwargs_rnn = {"N_recurrent_layers": config.N_recurrent_layers,
-                          "dropout": config.dropout,
-                          "rnn": config.rnn}
-            representation = REGISTRY_Representation[config.representation](*input_representation, **kwargs_rnn)
-        else:
-            representation = REGISTRY_Representation[config.representation](*input_representation)
+    def _build_policy(self) -> Module:
+        """
+        Build representation(s) and policy(ies) for agent(s)
+
+        Returns:
+            policy (torch.nn.Module): A dict of policies.
+        """
+        normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None
+        initializer = InitializeFunctions[self.config.initialize] if hasattr(self.config, "initialize") else None
+        activation = ActivationFunctions[self.config.activation]
+        agent = self.config.agent
+
+        # build representations
+        representation = self._build_representation(self.config.representation, self.observation_space, self.config)
+
+        # build policies
+        dim_state = self.state_space.shape[-1]
+        action_space = self.action_space
         mixer = VDN_mixer()
-        if config.agent == "QTRAN_base":
-            qtran_net = QTRAN_base(config.dim_state[0], config.dim_act, config.qtran_net_hidden_dim,
-                                   config.n_agents, config.q_hidden_size[0])
-        elif config.agent == "QTRAN_alt":
-            qtran_net = QTRAN_alt(config.dim_state[0], config.dim_act, config.qtran_net_hidden_dim,
-                                  config.n_agents, config.q_hidden_size[0])
+        if self.config.agent == "QTRAN_base":
+            qtran_mixer = QTRAN_base(dim_state, action_space, self.config.qtran_net_hidden_dim, self.config.n_agents,
+                                     self.config.q_hidden_size[0], self.use_parameter_sharing)
+        elif self.config.agent == "QTRAN_alt":
+            qtran_mixer = QTRAN_alt(dim_state, action_space, self.config.qtran_net_hidden_dim, self.config.n_agents,
+                                    self.config.q_hidden_size[0], self.use_parameter_sharing)
         else:
-            raise ValueError("Mixer {} not recognised.".format(config.agent))
-        input_policy = get_policy_in_marl(config, representation, mixer, qtran_mixer=qtran_net)
-        policy = REGISTRY_Policy[config.policy](*input_policy,
-                                                use_rnn=config.use_rnn,
-                                                rnn=config.rnn)
-        lr_scheduler = MyLinearLR(config.learning_rate, start_factor=1.0, end_factor=self.end_factor_lr_decay,
-                                  total_iters=get_total_iters(config.agent_name, config))
-        optimizer = tk.optimizers.Adam(lr_scheduler)
-        self.observation_space = envs.observation_space
-        self.action_space = envs.action_space
-        self.representation_info_shape = policy.representation.output_shapes
-        self.auxiliary_info_shape = {}
+            raise ValueError("Mixer {} not recognised.".format(self.config.agent))
 
-        buffer = MARL_OffPolicyBuffer_RNN if self.use_rnn else MARL_OffPolicyBuffer
-        input_buffer = (config.n_agents, state_shape, config.obs_shape, config.act_shape, config.rew_shape,
-                        config.done_shape, envs.num_envs, config.buffer_size, config.batch_size)
-        memory = buffer(*input_buffer, max_episode_steps=envs.max_episode_steps, dim_act=config.dim_act)
-        learner = QTRAN_Learner(config, policy, optimizer,
-                                config.device, config.model_dir, config.gamma, config.sync_frequency)
-        super(QTRAN_Agents, self).__init__(config, envs, policy, memory, learner, device,
-                                           config.log_dir, config.model_dir)
-        self.on_policy = False
-
-    def act(self, obs_n, *rnn_hidden, avail_actions=None, test_mode=False):
-        batch_size = obs_n.shape[0]
-        agents_id = tf.repeat(tf.expand_dims(tf.eye(self.n_agents), 0), batch_size, 0)
-        obs_in = tf.reshape(tf.convert_to_tensor(obs_n), [batch_size, self.n_agents, -1])
-        if self.use_rnn:
-            batch_agents = batch_size * self.n_agents
-            input_policy = {'obs': obs_in.view(batch_agents, 1, -1),
-                            'ids': agents_id.view(batch_agents, 1, -1)}
-            hidden_state, greedy_actions, _ = self.policy(input_policy,
-                                                          *rnn_hidden,
-                                                          avail_actions=avail_actions.reshape(batch_agents, 1, -1))
-            greedy_actions = greedy_actions.view(batch_size, self.n_agents)
+        if self.config.policy == "Qtran_Mixing_Q_network":
+            policy = REGISTRY_Policy["Qtran_Mixing_Q_network"](
+                action_space=self.action_space, n_agents=self.n_agents, representation=representation,
+                mixer=mixer, qtran_mixer=qtran_mixer,
+                hidden_size=self.config.q_hidden_size,
+                normalize=normalize_fn, initialize=initializer, activation=activation,
+                use_distributed_training=self.distributed_training,
+                use_parameter_sharing=self.use_parameter_sharing, model_keys=self.model_keys,
+                use_rnn=self.use_rnn, rnn=self.config.rnn if self.use_rnn else None)
         else:
-            input_policy = {'obs': obs_in, 'ids': agents_id}
-            hidden_state, greedy_actions, _ = self.policy(input_policy, avail_actions=avail_actions)
-        greedy_actions = greedy_actions.numpy()
+            raise AttributeError(f"QTRAN currently does not support the policy named {self.config.policy}.")
 
-        if test_mode:
-            return hidden_state, greedy_actions
+        return policy
+
+    def action(self,
+               obs_dict: List[dict],
+               avail_actions_dict: Optional[List[dict]] = None,
+               rnn_hidden: Optional[dict] = None,
+               test_mode: Optional[bool] = False,
+               **kwargs):
+        """
+        Returns actions for agents.
+
+        Parameters:
+            obs_dict (List[dict]): Observations for each agent in self.agent_keys.
+            avail_actions_dict (Optional[List[dict]]): Actions mask values, default is None.
+            rnn_hidden (Optional[dict]): The hidden variables of the RNN.
+            test_mode (Optional[bool]): True for testing without noises.
+
+        Returns:
+            rnn_hidden_state (dict): The new hidden states for RNN (if self.use_rnn=True).
+            actions_dict (dict): The output actions.
+        """
+        batch_size = len(obs_dict)
+        obs_input, agents_id, avail_actions_input = self._build_inputs(obs_dict, avail_actions_dict)
+        hidden_state, _, actions, _ = self.policy(observation=obs_input,
+                                                  agent_ids=agents_id,
+                                                  avail_actions=avail_actions_input,
+                                                  rnn_hidden=rnn_hidden)
+
+        if self.use_parameter_sharing:
+            key = self.agent_keys[0]
+            actions_out = actions[key].reshape([batch_size, self.n_agents]).asnumpy()
+            actions_dict = [{k: actions_out[e, i] for i, k in enumerate(self.agent_keys)} for e in range(batch_size)]
         else:
-            if avail_actions is None:
-                random_actions = np.random.choice(self.dim_act, [self.nenvs, self.n_agents])
-            else:
-                random_actions = CategoricalDistribution(tf.convert_to_tensor(avail_actions)).stochastic_sample().numpy()
-            if np.random.rand() < self.egreedy:
-                return hidden_state, random_actions
-            else:
-                return hidden_state, greedy_actions
+            actions_out = {k: actions[k].reshape(batch_size).asnumpy() for k in self.agent_keys}
+            actions_dict = [{k: actions_out[k][i] for k in self.agent_keys} for i in range(batch_size)]
 
-    def train(self, i_step, n_epochs=1):
-        if self.egreedy >= self.end_greedy:
-            self.egreedy = self.start_greedy - self.delta_egreedy * i_step
-        info_train = {}
-        if i_step > self.start_training:
-            for i_epoch in range(n_epochs):
-                sample = self.memory.sample()
-                info_train = self.learner.update(sample)
-        info_train["epsilon-greedy"] = self.egreedy
-        return info_train
+        if not test_mode:  # get random actions
+            actions_dict = self.exploration(batch_size, actions_dict, avail_actions_dict)
+        return {"hidden_state": hidden_state, "actions": actions_dict}

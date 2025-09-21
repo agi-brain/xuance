@@ -659,9 +659,10 @@ class QTRAN_base(Module):
         self.n_actions_max = max(self.n_actions_list)
         self.dim_hidden = dim_hidden
         self.n_agents = n_agents
+        self.use_parameter_sharing = use_parameter_sharing
 
-        self.dim_q_input = (dim_utility_hidden + self.dim_action) * self.n_agents
-        self.dim_v_input = dim_utility_hidden * self.n_agents
+        self.dim_q_input = int(self.dim_state + dim_utility_hidden + self.n_actions_max)
+        self.dim_v_input = int(self.dim_state)
 
         self.Q_jt = nn.SequentialCell(nn.Dense(self.dim_q_input, self.dim_hidden),
                                       nn.ReLU(),
@@ -673,7 +674,7 @@ class QTRAN_base(Module):
                                       nn.Dense(self.dim_hidden, self.dim_hidden),
                                       nn.ReLU(),
                                       nn.Dense(self.dim_hidden, 1))
-        self.dim_ae_input = dim_utility_hidden + self.n_actions_max
+        self.dim_ae_input = int(dim_utility_hidden + self.n_actions_max)
         self.action_encoding = nn.SequentialCell(nn.Dense(self.dim_ae_input, self.dim_ae_input),
                                                  nn.ReLU(),
                                                  nn.Dense(self.dim_ae_input, self.dim_ae_input))

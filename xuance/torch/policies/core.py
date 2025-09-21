@@ -234,7 +234,7 @@ class BasicRecurrent(Module):
             return hn, self.model(output)
 
 
-class ActorNet(nn.Module):
+class ActorNet(Module):
     """
     The actor network for deterministic policy, which outputs activated continuous actions directly.
 
@@ -511,7 +511,7 @@ class GaussianActorNet_SAC(Module):
         return self.dist
 
 
-class VDN_mixer(nn.Module):
+class VDN_mixer(Module):
     """
     The value decomposition networks mixer. (Additivity)
     """
@@ -523,7 +523,7 @@ class VDN_mixer(nn.Module):
         return values_n.sum(dim=1)
 
 
-class QMIX_mixer(nn.Module):
+class QMIX_mixer(Module):
     """
     The QMIX mixer. (Monotonicity)
 
@@ -593,7 +593,7 @@ class QMIX_mixer(nn.Module):
         return q_tot
 
 
-class QMIX_FF_mixer(nn.Module):
+class QMIX_FF_mixer(Module):
     """
     The feedforward mixer without the constraints of monotonicity.
     """
@@ -638,7 +638,7 @@ class QMIX_FF_mixer(nn.Module):
         return q_tot
 
 
-class QTRAN_base(nn.Module):
+class QTRAN_base(Module):
     """
     The basic QTRAN module.
 
@@ -709,7 +709,7 @@ class QTRAN_base(nn.Module):
         return q_jt, v_jt
 
 
-class QTRAN_alt(nn.Module):
+class QTRAN_alt(Module):
     """
     The basic QTRAN module.
 
