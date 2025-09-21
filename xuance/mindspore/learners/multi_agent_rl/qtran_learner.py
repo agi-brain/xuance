@@ -21,7 +21,7 @@ class QTRAN_Learner(LearnerMAS):
         self.sync_frequency = config.sync_frequency
         self.mse_loss = nn.MSELoss()
         super(QTRAN_Learner, self).__init__(config, model_keys, agent_keys, policy)
-        self.optimizer = optim.Adam(params=self.policy.trainable_params(), lr=config.learning_rate, eps=1e-5)
+        self.optimizer = optim.Adam(params=self.policy.parameters_model, lr=config.learning_rate, eps=1e-5)
         self.scheduler = optim.lr_scheduler.LinearLR(self.optimizer, start_factor=1.0,
                                                      end_factor=self.end_factor_lr_decay,
                                                      total_iters=self.config.running_steps)
@@ -77,14 +77,14 @@ class QTRAN_Learner(LearnerMAS):
             q_tot_greedy = self.policy.Q_tot(q_eval_greedy_a)
             q_joint_greedy_hat, _ = self.policy.Q_tran(state, hidden_state, actions_greedy, agent_mask)
             error_opt = q_tot_greedy - ops.stop_gradient(q_joint_greedy_hat) + v_joint
-            loss_opt = ops.mean(error_opt ** 2)  # Opt loss
+            loss_opt = ops.reduce_mean(error_opt ** 2)  # Opt loss
 
             # -- Nopt Loss --
             q_tot = self.policy.Q_tot(q_eval_a)
             q_joint_hat = q_joint
             error_nopt = q_tot - ops.stop_gradient(q_joint_hat) + v_joint
             error_nopt = error_nopt.clamp(max=0)
-            loss_nopt = ops.mean(error_nopt ** 2)  # NOPT loss
+            loss_nopt = ops.reduce_mean(error_nopt ** 2)  # NOPT loss
 
             info["Q_joint"] = q_joint.mean().asnumpy()
 
@@ -109,7 +109,7 @@ class QTRAN_Learner(LearnerMAS):
             q_joint_greedy_hat_all = q_joint_greedy_hat.gather(
                 -1, actions_greedy_current.long()).reshape(-1, self.n_agents)
             error_opt = q_tot_greedy - ops.stop_gradient(q_joint_greedy_hat_all) + v_joint
-            loss_opt = ops.mean(error_opt ** 2)  # Opt loss
+            loss_opt = ops.reduce_mean(error_opt ** 2)  # Opt loss
 
             # -- Nopt Loss --
             q_eval_count = ops.stack(itemgetter(*self.model_keys)(q_eval),
@@ -123,7 +123,7 @@ class QTRAN_Learner(LearnerMAS):
             v_joint_repeated = ops.repeat_elements(v_joint, rep=self.n_agents, axis=1).reshape(-1, 1)
             error_nopt = q_eval_count + q_sum_mask.view(-1, 1) - ops.stop_gradient(q_count_for_nopt) + v_joint_repeated
             error_nopt_min, _ = ops.min(error_nopt, axis=-1)
-            loss_nopt = ops.mean(error_nopt_min ** 2)  # NOPT loss
+            loss_nopt = ops.reduce_mean(error_nopt_min ** 2)  # NOPT loss
 
             info["Q_joint"] = q_joint_choosen.mean().asnumpy()
 
