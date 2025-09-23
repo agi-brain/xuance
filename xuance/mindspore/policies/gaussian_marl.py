@@ -119,7 +119,7 @@ class MAAC_Policy(Module):
             rnn_hidden_new (Optional[Dict[str, List[Tensor]]]): The new RNN hidden states of actor representation.
             pi_dists (dict): The stochastic policy distributions.
         """
-        rnn_hidden_new, pi_dists = deepcopy(rnn_hidden), {}
+        rnn_hidden_new, pi_mu, pi_std = deepcopy(rnn_hidden), {}, {}
         agent_list = self.model_keys if agent_key is None else [agent_key]
 
         for key in agent_list:
@@ -133,9 +133,9 @@ class MAAC_Policy(Module):
                 actor_in = ops.cat([outputs, agent_ids], axis=-1)
             else:
                 actor_in = outputs
-            pi_dists[key] = self.actor[key](actor_in)
+            pi_mu[key], pi_std[key] = self.actor[key](actor_in)
 
-        return rnn_hidden, pi_dists
+        return rnn_hidden, pi_mu, pi_std
 
     def get_values(self, observation: Dict[str, Tensor], agent_ids: Tensor = None, agent_key: str = None,
                    rnn_hidden: Optional[Dict[str, List[Tensor]]] = None):
