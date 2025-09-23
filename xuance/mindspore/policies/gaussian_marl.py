@@ -10,21 +10,38 @@ from .core import GaussianActorNet, GaussianActorNet_SAC, CriticNet
 class MAAC_Policy(Module):
     """
     MAAC_Policy: Multi-Agent Actor-Critic Policy with Gaussian distributions.
+
+    Args:
+        action_space (Box): The continuous action space.
+        n_agents (int): The number of agents.
+        representation_actor (ModuleDict): A dict of representation modules for each agent's actor.
+        representation_critic (ModuleDict): A dict of representation modules for each agent's critic.
+        actor_hidden_size (Sequence[int]): A list of hidden layer sizes for actor network.
+        critic_hidden_size (Sequence[int]): A list of hidden layer sizes for critic network.
+        normalize (Optional[ModuleType]): The layer normalization over a minibatch of inputs.
+        initialize (Optional[Callable[..., Tensor]]): The parameters initializer.
+        activation (Optional[ModuleType]): The activation function for each layer.
+        activation_action (Optional[ModuleType]): The activation of final layer to bound the actions.
+        use_distributed_training (bool): Whether to use multi-GPU for distributed training.
+        **kwargs: Other arguments.
     """
 
     def __init__(self,
                  action_space: Optional[Dict[str, Box]],
                  n_agents: int,
-                 representation_actor: Module,
-                 representation_critic: Module,
+                 representation_actor: ModuleDict,
+                 representation_critic: ModuleDict,
+                 mixer: Optional[Module] = None,
                  actor_hidden_size: Sequence[int] = None,
                  critic_hidden_size: Sequence[int] = None,
                  normalize: Optional[ModuleType] = None,
                  initialize: Optional[Callable[..., Tensor]] = None,
                  activation: Optional[ModuleType] = None,
                  activation_action: Optional[ModuleType] = None,
+                 use_distributed_training: bool = False,
                  **kwargs):
         super(MAAC_Policy, self).__init__()
+        self.is_continuous = True
         self.action_space = action_space
         self.n_agents = n_agents
         self.use_parameter_sharing = kwargs['use_parameter_sharing']
@@ -52,10 +69,14 @@ class MAAC_Policy(Module):
             self.actor[key].update_parameters_name(key + '_actor_')
             self.critic[key].update_parameters_name(key + '_critic_')
 
+        self.mixer = mixer
+
     @property
     def parameters_model(self):
-        parameters = self.actor_representation.parameters() + self.actor.parameters() + \
-                     self.critic_representation.parameters() + self.critic.parameters()
+        parameters = self.actor_representation.trainable_params() + self.actor.trainable_params() + \
+                     self.critic_representation.trainable_params() + self.critic.trainable_params()
+        if self.mixer is not None:
+            parameters = parameters + self.mixer.trainable_params()
         return parameters
 
     def _get_actor_critic_input(self, dim_action, dim_actor_rep, dim_critic_rep, n_agents):
@@ -150,6 +171,11 @@ class MAAC_Policy(Module):
 
         return rnn_hidden_new, values
 
+    def value_tot(self, values_n: Tensor, global_state=None):
+        if global_state is not None:
+            global_state = Tensor(global_state)
+        return values_n if self.mixer is None else self.mixer(values_n, global_state)
+
 
 class Basic_ISAC_Policy(Module):
     def __init__(self,
@@ -165,6 +191,7 @@ class Basic_ISAC_Policy(Module):
                  activation_action: Optional[ModuleType] = None,
                  **kwargs):
         super(Basic_ISAC_Policy, self).__init__()
+        self.is_continuous = False
         self.action_space = action_space
         self.n_agents = n_agents
         self.use_parameter_sharing = kwargs['use_parameter_sharing']
