@@ -76,7 +76,7 @@ setup(
         "pettingzoo",  # for MARL, suggest version: >=1.23.0
         "tensorboard",  # logger, suggest version: >=2.11.2
         "wandb",  # suggest version: >=0.15.3
-        "moviepy",  # suggest version: >=1.0.3
+        "moviepy==1.0.3",  # suggest version: >=1.0.3
         "imageio",  # suggest version: 2.9.0
         "opencv-python",  # suggest version: 4.5.4.58
         "mpi4py",  # suggest version: 3.1.3
