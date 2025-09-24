@@ -101,7 +101,10 @@ class VDAC_Learner(IAC_Learner):
                 f"predict_value/{key}": value_pred_i.mean().asnumpy()
             })
 
-        return loss_a, loss_e, loss_c, value_pred
+        # Total loss
+        loss = sum(loss_a) + self.vf_coef * sum(loss_c) - self.ent_coef * sum(loss_e)
+
+        return loss, loss_a, loss_e, loss_c, value_pred
 
     def update(self, sample):
         self.iterations += 1
@@ -126,10 +129,9 @@ class VDAC_Learner(IAC_Learner):
         bs = batch_size * self.n_agents if self.use_parameter_sharing else batch_size
 
         # feedforward
-        (loss_a, loss_e, loss_c, value_pred), grads = self.grad_fn(bs, batch_size, state, obs, actions, agent_mask,
-                                                                   avail_actions, values, returns, advantages, IDs)
-        # Total loss
-        loss = sum(loss_a) + self.vf_coef * sum(loss_c) - self.ent_coef * sum(loss_e)
+        (loss, loss_a, loss_e, loss_c, value_pred), grads = self.grad_fn(bs, batch_size, state, obs, actions,
+                                                                         agent_mask, avail_actions, values, returns,
+                                                                         advantages, IDs)
         if self.use_grad_clip:
             grads = clip_grads(grads, Tensor(-self.grad_clip_norm), Tensor(self.grad_clip_norm))
         self.optimizer(grads)  # backpropagation
