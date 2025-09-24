@@ -6,7 +6,6 @@ Implementation: Pytorch
 import numpy as np
 from argparse import Namespace
 from operator import itemgetter
-from mindspore.nn import MSELoss, HuberLoss
 from xuance.common import Optional, List
 from xuance.mindspore import ms, nn, msd, ops, Module, Tensor, optim
 from xuance.mindspore.utils import ValueNorm, clip_grads
@@ -25,12 +24,12 @@ class IAC_Learner(LearnerMAS):
         self.use_huber_loss, self.huber_delta = config.use_huber_loss, config.huber_delta
         self.use_value_norm = config.use_value_norm
         self.vf_coef, self.ent_coef = config.vf_coef, config.ent_coef
-        self.mse_loss = MSELoss()
-        self.huber_loss = HuberLoss(reduction="none", delta=self.huber_delta)
+        self.mse_loss = nn.MSELoss()
+        self.huber_loss = nn.HuberLoss(reduction="none", delta=self.huber_delta)
         self.softmax = nn.Softmax(axis=-1)
         self.is_continuous = self.policy.is_continuous
         if self.use_value_norm:
-            self.value_normalizer = {key: ValueNorm(1).to(self.device) for key in self.model_keys}
+            self.value_normalizer = {key: ValueNorm(1) for key in self.model_keys}
         else:
             self.value_normalizer = None
 
@@ -224,7 +223,7 @@ class IAC_Learner(LearnerMAS):
         # Total loss
         loss = sum(loss_a) + self.vf_coef * sum(loss_c) - self.ent_coef * sum(loss_e)
 
-        return loss, loss_a, loss_e, loss_c, value_pred
+        return loss, sum(loss_a), sum(loss_e), sum(loss_c), value_pred
 
     def update(self, sample):
         self.iterations += 1
@@ -258,9 +257,9 @@ class IAC_Learner(LearnerMAS):
 
         info.update({
             "learning_rate": lr.asnumpy(),
-            "pg_loss": sum(loss_a).asnumpy(),
-            "vf_loss": sum(loss_c).asnumpy(),
-            "entropy_loss": sum(loss_e).asnumpy(),
+            "pg_loss": loss_a.asnumpy(),
+            "vf_loss": loss_c.asnumpy(),
+            "entropy_loss": loss_e.asnumpy(),
             "loss": loss.asnumpy(),
         })
         info.update(value_pred)

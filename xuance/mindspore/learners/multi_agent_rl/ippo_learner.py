@@ -4,28 +4,20 @@ Paper link:
 https://arxiv.org/pdf/2103.01955.pdf
 Implementation: MindSpore
 """
-import numpy as np
-from mindspore.nn import MSELoss, HuberLoss
-from xuance.mindspore import ms, Module, Tensor, optim, ops
-from xuance.mindspore.learners import LearnerMAS
-from xuance.mindspore.utils import clip_grads
-from xuance.common import List, Optional
-from xuance.mindspore.utils import ValueNorm
 from argparse import Namespace
-from operator import itemgetter
+from xuance.common import List
+from xuance.mindspore import ms, nn, msd, ops, Module, Tensor
+from xuance.mindspore.utils import ValueNorm, clip_grads
+from xuance.mindspore.learners.multi_agent_rl.iac_learner import IAC_Learner
 
 
-class IPPO_Learner(LearnerMAS):
+class IPPO_Learner(IAC_Learner):
     def __init__(self,
                  config: Namespace,
                  model_keys: List[str],
                  agent_keys: List[str],
                  policy: Module):
         super(IPPO_Learner, self).__init__(config, model_keys, agent_keys, policy)
-        self.optimizer = optim.Adam(params=self.policy.trainable_params(), lr=config.learning_rate, eps=1e-5,
-                                    weight_decay=config.weight_decay)
-        self.scheduler = optim.lr_scheduler.LinearLR(self.optimizer, start_factor=1.0, end_factor=self.end_factor_lr_decay,
-                                                     total_iters=self.config.running_steps)
         self.lr = config.learning_rate
         self.end_factor_lr_decay = config.end_factor_lr_decay
         self.gamma = config.gamma
@@ -36,20 +28,35 @@ class IPPO_Learner(LearnerMAS):
         self.use_value_norm = config.use_value_norm
         self.use_global_state = config.use_global_state
         self.vf_coef, self.ent_coef = config.vf_coef, config.ent_coef
-        self.mse_loss = MSELoss()
-        self.huber_loss = HuberLoss(reduction="none", delta=self.huber_delta)
+        self.mse_loss = nn.MSELoss()
+        self.huber_loss = nn.HuberLoss(reduction="none", delta=self.huber_delta)
+        self.softmax = nn.Softmax(axis=-1)
+        self.is_continuous = self.policy.is_continuous
         if self.use_value_norm:
             self.value_normalizer = {key: ValueNorm(1) for key in self.model_keys}
         else:
             self.value_normalizer = None
+
+        if self.is_continuous:
+            self.pi_dist = {k: msd.Normal(dtype=ms.float32) for k in self.model_keys}
+        else:
+            self.pi_dist = {k: msd.Categorical() for k in self.model_keys}
+
         # Get gradient function
         self.grad_fn = ms.value_and_grad(self.forward_fn, None, self.optimizer.parameters, has_aux=True)
         self.policy.set_train()
 
     def forward_fn(self, *args):
         bs, obs, actions, avail_actions, log_pi_old, values, returns, advantages, agt_mask, ids = args
+        value_pred = {}
+        pi_dist_mu, pi_dist_std, pi_dist_logits = {}, {}, {}
+
         # feedforward
-        _, pi_dists_dict = self.policy(observation=obs, agent_ids=ids, avail_actions=avail_actions)
+        if self.is_continuous:
+            _, pi_dist_mu, pi_dist_std = self.policy(observation=obs, agent_ids=ids, avail_actions=avail_actions)
+        else:
+            _, pi_dist_logits = self.policy(observation=obs, agent_ids=IDs, avail_actions=avail_actions)
+
         _, value_pred_dict = self.policy.get_values(observation=obs, agent_ids=ids)
 
         # calculate losses for each agent
@@ -58,7 +65,15 @@ class IPPO_Learner(LearnerMAS):
         for key in self.model_keys:
             mask_values = agt_mask[key]
             # actor loss
-            log_pi = pi_dists_dict[key].log_prob(actions[key]).reshape(bs)
+            if self.is_continuous:
+                log_pi = self.pi_dist[key]._log_prob(value=actions[key], mean=pi_dist_mu[key], sd=pi_dist_std[key])
+                log_pi = ops.reduce_sum(x=log_pi, axis=-1)
+                entropy = self.pi_dist[key]._entropy(mean=pi_dist_mu[key], sd=pi_dist_std[key])
+                entropy = ops.reduce_sum(x=entropy, axis=-1)
+            else:
+                probs = self.softmax(pi_dist_logits[key])
+                log_pi = self.pi_dist[key]._log_prob(value=actions[key], probs=probs)
+                entropy = self.pi_dist[key].entropy(probs=probs)
             ratio = ops.exp(log_pi - log_pi_old[key]).reshape(bs)
             advantages_mask = ops.stop_gradient(advantages[key]) * mask_values
             surrogate1 = ratio * advantages_mask
@@ -67,8 +82,8 @@ class IPPO_Learner(LearnerMAS):
             loss_a.append(-ops.minimum(surrogate1, surrogate2).mean())
 
             # entropy loss
-            entropy = pi_dists_dict[key].entropy().reshape(bs) * mask_values
-            loss_e.append(entropy.mean())
+            entropy_loss = (entropy * mask_values).sum() / mask_values.sum()
+            loss_e.append(entropy_loss)
 
             # critic loss
             value_pred_i = value_pred_dict[key].reshape(bs)
@@ -98,121 +113,12 @@ class IPPO_Learner(LearnerMAS):
                     loss_v = ((value_pred_i - value_target) ** 2) * mask_values
                 loss_c.append(loss_v.sum() / mask_values.sum())
 
-            info.update({
-                f"{key}/actor_loss": loss_a[-1].asnumpy(),
-                f"{key}/critic_loss": loss_c[-1].asnumpy(),
-                f"{key}/entropy": loss_e[-1].asnumpy(),
-                f"{key}/predict_value": value_pred_i.mean().asnumpy()
+            value_pred.update({
+                f"predict_value/{key}": value_pred_i.mean().asnumpy()
             })
 
         loss = sum(loss_a) + self.vf_coef * sum(loss_c) - self.ent_coef * sum(loss_e)
-        return loss, sum(loss_a), sum(loss_c), sum(loss_e)
-
-    def build_training_data(self, sample: Optional[dict],
-                            use_parameter_sharing: Optional[bool] = False,
-                            use_actions_mask: Optional[bool] = False,
-                            use_global_state: Optional[bool] = False):
-        """
-        Prepare the training data.
-
-        Parameters:
-            sample (dict): The raw sampled data.
-            use_parameter_sharing (bool): Whether to use parameter sharing for individual agent models.
-            use_actions_mask (bool): Whether to use actions mask for unavailable actions.
-            use_global_state (bool): Whether to use global state.
-
-        Returns:
-            sample_Tensor (dict): The formatted sampled data.
-        """
-        batch_size = sample['batch_size']
-        seq_length = sample['sequence_length'] if self.use_rnn else 1
-        state, avail_actions, filled, IDs = None, None, None, None
-        if use_parameter_sharing:
-            k = self.model_keys[0]
-            bs = batch_size * self.n_agents
-            obs_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['obs']), axis=1))
-            actions_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['actions']), axis=1))
-            values_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['values']), axis=1))
-            returns_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['returns']), axis=1))
-            advantages_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['advantages']), 1))
-            log_pi_old_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['log_pi_old']), 1))
-            ter_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['terminals']), 1)).float()
-            msk_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['agent_mask']), 1)).float()
-            if self.use_rnn:
-                obs = {k: obs_tensor.reshape(bs, seq_length, -1)}
-                if len(actions_tensor.shape) == 3:
-                    actions = {k: actions_tensor.reshape(bs, seq_length)}
-                elif len(actions_tensor.shape) == 4:
-                    actions = {k: actions_tensor.reshape(bs, seq_length, -1)}
-                else:
-                    raise AttributeError("Wrong actions shape.")
-                values = {k: values_tensor.reshape(bs, seq_length)}
-                returns = {k: returns_tensor.reshape(bs, seq_length)}
-                advantages = {k: advantages_tensor.reshape(bs, seq_length)}
-                log_pi_old = {k: log_pi_old_tensor.reshape(bs, seq_length)}
-                terminals = {k: ter_tensor.reshape(bs, seq_length)}
-                agent_mask = {k: msk_tensor.reshape(bs, seq_length)}
-                IDs = self.eye(self.n_agents, self.n_agents, ms.float32).unsqueeze(1).unsqueeze(0).broadcast_to(
-                    (batch_size, -1, seq_length, -1)).reshape(bs, seq_length, self.n_agents)
-            else:
-                obs = {k: obs_tensor.reshape(bs, -1)}
-                if len(actions_tensor.shape) == 2:
-                    actions = {k: actions_tensor.reshape(bs)}
-                elif len(actions_tensor.shape) == 3:
-                    actions = {k: actions_tensor.reshape(bs, -1)}
-                else:
-                    raise AttributeError("Wrong actions shape.")
-                values = {k: values_tensor.reshape(bs)}
-                returns = {k: returns_tensor.reshape(bs)}
-                advantages = {k: advantages_tensor.reshape(bs)}
-                log_pi_old = {k: log_pi_old_tensor.reshape(bs)}
-                terminals = {k: ter_tensor.reshape(bs)}
-                agent_mask = {k: msk_tensor.reshape(bs)}
-                IDs = self.eye(self.n_agents, self.n_agents, ms.float32).unsqueeze(0).broadcast_to(
-                    (batch_size, -1, -1)).reshape(bs, self.n_agents)
-
-            if use_actions_mask:
-                avail_a = np.stack(itemgetter(*self.agent_keys)(sample['avail_actions']), axis=1)
-                if self.use_rnn:
-                    avail_actions = {k: Tensor(avail_a.reshape([bs, seq_length, -1])).float()}
-                else:
-                    avail_actions = {k: Tensor(avail_a.reshape([bs, -1])).float()}
-
-        else:
-            obs = {k: Tensor(sample['obs'][k]) for k in self.agent_keys}
-            actions = {k: Tensor(sample['actions'][k]) for k in self.agent_keys}
-            values = {k: Tensor(sample['values'][k]) for k in self.agent_keys}
-            returns = {k: Tensor(sample['returns'][k]) for k in self.agent_keys}
-            advantages = {k: Tensor(sample['advantages'][k]) for k in self.agent_keys}
-            log_pi_old = {k: Tensor(sample['log_pi_old'][k]) for k in self.agent_keys}
-            terminals = {k: Tensor(sample['terminals'][k]).float() for k in self.agent_keys}
-            agent_mask = {k: Tensor(sample['agent_mask'][k]).float() for k in self.agent_keys}
-            if use_actions_mask:
-                avail_actions = {k: Tensor(sample['avail_actions'][k]).float() for k in self.agent_keys}
-
-        if use_global_state:
-            state = Tensor(sample['state'])
-
-        if self.use_rnn:
-            filled = Tensor(sample['filled']).float()
-
-        sample_Tensor = {
-            'batch_size': batch_size,
-            'state': state,
-            'obs': obs,
-            'actions': actions,
-            'values': values,
-            'returns': returns,
-            'advantages': advantages,
-            'log_pi_old': log_pi_old,
-            'terminals': terminals,
-            'agent_mask': agent_mask,
-            'avail_actions': avail_actions,
-            'agent_ids': IDs,
-            'filled': filled,
-            'seq_length': seq_length,
-        }
-        return sample_Tensor
+        return loss, sum(loss_a), sum(loss_c), sum(loss_e), value_pred
 
     def update(self, sample):
         self.iterations += 1
@@ -235,8 +141,8 @@ class IPPO_Learner(LearnerMAS):
 
         bs = batch_size * self.n_agents if self.use_parameter_sharing else batch_size
 
-        (loss, loss_a, loss_c, loss_e), grads = self.grad_fn(bs, obs, actions, avail_actions, log_pi_old,
-                                                             values, returns, advantages, agent_mask, IDs)
+        (loss, loss_a, loss_c, loss_e, value_pred), grads = self.grad_fn(bs, obs, actions, avail_actions, log_pi_old,
+                                                                         values, returns, advantages, agent_mask, IDs)
         if self.use_grad_clip:
             grads = clip_grads(grads, Tensor(-self.grad_clip_norm), Tensor(self.grad_clip_norm))
         self.optimizer(grads)
@@ -251,5 +157,6 @@ class IPPO_Learner(LearnerMAS):
             "loss_c": loss_c.asnumpy(),
             "loss_e": loss_e.asnumpy()
         })
+        info.update(value_pred)
 
         return info

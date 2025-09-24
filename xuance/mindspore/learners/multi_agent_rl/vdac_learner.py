@@ -104,7 +104,7 @@ class VDAC_Learner(IAC_Learner):
         # Total loss
         loss = sum(loss_a) + self.vf_coef * sum(loss_c) - self.ent_coef * sum(loss_e)
 
-        return loss, loss_a, loss_e, loss_c, value_pred
+        return loss, sum(loss_a), sum(loss_e), sum(loss_c), value_pred
 
     def update(self, sample):
         self.iterations += 1
@@ -141,9 +141,9 @@ class VDAC_Learner(IAC_Learner):
 
         info.update({
             "learning_rate": lr.asnumpy(),
-            "pg_loss": sum(loss_a).asnumpy(),
-            "vf_loss": sum(loss_c).asnumpy(),
-            "entropy_loss": sum(loss_e).asnumpy(),
+            "pg_loss": loss_a.asnumpy(),
+            "vf_loss": loss_c.asnumpy(),
+            "entropy_loss": loss_e.asnumpy(),
             "loss": loss.asnumpy(),
         })
         info.update(value_pred)

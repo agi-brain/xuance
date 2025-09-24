@@ -6,7 +6,7 @@ from argparse import Namespace
 from operator import itemgetter
 from xuance.common import MARL_OnPolicyBuffer, MARL_OnPolicyBuffer_RNN, Optional, List, Union
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
-from xuance.mindspore import Module
+from xuance.mindspore import Module, Tensor
 from xuance.mindspore.agents.base import MARLAgents
 
 
@@ -158,10 +158,17 @@ class OnPolicyMARLAgents(MARLAgents):
         rnn_hidden_critic_new, values_out, log_pi_a_dict, values_dict = {}, {}, {}, {}
 
         obs_input, agents_id, avail_actions_input = self._build_inputs(obs_dict, avail_actions_dict)
-        rnn_hidden_actor_new, pi_dists = self.policy(observation=obs_input,
-                                                     agent_ids=agents_id,
-                                                     avail_actions=avail_actions_input,
-                                                     rnn_hidden=rnn_hidden_actor)
+        if self.continuous_control:
+            rnn_hidden_actor_new, pi_mu, pi_std = self.policy(observation=obs_input,
+                                                              agent_ids=agents_id,
+                                                              avail_actions=avail_actions_input,
+                                                              rnn_hidden=rnn_hidden_actor)
+        else:
+            rnn_hidden_actor_new, pi_logits = self.policy(observation=obs_input,
+                                                          agent_ids=agents_id,
+                                                          avail_actions=avail_actions_input,
+                                                          rnn_hidden=rnn_hidden_actor)
+
         if not test_mode:
             rnn_hidden_critic_new, values_out = self.policy.get_values(observation=obs_input,
                                                                        agent_ids=agents_id,
@@ -169,25 +176,30 @@ class OnPolicyMARLAgents(MARLAgents):
 
         if self.use_parameter_sharing:
             key = self.agent_keys[0]
-            actions_sample = pi_dists[key].stochastic_sample()
             if self.continuous_control:
-                actions_out = actions_sample.reshape(n_env, self.n_agents, -1)
+                pi_dists = self.policy.actor[key].distribution(mu=pi_mu[key], std=pi_std[key])
+                actions_sample = pi_dists.stochastic_sample()
+                actions_out = actions_sample.asnumpy().reshape(n_env, self.n_agents, -1)
             else:
-                actions_out = actions_sample.reshape(n_env, self.n_agents)
-            actions_dict = [{k: actions_out[e, i].asnumpy() for i, k in enumerate(self.agent_keys)}
-                            for e in range(n_env)]
+                pi_dists = self.policy.actor[key].distribution(logits=pi_logits[key])
+                actions_sample = pi_dists.stochastic_sample()
+                actions_out = actions_sample.asnumpy().reshape(n_env, self.n_agents)
+            actions_dict = [{k: actions_out[e, i] for i, k in enumerate(self.agent_keys)} for e in range(n_env)]
             if not test_mode:
-                log_pi_a = pi_dists[key].log_prob(actions_sample).asnumpy()
+                log_pi_a = pi_dists.log_prob(actions_sample).asnumpy()
                 log_pi_a = log_pi_a.reshape(n_env, self.n_agents)
                 log_pi_a_dict = {k: log_pi_a[:, i] for i, k in enumerate(self.agent_keys)}
                 values_out[key] = values_out[key].reshape(n_env, self.n_agents)
                 values_dict = {k: values_out[key][:, i].asnumpy() for i, k in enumerate(self.agent_keys)}
         else:
-            actions_sample = {k: pi_dists[k].stochastic_sample() for k in self.agent_keys}
             if self.continuous_control:
+                pi_dists = {k: self.policy.actor[k].distribution(pi_mu[k], pi_std[k]) for k in self.agent_keys}
+                actions_sample = {k: pi_dists[k].stochastic_sample() for k in self.agent_keys}
                 actions_dict = [{k: actions_sample[k].asnumpy()[e].reshape([-1]) for k in self.agent_keys}
                                 for e in range(n_env)]
             else:
+                pi_dists = {k: self.policy.actor[k].distribution(logits=pi_logits[k]) for k in self.agent_keys}
+                actions_sample = {k: pi_dists[k].stochastic_sample() for k in self.agent_keys}
                 actions_dict = [{k: actions_sample[k].asnumpy()[e].reshape([]) for k in self.agent_keys}
                                 for e in range(n_env)]
             if not test_mode:
@@ -225,12 +237,12 @@ class OnPolicyMARLAgents(MARLAgents):
                 rnn_hidden_critic_i = {key: self.policy.critic_representation[key].get_hidden_item(
                     hidden_item_index, *rnn_hidden_critic[key])}
                 batch_size = n_env * self.n_agents
-                obs_array = np.array(itemgetter(*self.agent_keys)(obs_dict))
+                obs_array = Tensor(np.array(itemgetter(*self.agent_keys)(obs_dict)))
                 obs_input = {key: obs_array.reshape([batch_size, 1, -1])}
                 agents_id = self.eye(self.n_agents, self.n_agents, ms.float32).unsqueeze(0).broadcast_to(
                     (n_env, -1, -1)).reshape(batch_size, 1, -1)
             else:
-                obs_input = {key: np.array([itemgetter(*self.agent_keys)(obs_dict)])}
+                obs_input = {key: Tensor(np.array([itemgetter(*self.agent_keys)(obs_dict)]))}
                 agents_id = self.eye(self.n_agents, self.n_agents, ms.float32).unsqueeze(0).broadcast_to(
                     (n_env, -1, -1))
 
