@@ -37,11 +37,11 @@ class PPOKL_Learner(Learner):
             obs_batch, act_batch, ret_batch, adv_batch, old_mu, old_std = args
             outputs, mu, std, v_pred = self.policy(obs_batch)
             log_prob = self.a_dist._log_prob(value=act_batch, mean=mu, sd=std)
-            log_prob = log_prob.squeeze(-1)
+            log_prob = ops.reduce_sum(x=log_prob, axis=-1)
             old_log_prob = self.a_dist._log_prob(value=act_batch, mean=old_mu, sd=old_std)
             old_log_prob = old_log_prob.squeeze(-1)
             entropy = self.a_dist._entropy(mean=mu, sd=std)
-            entropy = entropy.squeeze(-1)
+            entropy = ops.reduce_sum(x=entropy, axis=-1)
             kl = self.a_dist._kl_loss("Normal", mean_b=old_mu, sd_b=old_std, mean=mu, sd=std)
         else:
             obs_batch, act_batch, ret_batch, adv_batch, old_logits = args

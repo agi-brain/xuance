@@ -31,9 +31,9 @@ class A2C_Learner(Learner):
         if self.is_continuous:
             outputs, mu, std, v_pred = self.policy(obs_batch)
             log_prob = self.a_dist._log_prob(value=act_batch, mean=mu, sd=std)
-            log_prob = log_prob.squeeze(-1)
+            log_prob = ops.reduce_sum(x=log_prob, axis=-1)
             entropy = self.a_dist._entropy(mean=mu, sd=std)
-            entropy = entropy.squeeze(-1)
+            entropy = ops.reduce_sum(x=entropy, axis=-1)
         else:
             outputs, logits, v_pred = self.policy(obs_batch)
             probs = self.softmax(logits)
