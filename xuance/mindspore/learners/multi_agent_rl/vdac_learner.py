@@ -52,7 +52,9 @@ class VDAC_Learner(IAC_Learner):
             # policy gradient loss
             if self.is_continuous:
                 log_pi = self.pi_dist[key]._log_prob(value=actions[key], mean=pi_dist_mu[key], sd=pi_dist_std[key])
+                log_pi = ops.reduce_sum(x=log_pi, axis=-1)
                 entropy = self.pi_dist[key]._entropy(mean=pi_dist_mu[key], sd=pi_dist_std[key])
+                entropy = ops.reduce_sum(x=entropy, axis=-1)
             else:
                 probs = self.softmax(pi_dist_logits[key])
                 log_pi = self.pi_dist[key]._log_prob(value=actions[key], probs=probs)
