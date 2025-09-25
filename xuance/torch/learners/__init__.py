@@ -9,7 +9,7 @@ from .model_based import DreamerV2_Learner, DreamerV3_Learner
 from .contrastive_unsupervised_rl import CURL_Learner,SPR_Learner,DrQ_Learner
 
 from .multi_agent_rl import (IQL_Learner, VDN_Learner, QMIX_Learner, WQMIX_Learner, QTRAN_Learner, \
-    IAC_Learner, VDAC_Learner, COMA_Learner, MFQ_Learner, MFAC_Learner, IPPO_Learner, MAPPO_Clip_Learner, \
+    IAC_Learner, VDAC_Learner, COMA_Learner, MFQ_Learner, MFAC_Learner, IPPO_Learner, MAPPO_Learner, \
     IC3Net_Learner, CommNet_Learner, TarMAC_Learner, \
     IDDPG_Learner, MADDPG_Learner, MATD3_Learner, ISAC_Learner, ISACDIS_Learner, MASAC_Learner, MASACDIS_Learner)
 
@@ -56,7 +56,7 @@ REGISTRY_Learners = {
     "MFQ_Learner": MFQ_Learner,
     "MFAC_Learner": MFAC_Learner,
     "IPPO_Learner": IPPO_Learner,
-    "MAPPO_Clip_Learner": MAPPO_Clip_Learner,
+    "MAPPO_Clip_Learner": MAPPO_Learner,
     "ISAC_Learner": ISAC_Learner,
     "ISACDIS_Learner": ISACDIS_Learner,
     "MASAC_Learner": MASAC_Learner,

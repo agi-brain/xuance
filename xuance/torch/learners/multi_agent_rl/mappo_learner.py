@@ -11,14 +11,14 @@ from argparse import Namespace
 from xuance.torch.learners.multi_agent_rl.ippo_learner import IPPO_Learner
 
 
-class MAPPO_Clip_Learner(IPPO_Learner):
+class MAPPO_Learner(IPPO_Learner):
     def __init__(self,
                  config: Namespace,
                  model_keys: List[str],
                  agent_keys: List[str],
                  policy: nn.Module,
                  callback):
-        super(MAPPO_Clip_Learner, self).__init__(config, model_keys, agent_keys, policy, callback)
+        super(MAPPO_Learner, self).__init__(config, model_keys, agent_keys, policy, callback)
 
     def update(self, sample):
         self.iterations += 1

@@ -55,13 +55,12 @@ class IPPO_Learner(IAC_Learner):
         if self.is_continuous:
             _, pi_dist_mu, pi_dist_std = self.policy(observation=obs, agent_ids=ids, avail_actions=avail_actions)
         else:
-            _, pi_dist_logits = self.policy(observation=obs, agent_ids=IDs, avail_actions=avail_actions)
+            _, pi_dist_logits = self.policy(observation=obs, agent_ids=ids, avail_actions=avail_actions)
 
         _, value_pred_dict = self.policy.get_values(observation=obs, agent_ids=ids)
 
         # calculate losses for each agent
         loss_a, loss_e, loss_c = [], [], []
-        info = {}
         for key in self.model_keys:
             mask_values = agt_mask[key]
             # actor loss

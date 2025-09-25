@@ -4,15 +4,10 @@ Paper link:
 https://arxiv.org/pdf/2103.01955.pdf
 Implementation: MindSpore
 """
-import numpy as np
-from mindspore.nn import MSELoss, HuberLoss
-from xuance.mindspore import ms, Module, Tensor, optim, ops
-from xuance.mindspore.learners import LearnerMAS
-from xuance.mindspore.utils import clip_grads
-from xuance.common import List, Optional
-from xuance.mindspore.utils import ValueNorm
 from argparse import Namespace
-from operator import itemgetter
+from xuance.common import List
+from xuance.mindspore import Module, Tensor, ops
+from xuance.mindspore.utils import clip_grads
 from xuance.mindspore.learners.multi_agent_rl.ippo_learner import IPPO_Learner
 
 
@@ -26,8 +21,15 @@ class MAPPO_Learner(IPPO_Learner):
 
     def forward_fn(self, *args):
         bs, obs, actions, avail_actions, log_pi_old, values, returns, advantages, agt_mask, ids, critic_input = args
+        value_pred = {}
+        pi_dist_mu, pi_dist_std, pi_dist_logits = {}, {}, {}
+
         # feedforward
-        _, pi_dists_dict = self.policy(observation=obs, agent_ids=ids, avail_actions=avail_actions)
+        if self.is_continuous:
+            _, pi_dist_mu, pi_dist_std = self.policy(observation=obs, agent_ids=ids, avail_actions=avail_actions)
+        else:
+            _, pi_dist_logits = self.policy(observation=obs, agent_ids=ids, avail_actions=avail_actions)
+
         _, value_pred_dict = self.policy.get_values(observation=critic_input, agent_ids=ids)
 
         # calculate losses for each agent
@@ -35,7 +37,15 @@ class MAPPO_Learner(IPPO_Learner):
         for key in self.model_keys:
             mask_values = agt_mask[key]
             # actor loss
-            log_pi = pi_dists_dict[key].log_prob(actions[key]).reshape(bs)
+            if self.is_continuous:
+                log_pi = self.pi_dist[key]._log_prob(value=actions[key], mean=pi_dist_mu[key], sd=pi_dist_std[key])
+                log_pi = ops.reduce_sum(x=log_pi, axis=-1)
+                entropy = self.pi_dist[key]._entropy(mean=pi_dist_mu[key], sd=pi_dist_std[key])
+                entropy = ops.reduce_sum(x=entropy, axis=-1)
+            else:
+                probs = self.softmax(pi_dist_logits[key])
+                log_pi = self.pi_dist[key]._log_prob(value=actions[key], probs=probs)
+                entropy = self.pi_dist[key].entropy(probs=probs)
             ratio = ops.exp(log_pi - log_pi_old[key]).reshape(bs)
             advantages_mask = ops.stop_gradient(advantages[key]) * mask_values
             surrogate1 = ratio * advantages_mask
@@ -43,8 +53,8 @@ class MAPPO_Learner(IPPO_Learner):
             loss_a.append(-ops.minimum(surrogate1, surrogate2).mean())
 
             # entropy loss
-            entropy = pi_dists_dict[key].entropy().reshape(bs) * mask_values
-            loss_e.append(entropy.mean())
+            entropy_loss = (entropy * mask_values).sum() / mask_values.sum()
+            loss_e.append(entropy_loss)
 
             # critic loss
             value_pred_i = value_pred_dict[key].reshape(bs)
@@ -73,8 +83,13 @@ class MAPPO_Learner(IPPO_Learner):
                 else:
                     loss_v = ((value_pred_i - value_target) ** 2) * mask_values
                 loss_c.append(loss_v.sum() / mask_values.sum())
+
+            value_pred.update({
+                f"predict_value/{key}": value_pred_i.mean().asnumpy()
+            })
+
         loss = sum(loss_a) + self.vf_coef * sum(loss_c) - self.ent_coef * sum(loss_e)
-        return loss, sum(loss_a), sum(loss_c), sum(loss_e)
+        return loss, sum(loss_a), sum(loss_c), sum(loss_e), value_pred
 
     def update(self, sample):
         self.iterations += 1
@@ -112,11 +127,12 @@ class MAPPO_Learner(IPPO_Learner):
             if self.use_global_state:
                 critic_input = {k: state.reshape(batch_size, -1) for k in self.agent_keys}
             else:
-                joint_obs = ops.cat(itemgetter(*self.agent_keys)(obs), axis=-1)
+                joint_obs = self.get_joint_input(obs)
                 critic_input = {k: joint_obs for k in self.agent_keys}
 
-        (loss, loss_a, loss_c, loss_e), grads = self.grad_fn(bs, obs, actions, avail_actions, log_pi_old,
-                                                             values, returns, advantages, agent_mask, IDs, critic_input)
+        (loss, loss_a, loss_c, loss_e, value_pred), grads = self.grad_fn(bs, obs, actions, avail_actions, log_pi_old,
+                                                                         values, returns, advantages, agent_mask,
+                                                                         IDs, critic_input)
         if self.use_grad_clip:
             grads = clip_grads(grads, Tensor(-self.grad_clip_norm), Tensor(self.grad_clip_norm))
         self.optimizer(grads)
@@ -131,5 +147,6 @@ class MAPPO_Learner(IPPO_Learner):
             "loss_c": loss_c.asnumpy(),
             "loss_e": loss_e.asnumpy()
         })
+        info.update(value_pred)
 
         return info

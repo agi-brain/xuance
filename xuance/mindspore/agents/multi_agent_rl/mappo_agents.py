@@ -15,7 +15,6 @@ class MAPPO_Agents(IPPO_Agents):
     Args:
         config: the Namespace variable that provides hyperparameters and other settings.
         envs: the vectorized environments.
-        callback: A user-defined callback function object to inject custom logic during training.
     """
 
     def __init__(self,
@@ -83,9 +82,9 @@ class MAPPO_Agents(IPPO_Agents):
                 key = self.model_keys[0]
                 bs = batch_size * self.n_agents
                 state_n = np.stack([state for _ in range(self.n_agents)], axis=1).reshape([bs, -1])
-                critic_input = {key: state_n}
+                critic_input = {key: Tensor(state_n)}
             else:
-                critic_input = {k: state for k in self.model_keys}
+                critic_input = {k: Tensor(state) for k in self.model_keys}
         else:
             if self.use_parameter_sharing:
                 key = self.model_keys[0]
@@ -96,7 +95,7 @@ class MAPPO_Agents(IPPO_Agents):
                 bs = batch_size
                 joint_obs = np.stack(itemgetter(*self.agent_keys)(obs_batch), axis=1)
             joint_obs = joint_obs.reshape([bs, 1, -1]) if self.use_rnn else joint_obs.reshape([bs, -1])
-            critic_input = {k: joint_obs for k in self.model_keys}
+            critic_input = {k: Tensor(joint_obs) for k in self.model_keys}
         return critic_input
 
     def action(self,
@@ -128,11 +127,17 @@ class MAPPO_Agents(IPPO_Agents):
         rnn_hidden_critic_new, values_out, log_pi_a_dict, values_dict = {}, {}, {}, {}
 
         obs_input, agents_id, avail_actions_input = self._build_inputs(obs_dict, avail_actions_dict)
-        rnn_hidden_actor_new, _ = self.policy(observation=obs_input,
-                                              agent_ids=agents_id,
-                                              avail_actions=avail_actions_input,
-                                              rnn_hidden=rnn_hidden_actor)
-        pi_dists = {key: self.policy.actor[key].dist for key in self.model_keys}
+        if self.continuous_control:
+            rnn_hidden_actor_new, pi_mu, pi_std = self.policy(observation=obs_input,
+                                                              agent_ids=agents_id,
+                                                              avail_actions=avail_actions_input,
+                                                              rnn_hidden=rnn_hidden_actor)
+        else:
+            rnn_hidden_actor_new, pi_logits = self.policy(observation=obs_input,
+                                                          agent_ids=agents_id,
+                                                          avail_actions=avail_actions_input,
+                                                          rnn_hidden=rnn_hidden_actor)
+
         if not test_mode:
             critic_input = self._build_critic_inputs(batch_size=n_env, obs_batch=obs_input, state=state)
             rnn_hidden_critic_new, values_out = self.policy.get_values(observation=critic_input,
@@ -141,24 +146,32 @@ class MAPPO_Agents(IPPO_Agents):
 
         if self.use_parameter_sharing:
             key = self.agent_keys[0]
-            actions_sample = pi_dists[key].stochastic_sample().asnumpy()
             if self.continuous_control:
-                actions_out = actions_sample.reshape(n_env, self.n_agents, -1)
+                pi_dists = self.policy.actor[key].distribution(mu=pi_mu[key], std=pi_std[key])
+                actions_sample = pi_dists.stochastic_sample()
+                actions_out = actions_sample.asnumpy().reshape(n_env, self.n_agents, -1)
             else:
-                actions_out = actions_sample.reshape(n_env, self.n_agents)
+                pi_dists = self.policy.actor[key].distribution(logits=pi_logits[key])
+                actions_sample = pi_dists.stochastic_sample()
+                actions_out = actions_sample.asnumpy().reshape(n_env, self.n_agents)
             actions_dict = [{k: actions_out[e, i] for i, k in enumerate(self.agent_keys)} for e in range(n_env)]
             if not test_mode:
-                log_pi_a = pi_dists[key].log_prob(actions_sample).asnumpy()
+                log_pi_a = pi_dists.log_prob(actions_sample).asnumpy()
                 log_pi_a = log_pi_a.reshape(n_env, self.n_agents)
                 log_pi_a_dict = {k: log_pi_a[:, i] for i, k in enumerate(self.agent_keys)}
                 values_out[key] = values_out[key].asnumpy().reshape(n_env, self.n_agents)
                 values_dict = {k: values_out[key][:, i] for i, k in enumerate(self.agent_keys)}
         else:
-            actions_sample = {k: pi_dists[k].stochastic_sample().asnumpy() for k in self.agent_keys}
             if self.continuous_control:
-                actions_dict = [{k: actions_sample[k][e].reshape([-1]) for k in self.agent_keys} for e in range(n_env)]
+                pi_dists = {k: self.policy.actor[k].distribution(pi_mu[k], pi_std[k]) for k in self.agent_keys}
+                actions_sample = {k: pi_dists[k].stochastic_sample() for k in self.agent_keys}
+                actions_dict = [{k: actions_sample[k].asnumpy()[e].reshape([-1]) for k in self.agent_keys}
+                                for e in range(n_env)]
             else:
-                actions_dict = [{k: actions_sample[k][e].reshape([]) for k in self.agent_keys} for e in range(n_env)]
+                pi_dists = {k: self.policy.actor[k].distribution(logits=pi_logits[k]) for k in self.agent_keys}
+                actions_sample = {k: pi_dists[k].stochastic_sample() for k in self.agent_keys}
+                actions_dict = [{k: actions_sample[k].asnumpy()[e].reshape([]) for k in self.agent_keys}
+                                for e in range(n_env)]
             if not test_mode:
                 log_pi_a = {k: pi_dists[k].log_prob(actions_sample[k]).asnumpy() for k in self.agent_keys}
                 log_pi_a_dict = {k: log_pi_a[k].reshape([n_env]) for i, k in enumerate(self.agent_keys)}
@@ -195,42 +208,42 @@ class MAPPO_Agents(IPPO_Agents):
                 rnn_hidden_critic_i = {key: self.policy.critic_representation[key].get_hidden_item(
                     hidden_item_index, *rnn_hidden_critic[key])}
                 if self.use_global_state:
-                    critic_input = np.repeat(state.reshape([n_env, 1, -1]),
-                                             self.n_agents, axis=1).reshape([batch_size, 1, -1])
+                    critic_input = Tensor(np.repeat(state.reshape([n_env, 1, -1]),
+                                                    self.n_agents, axis=1).reshape([batch_size, 1, -1]))
                 else:
                     obs_array = np.array(itemgetter(*self.agent_keys)(obs_dict))
-                    critic_input = np.repeat(obs_array.reshape([n_env, 1, -1]),
-                                             self.n_agents, axis=1).reshape([batch_size, 1, -1])
+                    critic_input = Tensor(np.repeat(obs_array.reshape([n_env, 1, -1]),
+                                                    self.n_agents, axis=1).reshape([batch_size, 1, -1]))
                 agents_id = np.eye(self.n_agents, dtype=np.float32)[None].repeat(n_env, 0).reshape(batch_size, -1)
             else:
                 if self.use_global_state:
-                    critic_input = np.repeat(state.reshape([batch_size, -1]), self.n_agents, axis=1)
+                    critic_input = Tensor(np.repeat(state.reshape([batch_size, -1]), self.n_agents, axis=1))
                 else:
                     obs_array = np.array([itemgetter(*self.agent_keys)(obs_dict)]).reshape([batch_size, -1])
-                    critic_input = np.repeat(obs_array, self.n_agents, axis=1).reshape(batch_size, -1)
+                    critic_input = Tensor(np.repeat(obs_array, self.n_agents, axis=1).reshape(batch_size, -1))
                 agents_id = np.eye(self.n_agents, dtype=np.float32)[None].repeat(n_env, 0).reshape(batch_size, -1)
 
             rnn_hidden_critic_new, values_out = self.policy.get_values(observation={key: critic_input},
                                                                        agent_ids=Tensor(agents_id),
                                                                        rnn_hidden=rnn_hidden_critic_i)
-            values_out = values_out[key].numpy().reshape(self.n_agents)
-            values_dict = {k: values_out[i] for i, k in enumerate(self.agent_keys)}
+            values_out = values_out[key].reshape(self.n_agents)
+            values_dict = {k: values_out[i].asnumpy() for i, k in enumerate(self.agent_keys)}
 
         else:
             if self.use_rnn:
                 rnn_hidden_critic_i = {k: self.policy.critic_representation[k].get_hidden_item(
                     [i_env, ], *rnn_hidden_critic[k]) for k in self.agent_keys}
                 joint_obs = np.stack(itemgetter(*self.agent_keys)(obs_dict), axis=0).reshape([n_env, 1, -1])
-                critic_input = {k: joint_obs for k in self.agent_keys}
+                critic_input = {k: Tensor(joint_obs) for k in self.agent_keys}
             else:
                 critic_input_array = np.concatenate([obs_dict[k].reshape(n_env, 1, -1) for k in self.agent_keys],
                                                     axis=1).reshape(n_env, -1)
                 if self.use_global_state:
                     critic_input_array = state.reshape([n_env, -1])
-                critic_input = {k: critic_input_array for k in self.agent_keys}
+                critic_input = {k: Tensor(critic_input_array) for k in self.agent_keys}
 
             rnn_hidden_critic_new, values_out = self.policy.get_values(observation=critic_input,
                                                                        rnn_hidden=rnn_hidden_critic_i)
-            values_dict = {k: values_out[k].numpy().reshape([]) for k in self.agent_keys}
+            values_dict = {k: values_out[k].asnumpy().reshape([]) for k in self.agent_keys}
 
         return rnn_hidden_critic_new, values_dict
