@@ -1,7 +1,5 @@
 import numpy as np
-import torch
 from argparse import Namespace
-from operator import itemgetter
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
 from xuance.common import List, Optional, Union
 from xuance.mindspore import Module
