@@ -340,27 +340,26 @@ class COMA_Policy(Module):
         self.n_actions_max = max(self.n_actions.values())
         self.critic = BasicQhead(dim_input_critic, self.n_actions_max,
                                  critic_hidden_size, normalize, initializer, activation)
-        self.target_critic = BasicQhead(dim_input_critic, self.n_actions_max,
-                                        critic_hidden_size, normalize, initializer, activation)
-        self.target_critic.set_weights(self.critic.get_weights())
+        self.target_critic = deepcopy(self.critic)
+        # update parameters name
+        for key in self.model_keys:
+            self.critic_representation[key].update_parameters_name(key + '_critic_rep_')
+        self.critic.update_parameters_name('_critic_')
 
     @property
     def parameters_actor(self):
-        params = []
         if isinstance(self.actor_representation[self.model_keys[0]], Basic_Identical):
-            for k in self.model_keys:
-                params.extend(self.actor_representation[k].trainable_params())
+            params = self.actor.trainable_params()
         else:
-            for k in self.model_keys:
-                params.extend(self.actor_representation[k].trainable_params() + self.actor[k].trainable_params())
+            params = self.actor_representation.trainable_params() + self.actor.trainable_params()
         return params
 
     @property
     def parameters_critic(self):
-        params = self.critic.trainable_params()
-        if not isinstance(self.critic_representation[self.model_keys[0]], Basic_Identical):
-            for k in self.model_keys:
-                params += self.critic_representation[k].trainable_params()
+        if isinstance(self.critic_representation[self.model_keys[0]], Basic_Identical):
+            params = self.critic.trainable_params()
+        else:
+            params = self.critic_representation.trainable_params() + self.critic.trainable_params()
         return params
 
     def construct(self, observation: Dict[str, Tensor], agent_ids: Optional[Tensor] = None,
@@ -405,7 +404,7 @@ class COMA_Policy(Module):
         return rnn_hidden_new, pi_logits
 
     def get_values(self, state: Tensor, observation: Dict[str, Tensor], actions: Dict[str, Tensor],
-                   agent_ids: Tensor = None, rnn_hidden: Optional[Dict[str, List[Tensor]]] = None):
+                   agent_ids: Tensor = None, rnn_hidden: Optional[Dict[str, List[Tensor]]] = None, target=False):
         """
         Get evaluated critic values.
 
@@ -415,6 +414,7 @@ class COMA_Policy(Module):
             actions (Dict[str, Tensor]): The input actions.
             agent_ids (Tensor): The agents' ids (for parameter sharing).
             rnn_hidden (Optional[Dict[str, List[Tensor]]]): The RNN hidden states of critic representation.
+            target: If to use target critic network to calculate the critic values.
 
         Returns:
             rnn_hidden_new (Optional[Dict[str, List[Tensor]]]): The new RNN hidden states of critic representation.
@@ -426,127 +426,72 @@ class COMA_Policy(Module):
         critic_inputs = []
 
         if self.use_rnn:
-            critic_inputs.append(state.unsqueeze(-2).repeat(1, 1, self.n_agents, 1))  # batch * T * N * dim_S)
+            critic_inputs.append(ops.repeat_elements(state.unsqueeze(-2),
+                                                     rep=self.n_agents, axis=2))  # batch * T * N * dim_S
         else:
-            critic_inputs.append(state.unsqueeze(-2).repeat(1, self.n_agents, 1))  # batch * N * dim_S
+            critic_inputs.append(ops.repeat_elements(state.unsqueeze(-2),
+                                                     rep=self.n_agents, axis=1))  # batch * N * dim_S
 
         obs_rep = {}
         for key in self.model_keys:
             if self.use_rnn:
-                outputs = self.critic_representation[key](observation[key], *rnn_hidden[key])
+                if target:
+                    outputs = self.target_critic_representation[key](observation[key], *rnn_hidden[key])
+                else:
+                    outputs = self.critic_representation[key](observation[key], *rnn_hidden[key])
                 rnn_hidden_new[key] = (outputs['rnn_hidden'], outputs['rnn_cell'])
             else:
-                outputs = self.critic_representation[key](observation[key])
+                if target:
+                    outputs = self.target_critic_representation[key](observation[key])
+                else:
+                    outputs = self.critic_representation[key](observation[key])
                 rnn_hidden_new[key] = [None, None]
             obs_rep[key] = outputs
 
-        agent_mask = (1 - ops.eye(self.n_agents, dtype=ms.float32)).unsqueeze(-1).unsqueeze(-1)
+        agent_mask = (1 - ops.eye(self.n_agents, dtype=ms.float32)).unsqueeze(-1)
         if self.use_parameter_sharing:
             key = self.model_keys[0]
-            agent_mask = agent_mask.repeat(1, 1, self.n_actions[key]).reshape([self.n_agents, -1]).unsqueeze(0)
+            agent_mask = ops.repeat_elements(agent_mask, rep=int(self.n_actions[key]),
+                                             axis=2).reshape(self.n_agents, -1).unsqueeze(0)
             if self.use_rnn:
-                actions_input = actions[key].reshape(batch_size, seq_len, 1, -1).repeat(1, 1, self.n_agents, 1)
+                actions_input = ops.repeat_elements(actions[key].reshape(batch_size, seq_len, 1, -1),
+                                                    rep=self.n_agents, axis=2)
                 critic_inputs.append(obs_rep[key].reshape(batch_size, self.n_agents, seq_len, -1).transpose(1, 2))
                 critic_inputs.append(actions_input * agent_mask.unsqueeze(0))
                 critic_inputs.append(agent_ids.reshape(batch_size, self.n_agents, seq_len, -1).transpose(1, 2))
             else:
-                actions_input = actions[key].reshape([batch_size, 1, -1]).repeat(1, self.n_agents, 1)
-                critic_inputs.append(obs_rep[key].reshape([batch_size, self.n_agents, -1]))
+                actions_input = ops.repeat_elements(actions[key].reshape(batch_size, 1, -1),
+                                                    rep=self.n_agents, axis=1)
+                critic_inputs.append(obs_rep[key].reshape(batch_size, self.n_agents, -1))
                 critic_inputs.append(actions_input * agent_mask)
-                critic_inputs.append(agent_ids.reshape([batch_size, self.n_agents, -1]))
+                critic_inputs.append(agent_ids.reshape(batch_size, self.n_agents, -1))
             critic_inputs = ops.cat(critic_inputs, axis=-1)
         else:
-            agent_mask = ops.cat([agent_mask[i].repeat(1, self.n_actions[k])
+            agent_mask = ops.cat([ops.repeat_elements(agent_mask[i], rep=self.n_actions[k], axis=1)
                                   for i, k in enumerate(self.model_keys)], axis=-1).unsqueeze(0)
             if self.use_rnn:
                 agent_mask = agent_mask.unsqueeze(1)
-                actions_input = ops.cat(itemgetter(*self.model_keys)(actions),
-                                        axis=-1).unsqueeze(-2).repeat(1, 1, self.n_agents, 1)  # batch * T * N * A
+                actions_input = ops.repeat_elements(ops.cat(itemgetter(*self.model_keys)(actions),
+                                                            axis=-1).unsqueeze(-2),
+                                                    rep=self.n_agents, axis=2)  # batch * T * N * A
                 agent_ids = agent_ids.reshape(batch_size, self.n_agents, seq_len, -1).transpose(1, 2)
             else:
-                actions_input = ops.cat(itemgetter(*self.model_keys)(actions),
-                                        axis=-1).unsqueeze(1).repeat(1, self.n_agents, 1)  # batch_size * N * A
+                actions_input = ops.repeat_elements(ops.cat(itemgetter(*self.model_keys)(actions),
+                                                            axis=-1).unsqueeze(1),
+                                                    rep=self.n_agents, axis=1)  # batch_size * N * A
                 agent_ids = agent_ids.reshape(batch_size, self.n_agents, -1)  # batch_size * N * N
             critic_inputs.append(ops.stack(itemgetter(*self.model_keys)(obs_rep), axis=-2))
             critic_inputs.append(actions_input * agent_mask)
             critic_inputs.append(agent_ids)
             critic_inputs = ops.cat(critic_inputs, axis=-1)
 
-        values = self.critic(critic_inputs)
-        return rnn_hidden_new, values
-
-    def get_values_target(self, state: Tensor, observation: Dict[str, Tensor], actions: Dict[str, Tensor],
-                          agent_ids: Tensor = None, rnn_hidden: Optional[Dict[str, List[Tensor]]] = None):
-        """
-        Get evaluated critic values.
-
-        Parameters:
-            state: Tensor: The global state.
-            observation (Dict[str, Tensor]): The input observations for the policies.
-            actions (Dict[str, Tensor]): The input actions.
-            agent_ids (Tensor): The agents' ids (for parameter sharing).
-            rnn_hidden (Optional[Dict[str, List[Tensor]]]): The RNN hidden states of critic representation.
-
-        Returns:
-            rnn_hidden_new (Optional[Dict[str, List[Tensor]]]): The new RNN hidden states of critic representation.
-            values (dict): The evaluated critic values.
-        """
-        rnn_hidden_new, critic_input = {}, {}
-        batch_size = state.shape[0]
-        seq_len = state.shape[1] if self.use_rnn else 1
-        critic_inputs = []
-
-        if self.use_rnn:
-            critic_inputs.append(state.unsqueeze(-2).repeat(1, 1, self.n_agents, 1))  # batch * T * N * dim_S)
-        else:
-            critic_inputs.append(state.unsqueeze(-2).repeat(1, self.n_agents, 1))  # batch * N * dim_S
-
-        obs_rep = {}
-        for key in self.model_keys:
-            if self.use_rnn:
-                outputs = self.target_critic_representation[key](observation[key], *rnn_hidden[key])
-                rnn_hidden_new[key] = (outputs['rnn_hidden'], outputs['rnn_cell'])
-            else:
-                outputs = self.target_critic_representation[key](observation[key])
-                rnn_hidden_new[key] = [None, None]
-            obs_rep[key] = outputs['state']
-
-        agent_mask = (1 - ops.eye(self.n_agents, dtype=ms.float32)).unsqueeze(-1).unsqueeze(-1)
-        if self.use_parameter_sharing:
-            key = self.model_keys[0]
-            agent_mask = agent_mask.repeat(1, 1, self.n_actions[key]).reshape([self.n_agents, -1]).unsqueeze(0)
-            if self.use_rnn:
-                actions_input = actions[key].reshape(batch_size, seq_len, 1, -1).repeat(1, 1, self.n_agents, 1)
-                critic_inputs.append(obs_rep[key].reshape(batch_size, self.n_agents, seq_len, -1).transpose(1, 2))
-                critic_inputs.append(actions_input * agent_mask.unsqueeze(0))
-                critic_inputs.append(agent_ids.reshape(batch_size, self.n_agents, seq_len, -1).transpose(1, 2))
-            else:
-                actions_input = actions[key].reshape([batch_size, 1, -1]).repeat(1, self.n_agents, 1)
-                critic_inputs.append(obs_rep[key].reshape([batch_size, self.n_agents, -1]))
-                critic_inputs.append(actions_input * agent_mask)
-                critic_inputs.append(agent_ids.reshape([batch_size, self.n_agents, -1]))
-            critic_inputs = ops.cat(critic_inputs, axis=-1)
-        else:
-            agent_mask = ops.cat([agent_mask[i].repeat(1, self.n_actions[k])
-                                  for i, k in enumerate(self.model_keys)], axis=-1).unsqueeze(0)
-            if self.use_rnn:
-                agent_mask = agent_mask.unsqueeze(1)
-                actions_input = ops.cat(itemgetter(*self.model_keys)(actions),
-                                        axis=-1).unsqueeze(-2).repeat(1, 1, self.n_agents, 1)  # batch * T * N * A
-                agent_ids = agent_ids.reshape(batch_size, self.n_agents, seq_len, -1).transpose(1, 2)
-            else:
-                actions_input = ops.cat(itemgetter(*self.model_keys)(actions),
-                                        axis=-1).unsqueeze(1).repeat(1, self.n_agents, 1)  # batch_size * N * A
-                agent_ids = agent_ids.reshape(batch_size, self.n_agents, -1)  # batch_size * N * N
-            critic_inputs.append(ops.stack(itemgetter(*self.model_keys)(obs_rep), axis=-2))
-            critic_inputs.append(actions_input * agent_mask)
-            critic_inputs.append(agent_ids)
-            critic_inputs = ops.cat(critic_inputs, axis=-1)
-
-        values = self.target_critic(critic_inputs)
+        values = self.target_critic(critic_inputs) if target else self.critic(critic_inputs)
         return rnn_hidden_new, values
 
     def copy_target(self):
+        for ep, tp in zip(self.critic_representation.trainable_params(),
+                          self.target_critic_representation.trainable_params()):
+            tp.assign_value(ep)
         for ep, tp in zip(self.critic.trainable_params(), self.target_critic.trainable_params()):
             tp.assign_value(ep)
 
@@ -594,7 +539,7 @@ class MeanFieldActorCriticPolicy(Module):
         self.action_space = action_space
         self.n_agents = n_agents
         self.n_actions_list = [a_space.n for a_space in self.action_space.values()]
-        self.n_actions_max = max(self.n_actions_list)
+        self.n_actions_max = int(max(self.n_actions_list))
         self.use_parameter_sharing = kwargs['use_parameter_sharing']
         self.model_keys = kwargs['model_keys']
         self.lstm = True if kwargs["rnn"] == "LSTM" else False
@@ -622,18 +567,21 @@ class MeanFieldActorCriticPolicy(Module):
             self.actor[key] = CategoricalActorNet(dim_actor_in, dim_actor_out, actor_hidden_size,
                                                   normalize, initialize, activation)
             self.critic[key] = CriticNet(dim_critic_in, critic_hidden_size, normalize, initialize, activation)
+            # update parameters name
+            self.actor_representation[key].update_parameters_name(key + '_actor_rep_')
+            self.critic_representation[key].update_parameters_name(key + '_critic_rep_')
+            self.action_mean_embedding[key].update_parameters_name(key + '_act_embedding_')
+            self.actor[key].update_parameters_name(key + '_actor_')
+            self.critic[key].update_parameters_name(key + '_critic_')
         self.temperature = kwargs['temperature']
 
-    def parameters_model(self, key=None):
-        key_list = [key] if key is not None else self.model_keys
-        params = []
-        for k in key_list:
-            if not isinstance(self.actor_representation[k], Basic_Identical):
-                params.extend(self.actor_representation[k].trainable_params())
-            if not isinstance(self.critic_representation[k], Basic_Identical):
-                params.extend(self.critic_representation[k].trainable_params)
-            params.extend(self.actor[k].trainable_params() + self.critic[k].trainable_params())
-            params.extend(self.action_mean_embedding[k].trainable_params())
+    @property
+    def parameters_model(self):
+        params = self.actor.trainable_params() + self.critic.trainable_params()
+        if not isinstance(self.actor_representation[self.model_keys[0]], Basic_Identical):
+            params += self.actor_representation.trainable_params()
+        if not isinstance(self.critic_representation[self.model_keys[0]], Basic_Identical):
+            params += self.critic_representation.trainable_params()
         return params
 
     def construct(self, observation: Dict[str, Tensor], agent_ids: Optional[Tensor] = None,
@@ -656,6 +604,9 @@ class MeanFieldActorCriticPolicy(Module):
         rnn_hidden_new, pi_logits, pi_dists = {}, {}, {}
         agent_list = self.model_keys if agent_key is None else [agent_key]
 
+        if avail_actions is not None:
+            avail_actions = {key: Tensor(avail_actions[key]) for key in agent_list}
+
         for key in agent_list:
             if self.use_rnn:
                 outputs = self.actor_representation[key](observation[key], *rnn_hidden[key])
@@ -665,9 +616,9 @@ class MeanFieldActorCriticPolicy(Module):
                 rnn_hidden_new[key] = [None, None]
 
             if self.use_parameter_sharing:
-                actor_input = ops.cat([outputs['state'], agent_ids], axis=-1)
+                actor_input = ops.cat([outputs, agent_ids], axis=-1)
             else:
-                actor_input = outputs['state']
+                actor_input = outputs
 
             avail_actions_input = None if avail_actions is None else avail_actions[key]
             pi_logits[key] = self.actor[key](actor_input, avail_actions_input)
@@ -695,15 +646,17 @@ class MeanFieldActorCriticPolicy(Module):
         actions_onehot = ops.one_hot(actions_tensor, depth=self.n_actions_max)
 
         # count alive neighbors
-        _eyes = ops.eye(self.n_agents).unsqueeze(0).repeat(batch_size, 1, 1)
-        agent_mask_diagonal = agent_mask_tensor.unsqueeze(-1).repeat(1, 1, self.n_agents) * _eyes
-        agent_mask_neighbors = agent_mask_tensor.unsqueeze(-1).repeat(1, 1, self.n_agents) - agent_mask_diagonal
-        agent_alive_neighbors = ops.reduce_sum(agent_mask_neighbors, axis=-1, keepdims=True)
+        _eyes = ops.repeat_elements(ops.eye(self.n_agents).unsqueeze(0), rep=batch_size, axis=0)
+        agent_mask_diagonal = ops.repeat_elements(agent_mask_tensor.unsqueeze(-1), rep=self.n_agents, axis=-1) * _eyes
+        agent_mask_neighbors = ops.repeat_elements(agent_mask_tensor.unsqueeze(-1),
+                                                   rep=self.n_agents, axis=-1) - agent_mask_diagonal
+        agent_alive_neighbors = agent_mask_neighbors.sum(axis=-1, keepdims=True)
 
         # calculate mean actions of each agent's neighbors
-        agent_mask_repeat = agent_mask_tensor.unsqueeze_(-1).repeat(1, 1, self.n_actions_max)
+        agent_mask_repeat = ops.repeat_elements(agent_mask_tensor.unsqueeze(-1), rep=self.n_actions_max, axis=-1)
         actions_onehot = actions_onehot * agent_mask_repeat
-        actions_sum = ops.reduce_sum(actions_onehot, axis=-2, keepdims=True).repeat(1, self.n_agents, 1)
+        actions_sum = ops.repeat_elements(actions_onehot.sum(axis=-2, keepdims=True),
+                                          rep=self.n_agents, axis=1)
         actions_neighbors_sum = actions_sum - actions_onehot  # Sum of other agents' actions.
         actions_mean_masked = actions_neighbors_sum * agent_mask_repeat / agent_alive_neighbors
         return actions_mean_masked
@@ -764,10 +717,10 @@ class MeanFieldActorCriticPolicy(Module):
             if self.use_parameter_sharing:
                 action_embedding_input = ops.cat([actions_mean[key], agent_ids], axis=-1)
                 act_embedding = self.action_mean_embedding[key](action_embedding_input)
-                critic_input = ops.cat([outputs['state'], act_embedding['state'], agent_ids], axis=-1)
+                critic_input = ops.cat([outputs, act_embedding, agent_ids], axis=-1)
             else:
                 act_embedding = self.action_mean_embedding[key](actions_mean[key])
-                critic_input = ops.cat([outputs['state'], act_embedding['state']], axis=-1)
+                critic_input = ops.cat([outputs, act_embedding], axis=-1)
 
             values[key] = self.critic[key](critic_input)
 
