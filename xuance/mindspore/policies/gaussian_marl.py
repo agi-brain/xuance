@@ -2,8 +2,9 @@ import numpy as np
 from copy import deepcopy
 from gymnasium.spaces import Box
 from xuance.common import Sequence, Optional, Callable, Union, Dict, List
-from xuance.mindspore.utils import ModuleType
 from xuance.mindspore import Tensor, Module, ModuleDict, ops
+from xuance.mindspore.utils import ModuleType
+from xuance.mindspore.representations import Basic_Identical
 from .core import GaussianActorNet, GaussianActorNet_SAC, CriticNet
 
 
@@ -178,6 +179,24 @@ class MAAC_Policy(Module):
 
 
 class Basic_ISAC_Policy(Module):
+    """
+    Basic_ISAC_Policy: The basic policy for independent soft actor-critic.
+
+    Args:
+        action_space (Optional[Dict[str, Box]]): The continuous action space.
+        n_agents (int): The number of agents.
+        actor_representation (ModuleDict): A dict of representation modules for each agent's actor.
+        critic_representation (ModuleDict): A dict of representation modules for each agent's critic.
+        actor_hidden_size (Sequence[int]): A list of hidden layer sizes for actor network.
+        critic_hidden_size (Sequence[int]): A list of hidden layer sizes for critic network.
+        normalize (Optional[ModuleType]): The layer normalization over a minibatch of inputs.
+        initialize (Optional[Callable[..., Tensor]]): The parameters initializer.
+        activation (Optional[ModuleType]): The activation function for each layer.
+        activation_action (Optional[ModuleType]): The activation of final layer to bound the actions.
+        use_distributed_training (bool): Whether to use multi-GPU for distributed training.
+        **kwargs: Other arguments.
+    """
+
     def __init__(self,
                  action_space: Optional[Dict[str, Box]],
                  n_agents: int,
@@ -189,6 +208,7 @@ class Basic_ISAC_Policy(Module):
                  initialize: Optional[Callable[..., Tensor]] = None,
                  activation: Optional[ModuleType] = None,
                  activation_action: Optional[ModuleType] = None,
+                 use_distributed_training: bool = False,
                  **kwargs):
         super(Basic_ISAC_Policy, self).__init__()
         self.is_continuous = False
@@ -199,6 +219,7 @@ class Basic_ISAC_Policy(Module):
         self.lstm = True if kwargs["rnn"] == "LSTM" else False
         self.use_rnn = True if kwargs["use_rnn"] else False
 
+        self.activation_action = activation_action()
         self.actor_representation = actor_representation
         self.critic_1_representation = critic_representation
         self.critic_2_representation = deepcopy(critic_representation)
@@ -230,18 +251,25 @@ class Basic_ISAC_Policy(Module):
     def parameters_actor(self):
         parameters_actor = {}
         for key in self.model_keys:
-            parameters_actor[key] = list(self.actor_representation[key].trainable_params()) + \
-                                    list(self.actor[key].trainable_params())
+            if isinstance(self.actor_representation[key], Basic_Identical):
+                parameters_actor[key] = self.actor[key].trainable_params()
+            else:
+                parameters_actor[key] = self.actor_representation[key].trainable_params() + \
+                                        self.actor[key].trainable_params()
         return parameters_actor
 
     @property
     def parameters_critic(self):
         parameters_critic = {}
         for key in self.model_keys:
-            parameters_critic[key] = list(self.critic_1_representation[key].trainable_params()) + \
-                                     list(self.critic_1[key].trainable_params()) + \
-                                     list(self.critic_2_representation[key].trainable_params()) + \
-                                     list(self.critic_2[key].trainable_params())
+            if isinstance(self.critic_1_representation[key], Basic_Identical):
+                parameters_critic[key] = self.critic_1[key].trainable_params() + \
+                                         self.critic_2[key].trainable_params()
+            else:
+                parameters_critic[key] = self.critic_1_representation[key].trainable_params() + \
+                                         self.critic_1[key].trainable_params() + \
+                                         self.critic_2_representation[key].trainable_params() + \
+                                         self.critic_2[key].trainable_params()
         return parameters_critic
 
     def _get_actor_critic_input(self, dim_actor_rep, dim_action, dim_critic_rep, n_agents):
@@ -267,14 +295,16 @@ class Basic_ISAC_Policy(Module):
             dim_critic_in += n_agents
         return dim_actor_in, dim_actor_out, dim_critic_in
 
-    def construct(self, observation: Dict[str, Tensor], agent_ids: Tensor = None, agent_key: str = None,
-                  rnn_hidden: Optional[Dict[str, List[Tensor]]] = None):
+    def construct(self, observation: Dict[str, Tensor], agent_ids: Tensor = None,
+                avail_actions: Dict[str, Tensor] = None, agent_key: str = None,
+                rnn_hidden: Optional[Dict[str, List[Tensor]]] = None):
         """
         Returns actions of the policy.
 
         Parameters:
             observation (Dict[Tensor]): The input observations for the policies.
             agent_ids (Tensor): The agents' ids (for parameter sharing).
+            avail_actions (Dict[str, Tensor]): Actions mask values, default is None.
             agent_key (str): Calculate actions for specified agent.
             rnn_hidden (Optional[Dict[str, List[Tensor]]]): The hidden variables of the RNN.
 
@@ -282,7 +312,7 @@ class Basic_ISAC_Policy(Module):
             rnn_hidden_new (Optional[Dict[str, List[Tensor]]]): The new hidden variables of the RNN.
             actions (Dict[Tensor]): The actions output by the policies.
         """
-        rnn_hidden_new, act_dists, actions_dict, log_action_prob = deepcopy(rnn_hidden), {}, {}, {}
+        rnn_hidden_new, actions_dict, log_action_prob = deepcopy(rnn_hidden), {}, {}
         agent_list = self.model_keys if agent_key is None else [agent_key]
         for key in agent_list:
             if self.use_rnn:
@@ -295,8 +325,17 @@ class Basic_ISAC_Policy(Module):
                 actor_in = ops.cat([outputs, agent_ids], axis=-1)
             else:
                 actor_in = outputs
-            act_dists = self.actor[key](actor_in)
-            actions_dict[key], log_action_prob[key] = act_dists.activated_rsample_and_logprob()
+            pi_mu, pi_std = self.actor[key](actor_in)
+            eps = ops.normal(shape=pi_mu.shape, mean=Tensor(0.0), stddev=Tensor(1.0))  # 𝜖 ~ N(0, 1)
+            action_sampled = pi_mu + pi_std * eps  # Reparameterization trick
+            actions_dict[key] = self.activation_action(action_sampled)
+            # calculate log prob
+            log_std = ops.log(pi_std + 1e-8)
+            log_prob = -0.5 * (((action_sampled - pi_mu) / (pi_std + 1e-8)) ** 2 + 2.0 * log_std + ops.log(
+                Tensor(2.0 * np.pi)))
+            correction = - 2. * (ops.log(Tensor(2.0)) - action_sampled - ops.softplus(-2. * action_sampled))
+            log_prob += correction
+            log_action_prob[key] = ops.reduce_sum(log_prob, axis=-1)
         return rnn_hidden_new, actions_dict, log_action_prob
 
     def Qpolicy(self, observation: Dict[str, Tensor],
@@ -335,8 +374,8 @@ class Basic_ISAC_Policy(Module):
                 outputs_critic_1 = self.critic_1_representation[key](observation[key])
                 outputs_critic_2 = self.critic_2_representation[key](observation[key])
 
-            critic_1_in = ops.cat([outputs_critic_1['state'], actions[key]], axis=-1)
-            critic_2_in = ops.cat([outputs_critic_2['state'], actions[key]], axis=-1)
+            critic_1_in = ops.cat([outputs_critic_1, actions[key]], axis=-1)
+            critic_2_in = ops.cat([outputs_critic_2, actions[key]], axis=-1)
             if self.use_parameter_sharing:
                 critic_1_in = ops.cat([critic_1_in, agent_ids], axis=-1)
                 critic_2_in = ops.cat([critic_2_in, agent_ids], axis=-1)
@@ -379,57 +418,14 @@ class Basic_ISAC_Policy(Module):
                 outputs_critic_1 = self.target_critic_1_representation[key](next_observation[key])
                 outputs_critic_2 = self.target_critic_2_representation[key](next_observation[key])
 
-            critic_1_in = ops.cat([outputs_critic_1['state'], next_actions[key]], axis=-1)
-            critic_2_in = ops.cat([outputs_critic_2['state'], next_actions[key]], axis=-1)
+            critic_1_in = ops.cat([outputs_critic_1, next_actions[key]], axis=-1)
+            critic_2_in = ops.cat([outputs_critic_2, next_actions[key]], axis=-1)
             if self.use_parameter_sharing:
                 critic_1_in = ops.cat([critic_1_in, agent_ids], axis=-1)
                 critic_2_in = ops.cat([critic_2_in, agent_ids], axis=-1)
             target_q_1, target_q_2 = self.target_critic_1[key](critic_1_in), self.target_critic_2[key](critic_2_in)
             target_q[key] = ops.minimum(target_q_1, target_q_2)
         return rnn_hidden_critic_new_1, rnn_hidden_critic_new_2, target_q
-
-    def Qaction(self, observation: Union[np.ndarray, dict],
-                actions: Tensor,
-                agent_ids: Tensor, agent_key: str = None,
-                rnn_hidden_critic_1: Optional[Dict[str, List[Tensor]]] = None,
-                rnn_hidden_critic_2: Optional[Dict[str, List[Tensor]]] = None):
-        """
-        Returns the evaluated Q-values for current observation-action pairs.
-
-        Parameters:
-            observation (Union[np.ndarray, dict]): The original observation.
-            actions (Tensor): The selected actions.
-            agent_ids (Tensor): The agents' ids (for parameter sharing).
-            agent_key (str): Calculate actions for specified agent.
-            rnn_hidden_critic_1 (Optional[Dict[str, List[Tensor]]]): The RNN hidden states for critic_1 representation.
-            rnn_hidden_critic_2 (Optional[Dict[str, List[Tensor]]]): The RNN hidden states for critic_2 representation.
-
-        Returns:
-            rnn_hidden_critic_new_1: The updated rnn states for critic_1_representation.
-            rnn_hidden_critic_new_2: The updated rnn states for critic_2_representation.
-            q_1: The Q-value calculated by the first critic network.
-            q_2: The Q-value calculated by the other critic network.
-        """
-        rnn_hidden_critic_new_1, rnn_hidden_critic_new_2 = deepcopy(rnn_hidden_critic_1), deepcopy(rnn_hidden_critic_2)
-        q_1, q_2 = {}, {}
-        agent_list = self.model_keys if agent_key is None else [agent_key]
-        for key in agent_list:
-            if self.use_rnn:
-                outputs_critic_1 = self.critic_1_representation[key](observation[key], *rnn_hidden_critic_1[key])
-                outputs_critic_2 = self.critic_2_representation[key](observation[key], *rnn_hidden_critic_2[key])
-                rnn_hidden_critic_new_1.update({key: (outputs_critic_1['rnn_hidden'], outputs_critic_1['rnn_cell'])})
-                rnn_hidden_critic_new_2.update({key: (outputs_critic_2['rnn_hidden'], outputs_critic_2['rnn_cell'])})
-            else:
-                outputs_critic_1 = self.critic_1_representation[key](observation[key])
-                outputs_critic_2 = self.critic_2_representation[key](observation[key])
-
-            critic_1_in = ops.cat([outputs_critic_1['state'], actions[key]], axis=-1)
-            critic_2_in = ops.cat([outputs_critic_2['state'], actions[key]], axis=-1)
-            if self.use_parameter_sharing:
-                critic_1_in = ops.cat([critic_1_in, agent_ids], axis=-1)
-                critic_2_in = ops.cat([critic_2_in, agent_ids], axis=-1)
-            q_1[key], q_2[key] = self.critic_1[key](critic_1_in), self.critic_2[key](critic_2_in)
-        return rnn_hidden_critic_new_1, rnn_hidden_critic_new_2, q_1, q_2
 
     def soft_update(self, tau=0.005):
         for key in self.model_keys:
@@ -446,6 +442,24 @@ class Basic_ISAC_Policy(Module):
 
 
 class MASAC_Policy(Basic_ISAC_Policy):
+    """
+    Basic_ISAC_Policy: The basic policy for independent soft actor-critic.
+
+    Args:
+        action_space (Box): The continuous action space.
+        n_agents (int): The number of agents.
+        actor_representation (ModuleDict): A dict of representation modules for each agent's actor.
+        critic_representation (ModuleDict): A dict of representation modules for each agent's critic.
+        actor_hidden_size (Sequence[int]): A list of hidden layer sizes for actor network.
+        critic_hidden_size (Sequence[int]): A list of hidden layer sizes for critic network.
+        normalize (Optional[ModuleType]): The layer normalization over a minibatch of inputs.
+        initialize (Optional[Callable[..., Tensor]]): The parameters initializer.
+        activation (Optional[ModuleType]): The activation function for each layer.
+        activation_action (Optional[ModuleType]): The activation of final layer to bound the actions.
+        use_distributed_training (bool): Whether to use multi-GPU for distributed training.
+        **kwargs: Other arguments.
+    """
+
     def __init__(self,
                  action_space: Optional[Dict[str, Box]],
                  n_agents: int,
@@ -457,10 +471,12 @@ class MASAC_Policy(Basic_ISAC_Policy):
                  initialize: Optional[Callable[..., Tensor]] = None,
                  activation: Optional[ModuleType] = None,
                  activation_action: Optional[ModuleType] = None,
+                 use_distributed_training: bool = False,
                  **kwargs):
         super(MASAC_Policy, self).__init__(action_space, n_agents, actor_representation, critic_representation,
                                            actor_hidden_size, critic_hidden_size,
-                                           normalize, initialize, activation, activation_action, **kwargs)
+                                           normalize, initialize, activation, activation_action,
+                                           use_distributed_training, **kwargs)
 
     def _get_actor_critic_input(self, dim_actor_rep, dim_action, dim_critic_rep, n_agents):
         """
@@ -531,25 +547,24 @@ class MASAC_Policy(Basic_ISAC_Policy):
 
         for key in agent_list:
             if self.use_parameter_sharing:
+                joint_rep_out_1 = ops.repeat_elements(outputs_critic_1[key].unsqueeze(1), rep=self.n_agents, axis=1)
+                joint_rep_out_2 = ops.repeat_elements(outputs_critic_2[key].unsqueeze(1), rep=self.n_agents, axis=1)
                 if self.use_rnn:
-                    joint_rep_out_1 = outputs_critic_1[key]['state'].unsqueeze(1).expand(-1, self.n_agents, -1, -1)
-                    joint_rep_out_2 = outputs_critic_2[key]['state'].unsqueeze(1).expand(-1, self.n_agents, -1, -1)
                     joint_rep_out_1 = joint_rep_out_1.reshape(bs, seq_len, -1)
                     joint_rep_out_2 = joint_rep_out_2.reshape(bs, seq_len, -1)
                 else:
-                    joint_rep_out_1 = outputs_critic_1[key]['state'].unsqueeze(1).expand(
-                        -1, self.n_agents, -1).reshape(bs, -1)
-                    joint_rep_out_2 = outputs_critic_2[key]['state'].unsqueeze(1).expand(
-                        -1, self.n_agents, -1).reshape(bs, -1)
+                    joint_rep_out_1 = joint_rep_out_1.reshape(bs, -1)
+                    joint_rep_out_2 = joint_rep_out_2.reshape(bs, -1)
+
                 critic_1_in = ops.cat([joint_rep_out_1, agent_ids], axis=-1)
                 critic_2_in = ops.cat([joint_rep_out_2, agent_ids], axis=-1)
             else:
                 if self.use_rnn:
-                    joint_rep_out_1 = outputs_critic_1[key]['state'].reshape(bs, seq_len, -1)
-                    joint_rep_out_2 = outputs_critic_2[key]['state'].reshape(bs, seq_len, -1)
+                    joint_rep_out_1 = outputs_critic_1[key].reshape(bs, seq_len, -1)
+                    joint_rep_out_2 = outputs_critic_2[key].reshape(bs, seq_len, -1)
                 else:
-                    joint_rep_out_1 = outputs_critic_1[key]['state'].reshape(bs, -1)
-                    joint_rep_out_2 = outputs_critic_2[key]['state'].reshape(bs, -1)
+                    joint_rep_out_1 = outputs_critic_1[key].reshape(bs, -1)
+                    joint_rep_out_2 = outputs_critic_2[key].reshape(bs, -1)
                 critic_1_in = joint_rep_out_1
                 critic_2_in = joint_rep_out_2
             q_1[key] = self.critic_1[key](critic_1_in)
@@ -602,101 +617,26 @@ class MASAC_Policy(Basic_ISAC_Policy):
 
         for key in agent_list:
             if self.use_parameter_sharing:
+                joint_rep_out_1 = ops.repeat_elements(outputs_critic_1[key].unsqueeze(1), rep=self.n_agents, axis=1)
+                joint_rep_out_2 = ops.repeat_elements(outputs_critic_2[key].unsqueeze(1), rep=self.n_agents, axis=1)
                 if self.use_rnn:
-                    joint_rep_out_1 = outputs_critic_1[key]['state'].unsqueeze(1).expand(-1, self.n_agents, -1, -1)
-                    joint_rep_out_2 = outputs_critic_2[key]['state'].unsqueeze(1).expand(-1, self.n_agents, -1, -1)
                     joint_rep_out_1 = joint_rep_out_1.reshape(bs, seq_len, -1)
                     joint_rep_out_2 = joint_rep_out_2.reshape(bs, seq_len, -1)
                 else:
-                    joint_rep_out_1 = outputs_critic_1[key]['state'].unsqueeze(1).expand(
-                        -1, self.n_agents, -1).reshape(bs, -1)
-                    joint_rep_out_2 = outputs_critic_2[key]['state'].unsqueeze(1).expand(
-                        -1, self.n_agents, -1).reshape(bs, -1)
+                    joint_rep_out_1 = joint_rep_out_1.reshape(bs, -1)
+                    joint_rep_out_2 = joint_rep_out_2.reshape(bs, -1)
                 critic_1_in = ops.cat([joint_rep_out_1, agent_ids], axis=-1)
                 critic_2_in = ops.cat([joint_rep_out_2, agent_ids], axis=-1)
             else:
                 if self.use_rnn:
-                    joint_rep_out_1 = outputs_critic_1[key]['state'].reshape(bs, seq_len, -1)
-                    joint_rep_out_2 = outputs_critic_2[key]['state'].reshape(bs, seq_len, -1)
+                    joint_rep_out_1 = outputs_critic_1[key].reshape(bs, seq_len, -1)
+                    joint_rep_out_2 = outputs_critic_2[key].reshape(bs, seq_len, -1)
                 else:
-                    joint_rep_out_1 = outputs_critic_1[key]['state'].reshape(bs, -1)
-                    joint_rep_out_2 = outputs_critic_2[key]['state'].reshape(bs, -1)
+                    joint_rep_out_1 = outputs_critic_1[key].reshape(bs, -1)
+                    joint_rep_out_2 = outputs_critic_2[key].reshape(bs, -1)
                 critic_1_in = joint_rep_out_1
                 critic_2_in = joint_rep_out_2
             q_1 = self.target_critic_1[key](critic_1_in)
             q_2 = self.target_critic_2[key](critic_2_in)
             target_q[key] = ops.minimum(q_1, q_2)
         return rnn_hidden_critic_new_1, rnn_hidden_critic_new_2, target_q
-
-    def Qaction(self, joint_observation: Optional[Tensor] = None,
-                joint_actions: Optional[Tensor] = None,
-                agent_ids: Optional[Tensor] = None, agent_key: str = None,
-                rnn_hidden_critic_1: Optional[Dict[str, List[Tensor]]] = None,
-                rnn_hidden_critic_2: Optional[Dict[str, List[Tensor]]] = None):
-        """
-        Returns the evaluated Q-values for current observation-action pairs.
-
-        Parameters:
-            joint_observation (Optional[Tensor]): The joint observations of the team.
-            joint_actions (Tensor): The joint actions of the team.
-            agent_ids (Dict[Tensor]): The agents' ids (for parameter sharing).
-            agent_key (str): Calculate actions for specified agent.
-            rnn_hidden_critic_1 (Optional[Dict[str, List[Tensor]]]): The RNN hidden states for critic_1 representation.
-            rnn_hidden_critic_2 (Optional[Dict[str, List[Tensor]]]): The RNN hidden states for critic_2 representation.
-
-        Returns:
-            rnn_hidden_critic_new_1: The updated rnn states for critic_1_representation.
-            rnn_hidden_critic_new_2: The updated rnn states for critic_2_representation.
-            q_1: The Q-value calculated by the first critic network.
-            q_2: The Q-value calculated by the other critic network.
-        """
-        rnn_hidden_critic_new_1, rnn_hidden_critic_new_2 = deepcopy(rnn_hidden_critic_1), deepcopy(rnn_hidden_critic_2)
-        q_1, q_2 = {}, {}
-        agent_list = self.model_keys if agent_key is None else [agent_key]
-        batch_size = joint_observation.shape[0]
-        seq_len = joint_observation.shape[1] if self.use_rnn else 1
-
-        critic_rep_in = ops.cat([joint_observation, joint_actions], axis=-1)
-        if self.use_rnn:
-            outputs_critic_1 = {k: self.critic_1_representation[k](critic_rep_in, *rnn_hidden_critic_1[k])
-                                for k in agent_list}
-            outputs_critic_2 = {k: self.critic_2_representation[k](critic_rep_in, *rnn_hidden_critic_2[k])
-                                for k in agent_list}
-            rnn_hidden_critic_new_1.update({k: (outputs_critic_1[k]['rnn_hidden'], outputs_critic_1[k]['rnn_cell'])
-                                            for k in agent_list})
-            rnn_hidden_critic_new_2.update({k: (outputs_critic_2[k]['rnn_hidden'], outputs_critic_2[k]['rnn_cell'])
-                                            for k in agent_list})
-        else:
-            outputs_critic_1 = {k: self.critic_1_representation[k](critic_rep_in) for k in agent_list}
-            outputs_critic_2 = {k: self.critic_2_representation[k](critic_rep_in) for k in agent_list}
-
-        bs = batch_size * self.n_agents if self.use_parameter_sharing else batch_size
-
-        for key in agent_list:
-            if self.use_parameter_sharing:
-                if self.use_rnn:
-                    joint_rep_out_1 = outputs_critic_1[key]['state'].unsqueeze(1).expand(-1, self.n_agents, -1, -1)
-                    joint_rep_out_2 = outputs_critic_2[key]['state'].unsqueeze(1).expand(-1, self.n_agents, -1, -1)
-                    joint_rep_out_1 = joint_rep_out_1.reshape(bs, seq_len, -1)
-                    joint_rep_out_2 = joint_rep_out_2.reshape(bs, seq_len, -1)
-                else:
-                    joint_rep_out_1 = outputs_critic_1[key]['state'].unsqueeze(1).expand(
-                        -1, self.n_agents, -1).reshape(bs, -1)
-                    joint_rep_out_2 = outputs_critic_2[key]['state'].unsqueeze(1).expand(
-                        -1, self.n_agents, -1).reshape(bs, -1)
-                critic_1_in = ops.cat([joint_rep_out_1, agent_ids], axis=-1)
-                critic_2_in = ops.cat([joint_rep_out_2, agent_ids], axis=-1)
-            else:
-                if self.use_rnn:
-                    joint_rep_out_1 = outputs_critic_1[key]['state'].reshape(bs, seq_len, -1)
-                    joint_rep_out_2 = outputs_critic_2[key]['state'].reshape(bs, seq_len, -1)
-                else:
-                    joint_rep_out_1 = outputs_critic_1[key]['state'].reshape(bs, -1)
-                    joint_rep_out_2 = outputs_critic_2[key]['state'].reshape(bs, -1)
-                critic_1_in = joint_rep_out_1
-                critic_2_in = joint_rep_out_2
-
-            q_1[key] = self.critic_1[key](critic_1_in)
-            q_2[key] = self.critic_2[key](critic_2_in)
-
-        return rnn_hidden_critic_new_1, rnn_hidden_critic_new_2, q_1, q_2

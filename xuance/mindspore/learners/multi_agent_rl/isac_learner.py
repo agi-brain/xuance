@@ -68,7 +68,7 @@ class ISAC_Learner(LearnerMAS):
         return loss_a, log_pi_eval[agent_key], policy_q
 
     def forward_fn_critic(self, obs, actions, ids, mask_values, backup, agent_key):
-        _, _, action_q_1, action_q_2 = self.policy.Qaction(observation=obs, actions=actions, agent_ids=ids)
+        _, _, action_q_1, action_q_2 = self.policy.Qpolicy(observation=obs, actions=actions, agent_ids=ids)
         action_q_1_i, action_q_2_i = action_q_1[agent_key].reshape(-1), action_q_2[agent_key].reshape(-1)
         td_error_1, td_error_2 = action_q_1_i - ops.stop_gradient(backup), action_q_2_i - ops.stop_gradient(backup)
         td_error_1 *= mask_values
@@ -99,8 +99,6 @@ class ISAC_Learner(LearnerMAS):
             terminals[key] = terminals[key].reshape(batch_size * self.n_agents)
         else:
             bs = batch_size
-
-        # feedforward
 
         _, actions_next, log_pi_next = self.policy(observation=obs_next, agent_ids=IDs)
         _, _, next_q = self.policy.Qtarget(next_observation=obs_next, next_actions=actions_next, agent_ids=IDs)

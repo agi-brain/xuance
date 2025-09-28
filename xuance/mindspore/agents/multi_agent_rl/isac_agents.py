@@ -2,7 +2,7 @@ from argparse import Namespace
 from xuance.common import List, Optional, Union
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
 from xuance.mindspore import Module
-from xuance.mindspore.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions
+from xuance.mindspore.utils import NormalizeFunctions, InitializeFunctions, ActivationFunctions
 from xuance.mindspore.policies import REGISTRY_Policy
 from xuance.mindspore.agents import OffPolicyMARLAgents
 
@@ -53,6 +53,17 @@ class ISAC_Agents(OffPolicyMARLAgents):
                 use_parameter_sharing=self.use_parameter_sharing, model_keys=self.model_keys,
                 use_rnn=self.use_rnn, rnn=self.config.rnn if self.use_rnn else None)
             self.continuous_control = True
+        elif self.config.policy == "Categorical_ISAC_Policy":
+            policy = REGISTRY_Policy["Categorical_ISAC_Policy"](
+                action_space=self.action_space, n_agents=self.n_agents,
+                actor_representation=A_representation, critic_representation=C_representation,
+                actor_hidden_size=self.config.actor_hidden_size,
+                critic_hidden_size=self.config.critic_hidden_size,
+                normalize=normalize_fn, initialize=initializer, activation=activation,
+                use_distributed_training=self.distributed_training,
+                use_parameter_sharing=self.use_parameter_sharing, model_keys=self.model_keys,
+                use_rnn=self.use_rnn, rnn=self.config.rnn if self.use_rnn else None)
+            self.continuous_control = False
         else:
             raise AttributeError(f"{agent} currently does not support the policy named {self.config.policy}.")
 
@@ -62,7 +73,8 @@ class ISAC_Agents(OffPolicyMARLAgents):
                obs_dict: List[dict],
                avail_actions_dict: Optional[List[dict]] = None,
                rnn_hidden: Optional[dict] = None,
-               test_mode: Optional[bool] = False):
+               test_mode: Optional[bool] = False,
+               **kwargs):
         """
         Returns actions for agents.
 
@@ -83,11 +95,17 @@ class ISAC_Agents(OffPolicyMARLAgents):
 
         if self.use_parameter_sharing:
             key = self.model_keys[0]
-            actions[key] = actions[key].reshape([batch_size, self.n_agents, -1]).asnumpy()
+            if self.continuous_control:
+                actions[key] = actions[key].reshape([batch_size, self.n_agents, -1]).asnumpy()
+            else:
+                actions[key] = actions[key].reshape(batch_size, self.n_agents).asnumpy()
             actions_dict = [{k: actions[key][e, i] for i, k in enumerate(self.agent_keys)} for e in range(batch_size)]
         else:
             for key in self.agent_keys:
-                actions[key] = actions[key].reshape([batch_size, -1]).asnumpy()
+                if self.continuous_control:
+                    actions[key] = actions[key].reshape([batch_size, -1]).asnumpy()
+                else:
+                    actions[key] = actions[key].reshape(batch_size).asnumpy()
             actions_dict = [{k: actions[k][i] for k in self.agent_keys} for i in range(batch_size)]
 
         return {"hidden_state": hidden_state, "actions": actions_dict}

@@ -77,7 +77,7 @@ class MASAC_Learner(LearnerMAS):
         return loss_a, log_pi_eval[agent_key], policy_q
 
     def forward_fn_critic(self, obs_joint, actions_joint, ids, mask_values, backup, agent_key):
-        _, _, action_q_1, action_q_2 = self.policy.Qaction(joint_observation=obs_joint, joint_actions=actions_joint,
+        _, _, action_q_1, action_q_2 = self.policy.Qpolicy(joint_observation=obs_joint, joint_actions=actions_joint,
                                                            agent_ids=ids)
         action_q_1_i = action_q_1[agent_key].reshape(-1)
         action_q_2_i = action_q_2[agent_key].reshape(-1)
