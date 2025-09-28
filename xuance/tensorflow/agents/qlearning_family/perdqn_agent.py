@@ -1,9 +1,8 @@
 from tqdm import tqdm
 from copy import deepcopy
 from argparse import Namespace
-from xuance.common import Union, Optional, PerOffPolicyBuffer
+from xuance.common import Union, Optional, PerOffPolicyBuffer, BaseCallback
 from xuance.environment import DummyVecEnv, SubprocVecEnv
-from xuance.tensorflow.agents import BaseCallback
 from xuance.tensorflow.agents.qlearning_family import DQN_Agent
 
 

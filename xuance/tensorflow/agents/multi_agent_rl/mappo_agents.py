@@ -1,12 +1,11 @@
 import numpy as np
 from argparse import Namespace
 from operator import itemgetter
-from xuance.common import Optional, List, Union
+from xuance.common import Optional, List, Union, MultiAgentBaseCallback
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
 from xuance.tensorflow import Module
 from xuance.tensorflow.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions
 from xuance.tensorflow.policies import REGISTRY_Policy
-from xuance.tensorflow.agents import BaseCallback
 from xuance.tensorflow.agents.multi_agent_rl.ippo_agents import IPPO_Agents
 
 
@@ -22,7 +21,7 @@ class MAPPO_Agents(IPPO_Agents):
     def __init__(self,
                  config: Namespace,
                  envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv],
-                 callback: Optional[BaseCallback] = None):
+                 callback: Optional[MultiAgentBaseCallback] = None):
         super(MAPPO_Agents, self).__init__(config, envs, callback)
 
     def _build_policy(self) -> Module:

@@ -1,11 +1,11 @@
 import numpy as np
 from argparse import Namespace
-from xuance.common import Optional, Union
+from xuance.common import Optional, Union, BaseCallback
 from xuance.environment import DummyVecEnv, SubprocVecEnv
 from xuance.tensorflow import Module
 from xuance.tensorflow.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions
 from xuance.tensorflow.policies import REGISTRY_Policy
-from xuance.tensorflow.agents import OffPolicyAgent, BaseCallback
+from xuance.tensorflow.agents import OffPolicyAgent
 
 
 class DDPG_Agent(OffPolicyAgent):

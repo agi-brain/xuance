@@ -4,12 +4,12 @@ from tqdm import tqdm
 from copy import deepcopy
 from argparse import Namespace
 from gymnasium import spaces
-from xuance.common import Optional, DummyOffPolicyBuffer
+from xuance.common import Optional, DummyOffPolicyBuffer, BaseCallback
 from xuance.environment.single_agent_env import Gym_Env
 from xuance.tensorflow import tk, Module
 from xuance.tensorflow.utils import NormalizeFunctions, ActivationFunctions
 from xuance.tensorflow.policies import REGISTRY_Policy
-from xuance.tensorflow.agents import Agent, BaseCallback
+from xuance.tensorflow.agents import Agent
 from xuance.tensorflow.agents.policy_gradient.pdqn_agent import PDQN_Agent
 
 

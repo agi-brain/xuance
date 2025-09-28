@@ -4,12 +4,12 @@ from copy import deepcopy
 from argparse import Namespace
 from operator import itemgetter
 from tensorflow import one_hot
-from xuance.common import List, Optional, Union
+from xuance.common import List, Optional, Union, MultiAgentBaseCallback
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
 from xuance.tensorflow import tf, Module, Tensor
 from xuance.tensorflow.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions
 from xuance.tensorflow.policies import REGISTRY_Policy
-from xuance.tensorflow.agents import OnPolicyMARLAgents, BaseCallback
+from xuance.tensorflow.agents import OnPolicyMARLAgents
 
 
 class COMA_Agents(OnPolicyMARLAgents):
@@ -24,7 +24,7 @@ class COMA_Agents(OnPolicyMARLAgents):
     def __init__(self,
                  config: Namespace,
                  envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv],
-                 callback: Optional[BaseCallback] = None):
+                 callback: Optional[MultiAgentBaseCallback] = None):
         super(COMA_Agents, self).__init__(config, envs, callback)
         self.start_greedy, self.end_greedy = config.start_greedy, config.end_greedy
         self.egreedy = self.start_greedy
