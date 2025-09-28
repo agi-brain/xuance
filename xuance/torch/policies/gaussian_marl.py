@@ -97,7 +97,7 @@ class MAAC_Policy(Module):
 
     def _get_actor_critic_input(self, dim_action, dim_actor_rep, dim_critic_rep, n_agents):
         """
-        Returns the input dimensions of actor netwrok and critic networks.
+        Returns the input dimensions of actor and critic networks.
 
         Parameters:
             dim_action: The dimension of actions (continuous), or the number of actions (discrete).
@@ -293,7 +293,7 @@ class Basic_ISAC_Policy(Module):
 
     def _get_actor_critic_input(self, dim_actor_rep, dim_action, dim_critic_rep, n_agents):
         """
-        Returns the input dimensions of actor netwrok and critic networks.
+        Returns the input dimensions of actor and critic networks.
 
         Parameters:
             dim_actor_rep: The dimension of the output of actor presentation.
@@ -493,7 +493,7 @@ class MASAC_Policy(Basic_ISAC_Policy):
 
     def _get_actor_critic_input(self, dim_actor_rep, dim_action, dim_critic_rep, n_agents):
         """
-        Returns the input dimensions of actor netwrok and critic networks.
+        Returns the input dimensions of actor and critic networks.
 
         Parameters:
             dim_actor_rep: The dimension of the output of actor presentation.
