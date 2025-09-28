@@ -1,9 +1,8 @@
 from tqdm import tqdm
 from copy import deepcopy
 from argparse import Namespace
-from xuance.common import Union, Optional, PerOffPolicyBuffer
+from xuance.common import Union, Optional, PerOffPolicyBuffer, BaseCallback
 from xuance.environment import DummyVecEnv, SubprocVecEnv
-from xuance.torch.agents import BaseCallback
 from xuance.torch.agents.qlearning_family import DQN_Agent
 
 

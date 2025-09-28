@@ -2,10 +2,10 @@ import numpy as np
 from tqdm import tqdm
 from copy import deepcopy
 from argparse import Namespace
-from xuance.common import Optional, Union, DummyOffPolicyBuffer, DummyOffPolicyBuffer_Atari
+from xuance.common import Optional, Union, DummyOffPolicyBuffer, DummyOffPolicyBuffer_Atari, BaseCallback
 from xuance.environment import DummyVecEnv, SubprocVecEnv
 from xuance.torch import Module
-from xuance.torch.agents.base import Agent, BaseCallback
+from xuance.torch.agents.base import Agent
 
 
 class OffPolicyAgent(Agent):

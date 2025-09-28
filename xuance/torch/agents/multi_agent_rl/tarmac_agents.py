@@ -6,14 +6,13 @@ import torch
 from gymnasium import Space
 from torch.nn import Module, ModuleDict
 
-from xuance.common import space2shape
+from xuance.common import space2shape, MultiAgentBaseCallback
 
 from xuance.torch import REGISTRY_Policy
 from xuance.torch.communications.attention_comm import TarMAC
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
 
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
-from xuance.torch.agents import BaseCallback
 from xuance.torch.agents.multi_agent_rl.ic3net_agents import IC3Net_Agents
 
 
@@ -21,7 +20,7 @@ class TarMAC_Agents(IC3Net_Agents):
     def __init__(self,
                  config: Namespace,
                  envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv],
-                 callback: Optional[BaseCallback] = None):
+                 callback: Optional[MultiAgentBaseCallback] = None):
         super(TarMAC_Agents, self).__init__(config, envs, callback)
         self.policy = self._build_policy()
         self.memory = self._build_memory()  # build memory

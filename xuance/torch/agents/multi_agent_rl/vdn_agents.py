@@ -1,11 +1,11 @@
 import torch
 from argparse import Namespace
-from xuance.common import Union, Optional
+from xuance.common import Union, Optional, MultiAgentBaseCallback
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
 from xuance.torch import Module
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
 from xuance.torch.policies import REGISTRY_Policy, VDN_mixer
-from xuance.torch.agents import OffPolicyMARLAgents, BaseCallback
+from xuance.torch.agents import OffPolicyMARLAgents
 
 
 class VDN_Agents(OffPolicyMARLAgents):
@@ -16,11 +16,12 @@ class VDN_Agents(OffPolicyMARLAgents):
         envs: the vectorized environments.
         callback: A user-defined callback function object to inject custom logic during training.
     """
+
     def __init__(self,
                  config: Namespace,
                  envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv],
-                 callback: Optional[BaseCallback] = None):
-        super(VDN_Agents, self).__init__(config, envs)
+                 callback: Optional[MultiAgentBaseCallback] = None):
+        super(VDN_Agents, self).__init__(config, envs, callback)
 
         self.start_greedy, self.end_greedy = config.start_greedy, config.end_greedy
         self.e_greedy = self.start_greedy

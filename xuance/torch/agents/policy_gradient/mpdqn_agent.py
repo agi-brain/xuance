@@ -1,11 +1,10 @@
 import torch
 from argparse import Namespace
 from xuance.environment.single_agent_env import Gym_Env
-from xuance.common import Optional
+from xuance.common import Optional, BaseCallback
 from xuance.torch import Module
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
 from xuance.torch.policies import REGISTRY_Policy
-from xuance.torch.agents import BaseCallback
 from xuance.torch.agents.policy_gradient.pdqn_agent import PDQN_Agent
 
 

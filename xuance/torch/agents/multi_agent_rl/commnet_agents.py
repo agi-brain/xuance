@@ -9,20 +9,19 @@ from argparse import Namespace
 
 from xuance.torch.agents.multi_agent_rl.ippo_agents import IPPO_Agents
 
-from xuance.common import Optional, Union, space2shape
+from xuance.common import Optional, Union, space2shape, MultiAgentBaseCallback
 import gymnasium as gym
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
 from xuance.torch import Module, REGISTRY_Policy, ModuleDict
 from xuance.torch.communications.comm_net import CommNet
 from xuance.torch.utils import ActivationFunctions, NormalizeFunctions
-from xuance.torch.agents.base import BaseCallback
 
 
 class CommNet_Agents(IPPO_Agents):
     def __init__(self,
                  config: Namespace,
                  envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv],
-                 callback: Optional[BaseCallback] = None):
+                 callback: Optional[MultiAgentBaseCallback] = None):
 
         super(CommNet_Agents, self).__init__(config, envs, callback)
         self.policy = self._build_policy()

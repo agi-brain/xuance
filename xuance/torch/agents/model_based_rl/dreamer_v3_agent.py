@@ -1,8 +1,8 @@
 import torch
 from copy import deepcopy
-from xuance.common import List, Union, SequentialReplayBuffer
+from xuance.common import List, Union, SequentialReplayBuffer, BaseCallback
 from xuance.environment import DummyVecEnv, SubprocVecEnv
-from xuance.torch.agents import OffPolicyAgent, BaseCallback
+from xuance.torch.agents import OffPolicyAgent
 from xuance.torch import REGISTRY_Representation, REGISTRY_Policy
 from xuance.torch.utils import ActivationFunctions
 

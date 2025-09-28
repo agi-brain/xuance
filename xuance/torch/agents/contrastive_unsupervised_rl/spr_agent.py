@@ -1,9 +1,9 @@
 import torch
 import torch.nn as nn
 from argparse import Namespace
-from xuance.common import Union, Optional
+from xuance.common import Union, Optional, BaseCallback
 from xuance.torch import REGISTRY_Policy
-from xuance.torch.agents import OffPolicyAgent, BaseCallback
+from xuance.torch.agents import OffPolicyAgent
 from xuance.torch.learners.contrastive_unsupervised_rl.spr_learner import SPR_Learner
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
 from xuance.environment import DummyVecEnv, SubprocVecEnv

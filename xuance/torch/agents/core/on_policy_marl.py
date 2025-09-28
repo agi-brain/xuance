@@ -4,10 +4,10 @@ from argparse import Namespace
 from tqdm import tqdm
 from copy import deepcopy
 from operator import itemgetter
-from xuance.common import List, MARL_OnPolicyBuffer, MARL_OnPolicyBuffer_RNN, Optional, Union
+from xuance.common import List, MARL_OnPolicyBuffer, MARL_OnPolicyBuffer_RNN, Optional, Union, MultiAgentBaseCallback
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
 from xuance.torch import Module
-from xuance.torch.agents.base import MARLAgents, BaseCallback
+from xuance.torch.agents.base import MARLAgents
 
 
 class OnPolicyMARLAgents(MARLAgents):
@@ -24,7 +24,7 @@ class OnPolicyMARLAgents(MARLAgents):
     def __init__(self,
                  config: Namespace,
                  envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv],
-                 callback: Optional[BaseCallback] = None):
+                 callback: Optional[MultiAgentBaseCallback] = None):
         super(OnPolicyMARLAgents, self).__init__(config, envs, callback)
         self.on_policy = True
         self.continuous_control: bool = False

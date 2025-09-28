@@ -12,12 +12,12 @@ from gymnasium.spaces import Space
 from torch import nn
 from torch.utils.tensorboard import SummaryWriter
 from torch.distributed import destroy_process_group
-from xuance.common import get_time_string, create_directory, space2shape, Optional, List, Dict, Union
+from xuance.common import get_time_string, create_directory, space2shape, Optional, List, Dict, Union, \
+    MultiAgentBaseCallback
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
 from xuance.torch import ModuleDict, REGISTRY_Representation, REGISTRY_Learners, Module
 from xuance.torch.learners import learner
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions, init_distributed_mode
-from .callback import MultiAgentBaseCallback
 
 
 class MARLAgents(ABC):
@@ -28,6 +28,7 @@ class MARLAgents(ABC):
         envs: the vectorized environments.
         callback: A user-defined callback function object to inject custom logic during training.
     """
+
     def __init__(self,
                  config: Namespace,
                  envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv],
@@ -180,7 +181,7 @@ class MARLAgents(ABC):
                 if v is None:
                     continue
                 self.writer.add_video(k, v, fps=fps, global_step=x_index)
-                
+
     def _build_representation(self, representation_key: str,
                               input_space: Union[Dict[str, Space], Dict[str, tuple]],
                               config: Namespace) -> Module:

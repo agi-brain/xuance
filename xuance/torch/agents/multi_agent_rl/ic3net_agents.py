@@ -8,7 +8,7 @@ import torch
 from gymnasium import Space
 from torch.nn import Module, ModuleDict
 
-from xuance.common import space2shape
+from xuance.common import space2shape, MultiAgentBaseCallback
 from xuance.common.memory_tools_marl import IC3Net_OnPolicyBuffer_RNN
 from xuance.torch.communications import IC3NetComm
 
@@ -16,7 +16,6 @@ from xuance.torch import REGISTRY_Policy
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
 
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
-from xuance.torch.agents import BaseCallback
 from xuance.torch.agents.multi_agent_rl.commnet_agents import CommNet_Agents
 
 
@@ -24,7 +23,7 @@ class IC3Net_Agents(CommNet_Agents):
     def __init__(self,
                  config: Namespace,
                  envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv],
-                 callback: Optional[BaseCallback] = None):
+                 callback: Optional[MultiAgentBaseCallback] = None):
         super(IC3Net_Agents, self).__init__(config, envs, callback)
         self.policy = self._build_policy()
         self.memory = self._build_memory()  # build memory

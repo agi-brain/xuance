@@ -1,4 +1,5 @@
 from typing import Optional, Union, List, Dict, Sequence, Callable, Any, Tuple, SupportsFloat, Type, Mapping
+from xuance.common.callback import BaseCallback, MultiAgentBaseCallback
 from xuance.common.common_tools import EPS, recursive_dict_update, get_configs, get_arguments, get_runner, \
     create_directory, combined_shape, space2shape, discount_cumsum, get_time_string
 from xuance.common.statistic_tools import mpi_mean, mpi_moments, RunningMeanStd
@@ -15,6 +16,8 @@ from xuance.common.segtree_tool import SegmentTree, SumSegmentTree, MinSegmentTr
 __all__ = [
     # typing
     "Optional", "Union", "List", "Dict", "Sequence", "Callable", "Any", "Tuple", "SupportsFloat", "Type", "Mapping",
+    # callbacks
+    "BaseCallback", "MultiAgentBaseCallback",
     # common_tools
     "EPS", "recursive_dict_update", "get_configs", "get_arguments", "get_runner", "create_directory", "combined_shape",
     "space2shape", "discount_cumsum", "get_time_string",
@@ -29,7 +32,6 @@ __all__ = [
     "BaseBuffer", "MARL_OnPolicyBuffer", "MARL_OnPolicyBuffer_RNN", "MARL_OffPolicyBuffer", "MARL_OffPolicyBuffer_RNN",
     "MeanField_OnPolicyBuffer", "MeanField_OnPolicyBuffer_RNN",
     "MeanField_OffPolicyBuffer", "MeanField_OffPolicyBuffer_RNN",
-    "I3CNet_Buffer", "I3CNet_Buffer_RNN",
     "OfflineBuffer_D4RL",
     # segtree_tool
     "SegmentTree", "SumSegmentTree", "MinSegmentTree",

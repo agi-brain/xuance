@@ -2,10 +2,10 @@ import torch
 import numpy as np
 from copy import deepcopy
 from argparse import Namespace
-from xuance.common import Union, Optional
+from xuance.common import Union, Optional, BaseCallback
 from xuance.environment import DummyVecEnv, SubprocVecEnv
 from xuance.torch import Module, REGISTRY_Learners
-from xuance.torch.agents import OfflineAgent, BaseCallback
+from xuance.torch.agents import OfflineAgent
 from xuance.torch.policies import REGISTRY_Policy
 from xuance.torch.learners import TD3_BC_Learner
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions

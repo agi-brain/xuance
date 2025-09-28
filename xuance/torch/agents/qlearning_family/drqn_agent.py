@@ -3,12 +3,12 @@ import numpy as np
 from tqdm import tqdm
 from copy import deepcopy
 from argparse import Namespace
-from xuance.common import Union, Optional, RecurrentOffPolicyBuffer, EpisodeBuffer
+from xuance.common import Union, Optional, RecurrentOffPolicyBuffer, EpisodeBuffer, BaseCallback
 from xuance.environment import DummyVecEnv, SubprocVecEnv
 from xuance.torch import Module
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
 from xuance.torch.policies import REGISTRY_Policy
-from xuance.torch.agents import OffPolicyAgent, BaseCallback
+from xuance.torch.agents import OffPolicyAgent
 
 
 class DRQN_Agent(OffPolicyAgent):
@@ -62,7 +62,7 @@ class DRQN_Agent(OffPolicyAgent):
             policy = REGISTRY_Policy["DRQN_Policy"](
                 action_space=self.action_space, representation=representation,
                 rnn=self.config.rnn, recurrent_hidden_size=self.config.recurrent_hidden_size,
-                recurrent_layer_N=self.config.N_recurrent_layers, dropout=self.config.dropout,
+                recurrent_layer_N=self.config.recurrent_layer_N, dropout=self.config.dropout,
                 normalize=normalize_fn, initialize=initializer, activation=activation, device=device,
                 use_distributed_training=self.distributed_training)
         else:
