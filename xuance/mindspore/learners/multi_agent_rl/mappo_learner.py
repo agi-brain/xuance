@@ -16,8 +16,9 @@ class MAPPO_Learner(IPPO_Learner):
                  config: Namespace,
                  model_keys: List[str],
                  agent_keys: List[str],
-                 policy: Module):
-        super(MAPPO_Learner, self).__init__(config, model_keys, agent_keys, policy)
+                 policy: Module,
+                 callback):
+        super(MAPPO_Learner, self).__init__(config, model_keys, agent_keys, policy, callback)
 
     def forward_fn(self, *args):
         bs, obs, actions, avail_actions, log_pi_old, values, returns, advantages, agt_mask, ids, critic_input = args

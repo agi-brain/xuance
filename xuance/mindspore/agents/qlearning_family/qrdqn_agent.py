@@ -1,5 +1,5 @@
 from argparse import Namespace
-from xuance.common import Union
+from xuance.common import Union, Optional, BaseCallback
 from xuance.environment import DummyVecEnv, SubprocVecEnv
 from xuance.mindspore import Module
 from xuance.mindspore.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions
@@ -17,8 +17,9 @@ class QRDQN_Agent(DQN_Agent):
     """
     def __init__(self,
                  config: Namespace,
-                 envs: Union[DummyVecEnv, SubprocVecEnv]):
-        super(QRDQN_Agent, self).__init__(config, envs)
+                 envs: Union[DummyVecEnv, SubprocVecEnv],
+                 callback: Optional[BaseCallback] = None):
+        super(QRDQN_Agent, self).__init__(config, envs, callback)
 
     def _build_policy(self) -> Module:
         normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None

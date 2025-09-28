@@ -3,7 +3,8 @@ from operator import itemgetter
 from argparse import Namespace
 from tqdm import tqdm
 from copy import deepcopy
-from xuance.common import List, Union, Optional, MeanField_OffPolicyBuffer, MeanField_OffPolicyBuffer_RNN
+from xuance.common import List, Union, Optional, MeanField_OffPolicyBuffer, MeanField_OffPolicyBuffer_RNN, \
+    MultiAgentBaseCallback
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
 from xuance.mindspore import ms, Module, Tensor
 from xuance.mindspore.utils import NormalizeFunctions, InitializeFunctions, ActivationFunctions
@@ -17,12 +18,14 @@ class MFQ_Agents(OffPolicyMARLAgents):
     Args:
         config: the Namespace variable that provides hyperparameters and other settings.
         envs: the vectorized environments.
+        callback: A user-defined callback function object to inject custom logic during training.
     """
 
     def __init__(self,
                  config: Namespace,
-                 envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv]):
-        super(MFQ_Agents, self).__init__(config, envs)
+                 envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv],
+                 callback: Optional[MultiAgentBaseCallback] = None):
+        super(MFQ_Agents, self).__init__(config, envs, callback)
 
         self.n_actions_list = [a_space.n for a_space in self.action_space.values()]
         self.n_actions_max = max(self.n_actions_list)
@@ -35,7 +38,7 @@ class MFQ_Agents(OffPolicyMARLAgents):
 
         self.policy = self._build_policy()  # build policy
         self.memory = self._build_memory()  # build memory
-        self.learner = self._build_learner(self.config, self.model_keys, self.agent_keys, self.policy)
+        self.learner = self._build_learner(self.config, self.model_keys, self.agent_keys, self.policy, self.callback)
 
     def _build_memory(self):
         """Build replay buffer for models training

@@ -60,12 +60,13 @@ class DCG_Learner(LearnerMAS):
                  config: Namespace,
                  model_keys: List[str],
                  agent_keys: List[str],
-                 policy: Module):
+                 policy: Module,
+                 callback):
         self.gamma = gamma
         self.use_rnn = config.use_rnn
         self.sync_frequency = sync_frequency
         self.mse_loss = nn.MSELoss()
-        super(DCG_Learner, self).__init__(config, model_keys, agent_keys, policy)
+        super(DCG_Learner, self).__init__(config, model_keys, agent_keys, policy, callback)
         # build train net
         self.zeros = ms.ops.Zeros()
         self._mean = ops.ReduceMean(keep_dims=False)

@@ -13,8 +13,9 @@ from xuance.mindspore.utils import clip_grads
 class DDPG_Learner(Learner):
     def __init__(self,
                  config: Namespace,
-                 policy: Module):
-        super(DDPG_Learner, self).__init__(config, policy)
+                 policy: Module,
+                 callback):
+        super(DDPG_Learner, self).__init__(config, policy, callback)
         self.optimizer = {
             'actor': optim.Adam(params=self.policy.actor_parameters, lr=self.config.learning_rate, eps=1e-5),
             'critic': optim.Adam(params=self.policy.critic_parameters, lr=self.config.learning_rate, eps=1e-5),

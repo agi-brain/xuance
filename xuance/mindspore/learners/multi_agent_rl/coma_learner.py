@@ -17,12 +17,13 @@ class COMA_Learner(LearnerMAS):
                  config: Namespace,
                  model_keys: List[str],
                  agent_keys: List[str],
-                 policy: Module):
+                 policy: Module,
+                 callback):
         config.use_value_clip, config.value_clip_range = False, None
         config.use_huber_loss, config.huber_delta = False, None
         config.use_value_norm = False
         config.vf_coef, config.ent_coef = None, None
-        super(COMA_Learner, self).__init__(config, model_keys, agent_keys, policy)
+        super(COMA_Learner, self).__init__(config, model_keys, agent_keys, policy, callback)
         self.build_optimizer()
         self.use_value_clip, self.value_clip_range = config.use_value_clip, config.value_clip_range
         self.use_huber_loss, self.huber_delta = config.use_huber_loss, config.huber_delta

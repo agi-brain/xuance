@@ -1,11 +1,11 @@
 import numpy as np
-from mindspore.ops.tensor_method import deprecated_tensor_unbind
 from tqdm import tqdm
 from copy import deepcopy
 from argparse import Namespace
 from operator import itemgetter
+from xuance.common import List, Optional, Union, MeanField_OnPolicyBuffer, MeanField_OnPolicyBuffer_RNN, \
+    MultiAgentBaseCallback
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
-from xuance.common import List, Optional, Union, MeanField_OnPolicyBuffer, MeanField_OnPolicyBuffer_RNN
 from xuance.mindspore import ms, ops, Tensor
 from xuance.mindspore.utils import NormalizeFunctions, InitializeFunctions, ActivationFunctions
 from xuance.mindspore.policies import REGISTRY_Policy
@@ -18,12 +18,14 @@ class MFAC_Agents(OnPolicyMARLAgents):
     Args:
         config: the Namespace variable that provides hyperparameters and other settings.
         envs: the vectorized environments.
+        callback: A user-defined callback function object to inject custom logic during training.
     """
 
     def __init__(self,
                  config: Namespace,
-                 envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv]):
-        super(MFAC_Agents, self).__init__(config, envs)
+                 envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv],
+                 callback: Optional[MultiAgentBaseCallback] = None):
+        super(MFAC_Agents, self).__init__(config, envs, callback)
 
         self.n_actions_list = [a_space.n for a_space in self.action_space.values()]
         self.n_actions_max = max(self.n_actions_list)
@@ -31,7 +33,7 @@ class MFAC_Agents(OnPolicyMARLAgents):
 
         self.policy = self._build_policy()  # build policy
         self.memory = self._build_memory()  # build memory
-        self.learner = self._build_learner(self.config, self.model_keys, self.agent_keys, self.policy)
+        self.learner = self._build_learner(self.config, self.model_keys, self.agent_keys, self.policy, self.callback)
 
     def _build_memory(self):
         """Build replay buffer for models training

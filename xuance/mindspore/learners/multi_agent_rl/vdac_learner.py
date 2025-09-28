@@ -15,8 +15,9 @@ class VDAC_Learner(IAC_Learner):
                  config: Namespace,
                  model_keys: List[str],
                  agent_keys: List[str],
-                 policy: Module):
-        super(VDAC_Learner, self).__init__(config, model_keys, agent_keys, policy)
+                 policy: Module,
+                 callback):
+        super(VDAC_Learner, self).__init__(config, model_keys, agent_keys, policy, callback)
         self.use_global_state = True if config.mixer == "QMIX" else getattr(config, "use_global_state", False)
 
     def forward_fn(self, *args):

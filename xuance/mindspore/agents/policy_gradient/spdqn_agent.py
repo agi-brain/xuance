@@ -4,7 +4,7 @@ from tqdm import tqdm
 from copy import deepcopy
 from argparse import Namespace
 from gymnasium import spaces
-from xuance.common import DummyOffPolicyBuffer
+from xuance.common import Optional, DummyOffPolicyBuffer, BaseCallback
 from xuance.environment.single_agent_env import Gym_Env
 from xuance.mindspore import Module
 from xuance.mindspore.utils import NormalizeFunctions, ActivationFunctions
@@ -23,7 +23,8 @@ class SPDQN_Agent(PDQN_Agent, Agent):
     """
     def __init__(self,
                  config: Namespace,
-                 envs: Gym_Env,):
+                 envs: Gym_Env,
+                 callback: Optional[BaseCallback] = None):
         Agent.__init__(self, config, envs)
         self.start_noise, self.end_noise = config.start_noise, config.end_noise
         self.noise_scale = config.start_noise
@@ -58,7 +59,7 @@ class SPDQN_Agent(PDQN_Agent, Agent):
                                            n_envs=self.n_envs,
                                            buffer_size=config.buffer_size,
                                            batch_size=config.batch_size)
-        self.learner = self._build_learner(self.config, self.policy)
+        self.learner = self._build_learner(self.config, self.policy, self.callback)
 
         self.num_disact = self.action_space.spaces[0].n
         self.conact_sizes = np.array([self.action_space.spaces[i].shape[0] for i in range(1, self.num_disact + 1)])

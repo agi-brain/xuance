@@ -10,8 +10,9 @@ from xuance.mindspore.learners import Learner
 class A2C_Learner(Learner):
     def __init__(self,
                  config: Namespace,
-                 policy: Module):
-        super(A2C_Learner, self).__init__(config, policy)
+                 policy: Module,
+                 callback):
+        super(A2C_Learner, self).__init__(config, policy, callback)
         self.optimizer = optim.Adam(params=self.policy.trainable_params(), lr=self.config.learning_rate, eps=1e-5)
         self.scheduler = optim.lr_scheduler.LinearLR(self.optimizer,
                                                      start_factor=1.0,

@@ -18,8 +18,9 @@ class MFAC_Learner(IPPO_Learner):
                  config: Namespace,
                  model_keys: List[str],
                  agent_keys: List[str],
-                 policy: Module):
-        super(MFAC_Learner, self).__init__(config, model_keys, agent_keys, policy)
+                 policy: Module,
+                 callback):
+        super(MFAC_Learner, self).__init__(config, model_keys, agent_keys, policy, callback)
 
     def build_actions_mean_input(self, sample: Optional[dict], use_parameter_sharing: Optional[bool] = False):
         batch_size = sample['batch_size']

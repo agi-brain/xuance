@@ -4,7 +4,7 @@ import numpy as np
 from copy import deepcopy
 from argparse import Namespace
 from operator import itemgetter
-from xuance.common import MARL_OnPolicyBuffer, MARL_OnPolicyBuffer_RNN, Optional, List, Union
+from xuance.common import MARL_OnPolicyBuffer, MARL_OnPolicyBuffer_RNN, Optional, List, Union, MultiAgentBaseCallback
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
 from xuance.mindspore import Module, Tensor
 from xuance.mindspore.agents.base import MARLAgents
@@ -21,8 +21,9 @@ class OnPolicyMARLAgents(MARLAgents):
 
     def __init__(self,
                  config: Namespace,
-                 envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv]):
-        super(OnPolicyMARLAgents, self).__init__(config, envs)
+                 envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv],
+                 callback: Optional[MultiAgentBaseCallback] = None):
+        super(OnPolicyMARLAgents, self).__init__(config, envs, callback)
         self.continuous_control: bool = False
         self.n_epochs = config.n_epochs
         self.n_minibatch = config.n_minibatch

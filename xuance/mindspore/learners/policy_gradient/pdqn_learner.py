@@ -36,10 +36,11 @@ class PDQN_Learner(Learner):
 
     def __init__(self,
                  config: Namespace,
-                 policy: Module):
+                 policy: Module,
+                 callback):
         self.gamma = config.gamma
         self.tau = config.tau
-        super(PDQN_Learner, self).__init__(config, policy)
+        super(PDQN_Learner, self).__init__(config, policy, callback)
         # define loss function
         loss_fn = nn.MSELoss()
         # connect the feed forward network with loss function.

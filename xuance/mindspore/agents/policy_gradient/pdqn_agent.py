@@ -4,7 +4,7 @@ from tqdm import tqdm
 from copy import deepcopy
 from argparse import Namespace
 from gymnasium import spaces
-from xuance.common import DummyOffPolicyBuffer
+from xuance.common import Optional, DummyOffPolicyBuffer, BaseCallback
 from xuance.environment.single_agent_env import Gym_Env
 from xuance.mindspore import Module
 from xuance.mindspore.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions
@@ -18,12 +18,14 @@ class PDQN_Agent(Agent):
     Args:
         config: the Namespace variable that provides hyperparameters and other settings.
         envs: the environments.
+        callback: A user-defined callback function object to inject custom logic during training.
     """
 
     def __init__(self,
                  config: Namespace,
-                 envs: Gym_Env):
-        super(PDQN_Agent, self).__init__(config, envs)
+                 envs: Gym_Env,
+                 callback: Optional[BaseCallback] = None):
+        super(PDQN_Agent, self).__init__(config, envs, callback)
 
         self.start_greedy, self.end_greedy = config.start_greedy, config.end_greedy
         self.egreedy = config.start_greedy
@@ -62,7 +64,7 @@ class PDQN_Agent(Agent):
                                            n_envs=self.n_envs,
                                            buffer_size=config.buffer_size,
                                            batch_size=config.batch_size)
-        self.learner = self._build_learner(self.config, self.policy)
+        self.learner = self._build_learner(self.config, self.policy, self.callback)
 
         self.num_disact = self.action_space.spaces[0].n
         self.conact_sizes = np.array([self.action_space.spaces[i].shape[0] for i in range(1, self.num_disact + 1)])

@@ -2,7 +2,7 @@ import numpy as np
 from tqdm import tqdm
 from copy import deepcopy
 from argparse import Namespace
-from xuance.common import Optional, Union, DummyOffPolicyBuffer, DummyOffPolicyBuffer_Atari
+from xuance.common import Optional, Union, DummyOffPolicyBuffer, DummyOffPolicyBuffer_Atari, BaseCallback
 from xuance.environment import DummyVecEnv, SubprocVecEnv
 from xuance.mindspore import Module, Tensor
 from xuance.mindspore.agents.base import Agent
@@ -18,8 +18,9 @@ class OffPolicyAgent(Agent):
     """
     def __init__(self,
                  config: Namespace,
-                 envs: Union[DummyVecEnv, SubprocVecEnv]):
-        super(OffPolicyAgent, self).__init__(config, envs)
+                 envs: Union[DummyVecEnv, SubprocVecEnv],
+                 callback: Optional[BaseCallback] = None):
+        super(OffPolicyAgent, self).__init__(config, envs, callback)
         self.start_greedy = config.start_greedy if hasattr(config, "start_greedy") else None
         self.end_greedy = config.end_greedy if hasattr(config, "start_greedy") else None
         self.delta_egreedy: Optional[float] = None

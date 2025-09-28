@@ -36,10 +36,11 @@ class MPDQN_Learner(Learner):
 
     def __init__(self,
                  config: Namespace,
-                 policy: Module):
+                 policy: Module,
+                 callback):
         self.gamma = config.gamma
         self.tau = config.tau
-        super(MPDQN_Learner, self).__init__(config, policy)
+        super(MPDQN_Learner, self).__init__(config, policy, callback)
         # define loss function
         loss_fn = nn.MSELoss()
         # connect the feed forward network with loss function.

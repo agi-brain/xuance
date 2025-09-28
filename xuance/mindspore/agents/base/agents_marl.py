@@ -8,7 +8,8 @@ from argparse import Namespace
 from operator import itemgetter
 from gymnasium.spaces import Space
 from torch.utils.tensorboard import SummaryWriter
-from xuance.common import get_time_string, create_directory, space2shape, Optional, List, Dict, Union
+from xuance.common import get_time_string, create_directory, space2shape, Optional, List, Dict, Union, \
+    MultiAgentBaseCallback
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
 from xuance.mindspore import Tensor, Module, ModuleDict, REGISTRY_Representation, REGISTRY_Learners, ops
 from xuance.mindspore.learners import learner
@@ -18,7 +19,8 @@ from xuance.mindspore.utils import NormalizeFunctions, ActivationFunctions, Init
 class MARLAgents(ABC):
     def __init__(self,
                  config: Namespace,
-                 envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv]):
+                 envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv],
+                 callback: Optional[MultiAgentBaseCallback] = None):
         # Training settings.
         self.config = config
         self.use_rnn = config.use_rnn if hasattr(config, "use_rnn") else False
@@ -88,6 +90,7 @@ class MARLAgents(ABC):
         self.policy: Optional[Module] = None
         self.learner: Optional[learner] = None
         self.memory: Optional[object] = None
+        self.callback = callback or MultiAgentBaseCallback()
         self.eye = ops.Eye()
 
     def store_experience(self, *args, **kwargs):

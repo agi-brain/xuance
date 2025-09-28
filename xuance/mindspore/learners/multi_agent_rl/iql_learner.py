@@ -14,8 +14,9 @@ class IQL_Learner(LearnerMAS):
                  config: Namespace,
                  model_keys: List[str],
                  agent_keys: List[str],
-                 policy: Module):
-        super(IQL_Learner, self).__init__(config, model_keys, agent_keys, policy)
+                 policy: Module,
+                 callback):
+        super(IQL_Learner, self).__init__(config, model_keys, agent_keys, policy, callback)
         self.optimizer = {key: optim.Adam(params=self.policy.parameters_model[key], lr=self.config.learning_rate,
                                           eps=1e-5) for key in self.model_keys}
         self.scheduler = {key: optim.lr_scheduler.LinearLR(self.optimizer[key], start_factor=1.0, end_factor=self.end_factor_lr_decay,

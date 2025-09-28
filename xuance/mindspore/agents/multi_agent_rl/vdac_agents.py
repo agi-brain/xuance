@@ -1,8 +1,8 @@
 import numpy as np
 from argparse import Namespace
 from operator import itemgetter
+from xuance.common import List, Optional, Union, MultiAgentBaseCallback
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
-from xuance.common import List, Optional, Union
 from xuance.mindspore import ops, Module
 from xuance.mindspore.utils import NormalizeFunctions, InitializeFunctions, ActivationFunctions
 from xuance.mindspore.policies import REGISTRY_Policy, VDN_mixer, QMIX_mixer
@@ -12,14 +12,15 @@ from xuance.mindspore.agents import OnPolicyMARLAgents
 class VDAC_Agents(OnPolicyMARLAgents):
     def __init__(self,
                  config: Namespace,
-                 envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv]):
-        super(VDAC_Agents, self).__init__(config, envs)
+                 envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv],
+                 callback: Optional[MultiAgentBaseCallback] = None):
+        super(VDAC_Agents, self).__init__(config, envs, callback)
         self.state_space = envs.state_space
         self.mixer = config.mixer
 
         self.policy = self._build_policy()  # build policy
         self.memory = self._build_memory()  # build memory
-        self.learner = self._build_learner(self.config, self.model_keys, self.agent_keys, self.policy)
+        self.learner = self._build_learner(self.config, self.model_keys, self.agent_keys, self.policy, self.callback)
 
     def _build_policy(self) -> Module:
         """

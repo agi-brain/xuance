@@ -15,8 +15,9 @@ class MATD3_Learner(LearnerMAS):
                  config: Namespace,
                  model_keys: List[str],
                  agent_keys: List[str],
-                 policy: Module):
-        super(MATD3_Learner, self).__init__(config, model_keys, agent_keys, policy)
+                 policy: Module,
+                 callback):
+        super(MATD3_Learner, self).__init__(config, model_keys, agent_keys, policy, callback)
         self.optimizer = {
             key: {
                 'actor': optim.Adam(params=self.policy.parameters_actor[key], lr=self.config.learning_rate_actor,

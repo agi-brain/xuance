@@ -1,7 +1,7 @@
 from tqdm import tqdm
 from copy import deepcopy
 from argparse import Namespace
-from xuance.common import Union
+from xuance.common import Union, Optional, BaseCallback
 from xuance.environment import DummyVecEnv, SubprocVecEnv
 from xuance.mindspore import Module
 from xuance.mindspore.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions
@@ -20,12 +20,13 @@ class PPOCLIP_Agent(OnPolicyAgent):
 
     def __init__(self,
                  config: Namespace,
-                 envs: Union[DummyVecEnv, SubprocVecEnv]):
-        super(PPOCLIP_Agent, self).__init__(config, envs)
+                 envs: Union[DummyVecEnv, SubprocVecEnv],
+                 callback: Optional[BaseCallback] = None):
+        super(PPOCLIP_Agent, self).__init__(config, envs, callback)
         self.auxiliary_info_shape = {"old_logp": ()}
         self.memory = self._build_memory(self.auxiliary_info_shape)  # build memory
         self.policy = self._build_policy()  # build policy
-        self.learner = self._build_learner(self.config, self.policy)  # build learner
+        self.learner = self._build_learner(self.config, self.policy, self.callback)  # build learner
 
     def _build_policy(self) -> Module:
         normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None

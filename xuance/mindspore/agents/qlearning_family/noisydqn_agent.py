@@ -2,12 +2,12 @@ import numpy as np
 from tqdm import tqdm
 from copy import deepcopy
 from argparse import Namespace
+from xuance.common import Union, Optional, DummyOffPolicyBuffer, DummyOffPolicyBuffer_Atari, BaseCallback
 from xuance.environment import DummyVecEnv, SubprocVecEnv
 from xuance.mindspore import Module, Tensor
 from xuance.mindspore.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions
 from xuance.mindspore.policies import REGISTRY_Policy
 from xuance.mindspore.agents import Agent
-from xuance.common import Union, DummyOffPolicyBuffer, DummyOffPolicyBuffer_Atari
 
 
 class NoisyDQN_Agent(Agent):
@@ -20,8 +20,9 @@ class NoisyDQN_Agent(Agent):
     """
     def __init__(self,
                  config: Namespace,
-                 envs: Union[DummyVecEnv, SubprocVecEnv]):
-        super(NoisyDQN_Agent, self).__init__(config, envs)
+                 envs: Union[DummyVecEnv, SubprocVecEnv],
+                 callback: Optional[BaseCallback] = None):
+        super(NoisyDQN_Agent, self).__init__(config, envs, callback)
 
         self.start_noise, self.end_noise = config.start_noise, config.end_noise
         self.noise_scale = config.start_noise
@@ -41,7 +42,7 @@ class NoisyDQN_Agent(Agent):
         self.atari = True if config.env_name == "Atari" else False
         Buffer = DummyOffPolicyBuffer_Atari if self.atari else DummyOffPolicyBuffer
         self.memory = Buffer(**input_buffer)
-        self.learner = self._build_learner(self.config, self.policy)
+        self.learner = self._build_learner(self.config, self.policy, self.callback)
 
     def _build_policy(self) -> Module:
         normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None

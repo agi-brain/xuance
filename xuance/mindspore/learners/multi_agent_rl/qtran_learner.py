@@ -17,10 +17,11 @@ class QTRAN_Learner(LearnerMAS):
                  config: Namespace,
                  model_keys: List[str],
                  agent_keys: List[str],
-                 policy: Module):
+                 policy: Module,
+                 callback):
         self.sync_frequency = config.sync_frequency
         self.mse_loss = nn.MSELoss()
-        super(QTRAN_Learner, self).__init__(config, model_keys, agent_keys, policy)
+        super(QTRAN_Learner, self).__init__(config, model_keys, agent_keys, policy, callback)
         self.optimizer = optim.Adam(params=self.policy.parameters_model, lr=config.learning_rate, eps=1e-5)
         self.scheduler = optim.lr_scheduler.LinearLR(self.optimizer, start_factor=1.0,
                                                      end_factor=self.end_factor_lr_decay,

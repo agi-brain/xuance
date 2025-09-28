@@ -2,12 +2,12 @@ import numpy as np
 from tqdm import tqdm
 from copy import deepcopy
 from argparse import Namespace
+from xuance.common import Union, Optional, RecurrentOffPolicyBuffer, EpisodeBuffer, BaseCallback
 from xuance.environment import DummyVecEnv, SubprocVecEnv
 from xuance.mindspore import Module, Tensor
 from xuance.mindspore.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions
 from xuance.mindspore.policies import REGISTRY_Policy
 from xuance.mindspore.agents import OffPolicyAgent
-from xuance.common import Union, RecurrentOffPolicyBuffer, EpisodeBuffer
 
 
 class DRQN_Agent(OffPolicyAgent):
@@ -21,8 +21,9 @@ class DRQN_Agent(OffPolicyAgent):
 
     def __init__(self,
                  config: Namespace,
-                 envs: Union[DummyVecEnv, SubprocVecEnv]):
-        super(DRQN_Agent, self).__init__(config, envs)
+                 envs: Union[DummyVecEnv, SubprocVecEnv],
+                 callback: Optional[BaseCallback] = None):
+        super(DRQN_Agent, self).__init__(config, envs, callback)
 
         self.start_greedy, self.end_greedy = config.start_greedy, config.end_greedy
         self.egreedy = config.start_greedy
@@ -31,7 +32,7 @@ class DRQN_Agent(OffPolicyAgent):
         self.policy = self._build_policy()  # build policy
         self.auxiliary_info_shape = {}
         self.memory = self._build_memory(auxiliary_info_shape=self.auxiliary_info_shape)  # build memory
-        self.learner = self._build_learner(self.config, self.policy)  # build learner
+        self.learner = self._build_learner(self.config, self.policy, self.callback)  # build learner
         self.lstm = True if config.rnn == "LSTM" else False
 
     def _build_memory(self, auxiliary_info_shape=None):

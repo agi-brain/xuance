@@ -2,7 +2,7 @@ import numpy as np
 from tqdm import tqdm
 from copy import deepcopy
 from argparse import Namespace
-from xuance.common import Optional, Union, DummyOnPolicyBuffer, DummyOnPolicyBuffer_Atari
+from xuance.common import Optional, Union, DummyOnPolicyBuffer, DummyOnPolicyBuffer_Atari, BaseCallback
 from xuance.environment import DummyVecEnv, SubprocVecEnv
 from xuance.mindspore import Module, Tensor
 from xuance.mindspore.utils import split_distributions
@@ -19,8 +19,9 @@ class OnPolicyAgent(Agent):
     """
     def __init__(self,
                  config: Namespace,
-                 envs: Union[DummyVecEnv, SubprocVecEnv]):
-        super(OnPolicyAgent, self).__init__(config, envs)
+                 envs: Union[DummyVecEnv, SubprocVecEnv],
+                 callback: Optional[BaseCallback] = None):
+        super(OnPolicyAgent, self).__init__(config, envs, callback)
         self.horizon_size = config.horizon_size
         self.n_epochs = config.n_epochs
         self.n_minibatch = config.n_minibatch
