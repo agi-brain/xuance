@@ -80,12 +80,17 @@ class PG_Learner(Learner):
             act_batch = tf.convert_to_tensor(samples["actions"], dtype=tf.float32)
         else:
             act_batch = tf.convert_to_tensor(samples["actions"][:, None], dtype=tf.int32)
+        info = self.callback.on_update_start(self.iterations,
+                                             policy=self.policy, obs=obs_batch, act=act_batch, returns=ret_batch)
 
         a_loss, e_loss = self.learn(obs_batch, act_batch, ret_batch)
 
-        info = {
+        info.update({
             "actor-loss": a_loss.numpy(),
             "entropy": e_loss.numpy()
-        }
+        })
+
+        info.update(self.callback.on_update_end(self.iterations, policy=self.policy, info=info,
+                                                a_loss=a_loss, e_loss=e_loss))
 
         return info

@@ -124,6 +124,7 @@ class PDQN_Agent(Agent):
         return train_info
 
     def train(self, train_steps=10000):
+        train_info = {}
         episodes = np.zeros((self.nenvs,), np.int32)
         scores = np.zeros((self.nenvs,), np.float32)
         obs, _ = self.envs.reset()
@@ -136,22 +137,39 @@ class PDQN_Agent(Agent):
             (next_obs, steps), rewards, terminal, _ = self.envs.step(action)
             if self.render: self.envs.render("human")
             acts = np.concatenate(([disaction], con_actions), axis=0).ravel()
+
+            self.callback.on_train_step(self.current_step, envs=self.envs, policy=self.policy,
+                                        obs=obs, next_obs=next_obs, rewards=rewards, terminals=terminal,
+                                        action=action, acts=acts, steps=steps,
+                                        disaction=disaction, conaction=conaction, con_actions=con_actions,
+                                        train_steps=train_steps)
+
             self.memory.store(obs, acts, rewards, terminal, next_obs)
             if self.current_step > self.start_training and self.current_step % self.training_frequency == 0:
-                train_info = self.train_epochs(n_epochs=self.n_epochs)
-                self.log_infos(train_info, self.current_step)
+                update_info = self.train_epochs(n_epochs=self.n_epochs)
+                self.log_infos(update_info, self.current_step)
+                train_info.update(update_info)
+                self.callback.on_train_epochs_end(self.current_step, policy=self.policy, memory=self.memory,
+                                                  current_episode=self.current_episode, train_steps=train_steps,
+                                                  update_info=update_info)
 
             scores += rewards
             obs = deepcopy(next_obs)
 
             if terminal:
-                step_info["returns-step"] = scores
+                episode_info = {"returns-step": scores}
                 scores = 0
                 returns = 0
                 episodes += 1
                 self.end_episode(episodes)
                 obs, _ = self.envs.reset()
-                self.log_infos(step_info, self.current_step)
+                self.log_infos(episode_info, self.current_step)
+                train_info.update(episode_info)
+                self.callback.on_train_episode_info(envs=self.envs, policy=self.policy,
+                                                    use_wandb=self.use_wandb,
+                                                    current_step=self.current_step,
+                                                    current_episode=self.current_episode,
+                                                    train_steps=train_steps)
 
             self.current_step += self.n_envs
 
@@ -161,10 +179,13 @@ class PDQN_Agent(Agent):
             if self.noise_scale >= self.end_noise:
                 self.noise_scale -= self.delta_noise
 
+            self.callback.on_train_step_end(self.current_step, envs=self.envs, policy=self.policy,
+                                            train_steps=train_steps, train_info=train_info)
+
     def test(self, env_fn, test_episodes):
         test_envs = env_fn()
         episode_score = 0
-        current_episode, scores, best_score = 0, [], -np.inf
+        current_episode, current_step, scores, best_score = 0, 0, [], -np.inf
         obs, _ = self.envs.reset()
 
         while current_episode < test_episodes:
@@ -174,6 +195,14 @@ class PDQN_Agent(Agent):
                 disaction]
             (next_obs, steps), rewards, terminal, _ = self.envs.step(action)
             self.envs.render("human")
+
+            self.callback.on_test_step(envs=test_envs, policy=self.policy,
+                                       disaction=disaction, conaction=conaction, con_actions=con_actions,
+                                       action=action, steps=steps, rewards=rewards, terminals=terminal,
+                                       obs=obs, next_obs=next_obs,
+                                       current_train_step=self.current_step,
+                                       current_step=current_step, current_episode=current_episode)
+
             episode_score += rewards
             obs = deepcopy(next_obs)
             if terminal:
@@ -185,6 +214,7 @@ class PDQN_Agent(Agent):
                 episode_score = 0
                 if self.config.test_mode:
                     print("Episode: %d, Score: %.2f" % (current_episode, episode_score))
+            current_step += 1
 
         if self.config.test_mode:
             print("Best Score: %.2f" % (best_score))
@@ -194,6 +224,11 @@ class PDQN_Agent(Agent):
             "Test-Episode-Rewards/Std-Score": np.std(scores)
         }
         self.log_infos(test_info, self.current_step)
+
+        self.callback.on_test_end(envs=test_envs, policy=self.policy,
+                                  current_train_step=self.current_step,
+                                  current_step=current_step, current_episode=current_episode,
+                                  scores=scores, best_score=best_score)
 
         test_envs.close()
 

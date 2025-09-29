@@ -129,7 +129,6 @@ class ISAC_Learner(LearnerMAS):
 
     def update(self, sample):
         self.iterations += 1
-        info = {}
 
         # Prepare training data.
         sample_Tensor = self.build_training_data(sample,
@@ -151,11 +150,15 @@ class ISAC_Learner(LearnerMAS):
         else:
             bs = batch_size
 
+        info = self.callback.on_update_start(self.iterations, method="update",
+                                             policy=self.policy, sample_Tensor=sample_Tensor, bs=bs)
+
         info_train = self.learn(bs, obs, actions, rewards, obs_next, terminals, IDs, agent_mask)
         for k, v in info_train.items():
             info_train[k] = v.numpy()
         info.update(info_train)
 
         self.policy.soft_update(self.tau)
+        info.update(self.callback.on_update_end(self.iterations, method="update", policy=self.policy, info=info))
 
         return info

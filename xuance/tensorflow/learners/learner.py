@@ -27,6 +27,7 @@ class Learner(ABC):
         self.use_actions_mask = config.use_actions_mask if hasattr(config, 'use_actions_mask') else False
         self.policy = policy
         self.optimizer: Union[dict, list, Optional[tk.optimizers.Optimizer]] = None
+        self.callback = callback
 
         self.use_grad_clip = config.use_grad_clip
         self.grad_clip_norm = config.grad_clip_norm

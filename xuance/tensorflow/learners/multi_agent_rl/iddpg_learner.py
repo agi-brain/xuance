@@ -76,7 +76,15 @@ class IDDPG_Learner(LearnerMAS):
                     self.optimizer[key]['actor'].apply_gradients(zip(gradients,
                                                                      self.policy.actor_trainable_variables(key)))
                 info_train.update({f"{key}/loss_actor": loss_a})
+
+            info_train.update(self.callback.on_update_agent_wise(self.iterations, key, info=info_train, method="update",
+                                                                 mask_values=mask_values, q_policy_i=q_policy_i,
+                                                                 q_eval_a=q_eval_a, q_next_i=q_next_i,
+                                                                 q_target=q_target, td_error=td_error))
+
         self.policy.soft_update(self.tau)
+        info_train.update(self.callback.on_update_end(self.iterations,
+                                                      method="update", policy=self.policy, info=info_train))
         return info_train
 
     @tf.function
@@ -89,7 +97,6 @@ class IDDPG_Learner(LearnerMAS):
 
     def update(self, sample):
         self.iterations += 1
-        info = {}
 
         # prepare training data.
         sample_Tensor = self.build_training_data(sample,
@@ -110,6 +117,9 @@ class IDDPG_Learner(LearnerMAS):
             terminals[key] = tf.reshape(terminals[key], [batch_size * self.n_agents])
         else:
             bs = batch_size
+
+        info = self.callback.on_update_start(self.iterations, method="update",
+                                             policy=self.policy, sample_Tensor=sample_Tensor, bs=bs)
 
         info_train = self.learn(bs, obs, actions, rewards, obs_next, terminals, IDs, agent_mask)
         for k, v in info_train.items():

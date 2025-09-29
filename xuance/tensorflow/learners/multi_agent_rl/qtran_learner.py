@@ -209,4 +209,7 @@ class QTRAN_Learner(LearnerMAS):
         if self.iterations % self.sync_frequency == 0:
             self.policy.copy_target()
 
+        info.update(self.callback.on_update_end(self.iterations, method="update", policy=self.policy, info=info,
+                                                q_joint_mean=q_joint_mean))
+
         return info

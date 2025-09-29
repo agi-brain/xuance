@@ -87,7 +87,6 @@ class VDN_Learner(LearnerMAS):
 
     def update(self, sample):
         self.iterations += 1
-        info = {}
 
         # prepare training data
         sample_Tensor = self.build_training_data(sample=sample,
@@ -116,6 +115,10 @@ class VDN_Learner(LearnerMAS):
             terminals_tot = tf.reduce_prod(tf.stack(itemgetter(*self.agent_keys)(terminals), axis=1),
                                            axis=1, keepdims=True)
 
+        info = self.callback.on_update_start(self.iterations, method="update",
+                                             policy=self.policy, sample_Tensor=sample_Tensor, bs=bs,
+                                             rewards_tot=rewards_tot, terminals_tot=terminals_tot)
+
         loss, predictQ = self.learn(bs, obs, actions, rewards_tot, obs_next, terminals_tot,
                                     agent_mask, avail_actions, avail_actions_next, IDs)
         info.update({
@@ -125,5 +128,8 @@ class VDN_Learner(LearnerMAS):
 
         if self.iterations % self.sync_frequency == 0:
             self.policy.copy_target()
+
+        info.update(self.callback.on_update_end(self.iterations, method="update", policy=self.policy, info=info,
+                                                predictQ=predictQ, loss=loss))
 
         return info

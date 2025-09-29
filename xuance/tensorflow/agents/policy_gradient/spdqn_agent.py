@@ -91,6 +91,7 @@ class SPDQN_Agent(PDQN_Agent, Agent):
         return policy
 
     def train(self, train_steps=10000):
+        train_info = {}
         episodes = np.zeros((self.nenvs,), np.int32)
         scores = np.zeros((self.nenvs,), np.float32)
         obs, _ = self.envs.reset()
@@ -103,23 +104,46 @@ class SPDQN_Agent(PDQN_Agent, Agent):
             (next_obs, steps), rewards, terminal, _ = self.envs.step(action)
             if self.render: self.envs.render("human")
             acts = np.concatenate(([disaction], con_actions), axis=0).ravel()
+
+            self.callback.on_train_step(self.current_step, envs=self.envs, policy=self.policy,
+                                        obs=obs, next_obs=next_obs, rewards=rewards, terminals=terminal,
+                                        action=action, acts=acts, steps=steps,
+                                        disaction=disaction, conaction=conaction, con_actions=con_actions,
+                                        train_steps=train_steps)
+
             self.memory.store(obs, acts, rewards, terminal, next_obs)
             if self.current_step > self.start_training and self.current_step % self.training_frequency == 0:
-                train_info = self.train_epochs(n_epochs=self.n_epochs)
-                self.log_infos(train_info, self.current_step)
+                update_info = self.train_epochs(n_epochs=self.n_epochs)
+                self.log_infos(update_info, self.current_step)
+                train_info.update(update_info)
+                self.callback.on_train_epochs_end(self.current_step, policy=self.policy, memory=self.memory,
+                                                  current_episode=self.current_episode, train_steps=train_steps,
+                                                  update_info=update_info)
 
             scores += rewards
             obs = deepcopy(next_obs)
 
             if terminal:
-                step_info["returns-step"] = scores
+                episode_info = {"returns-step": scores}
                 scores = 0
                 returns = 0
                 episodes += 1
                 self.end_episode(episodes)
                 obs, _ = self.envs.reset()
                 self.log_infos(step_info, self.current_step)
+                train_info.update(episode_info)
+                self.callback.on_train_episode_info(envs=self.envs, policy=self.policy,
+                                                    rank=self.rank, use_wandb=self.use_wandb,
+                                                    current_step=self.current_step,
+                                                    current_episode=self.current_episode,
+                                                    train_steps=train_steps)
 
             self.current_step += self.n_envs
+
             if self.noise_scale >= self.end_noise:
                 self.noise_scale -= self.delta_noise
+
+            self.callback.on_train_step_end(self.current_step, envs=self.envs, policy=self.policy,
+                                            train_steps=train_steps, train_info=train_info)
+
+        return train_info
