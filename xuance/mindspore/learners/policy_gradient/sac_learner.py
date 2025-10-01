@@ -21,9 +21,11 @@ class SAC_Learner(Learner):
             'critic': optim.Adam(params=self.policy.critic_parameters, lr=self.config.learning_rate, eps=1e-5),
         }
         self.scheduler = {
-            'actor': optim.lr_scheduler.LinearLR(self.optimizer['actor'], start_factor=1.0, end_factor=self.end_factor_lr_decay,
+            'actor': optim.lr_scheduler.LinearLR(self.optimizer['actor'], start_factor=1.0,
+                                                 end_factor=self.end_factor_lr_decay,
                                                  total_iters=self.config.running_steps),
-            'critic': optim.lr_scheduler.LinearLR(self.optimizer['critic'], start_factor=1.0, end_factor=self.end_factor_lr_decay,
+            'critic': optim.lr_scheduler.LinearLR(self.optimizer['critic'], start_factor=1.0,
+                                                  end_factor=self.end_factor_lr_decay,
                                                   total_iters=self.config.running_steps)
         }
         self.mse_loss = nn.MSELoss()
@@ -55,7 +57,7 @@ class SAC_Learner(Learner):
         log_pi, policy_q_1, policy_q_2 = self.policy.Qpolicy(x)
         policy_q = ops.minimum(policy_q_1, policy_q_2).reshape([-1])
         loss_a = ops.mean(self.alpha * log_pi.reshape([-1]) - policy_q)
-        return loss_a, log_pi, policy_q
+        return loss_a, log_pi, policy_q_1, policy_q_2, policy_q
 
     def forward_fn_critic(self, obs_batch, act_batch, rew_batch, next_batch, ter_batch):
         action_q_1, action_q_2 = self.policy.Qaction(obs_batch, act_batch)
@@ -66,7 +68,7 @@ class SAC_Learner(Learner):
         loss_q_1 = self.mse_loss(logits=action_q_1.reshape([-1]), labels=ops.stop_gradient(backup))
         loss_q_2 = self.mse_loss(logits=action_q_2.reshape([-1]), labels=ops.stop_gradient(backup))
         loss_q = loss_q_1 + loss_q_2
-        return loss_q, action_q_1, action_q_2
+        return loss_q, action_q_1, action_q_2, log_pi_next, target_q, target_value, backup
 
     def update(self, **samples):
         self.iterations += 1
@@ -76,12 +78,17 @@ class SAC_Learner(Learner):
         next_batch = Tensor(samples['obs_next'], dtype=ms.float32)
         ter_batch = Tensor(samples['terminals'], dtype=ms.float32)
 
-        (q_loss, _, _), grads_critic = self.grad_fn_critic(obs_batch, act_batch, rew_batch, next_batch, ter_batch)
+        info = self.callback.on_update_start(self.iterations,
+                                             policy=self.policy, obs=obs_batch, act=act_batch,
+                                             next_obs=next_batch, rew=rew_batch, termination=ter_batch)
+
+        (q_loss, action_q_1, action_q_2, log_pi_next, target_q, target_value,
+         backup), grads_critic = self.grad_fn_critic(obs_batch, act_batch, rew_batch, next_batch, ter_batch)
         if self.use_grad_clip:
             grads_critic = ops.clip_by_norm(grads_critic, self.grad_clip_norm)
         self.optimizer['critic'](grads_critic)
 
-        (p_loss, log_pi, policy_q), grads_actor = self.grad_fn_actor(obs_batch)
+        (p_loss, log_pi, policy_q_1, policy_q_2, policy_q), grads_actor = self.grad_fn_actor(obs_batch)
         if self.use_grad_clip:
             grads_actor = ops.clip_by_norm(grads_actor, self.grad_clip_norm)
         self.optimizer['actor'](grads_actor)
@@ -100,7 +107,7 @@ class SAC_Learner(Learner):
         actor_lr = self.scheduler['actor'].get_last_lr()[0]
         critic_lr = self.scheduler['critic'].get_last_lr()[0]
 
-        info = {
+        info.update({
             "Qloss": q_loss.asnumpy(),
             "Ploss": p_loss.asnumpy(),
             "Qvalue": policy_q.mean().asnumpy(),
@@ -108,6 +115,15 @@ class SAC_Learner(Learner):
             "critic_lr": critic_lr.asnumpy(),
             "alpha_loss": alpha_loss.asnumpy(),
             "alpha": self.alpha.asnumpy(),
-        }
+        })
+
+        info.update(self.callback.on_update_end(self.iterations,
+                                                policy=self.policy, info=info,
+                                                log_pi=log_pi, policy_q_1=policy_q_1, policy_q_2=policy_q_2,
+                                                policy_q=policy_q, p_loss=p_loss,
+                                                action_q_1=action_q_1, action_q_2=action_q_2,
+                                                log_pi_next=log_pi_next, target_q=target_q,
+                                                target_value=target_value, backup=backup, q_loss=q_loss,
+                                                alpha_loss=alpha_loss, alpha=self.alpha))
 
         return info

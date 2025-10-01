@@ -45,20 +45,29 @@ class PerDQN_Agent(DQN_Agent):
         return train_info
 
     def train(self, train_steps):
+        train_info = {}
         obs = self.envs.buf_obs
         for _ in tqdm(range(train_steps)):
-            step_info = {}
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
             policy_out = self.action(obs, test_mode=False)
             acts = policy_out['actions']
             next_obs, rewards, terminals, truncations, infos = self.envs.step(acts)
 
+            self.callback.on_train_step(self.current_step, envs=self.envs, policy=self.policy,
+                                        obs=obs, policy_out=policy_out, acts=acts, next_obs=next_obs, rewards=rewards,
+                                        terminals=terminals, truncations=truncations, infos=infos,
+                                        train_steps=train_steps)
+
             self.memory.store(obs, acts, self._process_reward(rewards), terminals, self._process_observation(next_obs))
             if self.current_step > self.start_training and self.current_step % self.training_frequency == 0:
-                train_info = self.train_epochs(n_epochs=self.n_epochs)
-                self.log_infos(train_info, self.current_step)
+                update_info = self.train_epochs(n_epochs=self.n_epochs)
+                self.log_infos(update_info, self.current_step)
+                train_info.update(update_info)
                 self.PER_beta += (1 - self.PER_beta0) / train_steps
+                self.callback.on_train_epochs_end(self.current_step, policy=self.policy, memory=self.memory,
+                                                  current_episode=self.current_episode, train_steps=train_steps,
+                                                  update_info=update_info, per_beta=self.PER_beta)
 
             obs = deepcopy(next_obs)
             for i in range(self.n_envs):
@@ -70,13 +79,26 @@ class PerDQN_Agent(DQN_Agent):
                         self.envs.buf_obs[i] = obs[i]
                         self.current_episode[i] += 1
                         if self.use_wandb:
-                            step_info["Episode-Steps/env-%d" % i] = infos[i]["episode_step"]
-                            step_info["Train-Episode-Rewards/env-%d" % i] = infos[i]["episode_score"]
+                            episode_info = {
+                                f"Episode-Steps/env-{i}": infos[i]["episode_step"],
+                                f"Train-Episode-Rewards/env-{i}": infos[i]["episode_score"]
+                            }
                         else:
-                            step_info["Episode-Steps"] = {"env-%d" % i: infos[i]["episode_step"]}
-                            step_info["Train-Episode-Rewards"] = {"env-%d" % i: infos[i]["episode_score"]}
-                        self.log_infos(step_info, self.current_step)
+                            episode_info = {
+                                f"Episode-Steps": {f"env-{i}": infos[i]["episode_step"]},
+                                f"Train-Episode-Rewards": {f"env-{i}": infos[i]["episode_score"]}
+                            }
+                        self.log_infos(episode_info, self.current_step)
+                        train_info.update(episode_info)
+                        self.callback.on_train_episode_info(envs=self.envs, policy=self.policy, env_id=i,
+                                                            infos=infos, use_wandb=self.use_wandb,
+                                                            current_step=self.current_step,
+                                                            current_episode=self.current_episode,
+                                                            train_steps=train_steps)
 
             self.current_step += self.n_envs
             if self.e_greedy > self.end_greedy:
                 self.e_greedy -= self.delta_egreedy
+            self.callback.on_train_step_end(self.current_step, envs=self.envs, policy=self.policy,
+                                            train_steps=train_steps, train_info=train_info)
+        return train_info

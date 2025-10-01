@@ -69,11 +69,10 @@ class WQMIX_Learner(LearnerMAS):
         loss_central = self.mse_loss(logits=q_tot_centralized, labels=ops.stop_gradient(target_value))
         loss_qmix = (ops.stop_gradient(w) * (td_error ** 2)).mean()
         loss = loss_qmix + loss_central
-        return loss, loss_qmix, loss_central, q_tot_eval
+        return loss, loss_qmix, loss_central, q_tot_eval, q_tot_centralized, td_error, ones, w
 
     def update(self, sample):
         self.iterations += 1
-        info = {}
 
         # prepare training data
         sample_Tensor = self.build_training_data(sample=sample,
@@ -104,11 +103,16 @@ class WQMIX_Learner(LearnerMAS):
             terminals_tot = ops.stack(itemgetter(*self.agent_keys)(terminals),
                                       axis=1).all(axis=1).astype(ms.float32).reshape(batch_size, 1)
 
+        info = self.callback.on_update_start(self.iterations, method="update", policy=self.policy,
+                                             sample_Tensor=sample_Tensor, bs=bs,
+                                             rewards_tot=rewards_tot, terminals_tot=terminals_tot)
+
         # calculate Q_tot
         _, q_eval_next_centralized = self.policy.target_q_centralized(observation=obs_next, agent_ids=IDs)
 
         q_eval_next_centralized_a, act_next = {}, {}
         for key in self.model_keys:
+            mask_values = agent_mask[key]
             if self.config.double_q:
                 _, a_next_greedy, _ = self.policy(observation=obs_next, agent_ids=IDs,
                                                   avail_actions=avail_actions_next, agent_key=key)
@@ -121,12 +125,17 @@ class WQMIX_Learner(LearnerMAS):
             q_eval_next_centralized_a[key] = q_eval_next_centralized[key].gather(act_next[key], -1, -1).reshape(bs)
             q_eval_next_centralized_a[key] *= agent_mask[key]
 
+            info.update(self.callback.on_update_agent_wise(self.iterations, key, info=info, method="update",
+                                                           mask_values=mask_values,
+                                                           act_next=act_next,
+                                                           q_eval_next_centralized_a=q_eval_next_centralized_a))
+
         q_tot_next_centralized = self.policy.target_q_feedforward(q_eval_next_centralized_a, state_next)  # y_i
 
         target_value = rewards_tot + (1 - terminals_tot) * self.gamma * q_tot_next_centralized
 
-        (loss, loss_qmix, loss_central, q_tot_eval), grads = self.grad_fn(state, obs, actions, agent_mask,
-                                                                          avail_actions, IDs, target_value)
+        (loss, loss_qmix, loss_central, q_tot_eval, q_tot_centralized, td_error, ones, w), grads = self.grad_fn(
+            state, obs, actions, agent_mask, avail_actions, IDs, target_value)
         if self.use_grad_clip:
             grads = clip_grads(grads, Tensor(-self.grad_clip_norm), Tensor(self.grad_clip_norm))
         self.optimizer(grads)
@@ -143,5 +152,10 @@ class WQMIX_Learner(LearnerMAS):
             "loss": loss.asnumpy(),
             "predictQ": q_tot_eval.mean().asnumpy()
         })
+
+        info.update(self.callback.on_update_end(self.iterations, method="update", policy=self.policy, info=info,
+                                                q_tot_eval=q_tot_eval, q_tot_centralized=q_tot_centralized,
+                                                q_tot_next_centralized=q_tot_next_centralized,
+                                                target_value=target_value, td_error=td_error, ones=ones, w=w))
 
         return info

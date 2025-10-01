@@ -348,13 +348,13 @@ class MFAC_Agents(OnPolicyMARLAgents):
             next_state = self.envs.buf_state if self.use_global_state else None
             next_avail_actions = self.envs.buf_avail_actions if self.use_actions_mask else None
 
-            # self.callback.on_train_step(self.current_step, envs=self.envs, policy=self.policy,
-            #                             obs=obs_dict, policy_out=policy_out, acts=actions_dict, next_obs=next_obs_dict,
-            #                             rewards=rewards_dict, state=state, next_state=next_state,
-            #                             avail_actions=avail_actions, next_avail_actions=next_avail_actions,
-            #                             actions_mean_dict=actions_mean_dict,
-            #                             terminals=terminated_dict, truncations=truncated, infos=info,
-            #                             n_steps=n_steps, values_dict=values_dict)
+            self.callback.on_train_step(self.current_step, envs=self.envs, policy=self.policy,
+                                        obs=obs_dict, policy_out=policy_out, acts=actions_dict, next_obs=next_obs_dict,
+                                        rewards=rewards_dict, state=state, next_state=next_state,
+                                        avail_actions=avail_actions, next_avail_actions=next_avail_actions,
+                                        actions_mean_dict=actions_mean_dict,
+                                        terminals=terminated_dict, truncations=truncated, infos=info,
+                                        n_steps=n_steps, values_dict=values_dict)
 
             self.store_experience(obs_dict, avail_actions, actions_dict, log_pi_a_dict, rewards_dict, values_dict,
                                   terminated_dict, info,
@@ -414,16 +414,16 @@ class MFAC_Agents(OnPolicyMARLAgents):
                         }
                     self.log_infos(episode_info, self.current_step)
                     train_info.update(episode_info)
-                    # self.callback.on_train_episode_info(envs=self.envs, policy=self.policy, env_id=i,
-                    #                                     infos=info, rank=self.rank, use_wandb=self.use_wandb,
-                    #                                     current_step=self.current_step,
-                    #                                     current_episode=self.current_episode,
-                    #                                     n_steps=n_steps)
+                    self.callback.on_train_episode_info(envs=self.envs, policy=self.policy, env_id=i,
+                                                        infos=info, use_wandb=self.use_wandb,
+                                                        current_step=self.current_step,
+                                                        current_episode=self.current_episode,
+                                                        n_steps=n_steps)
 
             self.current_step += self.n_envs
             self.actions_mean = deepcopy(actions_mean_dict)
-            # self.callback.on_train_step_end(self.current_step, envs=self.envs, policy=self.policy,
-            #                                 n_steps=n_steps, train_info=train_info)
+            self.callback.on_train_step_end(self.current_step, envs=self.envs, policy=self.policy,
+                                            n_steps=n_steps, train_info=train_info)
         return train_info
 
     def run_episodes(self, env_fn=None, n_episodes: int = 1, test_mode: bool = False):
@@ -478,14 +478,14 @@ class MFAC_Agents(OnPolicyMARLAgents):
                 self.store_experience(obs_dict, avail_actions, actions_dict, log_pi_a_dict, rewards_dict, values_dict,
                                       terminated_dict, info, **{'state': state, 'actions_mean': actions_mean_dict})
 
-            # self.callback.on_test_step(envs=envs, policy=self.policy, images=images, test_mode=test_mode,
-            #                            obs=obs_dict, policy_out=policy_out, acts=actions_dict,
-            #                            actions_mean_dict=actions_mean_dict,
-            #                            next_obs=next_obs_dict, rewards=rewards_dict,
-            #                            terminals=terminated_dict, truncations=truncated, infos=info,
-            #                            state=state, next_state=next_state,
-            #                            current_train_step=self.current_step, n_episodes=n_episodes,
-            #                            current_step=current_step, current_episode=current_episode)
+            self.callback.on_test_step(envs=envs, policy=self.policy, images=images, test_mode=test_mode,
+                                       obs=obs_dict, policy_out=policy_out, acts=actions_dict,
+                                       actions_mean_dict=actions_mean_dict,
+                                       next_obs=next_obs_dict, rewards=rewards_dict,
+                                       terminals=terminated_dict, truncations=truncated, infos=info,
+                                       state=state, next_state=next_state,
+                                       current_train_step=self.current_step, n_episodes=n_episodes,
+                                       current_step=current_step, current_episode=current_episode)
 
             obs_dict, avail_actions = deepcopy(next_obs_dict), deepcopy(next_avail_actions)
             agent_mask_dict = [data['agent_mask'] for data in info]
@@ -532,11 +532,11 @@ class MFAC_Agents(OnPolicyMARLAgents):
                             }
                         self.current_step += info[i]["episode_step"]
                         self.log_infos(episode_info, self.current_step)
-                        # self.callback.on_train_episode_info(envs=self.envs, policy=self.policy, env_id=i,
-                        #                                     infos=info, rank=self.rank, use_wandb=self.use_wandb,
-                        #                                     current_step=self.current_step,
-                        #                                     current_episode=self.current_episode,
-                        #                                     n_episodes=n_episodes)
+                        self.callback.on_train_episode_info(envs=self.envs, policy=self.policy, env_id=i,
+                                                            infos=info, use_wandb=self.use_wandb,
+                                                            current_step=self.current_step,
+                                                            current_episode=self.current_episode,
+                                                            n_episodes=n_episodes)
 
                     obs_dict[i] = info[i]["reset_obs"]
                     envs.buf_obs[i] = info[i]["reset_obs"]
@@ -562,10 +562,10 @@ class MFAC_Agents(OnPolicyMARLAgents):
             }
             self.log_infos(test_info, self.current_step)
 
-            # self.callback.on_test_end(envs=envs, policy=self.policy,
-            #                           current_train_step=self.current_step,
-            #                           current_step=current_step, current_episode=current_episode,
-            #                           scores=scores, best_score=best_score)
+            self.callback.on_test_end(envs=envs, policy=self.policy,
+                                      current_train_step=self.current_step,
+                                      current_step=current_step, current_episode=current_episode,
+                                      scores=scores, best_score=best_score)
 
             if env_fn is not None:
                 envs.close()

@@ -55,11 +55,10 @@ class IDDPG_Learner(LearnerMAS):
         q_eval_a = q_eval[agent_key].reshape(-1)
         td_error = (q_eval_a - ops.stop_gradient(q_target)) * mask_values
         loss_c = (td_error ** 2).sum() / mask_values.sum()
-        return loss_c, q_eval_a
+        return loss_c, q_eval_a, td_error
 
     def update(self, sample):
         self.iterations += 1
-        info = {}
 
         # prepare training data.
         sample_Tensor = self.build_training_data(sample,
@@ -81,6 +80,9 @@ class IDDPG_Learner(LearnerMAS):
         else:
             bs = batch_size
 
+        info = self.callback.on_update_start(self.iterations, method="update",
+                                             policy=self.policy, sample_Tensor=sample_Tensor, bs=bs)
+
         # feedforward
         _, next_actions = self.policy.Atarget(next_observation=obs_next, agent_ids=IDs)
         _, q_next = self.policy.Qtarget(next_observation=obs_next, next_actions=next_actions, agent_ids=IDs)
@@ -91,13 +93,14 @@ class IDDPG_Learner(LearnerMAS):
             # update critic
             q_next_i = q_next[key].reshape(bs)
             q_target = rewards[key] + (1 - terminals[key]) * self.gamma * q_next_i
-            (loss_c, q_eval_a), grads_critic = self.grad_fn_critic[key](obs, actions, IDs, mask_values, q_target, key)
+            (loss_c, q_eval_a, td_error), grads_critic = self.grad_fn_critic[key](obs, actions, IDs, mask_values,
+                                                                                  q_target, key)
             if self.use_grad_clip:
                 grads_critic = clip_grads(grads_critic, Tensor(-self.grad_clip_norm), Tensor(self.grad_clip_norm))
             self.optimizer[key]['critic'](grads_critic)
 
             # update actor
-            (loss_a, _), grads_actor = self.grad_fn_actor[key](obs, IDs, mask_values, key)
+            (loss_a, q_policy_i), grads_actor = self.grad_fn_actor[key](obs, IDs, mask_values, key)
             if self.use_grad_clip:
                 grads_actor = clip_grads(grads_actor, Tensor(-self.grad_clip_norm), Tensor(self.grad_clip_norm))
             self.optimizer[key]['actor'](grads_actor)
@@ -115,5 +118,11 @@ class IDDPG_Learner(LearnerMAS):
                 f"{key}/predictQ": q_eval_a.mean().asnumpy()
             })
 
+            info.update(self.callback.on_update_agent_wise(self.iterations, key, info=info, method="update",
+                                                           mask_values=mask_values, q_policy_i=q_policy_i,
+                                                           q_eval_a=q_eval_a, q_next_i=q_next_i,
+                                                           q_target=q_target, td_error=td_error))
+
         self.policy.soft_update(self.tau)
+        info.update(self.callback.on_update_end(self.iterations, method="update", policy=self.policy, info=info))
         return info

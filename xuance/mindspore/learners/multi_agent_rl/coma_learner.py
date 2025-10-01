@@ -233,7 +233,6 @@ class COMA_Learner(LearnerMAS):
 
     def update(self, sample, epsilon=0.0):
         self.iterations += 1
-        info = {}
 
         # prepare training data
         sample_Tensor = self.build_training_data(sample=sample,
@@ -251,8 +250,8 @@ class COMA_Learner(LearnerMAS):
 
         bs = batch_size * self.n_agents if self.use_parameter_sharing else batch_size
 
-        # info = self.callback.on_update_start(self.iterations, method="update",
-        #                                      policy=self.policy, sample_Tensor=sample_Tensor, bs=bs)
+        info = self.callback.on_update_start(self.iterations, method="update",
+                                             policy=self.policy, sample_Tensor=sample_Tensor, bs=bs)
 
         # update critic
         (loss_critic, values_pred_dict), grad_critic = self.critic_grad_fn(bs, batch_size, obs, state, actions,
@@ -282,6 +281,6 @@ class COMA_Learner(LearnerMAS):
             "advantage": advantages_mean.mean().asnumpy(),
         })
 
-        # info.update(self.callback.on_update_end(self.iterations, method="update", policy=self.policy, info=info))
+        info.update(self.callback.on_update_end(self.iterations, method="update", policy=self.policy, info=info))
 
         return info

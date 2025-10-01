@@ -34,10 +34,10 @@ class PerDQN_Learner(Learner):
         targetQ = targetQ.max(axis=-1)
         targetQ = rew_batch + self.gamma * (1 - ter_batch) * targetQ
 
-        predict_Q = self.gather(evalQ, act_batch, axis=-1).reshape(-1)
-        loss = self.mse_loss(logits=predict_Q, labels=ops.stop_gradient(targetQ))
+        predictQ = self.gather(evalQ, act_batch, axis=-1).reshape(-1)
+        loss = self.mse_loss(logits=predictQ, labels=ops.stop_gradient(targetQ))
 
-        return loss, predict_Q, targetQ
+        return loss, evalQ, predictQ, targetQ
 
     def update(self, **samples):
         self.iterations += 1
@@ -47,7 +47,11 @@ class PerDQN_Learner(Learner):
         next_batch = Tensor(samples['obs_next'])
         ter_batch = Tensor(samples['terminals'])
 
-        (loss, predictQ, targetQ), grads = self.grad_fn(obs_batch, act_batch, next_batch, rew_batch, ter_batch)
+        info = self.callback.on_update_start(self.iterations,
+                                             policy=self.policy, obs=obs_batch, act=act_batch,
+                                             next_obs=next_batch, rew=rew_batch, termination=ter_batch)
+
+        (loss, evalQ, predictQ, targetQ), grads = self.grad_fn(obs_batch, act_batch, next_batch, rew_batch, ter_batch)
         self.optimizer(grads)
 
         td_error = ops.stop_gradient(targetQ - predictQ)
@@ -59,10 +63,15 @@ class PerDQN_Learner(Learner):
         self.scheduler.step()
         lr = self.scheduler.get_last_lr()[0]
 
-        info = {
+        info.update({
             "Qloss": loss.asnumpy(),
             "predictQ": predictQ.mean().asnumpy(),
             "learning_rate": lr.asnumpy(),
-        }
+        })
+
+        info.update(self.callback.on_update_end(self.iterations,
+                                                policy=self.policy, info=info,
+                                                evalQ=evalQ, predictQ=predictQ, targetQ=targetQ, td_error=td_error,
+                                                loss=loss))
 
         return np.abs(td_error.asnumpy()), info

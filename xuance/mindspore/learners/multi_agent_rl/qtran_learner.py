@@ -61,9 +61,9 @@ class QTRAN_Learner(LearnerMAS):
             q_eval_greedy_a[key] *= mask_values
             q_next_a[key] *= mask_values
 
-            # info.update(self.callback.on_update_agent_wise(self.iterations, key, info=info, method="update",
-            #                                                mask_values=mask_values, q_eval_a=q_eval_a,
-            #                                                q_eval_greedy_a=q_eval_greedy_a))
+            info.update(self.callback.on_update_agent_wise(self.iterations, key, info=info, method="update",
+                                                           mask_values=mask_values, q_eval_a=q_eval_a,
+                                                           q_eval_greedy_a=q_eval_greedy_a))
 
         if self.config.agent == "QTRAN_base":
             # -- TD Loss --
@@ -134,11 +134,11 @@ class QTRAN_Learner(LearnerMAS):
         # calculate the loss function
         loss = loss_td + self.config.lambda_opt * loss_opt + self.config.lambda_nopt * loss_nopt
 
-        return loss, loss_td, loss_opt, loss_nopt
+        return loss, loss_td, loss_opt, loss_nopt, \
+            v_joint, y_dqn, q_tot_greedy, q_joint_greedy_hat, error_opt, error_nopt
 
     def update(self, sample):
         self.iterations += 1
-        info = {}
 
         # prepare training data
         sample_Tensor = self.build_training_data(sample=sample,
@@ -168,13 +168,13 @@ class QTRAN_Learner(LearnerMAS):
             rewards_tot = ops.stack(itemgetter(*self.agent_keys)(rewards), axis=1).mean(dim=-1, keepdim=True)
             terminals_tot = ops.stack(itemgetter(*self.agent_keys)(terminals), axis=1).all(dim=1, keepdim=True).float()
 
-        # info = self.callback.on_update_start(self.iterations, method="update",
-        #                                      policy=self.policy, sample_Tensor=sample_Tensor, bs=bs,
-        #                                      rewards_tot=rewards_tot, terminals_tot=terminals_tot)
+        info = self.callback.on_update_start(self.iterations, method="update",
+                                             policy=self.policy, sample_Tensor=sample_Tensor, bs=bs,
+                                             rewards_tot=rewards_tot, terminals_tot=terminals_tot)
 
-        (loss, loss_td, loss_opt, loss_nopt), grads = self.grad_fn(bs, batch_size, state, obs, actions,
-                                                                   state_next, obs_next, agent_mask, avail_actions,
-                                                                   avail_actions_next, rewards_tot, terminals_tot, IDs)
+        (loss, loss_td, loss_opt, loss_nopt, v_joint, y_dqn, q_tot_greedy, q_joint_greedy_hat, error_opt,
+         error_nopt), grads = self.grad_fn(bs, batch_size, state, obs, actions, state_next, obs_next, agent_mask,
+                                           avail_actions, avail_actions_next, rewards_tot, terminals_tot, IDs)
         if self.use_grad_clip:
             grads = clip_grads(grads, Tensor(-self.grad_clip_norm), Tensor(self.grad_clip_norm))
         self.optimizer(grads)
@@ -193,9 +193,9 @@ class QTRAN_Learner(LearnerMAS):
             "loss": loss.asnumpy()
         })
 
-        # info.update(self.callback.on_update_end(self.iterations, method="update", policy=self.policy, info=info,
-        #                                         v_joint=v_joint, y_dqn=y_dqn, q_tot_greedy=q_tot_greedy,
-        #                                         q_joint_greedy_hat=q_joint_greedy_hat, error_opt=error_opt,
-        #                                         error_nopt=error_nopt))
+        info.update(self.callback.on_update_end(self.iterations, method="update", policy=self.policy, info=info,
+                                                v_joint=v_joint, y_dqn=y_dqn, q_tot_greedy=q_tot_greedy,
+                                                q_joint_greedy_hat=q_joint_greedy_hat, error_opt=error_opt,
+                                                error_nopt=error_nopt))
 
         return info

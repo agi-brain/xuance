@@ -64,11 +64,10 @@ class MATD3_Learner(LearnerMAS):
         td_error_A = (q_eval_A_i - ops.stop_gradient(q_target)) * mask_values
         td_error_B = (q_eval_B_i - ops.stop_gradient(q_target)) * mask_values
         loss_c = ((td_error_A ** 2).sum() + (td_error_B ** 2).sum()) / mask_values.sum()
-        return loss_c, q_eval_A_i, q_eval_B_i
+        return loss_c, q_eval_A_i, q_eval_B_i, td_error_A, td_error_B
 
     def update(self, sample):
         self.iterations += 1
-        info = {}
 
         # prepare training data
         sample_Tensor = self.build_training_data(sample,
@@ -96,6 +95,10 @@ class MATD3_Learner(LearnerMAS):
             next_obs_joint = ops.cat(itemgetter(*self.agent_keys)(obs_next), axis=-1).reshape(batch_size, -1)
             actions_joint = ops.cat(itemgetter(*self.agent_keys)(actions), axis=-1).reshape(batch_size, -1)
 
+        info = self.callback.on_update_start(self.iterations, method="update", policy=self.policy,
+                                             sample_Tensor=sample_Tensor, bs=bs, obs_joint=obs_joint,
+                                             next_obs_joint=next_obs_joint, actions_joint=actions_joint)
+
         # get values
         _, actions_next = self.policy.Atarget(next_observation=obs_next, agent_ids=IDs)
         if self.use_parameter_sharing:
@@ -111,8 +114,8 @@ class MATD3_Learner(LearnerMAS):
             mask_values = agent_mask[key]
             q_next_i = q_next[key].reshape(bs)
             q_target = rewards[key] + (1 - terminals[key]) * self.gamma * q_next_i
-            (loss_c, q_eval_A_i, q_eval_B_i), grads_critic = self.grad_fn_critic[key](obs_joint, actions_joint, IDs,
-                                                                                      mask_values, q_target, key)
+            (loss_c, q_eval_A_i, q_eval_B_i, td_error_A, td_error_B), grads_critic = self.grad_fn_critic[key](
+                obs_joint, actions_joint, IDs, mask_values, q_target, key)
             if self.use_grad_clip:
                 grads_critic = clip_grads(grads_critic, Tensor(-self.grad_clip_norm), Tensor(self.grad_clip_norm))
             self.optimizer[key]['critic'](grads_critic)
@@ -126,6 +129,12 @@ class MATD3_Learner(LearnerMAS):
                 f"{key}/predictQ_A": q_eval_A_i.mean().asnumpy(),
                 f"{key}/predictQ_B": q_eval_B_i.mean().asnumpy()
             })
+
+            info.update(self.callback.on_update_agent_wise(self.iterations, key, info=info, method="update_critic",
+                                                           mask_values=mask_values,
+                                                           q_eval_A_i=q_eval_A_i, q_eval_B_i=q_eval_B_i,
+                                                           q_target=q_target, q_next_i=q_next_i,
+                                                           td_error_A=td_error_A, td_error_B=td_error_B))
 
         # update actor(s)
         if self.iterations % self.actor_update_delay == 0:
@@ -146,6 +155,10 @@ class MATD3_Learner(LearnerMAS):
                     f"{key}/loss_actor": loss_a.asnumpy(),
                     f"{key}/q_policy": q_policy_i.mean().asnumpy(),
                 })
+
+                info.update(self.callback.on_update_agent_wise(self.iterations, key, info=info, method="update_actor",
+                                                               mask_values=mask_values, q_policy_i=q_policy_i))
             self.policy.soft_update(self.tau)
 
+        info.update(self.callback.on_update_end(self.iterations, method="update", policy=self.policy, info=info))
         return info

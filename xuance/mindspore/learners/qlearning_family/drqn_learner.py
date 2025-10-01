@@ -30,7 +30,7 @@ class DRQN_Learner(Learner):
     def forward_fn(self, batch_size, obs_batch, act_batch, rew_batch, ter_batch):
         rnn_hidden = self.policy.init_hidden(batch_size)
         _, _, evalQ, _ = self.policy(obs_batch[:, 0:-1], *rnn_hidden)
-        predict_Q = self.gather(evalQ, act_batch.unsqueeze(-1), axis=-1).squeeze(-1)
+        predictQ = self.gather(evalQ, act_batch.unsqueeze(-1), axis=-1).squeeze(-1)
 
         target_rnn_hidden = self.policy.init_hidden(batch_size)
         _, targetA, targetQ, _ = self.policy.target(obs_batch[:, 1:], *target_rnn_hidden)
@@ -39,8 +39,8 @@ class DRQN_Learner(Learner):
         targetQ = self.gather(targetQ, targetA.unsqueeze(-1), axis=-1).squeeze(-1)
         targetQ = rew_batch + self.gamma * (1 - ter_batch) * targetQ
 
-        loss = self.mse_loss(logits=predict_Q, labels=ops.stop_gradient(targetQ))
-        return loss, predict_Q
+        loss = self.mse_loss(logits=predictQ, labels=ops.stop_gradient(targetQ))
+        return loss, evalQ, predictQ, targetA, targetQ
 
     def update(self, **samples):
         self.iterations += 1
@@ -50,7 +50,12 @@ class DRQN_Learner(Learner):
         ter_batch = Tensor(samples['terminals'])
         batch_size = obs_batch.shape[0]
 
-        (loss, predictQ), grads = self.grad_fn(batch_size, obs_batch, act_batch, rew_batch, ter_batch)
+        info = self.callback.on_update_start(self.iterations,
+                                             policy=self.policy, obs=obs_batch, act=act_batch,
+                                             rew=rew_batch, termination=ter_batch, batch_size=batch_size)
+
+        (loss, evalQ, predictQ, targetA, targetQ), grads = self.grad_fn(
+            batch_size, obs_batch, act_batch, rew_batch, ter_batch)
         self.optimizer(grads)
 
         # hard update for target network
@@ -60,10 +65,15 @@ class DRQN_Learner(Learner):
         self.scheduler.step()
         lr = self.scheduler.get_last_lr()[0]
 
-        info = {
+        info.update({
             "Qloss": loss.asnumpy(),
             "predictQ": predictQ.mean().asnumpy(),
             "learning_rate": lr.asnumpy(),
-        }
+        })
+
+        info.update(self.callback.on_update_end(self.iterations,
+                                                policy=self.policy, info=info,
+                                                evalQ=evalQ, predictQ=predictQ, targetA=targetA, targetQ=targetQ,
+                                                loss=loss))
 
         return info

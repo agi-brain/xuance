@@ -45,25 +45,29 @@ class PG_Learner(Learner):
         e_loss = ops.mean(entropy)
 
         loss = a_loss - self.ent_coef * e_loss
-        return loss, a_loss, e_loss
+        return loss, a_loss, e_loss, outputs, log_prob
 
     def update(self, **samples):
         self.iterations += 1
         obs_batch = Tensor(samples['obs'])
         act_batch = Tensor(samples['actions'])
         ret_batch = Tensor(samples['returns'])
+        info = self.callback.on_update_start(self.iterations,
+                                             policy=self.policy, obs=obs_batch, act=act_batch, returns=ret_batch)
 
-        (loss, a_loss, e_loss), grads = self.grad_fn(obs_batch, act_batch, ret_batch)
+        (loss, a_loss, e_loss, outputs, log_prob), grads = self.grad_fn(obs_batch, act_batch, ret_batch)
         self.optimizer(grads)
 
         self.scheduler.step()
         lr = self.scheduler.get_last_lr()[0]
 
-        info = {
+        info.update({
             "total-loss": loss.asnumpy(),
             "actor-loss": a_loss.asnumpy(),
             "entropy": e_loss.asnumpy(),
             "learning_rate": lr.asnumpy(),
-        }
-
+        })
+        info.update(self.callback.on_update_end(self.iterations,
+                                                policy=self.policy, info=info, rep_output=outputs,
+                                                log_prob=log_prob, a_loss=a_loss, e_loss=e_loss, loss=loss))
         return info

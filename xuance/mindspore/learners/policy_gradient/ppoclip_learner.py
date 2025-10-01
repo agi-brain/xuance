@@ -49,7 +49,7 @@ class PPOCLIP_Learner(Learner):
         c_loss = self.mse_loss(logits=v_pred, labels=ops.stop_gradient(ret_batch))
         e_loss = ops.mean(entropy)
         loss = a_loss - self.ent_coef * e_loss + self.vf_coef * c_loss
-        return loss, a_loss, c_loss, e_loss, v_pred, ratio
+        return loss, a_loss, c_loss, e_loss, outputs, v_pred, ratio, log_prob, surrogate1, surrogate2
 
     def update(self, **samples):
         self.iterations += 1
@@ -62,8 +62,12 @@ class PPOCLIP_Learner(Learner):
         else:
             act_batch = Tensor(samples['actions'], dtype=ms.int32)
 
-        (loss, a_loss, c_loss, e_loss, v_pred, ratio), grads = self.grad_fn(obs_batch, act_batch, ret_batch,
-                                                                            adv_batch, old_log_prob_batch)
+        info = self.callback.on_update_start(self.iterations,
+                                             policy=self.policy, obs=obs_batch, act=act_batch,
+                                             returns=ret_batch, advantages=adv_batch, old_logp=old_log_prob_batch)
+
+        (loss, a_loss, c_loss, e_loss, outputs, v_pred, ratio, log_prob, surrogate1, surrogate2), grads = self.grad_fn(
+            obs_batch, act_batch, ret_batch, adv_batch, old_log_prob_batch)
         if self.use_grad_clip:
             grads = ops.clip_by_norm(grads, self.grad_clip_norm)
         self.optimizer(grads)
@@ -73,13 +77,19 @@ class PPOCLIP_Learner(Learner):
         lr = self.scheduler.get_last_lr()[0]
         cr = ((ratio < 1 - self.clip_range).sum() + (ratio > 1 + self.clip_range).sum()) / ratio.shape[0]
 
-        info = {
+        info.update({
             "actor_loss": a_loss.asnumpy(),
             "critic_loss": c_loss.asnumpy(),
             "entropy": e_loss.asnumpy(),
             "learning_rate": lr.asnumpy(),
             "predict_value": v_pred.mean().asnumpy(),
             "clip_ratio": cr.asnumpy(),
-        }
+        })
+
+        info.update(self.callback.on_update_end(self.iterations,
+                                                policy=self.policy, info=info, rep_output=outputs,
+                                                v_pred=v_pred, log_prob=log_prob,
+                                                ratio=ratio, surrogate1=surrogate1, surrogate2=surrogate2,
+                                                a_loss=a_loss, c_loss=c_loss, e_loss=e_loss, loss=loss))
 
         return info

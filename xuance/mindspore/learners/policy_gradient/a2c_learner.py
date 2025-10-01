@@ -46,7 +46,7 @@ class A2C_Learner(Learner):
         e_loss = ops.mean(entropy)
 
         loss = a_loss - self.ent_coef * e_loss + self.vf_coef * c_loss
-        return loss, a_loss, c_loss, e_loss, v_pred
+        return loss, a_loss, c_loss, e_loss, v_pred, log_prob
 
     def update(self, **samples):
         self.iterations += 1
@@ -55,19 +55,29 @@ class A2C_Learner(Learner):
         ret_batch = Tensor(samples['returns'])
         adv_batch = Tensor(samples['advantages'])
 
-        (loss, a_loss, c_loss, e_loss, v_pred), grads = self.grad_fn(obs_batch, act_batch, adv_batch, ret_batch)
+        info = self.callback.on_update_start(self.iterations,
+                                             policy=self.policy, obs=obs_batch, act=act_batch,
+                                             returns=ret_batch, advantages=adv_batch)
+
+        (loss, a_loss, c_loss, e_loss, v_pred, log_prob), grads = self.grad_fn(
+            obs_batch, act_batch, adv_batch, ret_batch)
         self.optimizer(grads)
 
         self.scheduler.step()
         lr = self.scheduler.get_last_lr()[0]
 
-        info = {
+        info.update({
             "total-loss": loss.asnumpy(),
             "actor-loss": a_loss.asnumpy(),
             "critic-loss": c_loss.asnumpy(),
             "entropy": e_loss.asnumpy(),
             "learning_rate": lr.asnumpy(),
             "predict_value": v_pred.mean().asnumpy(),
-        }
+        })
+
+        info.update(self.callback.on_update_end(self.iterations,
+                                                policy=self.policy, info=info,
+                                                v_pred=v_pred, log_prob=log_prob,
+                                                a_loss=a_loss, c_loss=c_loss, e_loss=e_loss, loss=loss))
 
         return info

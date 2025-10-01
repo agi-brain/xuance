@@ -117,16 +117,22 @@ class OnPolicyAgent(Agent):
                 train_info = self.learner.update(**samples)
         return train_info
 
-    def train(self, train_steps):
+    def train(self, train_steps: int) -> dict:
+        train_info = {}
         obs = self.envs.buf_obs
         for _ in tqdm(range(train_steps)):
-            step_info = {}
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
             policy_out = self.action(obs, return_dists=False, return_logpi=False)
             acts, vals = policy_out['actions'], policy_out['values']
             next_obs, rewards, terminals, truncations, infos = self.envs.step(acts)
             aux_info = self.get_aux_info()
+
+            self.callback.on_train_step(self.current_step, envs=self.envs, policy=self.policy,
+                                        obs=obs, policy_out=policy_out, acts=acts, vals=vals, next_obs=next_obs,
+                                        rewards=rewards, terminals=terminals, truncations=truncations,
+                                        infos=infos, aux_info=aux_info, train_steps=train_steps)
+
             self.memory.store(obs, acts, self._process_reward(rewards), vals, terminals, aux_info)
             if self.memory.full:
                 vals = self.get_terminated_values(next_obs, rewards)
@@ -135,8 +141,12 @@ class OnPolicyAgent(Agent):
                         self.memory.finish_path(0.0, i)
                     else:
                         self.memory.finish_path(vals[i], i)
-                train_info = self.train_epochs(self.n_epochs)
-                self.log_infos(train_info, self.current_step)
+                update_info = self.train_epochs(self.n_epochs)
+                self.log_infos(update_info, self.current_step)
+                train_info.update(update_info)
+                self.callback.on_train_epochs_end(self.current_step, policy=self.policy, memory=self.memory,
+                                                  current_episode=self.current_episode, train_steps=train_steps,
+                                                  update_info=update_info)
                 self.memory.clear()
 
             self.returns = self.gamma * self.returns + rewards
@@ -157,19 +167,33 @@ class OnPolicyAgent(Agent):
                         self.envs.buf_obs[i] = obs[i]
                         self.current_episode[i] += 1
                         if self.use_wandb:
-                            step_info["Episode-Steps/env-%d" % i] = infos[i]["episode_step"]
-                            step_info["Train-Episode-Rewards/env-%d" % i] = infos[i]["episode_score"]
+                            episode_info = {
+                                f"Episode-Steps/env-{i}": infos[i]["episode_step"],
+                                f"Train-Episode-Rewards/env-{i}": infos[i]["episode_score"]
+                            }
                         else:
-                            step_info["Episode-Steps"] = {"env-%d" % i: infos[i]["episode_step"]}
-                            step_info["Train-Episode-Rewards"] = {"env-%d" % i: infos[i]["episode_score"]}
-                        self.log_infos(step_info, self.current_step)
-            self.current_step += self.n_envs
+                            episode_info = {
+                                f"Episode-Steps": {f"env-{i}": infos[i]["episode_step"]},
+                                f"Train-Episode-Rewards": {f"env-{i}": infos[i]["episode_score"]}
+                            }
+                        self.log_infos(episode_info, self.current_step)
+                        train_info.update(episode_info)
+                        self.callback.on_train_episode_info(envs=self.envs, policy=self.policy, env_id=i,
+                                                            infos=infos, use_wandb=self.use_wandb,
+                                                            current_step=self.current_step,
+                                                            current_episode=self.current_episode,
+                                                            train_steps=train_steps)
 
-    def test(self, env_fn, test_episodes):
+            self.current_step += self.n_envs
+            self.callback.on_train_step_end(self.current_step, envs=self.envs, policy=self.policy,
+                                            train_steps=train_steps, train_info=train_info)
+        return train_info
+
+    def test(self, env_fn, test_episodes: int) -> list:
         test_envs = env_fn()
         num_envs = test_envs.num_envs
-        videos, episode_videos = [[] for _ in range(num_envs)], []
-        current_episode, scores, best_score = 0, [], -np.inf
+        videos, episode_videos, images = [[] for _ in range(num_envs)], [], None
+        current_episode, current_step, scores, best_score = 0, 0, [], -np.inf
         obs, infos = test_envs.reset()
         if self.config.render_mode == "rgb_array" and self.render:
             images = test_envs.render(self.config.render_mode)
@@ -186,6 +210,12 @@ class OnPolicyAgent(Agent):
                 for idx, img in enumerate(images):
                     videos[idx].append(img)
 
+            self.callback.on_test_step(envs=test_envs, policy=self.policy, images=images,
+                                       obs=obs, policy_out=policy_out, next_obs=next_obs, rewards=rewards,
+                                       terminals=terminals, truncations=truncations, infos=infos,
+                                       current_train_step=self.current_step,
+                                       current_step=current_step, current_episode=current_episode)
+
             obs = deepcopy(next_obs)
             for i in range(num_envs):
                 if terminals[i] or truncations[i]:
@@ -200,6 +230,7 @@ class OnPolicyAgent(Agent):
                             episode_videos = videos[i].copy()
                         if self.config.test_mode:
                             print("Episode: %d, Score: %.2f" % (current_episode, infos[i]["episode_score"]))
+            current_step += num_envs
 
         if self.config.render_mode == "rgb_array" and self.render:
             # time, height, width, channel -> time, channel, height, width
@@ -214,6 +245,11 @@ class OnPolicyAgent(Agent):
             "Test-Episode-Rewards/Std-Score": np.std(scores)
         }
         self.log_infos(test_info, self.current_step)
+
+        self.callback.on_test_end(envs=test_envs, policy=self.policy,
+                                  current_train_step=self.current_step,
+                                  current_step=current_step, current_episode=current_episode,
+                                  scores=scores, best_score=best_score)
 
         test_envs.close()
 

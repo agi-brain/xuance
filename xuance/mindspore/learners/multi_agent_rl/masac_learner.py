@@ -75,7 +75,7 @@ class MASAC_Learner(LearnerMAS):
         log_pi_eval_i = log_pi_eval[agent_key].reshape(-1)
         policy_q = ops.minimum(policy_q_1[agent_key], policy_q_2[agent_key]).reshape(-1)
         loss_a = ((self.alpha[agent_key] * log_pi_eval_i - policy_q) * mask_values).sum() / mask_values.sum()
-        return loss_a, log_pi_eval[agent_key], policy_q
+        return loss_a, log_pi_eval[agent_key], policy_q, policy_q_1, policy_q_2
 
     def forward_fn_critic(self, obs_joint, actions_joint, ids, mask_values, backup, agent_key):
         _, _, action_q_1, action_q_2 = self.policy.Qpolicy(joint_observation=obs_joint, joint_actions=actions_joint,
@@ -86,11 +86,10 @@ class MASAC_Learner(LearnerMAS):
         td_error_1 *= mask_values
         td_error_2 *= mask_values
         loss_c = ((td_error_1 ** 2).sum() + (td_error_2 ** 2).sum()) / mask_values.sum()
-        return loss_c, action_q_1_i, action_q_2_i
+        return loss_c, action_q_1_i, action_q_2_i, td_error_1, td_error_2
 
     def update(self, sample):
         self.iterations += 1
-        info = {}
 
         # Prepare training data.
         sample_Tensor = self.build_training_data(sample,
@@ -118,6 +117,10 @@ class MASAC_Learner(LearnerMAS):
             next_obs_joint = ops.cat(itemgetter(*self.agent_keys)(obs_next), axis=-1).reshape(batch_size, -1)
             actions_joint = ops.cat(itemgetter(*self.agent_keys)(actions), axis=-1).reshape(batch_size, -1)
 
+        info = self.callback.on_update_start(self.iterations, method="update", policy=self.policy,
+                                             sample_Tensor=sample_Tensor, bs=bs, obs_joint=obs_joint,
+                                             next_obs_joint=next_obs_joint, actions_joint=actions_joint)
+
         # train the model
         _, actions_next, log_pi_next = self.policy(observation=obs_next, agent_ids=IDs)
         if self.use_parameter_sharing:
@@ -134,15 +137,15 @@ class MASAC_Learner(LearnerMAS):
             log_pi_next_eval = log_pi_next[key].reshape(bs)
             target_value = target_q[key].reshape(bs) - self.alpha[key] * log_pi_next_eval
             backup = rewards[key] + (1 - terminals[key]) * self.gamma * target_value
-            (loss_c, _, _), grads_critic = self.grad_fn_critic[key](obs_joint, actions_joint, IDs, mask_values, backup,
-                                                                    key)
+            (loss_c, action_q_1_i, action_q_2_i, td_error_1, td_error_2), grads_critic = self.grad_fn_critic[key](
+                obs_joint, actions_joint, IDs, mask_values, backup, key)
             if self.use_grad_clip:
                 grads_critic = clip_grads(grads_critic, Tensor(-self.grad_clip_norm), Tensor(self.grad_clip_norm))
             self.optimizer[key]['critic'](grads_critic)
 
             # update actor
-            (loss_a, log_pi_eval_i, policy_q), grads_actor = self.grad_fn_actor[key](batch_size, obs, obs_joint, IDs,
-                                                                                     mask_values, key)
+            (loss_a, log_pi_eval_i, policy_q, policy_q_1, policy_q_2), grads_actor = self.grad_fn_actor[key](
+                batch_size, obs, obs_joint, IDs, mask_values, key)
             if self.use_grad_clip:
                 grads_actor = clip_grads(grads_actor, Tensor(-self.grad_clip_norm), Tensor(self.grad_clip_norm))
             self.optimizer[key]['actor'](grads_actor)
@@ -168,5 +171,15 @@ class MASAC_Learner(LearnerMAS):
                 f"{key}/alpha": self.alpha[key].asnumpy(),
             })
 
+            info.update(self.callback.on_update_agent_wise(self.iterations, key, info=info, method="update",
+                                                           mask_values=mask_values,
+                                                           action_q_1_i=action_q_1_i, action_q_2_i=action_q_2_i,
+                                                           log_pi_next_eval=log_pi_next_eval,
+                                                           target_value=target_value, backup=backup,
+                                                           td_error_1=td_error_1, td_error_2=td_error_2,
+                                                           policy_q_1=policy_q_1, policy_q_2=policy_q_2,
+                                                           log_pi_eval_i=log_pi_eval_i, policy_q=policy_q))
+
         self.policy.soft_update(self.tau)
+        info.update(self.callback.on_update_end(self.iterations, method="update", policy=self.policy, info=info))
         return info

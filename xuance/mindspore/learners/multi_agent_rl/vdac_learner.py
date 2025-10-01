@@ -22,7 +22,7 @@ class VDAC_Learner(IAC_Learner):
 
     def forward_fn(self, *args):
         bs, batch_size, state, obs, actions, agent_mask, avail_actions, values, returns, advantages, IDs = args
-        value_pred = {}
+        info_forward = {}
         pi_dist_mu, pi_dist_std, pi_dist_logits = {}, {}, {}
 
         # feedforward
@@ -98,18 +98,25 @@ class VDAC_Learner(IAC_Learner):
                     loss_v = ((value_pred_i - value_target) ** 2) * mask_values
                 loss_c.append(loss_v.sum() / mask_values.sum())
 
-            value_pred.update({
+            info_forward.update({
                 f"predict_value/{key}": value_pred_i.mean().asnumpy()
             })
+
+            info_forward.update(self.callback.on_update_agent_wise(self.iterations, key, info=info_forward,
+                                                                   method="update",
+                                                                   mask_values=mask_values, log_pi=log_pi,
+                                                                   pg_loss=pg_loss,
+                                                                   entropy=entropy, entropy_loss=entropy_loss,
+                                                                   value_pred_i=value_pred_i, value_target=value_target,
+                                                                   values_i=values_i, loss_v=loss_v))
 
         # Total loss
         loss = sum(loss_a) + self.vf_coef * sum(loss_c) - self.ent_coef * sum(loss_e)
 
-        return loss, sum(loss_a), sum(loss_e), sum(loss_c), value_pred
+        return loss, sum(loss_a), sum(loss_e), sum(loss_c), info_forward
 
     def update(self, sample):
         self.iterations += 1
-        info = {}
 
         # prepare training data
         sample_Tensor = self.build_training_data(sample=sample,
@@ -129,8 +136,11 @@ class VDAC_Learner(IAC_Learner):
 
         bs = batch_size * self.n_agents if self.use_parameter_sharing else batch_size
 
+        info = self.callback.on_update_start(self.iterations, method="update",
+                                             policy=self.policy, sample_Tensor=sample_Tensor, bs=bs)
+
         # feedforward
-        (loss, loss_a, loss_e, loss_c, value_pred), grads = self.grad_fn(bs, batch_size, state, obs, actions,
+        (loss, loss_a, loss_e, loss_c, info_forward), grads = self.grad_fn(bs, batch_size, state, obs, actions,
                                                                          agent_mask, avail_actions, values, returns,
                                                                          advantages, IDs)
         if self.use_grad_clip:
@@ -147,6 +157,8 @@ class VDAC_Learner(IAC_Learner):
             "entropy_loss": loss_e.asnumpy(),
             "loss": loss.asnumpy(),
         })
-        info.update(value_pred)
+        info.update(info_forward)
+
+        info.update(self.callback.on_update_end(self.iterations, method="update", policy=self.policy, info=info))
 
         return info

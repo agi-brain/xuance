@@ -38,17 +38,15 @@ class DDPG_Learner(Learner):
 
     def forward_fn_actor(self, obs_batch):
         policy_q = self.policy.Qpolicy(obs_batch)
-        loss_a = -ops.mean(policy_q)
-        return loss_a, policy_q
+        p_loss = -ops.mean(policy_q)
+        return p_loss, policy_q
 
     def forward_fn_critic(self, obs_batch, act_batch, next_batch, rew_batch, ter_batch):
-        target_q = self.policy.Qtarget(next_batch)
-        target_q = target_q.squeeze(-1)
-        backup = rew_batch + (1 - ter_batch) * self.gamma * target_q
-        action_q = self.policy.Qaction(obs_batch, act_batch)
-        action_q = action_q.squeeze(-1)
-        loss_q = self.mse_loss(logits=action_q, labels=ops.stop_gradient(backup))
-        return loss_q, action_q
+        action_q = self.policy.Qaction(obs_batch, act_batch).reshape([-1])
+        next_q = self.policy.Qtarget(next_batch).reshape([-1])
+        target_q = rew_batch + (1 - ter_batch) * self.gamma * next_q
+        q_loss = self.mse_loss(logits=action_q, labels=ops.stop_gradient(target_q))
+        return q_loss, action_q, next_q, target_q
 
     def update(self, **samples):
         self.iterations += 1
@@ -57,13 +55,17 @@ class DDPG_Learner(Learner):
         rew_batch = Tensor(samples['rewards'], dtype=ms.float32)
         next_batch = Tensor(samples['obs_next'], dtype=ms.float32)
         ter_batch = Tensor(samples['terminals'], dtype=ms.float32)
+        info = self.callback.on_update_start(self.iterations,
+                                             policy=self.policy, obs=obs_batch, act=act_batch,
+                                             next_obs=next_batch, rew=rew_batch, termination=ter_batch)
 
-        (q_loss, action_q), grads_critic = self.grad_fn_critic(obs_batch, act_batch, next_batch, rew_batch, ter_batch)
+        (q_loss, action_q, next_q, target_q), grads_critic = self.grad_fn_critic(
+            obs_batch, act_batch, next_batch, rew_batch, ter_batch)
         if self.use_grad_clip:
             grads_critic = clip_grads(grads_critic, Tensor(-self.grad_clip_norm), Tensor(self.grad_clip_norm))
         self.optimizer['critic'](grads_critic)
 
-        (p_loss, _), grads_actor = self.grad_fn_actor(obs_batch)
+        (p_loss, policy_q), grads_actor = self.grad_fn_actor(obs_batch)
         if self.use_grad_clip:
             grads_actor = clip_grads(grads_actor, Tensor(-self.grad_clip_norm), Tensor(self.grad_clip_norm))
         self.optimizer['actor'](grads_actor)
@@ -75,12 +77,17 @@ class DDPG_Learner(Learner):
         actor_lr = self.scheduler['actor'].get_last_lr()[0]
         critic_lr = self.scheduler['critic'].get_last_lr()[0]
 
-        info = {
+        info.update({
             "Qloss": q_loss.asnumpy(),
             "Ploss": p_loss.asnumpy(),
             "Qvalue": action_q.mean().asnumpy(),
             "actor_lr": actor_lr.asnumpy(),
             "critic_lr": critic_lr.asnumpy()
-        }
+        })
+
+        info.update(self.callback.on_update_end(self.iterations,
+                                                policy=self.policy, info=info,
+                                                action_q=action_q, next_q=next_q, target_q=target_q, policy_q=policy_q,
+                                                q_loss=q_loss, p_loss=p_loss))
 
         return info
