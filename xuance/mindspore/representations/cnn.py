@@ -1,4 +1,5 @@
 import numpy as np
+from mindspore.common.initializer import initializer, Orthogonal, Constant
 from xuance.common import Sequence, Optional, Callable
 from xuance.mindspore import Module, Tensor
 from xuance.mindspore.utils import ms, nn, cnn_block, mlp_block, ModuleType
@@ -37,10 +38,10 @@ class Basic_CNN(Module):
         layers.append(nn.Flatten())
         return nn.SequentialCell(*layers)
 
-    def construct(self, observations: np.ndarray):
+    def construct(self, observations: Tensor):
         observations = observations / 255.0
-        tensor_observation = Tensor(np.transpose(observations, (0, 3, 1, 2))).astype(ms.float32)
-        return {'state': self.model(tensor_observation)}
+        tensor_observation = observations.transpose([0, 3, 1, 2])
+        return self.model(tensor_observation)
 
 
 class AC_CNN_Atari(Module):
@@ -67,8 +68,9 @@ class AC_CNN_Atari(Module):
         self.model = self._create_network()
 
     def _init_layer(self, layer, gain=np.sqrt(2), bias=0.0):
-        nn.init.orthogonal_(layer.weight, gain=gain)
-        nn.init.constant_(layer.bias, bias)
+        layer.weight.assign_value(initializer(Orthogonal(gain=gain), shape=layer.weight.shape, dtype=ms.float32))
+        if layer.bias is not None:
+            layer.bias.assign_value(initializer(Constant(bias), shape=layer.bias.shape, dtype=ms.float32))
         return layer
 
     def _create_network(self):
@@ -86,7 +88,7 @@ class AC_CNN_Atari(Module):
             layers.extend(mlp)
         return nn.SequentialCell(*layers)
 
-    def construct(self, observations: np.ndarray):
+    def construct(self, observations: Tensor):
         observations = observations / 255.0
-        tensor_observation = Tensor(np.transpose(observations, (0, 3, 1, 2))).astype(ms.float32)
-        return {'state': self.model(tensor_observation)}
+        tensor_observation = observations.transpose([0, 3, 1, 2])
+        return self.model(tensor_observation)
