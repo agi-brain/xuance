@@ -107,7 +107,7 @@ To maintain consistency and quality across the project, please follow these guid
 
 ### Code of Conduct
 
-By participating in this project, you agree to abide by our [Code of Conduct](https://github.com/agi-brain/xuance/blob/master/CODE_OF_CONDUCT.md).
+By participating in this project, you agree to abide by our [Code of Conduct](CODE_OF_CONDUCT.md). 
 Please read it to understand the expectations for participation.
 
 ### Contributing to Documentation
