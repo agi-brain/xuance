@@ -7,4 +7,4 @@ Offline Reinforcement Learning
 
     TD3BC <offline/td3bc>
 
-* :class:`CURL_Agents` : :doc:`Twin Delayed Deep Deterministic Policy Gradient with Behavior Cloning (TD3BC) <offline/td3bc>`.
+* :class:`TD3BC` : :doc:`Twin Delayed Deep Deterministic Policy Gradient with Behavior Cloning (TD3BC) <offline/td3bc>`.
