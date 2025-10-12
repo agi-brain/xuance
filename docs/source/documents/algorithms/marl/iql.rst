@@ -1,0 +1,2 @@
+Independent Q-Learning (IQL)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

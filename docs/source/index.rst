@@ -165,21 +165,32 @@ XuanCe contains four main parts:
 - Part III: Environments. The supported simulated environments.
 - Part IV: Algorithms. The key part to build DRL algorithms.
 
+.. raw:: html
+
+   <br>
+
 .. toctree::
-   :hidden:
-   :maxdepth: 1
+   :maxdepth: 2
    :caption: Tutorial:
 
    documents/usage/installation
    documents/usage/basic_usage
    documents/usage/further_usage
-   documents/usage/custom_drl_envs
-   documents/usage/custom_marl_envs
+   documents/usage/custom_env
    documents/usage/custom_algorithm
    documents/usage/custom_callback
 
-APIs of XuanCe
-----------------
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Algorithms:
+
+   Single-Agent RL <documents/algorithms/drl>
+   Multo-Agent RL <documents/algorithms/marl>
+   Model-based RL <documents/algorithms/crl>
+   Constructive RL <documents/algorithms/crl>
+   Offline RL <documents/algorithms/crl>
+
 
 .. toctree::
    :maxdepth: 1

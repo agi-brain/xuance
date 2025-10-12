@@ -1,0 +1,2 @@
+Independent Actor-Critic (IAC)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
