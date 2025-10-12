@@ -1,4 +1,4 @@
-Customized Callback
+Custom Callback
 ---------------------------------
 
 The agents in XuanCe support the injection of user-defined callbacks of enhanced customization
@@ -37,7 +37,7 @@ The example code is provided below:
     from torch.utils.tensorboard import SummaryWriter
 
     class MyCallback(BaseCallback):
-    "The customized callback."
+    "The custom callback."
     def __init__(self, config):
         super(MyCallback, self).__init__()
         log_dir = os.path.join(os.getcwd(), config.log_dir, 'callback_info')
@@ -52,7 +52,7 @@ The example code is provided below:
         self.writer.add_scalars('environment_information/info_1', {f"env-{env_id}": infos[env_id]["info_1"]}, step)
         self.writer.add_scalars('environment_information/info_2', {f"env-{env_id}": infos[env_id]["info_2"]}, step)
 
-    Agent = DQN_Agent(config=configs, envs=envs, callback=MyCallback(configs))  # Create a DDPG agent with customized callback.
+    Agent = DQN_Agent(config=configs, envs=envs, callback=MyCallback(configs))  # Create a DDPG agent with custom callback.
 
 Full code
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

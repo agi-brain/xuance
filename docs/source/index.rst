@@ -173,8 +173,11 @@ XuanCe contains four main parts:
    documents/usage/installation
    documents/usage/basic_usage
    documents/usage/further_usage
-   documents/usage/new_envs
-   documents/usage/new_algorithm
+   documents/usage/new_drl_envs
+   documents/usage/new_marl_envs
+   documents/usage/new_drl_algorithm
+   documents/usage/new_marl_algorithm
+   documents/usage/new_callback
 
 APIs of XuanCe
 ----------------

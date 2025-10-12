@@ -74,7 +74,7 @@ The full algorithm for training P-DQN is presented in Algorithm 1:
 Before running P-DQN in XuanCe, you need to prepare a conda environment and install ``xuance`` following
 the [**installation steps**](./../../../usage/installation.rst#install-via-pypi).
 
-### Run With Customized Demos
+### Run With Custom Demos
 
 If you would like to run XuanCe's P-DQN in your own environment that was not included in XuanCe, you need to define the new environment following the steps in [**New Environment Tutorial**](./../../../usage/new_envs.rst). Then, [**prepapre the configuration file**](./../../../usage/new_envs.rst#step-2-create-the-config-file-and-read-the-configurations)``pdqn_myenv.yaml``.
 

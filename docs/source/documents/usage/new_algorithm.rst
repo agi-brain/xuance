@@ -1,4 +1,4 @@
-New Algorithm
+Custom Algorithm
 =========================================================
 
 .. raw:: html
@@ -11,7 +11,7 @@ New Algorithm
    </a>
    <br>
 
-We allow users create their own customized algorithm outside of the default in XuanCe.
+We allow users create their own custom algorithm outside of the default in XuanCe.
 
 This tutorial walks you through the process of creating, training,
 and testing a custom off-policy reinforcement learning (RL) agent using the XuanCe framework.
@@ -73,7 +73,7 @@ Key Points:
 - networks: The policy uses a feedforward neural network to calculate actions and estimate Q-values.
 - device: The device choice should align with that of the other modules.
 
-Step 2: Define the Learner
+Step 2: Define the Learner Class
 -------------------------------------------------------------
 
 The learner manages the policy optimization process,
@@ -129,7 +129,7 @@ Key Points:
 - update: In this method, we can get a batch of samples and use them to calculate loss values and back propagation.
 - info: The users can add arbitrarily .
 
-Step 3: Define the Agent
+Step 3: Define the Agent Class
 -------------------------------------------------------------
 
 The agent combines the policy, learner, and environment interaction to create a complete RL pipeline.
@@ -147,7 +147,7 @@ The agent combines the policy, learner, and environment interaction to create a 
         def _build_policy(self):
             # First create the representation module.
             representation = self._build_representation("Basic_MLP", self.observation_space, self.config)
-            # Build your customized policy module.
+            # Build your custom policy module.
             policy = MyPolicy(representation, 64, self.action_space.n, self.config.device)
             return policy
 

@@ -1,7 +1,7 @@
-Build Multi-Agent Environment
----------------------------------
+Custom Environment (Multi-Agent)
+---------------------------------------
 
-In XuanCe, users also have the flexibility to create and run their own customized environments with multiple agents in addition to utilizing the provided ones.
+In XuanCe, users also have the flexibility to create and run their own custom environments with multiple agents in addition to utilizing the provided ones.
 
 .. raw:: html
 
@@ -13,7 +13,7 @@ In XuanCe, users also have the flexibility to create and run their own customize
    </a>
    <br>
 
-Step 1: Create a New Multi-Agent Environment
+Step 1: Create a New Multi-Agent Environment Class
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 First, you need to prepare an original environment, i.e., an Partial Observed Markov decision process (POMDP).

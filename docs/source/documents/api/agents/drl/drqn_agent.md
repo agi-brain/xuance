@@ -80,7 +80,7 @@ runner.run()  # Or runner.benchmark()
 To learn more about the configurations, please visit the 
 [**tutorial of configs**](./../../configs/configuration_examples.rst).
 
-### Run With Customized Environment
+### Run With Custom Environment
 
 If you would like to run XuanCe's DRQN in your own environment that was not included in XuanCe, 
 you need to define the new environment following the steps in 

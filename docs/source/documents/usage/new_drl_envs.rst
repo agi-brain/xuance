@@ -1,7 +1,7 @@
-Build Single-Agent Environment
----------------------------------
+Custom Environment (Single-Agent)
+---------------------------------------
 
-In XuanCe, users have the flexibility to create and run their own customized environments in addition to utilizing the provided ones.
+In XuanCe, users have the flexibility to create and run their own custom environments in addition to utilizing the provided ones.
 
 .. raw:: html
 
@@ -13,8 +13,8 @@ In XuanCe, users have the flexibility to create and run their own customized env
    </a>
    <br>
 
-Step 1: Create a New Environment
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Step 1: Create a New Environment Class
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 First, you need to prepare an original environment, i.e., an Markov decision process.
 Then define a new environment based on the basic class ``RawEnvironment`` of XuanCe.
