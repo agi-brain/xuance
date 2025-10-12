@@ -52,7 +52,7 @@ This formulation enables the policy to be updated by following the gradient of t
 ## Run PG in XuanCe
 
 Before running PG in XuanCe, you need to prepare a conda environment and install ``xuance`` following 
-the [**installation steps**](./../../../usage/installation.rst#install-xuance).
+the [**installation steps**](./../../usage/installation.rst#install-xuance).
 
 ### Run Build-in Demos
 
@@ -89,8 +89,8 @@ To learn more about the configurations, please visit the
 
 If you would like to run XuanCe's PG in your own environment that was not included in XuanCe, 
 you need to define the new environment following the steps in 
-[**New Environment Tutorial**](./../../../usage/custom_env/custom_drl_env.rst).
-Then, [**prepapre the configuration file**](./../../../usage/custom_env/custom_drl_env.rst#step-2-create-the-config-file-and-read-the-configurations) 
+[**New Environment Tutorial**](./../../usage/custom_env/custom_drl_env.rst).
+Then, [**prepapre the configuration file**](./../../usage/custom_env/custom_drl_env.rst#step-2-create-the-config-file-and-read-the-configurations) 
  ``pg_myenv.yaml``.
 
 After that, you can run PG in your own environment with the following code:

@@ -83,7 +83,7 @@ Here is an example:
 Step 2: Create the Config File and Read the Configurations
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Then, you need to create a YAML file by following the step 1 in :doc:`Further Usage <further_usage>`.
+Then, you need to create a YAML file by following the step 1 in :doc:`Further Usage <../further_usage>`.
 
 Here is an example of configurations for DDPG algorithm, named "ippo_new_configs.yaml".
 

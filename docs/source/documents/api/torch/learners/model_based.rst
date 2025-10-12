@@ -1,18 +1,18 @@
-base
+model_based
 =============================
 
-agent
+dreamer_v2_learner
 -----------------------------
 
-.. automodule:: xuance.torch.agents.base.agent
+.. automodule:: xuance.torch.learners.model_based.dreamer_v2_learner
     :members:
     :undoc-members:
     :show-inheritance:
 
-agents_marl
+dreamer_v3_learner
 -----------------------------
 
-.. automodule:: xuance.torch.agents.base.agents_marl
+.. automodule:: xuance.torch.learners.model_based.dreamer_v3_learner
     :members:
     :undoc-members:
     :show-inheritance:

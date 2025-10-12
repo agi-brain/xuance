@@ -1,4 +1,4 @@
-Common Tools
+common_tools
 ----------------------
 
 .. automodule:: xuance.common.common_tools

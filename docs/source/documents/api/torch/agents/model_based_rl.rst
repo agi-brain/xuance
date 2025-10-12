@@ -1,18 +1,18 @@
-base
+model_based_rl
 =============================
 
-agent
+dreamer_v2_agent
 -----------------------------
 
-.. automodule:: xuance.torch.agents.base.agent
+.. automodule:: xuance.torch.agents.model_based_rl.dreamer_v2_agent
     :members:
     :undoc-members:
     :show-inheritance:
 
-agents_marl
+dreamer_v3_agent
 -----------------------------
 
-.. automodule:: xuance.torch.agents.base.agents_marl
+.. automodule:: xuance.torch.agents.model_based_rl.dreamer_v3_agent
     :members:
     :undoc-members:
     :show-inheritance:

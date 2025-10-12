@@ -74,7 +74,7 @@ The full algorithm for training PER DQN is presented in Algorithm 1:
 ## Run PER DQN in XuanCe
 
 Before running PER DQN in XuanCe, you need to prepare a conda environment and install ``xuance`` following 
-the [**installation steps**](./../../../usage/installation.rst#install-xuance).
+the [**installation steps**](./../../usage/installation.rst#install-xuance).
 
 ### Run Build-in Demos
 
@@ -111,8 +111,8 @@ To learn more about the configurations, please visit the
 
 If you would like to run XuanCe's PER DQN in your own environment that was not included in XuanCe, 
 you need to define the new environment following the steps in 
-[**New Environment Tutorial**](./../../../usage/custom_env/custom_drl_env.rst).
-Then, [**prepapre the configuration file**](./../../../usage/custom_env/custom_drl_env.rst#step-2-create-the-config-file-and-read-the-configurations) 
+[**New Environment Tutorial**](./../../usage/custom_env/custom_drl_env.rst).
+Then, [**prepapre the configuration file**](./../../usage/custom_env/custom_drl_env.rst#step-2-create-the-config-file-and-read-the-configurations) 
  ``perdqn_myenv.yaml``.
 
 After that, you can run PER DQN in your own environment with the following code:

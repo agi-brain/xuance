@@ -95,7 +95,7 @@ The full algorithm for training DQN is presented in Algorithm 1:
 ## Run DrQ in XuanCe
 
 Before running DrQ in XuanCe, you need to prepare a conda environment and install ``xuance`` following 
-the [**installation steps**](./../../../usage/installation.rst#install-xuance).
+the [**installation steps**](./../../usage/installation.rst#install-xuance).
 
 ### Run Build-in Demos
 

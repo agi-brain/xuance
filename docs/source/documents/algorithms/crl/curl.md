@@ -113,7 +113,7 @@ The overall agent-environment interaction of CURL, as implemented in XuanCe, is 
 ## Run CURL in XuanCe
 
 Before running CURL in XuanCe, you need to prepare a conda environment and install ``xuance`` following 
-the [**installation steps**](./../../../usage/installation.rst#install-xuance).
+the [**installation steps**](./../../usage/installation.rst#install-xuance).
 
 ### Run Build-in Demos
 
@@ -150,8 +150,8 @@ To learn more about the configurations, please visit the
 
 If you would like to run XuanCe's CURL in your own environment that was not included in XuanCe, 
 you need to define the new environment following the steps in 
-[**New Environment Tutorial**](./../../../usage/new_envs.rst).
-Then, [**prepapre the configuration file**](./../../../usage/new_envs.rst#step-2-create-the-config-file-and-read-the-configurations) 
+[**New Environment Tutorial**](./../../usage/new_envs.rst).
+Then, [**prepapre the configuration file**](./../../usage/new_envs.rst#step-2-create-the-config-file-and-read-the-configurations) 
  ``curl_myenv.yaml``.
 
 After that, you can run CURL in your own environment with the following code:

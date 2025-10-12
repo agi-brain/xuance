@@ -1,7 +1,8 @@
-memory_tools
+offline_util
 ----------------------
 
-.. automodule:: xuance.common.memory_tools
+.. automodule:: xuance.common.offline_util
     :members:
     :undoc-members:
     :show-inheritance:
+

@@ -41,7 +41,7 @@ Check out the [TD3](./td3_agent.md)   algorithm.
 
 ## Run SAC in XuanCe
 Before running SAC in XuanCe, you need to prepare a conda environment and install ```xuance``` following the
- [**installation steps**](./../../../usage/installation.rst#install-xuance).
+ [**installation steps**](./../../usage/installation.rst#install-xuance).
 ### Run Build-in Demos
 After completing the installation, you can open a Python console and run TD3 directly using the following commands:
 ```
@@ -69,8 +69,8 @@ To learn more about the configurations, please visit the
 ### Run With Custom Environment
 If you would like to run XuanCe’s SAC in your own environment that was not included in XuanCe, you need to 
 define the new environment following the steps in 
- [**New Environment Tutorial**](./../../../usage/custom_env/custom_drl_env.rst).
-Then, [**prepapre the configuration file**](./../../../usage/custom_env/custom_drl_env.rst#step-2-create-the-config-file-and-read-the-configurations) 
+ [**New Environment Tutorial**](./../../usage/custom_env/custom_drl_env.rst).
+Then, [**prepapre the configuration file**](./../../usage/custom_env/custom_drl_env.rst#step-2-create-the-config-file-and-read-the-configurations) 
    ```SAC_myenv.yaml```.
 
 After that, you can run SAC in your own environment with the following code:
