@@ -43,6 +43,9 @@ extensions = [
     "sphinx_github_changelog"
 ]
 
+napoleon_google_docstring = True
+napoleon_numpy_docstring = False
+
 source_suffix = {
     '.rst': 'restructuredtext',
     '.txt': 'markdown',

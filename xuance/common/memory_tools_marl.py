@@ -55,20 +55,20 @@ class MARL_OnPolicyBuffer(BaseBuffer):
         gae_lam (float): gae lambda.
         **kwargs: Other arguments.
 
-    Example:
-        $ state_space=None
-        $ obs_space={'agent_0': Box(-inf, inf, (18,), float32),
-                     'agent_1': Box(-inf, inf, (18,), float32),
-                     'agent_2': Box(-inf, inf, (18,), float32)},
-        $ act_space={'agent_0': Box(0.0, 1.0, (5,), float32),
-                     'agent_1': Box(0.0, 1.0, (5,), float32),
-                     'agent_2': Box(0.0, 1.0, (5,), float32)},
-        $ n_envs=16,
-        $ buffer_size=1600,
-        $ agent_keys=['agent_0', 'agent_1', 'agent_2'],
-        $ memory = MARL_OffPolicyBuffer(agent_keys=agent_keys, state_space=state_space, obs_space=obs_space,
-                                        act_space=act_space, n_envs=n_envs, buffer_size=buffer_size,
-                                        use_gae=False, use_advnorm=False, gamma=0.99, gae_lam=0.95)
+    Examples:
+        >>> state_space=None
+        >>> obs_space={'agent_0': Box(-inf, inf, (18,), float32),
+        ...            'agent_1': Box(-inf, inf, (18,), float32),
+        ...            'agent_2': Box(-inf, inf, (18,), float32)},
+        >>> act_space={'agent_0': Box(0.0, 1.0, (5,), float32),
+        ...            'agent_1': Box(0.0, 1.0, (5,), float32),
+        ...            'agent_2': Box(0.0, 1.0, (5,), float32)},
+        >>> n_envs=16,
+        >>> buffer_size=1600,
+        >>> agent_keys=['agent_0', 'agent_1', 'agent_2'],
+        >>> memory = MARL_OffPolicyBuffer(agent_keys=agent_keys, state_space=state_space, obs_space=obs_space,
+        ...                               act_space=act_space, n_envs=n_envs, buffer_size=buffer_size,
+        ...                               use_gae=False, use_advnorm=False, gamma=0.99, gae_lam=0.95)
     """
 
     def __init__(self,
@@ -107,15 +107,25 @@ class MARL_OnPolicyBuffer(BaseBuffer):
         """
         Clears the memory data in the replay buffer.
 
-        Example:
-        An example shows the data shape: (n_env=16, buffer_size=1600, agent_keys=['agent_0', 'agent_1', 'agent_2']).
-        self.data: {'obs': {'agent_0': shape=[16, 100, 18],
-                            'agent_1': shape=[16, 100, 18],
-                            'agent_2': shape=[16, 100, 18]},  # dim_obs: 18
-                    'actions': {'agent_0': shape=[16, 100, 5],
-                                'agent_1': shape=[16, 100, 5],
-                                'agent_2': shape=[16, 100, 5]},  # dim_act: 5
-                     ...}
+        Examples:
+            An example shows the data shape
+            (``n_env=16``, ``buffer_size=1600``, ``agent_keys=['agent_0', 'agent_1', 'agent_2']``):
+
+            .. code-block:: python
+
+                self.data = {
+                    'obs': {
+                        'agent_0': shape=[16, 100, 18],
+                        'agent_1': shape=[16, 100, 18],
+                        'agent_2': shape=[16, 100, 18],
+                    },  # dim_obs: 18
+                    'actions': {
+                        'agent_0': shape=[16, 100, 5],
+                        'agent_1': shape=[16, 100, 5],
+                        'agent_2': shape=[16, 100, 5],
+                    },  # dim_act: 5
+                    ...
+                }
         """
         self.data = {
             'obs': create_memory(space2shape(self.obs_space), self.n_envs, self.n_size),
@@ -258,22 +268,22 @@ class MARL_OnPolicyBuffer_RNN(MARL_OnPolicyBuffer):
         gae_lam (float): gae lambda.
         **kwargs: Other arguments.
 
-    Example:
-        >> state_space=None
-        >> obs_space={'agent_0': Box(-inf, inf, (18,), float32),
-                      'agent_1': Box(-inf, inf, (18,), float32),
-                      'agent_2': Box(-inf, inf, (18,), float32)},
-        >> act_space={'agent_0': Box(0.0, 1.0, (5,), float32),
-                      'agent_1': Box(0.0, 1.0, (5,), float32),
-                      'agent_2': Box(0.0, 1.0, (5,), float32)},
-        >> n_envs=16,
-        >> buffer_size=1600,
-        >> agent_keys=['agent_0', 'agent_1', 'agent_2'],
-        >> max_episode_steps = 100
-        >> memory = MARL_OffPolicyBuffer(agent_keys=agent_keys, state_space=state_space, obs_space=obs_space,
-                                         act_space=act_space, n_envs=n_envs, buffer_size=buffer_size,
-                                         max_episode_steps=max_episode_steps,
-                                         use_gae=False, use_advnorm=False, gamma=0.99, gae_lam=0.95)
+    Examples:
+        >>> state_space=None
+        >>> obs_space={'agent_0': Box(-inf, inf, (18,), float32),
+        ...            'agent_1': Box(-inf, inf, (18,), float32),
+        ...            'agent_2': Box(-inf, inf, (18,), float32)},
+        >>> act_space={'agent_0': Box(0.0, 1.0, (5,), float32),
+        ...            'agent_1': Box(0.0, 1.0, (5,), float32),
+        ...            'agent_2': Box(0.0, 1.0, (5,), float32)},
+        >>> n_envs=16,
+        >>> buffer_size=1600,
+        >>> agent_keys=['agent_0', 'agent_1', 'agent_2'],
+        >>> max_episode_steps = 100
+        >>> memory = MARL_OffPolicyBuffer(agent_keys=agent_keys, state_space=state_space, obs_space=obs_space,
+        ...                               act_space=act_space, n_envs=n_envs, buffer_size=buffer_size,
+        ...                               max_episode_steps=max_episode_steps,
+        ...                               use_gae=False, use_advnorm=False, gamma=0.99, gae_lam=0.95)
     """
 
     def __init__(self,
@@ -303,6 +313,17 @@ class MARL_OnPolicyBuffer_RNN(MARL_OnPolicyBuffer):
         return self.size >= self.buffer_size
 
     def clear(self):
+        """
+        Clear all buffer data in the on-policy replay buffer.
+
+        This method resets all stored observations, actions, rewards, values, and other related fields to zero.
+
+        Args:
+            None
+
+        Returns:
+            None
+        """
         self.data = {
             'obs': {k: np.zeros((self.buffer_size, self.max_eps_len) + self.obs_shape[k], np.float32)
                     for k in self.agent_keys},
@@ -490,9 +511,21 @@ class IC3Net_OnPolicyBuffer_RNN(MARL_OnPolicyBuffer_RNN):
                  gae_lam: Optional[float] = None,
                  **kwargs):
         super(IC3Net_OnPolicyBuffer_RNN, self).__init__(agent_keys, state_space, obs_space, act_space,
-                                                        n_envs, buffer_size, max_episode_steps, use_gae, use_advnorm, gamma, gae_lam, **kwargs)
+                                                        n_envs, buffer_size, max_episode_steps, use_gae, use_advnorm,
+                                                        gamma, gae_lam, **kwargs)
 
     def clear(self):
+        """
+        Clear all buffer data in the on-policy replay buffer.
+
+        This method resets all stored observations, actions, rewards, values, and other related fields to zero.
+
+        Args:
+            None
+
+        Returns:
+            None
+        """
         self.data = {
             'obs': {k: np.zeros((self.buffer_size, self.max_eps_len) + self.obs_shape[k], np.float32)
                     for k in self.agent_keys},
@@ -593,21 +626,21 @@ class MARL_OffPolicyBuffer(BaseBuffer):
         batch_size (int): Batch size of transition data for a sample.
         **kwargs: Other arguments.
 
-    Example:
-        >> state_space=None
-        >> obs_space={'agent_0': Box(-inf, inf, (18,), float32),
-                      'agent_1': Box(-inf, inf, (18,), float32),
-                      'agent_2': Box(-inf, inf, (18,), float32)},
-        >> act_space={'agent_0': Box(0.0, 1.0, (5,), float32),
-                      'agent_1': Box(0.0, 1.0, (5,), float32),
-                      'agent_2': Box(0.0, 1.0, (5,), float32)},
-        >> n_envs=50,
-        >> buffer_size=10000,
-        >> batch_size=256,
-        >> agent_keys=['agent_0', 'agent_1', 'agent_2'],
-        >> memory = MARL_OffPolicyBuffer(agent_keys=agent_keys, state_space=state_space, obs_space=obs_space,
-                                         act_space=act_space, n_envs=n_envs, buffer_size=buffer_size,
-                                         batch_size=batch_size)
+    Examples:
+        >>> state_space=None
+        >>> obs_space={'agent_0': Box(-inf, inf, (18,), float32),
+        ...            'agent_1': Box(-inf, inf, (18,), float32),
+        ...            'agent_2': Box(-inf, inf, (18,), float32)},
+        >>> act_space={'agent_0': Box(0.0, 1.0, (5,), float32),
+        ...            'agent_1': Box(0.0, 1.0, (5,), float32),
+        ...            'agent_2': Box(0.0, 1.0, (5,), float32)},
+        >>> n_envs=50,
+        >>> buffer_size=10000,
+        >>> batch_size=256,
+        >>> agent_keys=['agent_0', 'agent_1', 'agent_2'],
+        >>> memory = MARL_OffPolicyBuffer(agent_keys=agent_keys, state_space=state_space, obs_space=obs_space,
+        ...                              act_space=act_space, n_envs=n_envs, buffer_size=buffer_size,
+        ...                               batch_size=batch_size)
     """
 
     def __init__(self,
@@ -632,15 +665,25 @@ class MARL_OffPolicyBuffer(BaseBuffer):
         """
         Clears the memory data in the replay buffer.
 
-        Example:
-        An example shows the data shape: (n_env=50, buffer_size=10000, agent_keys=['agent_0', 'agent_1', 'agent_2']).
-        self.data: {'obs': {'agent_0': shape=[50, 200, 18],
-                            'agent_1': shape=[50, 200, 18],
-                            'agent_2': shape=[50, 200, 18]},  # dim_obs: 18
-                    'actions': {'agent_0': shape=[50, 200, 5],
-                                'agent_1': shape=[50, 200, 5],
-                                'agent_2': shape=[50, 200, 5]},  # dim_act: 5
-                     ...}
+        Examples:
+            An example shows the data shape:
+
+            .. code-block:: python
+
+                # (n_env=50, buffer_size=10000, agent_keys=['agent_0', 'agent_1', 'agent_2'])
+                self.data = {
+                    'obs': {
+                        'agent_0': shape=[50, 200, 18],
+                        'agent_1': shape=[50, 200, 18],
+                        'agent_2': shape=[50, 200, 18],
+                    },  # dim_obs: 18
+                    'actions': {
+                        'agent_0': shape=[50, 200, 5],
+                        'agent_1': shape=[50, 200, 5],
+                        'agent_2': shape=[50, 200, 5],
+                    },  # dim_act: 5
+                    ...
+                }
         """
         reward_space = {key: () for key in self.agent_keys}
         terminal_space = {key: () for key in self.agent_keys}
@@ -720,24 +763,23 @@ class MARL_OffPolicyBuffer_RNN(MARL_OffPolicyBuffer):
         max_episode_steps (int): The sequence length of each episode data.
         **kwargs: Other arguments.
 
-    Example:
-        $ state_space=None
-        $ obs_space={'agent_0': Box(-inf, inf, (18,), float32),
-                     'agent_1': Box(-inf, inf, (18,), float32),
-                     'agent_2': Box(-inf, inf, (18,), float32)},
-        $ act_space={'agent_0': Box(0.0, 1.0, (5,), float32),
-                     'agent_1': Box(0.0, 1.0, (5,), float32),
-                     'agent_2': Box(0.0, 1.0, (5,), float32)},
-        $ n_envs=50,
-        $ buffer_size=10000,
-        $ batch_size=256,
-        $ agent_keys=['agent_0', 'agent_1', 'agent_2'],
-        $ max_episode_steps=60
-        $ memory = MARL_OffPolicyBuffer_RNN(agent_keys=agent_keys, state_space=state_space,
-                                            obs_space=obs_space, act_space=act_space,
-                                            n_envs=n_envs, buffer_size=buffer_size, batch_size=batch_size,
-                                            max_episode_steps=max_episode_steps,
-                                            agent_keys=agent_keys)
+    Examples:
+        >>> state_space=None
+        >>> obs_space={'agent_0': Box(-inf, inf, (18,), float32),
+        ...            'agent_1': Box(-inf, inf, (18,), float32),
+        ...            'agent_2': Box(-inf, inf, (18,), float32)},
+        >>> act_space={'agent_0': Box(0.0, 1.0, (5,), float32),
+        ...            'agent_1': Box(0.0, 1.0, (5,), float32),
+        ...            'agent_2': Box(0.0, 1.0, (5,), float32)},
+        >>> n_envs=50,
+        >>> buffer_size=10000,
+        >>> batch_size=256,
+        >>> agent_keys=['agent_0', 'agent_1', 'agent_2'],
+        >>> max_episode_steps=60
+        >>> memory = MARL_OffPolicyBuffer_RNN(agent_keys=agent_keys, state_space=state_space,
+        ...                                   obs_space=obs_space, act_space=act_space,
+        ...                                   n_envs=n_envs, buffer_size=buffer_size, batch_size=batch_size,
+        ...                                   max_episode_steps=max_episode_steps)
     """
 
     def __init__(self,
@@ -763,18 +805,26 @@ class MARL_OffPolicyBuffer_RNN(MARL_OffPolicyBuffer):
         """
         Clears the memory data in the replay buffer.
 
-        Example:
-        An example shows the data shape: (buffer_size=10000, max_eps_len=60,
-                                          agent_keys=['agent_0', 'agent_1', 'agent_2']).
-        self.data: {'obs': {'agent_0': shape=[10000, 61, 18],
-                            'agent_1': shape=[10000, 61, 18],
-                            'agent_2': shape=[10000, 61, 18]},  # dim_obs: 18
-                    'actions': {'agent_0': shape=[10000, 60, 5],
-                                'agent_1': shape=[10000, 60, 5],
-                                'agent_2': shape=[10000, 60, 5]},  # dim_act: 5
-                     ...
-                     'filled': shape=[10000, 60],  # Step mask values. True means current step is not terminated.
-                     }
+        Examples:
+            An example shows the data shape
+            (``buffer_size=10000``, ``max_eps_len=60``, ``agent_keys=['agent_0', 'agent_1', 'agent_2']``):
+
+            .. code-block:: python
+
+                self.data = {
+                    'obs': {
+                        'agent_0': shape=[10000, 61, 18],
+                        'agent_1': shape=[10000, 61, 18],
+                        'agent_2': shape=[10000, 61, 18],
+                    },  # dim_obs: 18
+                    'actions': {
+                        'agent_0': shape=[10000, 60, 5],
+                        'agent_1': shape=[10000, 60, 5],
+                        'agent_2': shape=[10000, 60, 5],
+                    },  # dim_act: 5
+                    ...
+                    'filled': shape=[10000, 60],  # Step mask values. True means current step is not terminated.
+                }
         """
         self.data = {
             'obs': {k: np.zeros((self.buffer_size, self.max_eps_len + 1) + self.obs_shape[k], dtype=np.float32)
@@ -800,17 +850,26 @@ class MARL_OffPolicyBuffer_RNN(MARL_OffPolicyBuffer):
         """
         Clears an episode of data for multiple environments in the replay buffer.
 
-        Example:
-        An example shows the data shape: (n_envs=16, max_eps_len=60, agent_keys=['agent_0', 'agent_1', 'agent_2']).
-        self.data: {'obs': {'agent_0': shape=[16, 61, 18],
-                            'agent_1': shape=[16, 61, 18],
-                            'agent_2': shape=[16, 61, 18]},  # dim_obs: 18
-                    'actions': {'agent_0': shape=[16, 60, 5],
-                                'agent_1': shape=[16, 60, 5],
-                                'agent_2': shape=[16, 60, 5]},  # dim_act: 5
-                     ...
-                     'filled': shape=[16, 60],  # Step mask values. True means current step is not terminated.
-                     }
+        Examples:
+            An example shows the data shape
+            (``n_envs=16``, ``max_eps_len=60``, ``agent_keys=['agent_0', 'agent_1', 'agent_2']``):
+
+            .. code-block:: python
+
+                self.data = {
+                    'obs': {
+                        'agent_0': shape=[16, 61, 18],
+                        'agent_1': shape=[16, 61, 18],
+                        'agent_2': shape=[16, 61, 18],
+                    },  # dim_obs: 18
+                    'actions': {
+                        'agent_0': shape=[16, 60, 5],
+                        'agent_1': shape=[16, 60, 5],
+                        'agent_2': shape=[16, 60, 5],
+                    },  # dim_act: 5
+                    ...
+                    'filled': shape=[16, 60],  # Step mask values. True means current step is not terminated.
+                }
         """
         self.episode_data = {
             'obs': {k: np.zeros((self.n_envs, self.max_eps_len + 1) + self.obs_shape[k], dtype=np.float32)
@@ -932,21 +991,21 @@ class MeanField_OffPolicyBuffer(MARL_OffPolicyBuffer):
         batch_size (int): Batch size of transition data for a sample.
         **kwargs: Other arguments.
 
-    Example:
-        >> state_space=None
-        >> obs_space={'agent_0': Box(-inf, inf, (18,), float32),
-                      'agent_1': Box(-inf, inf, (18,), float32),
-                      'agent_2': Box(-inf, inf, (18,), float32)},
-        >> act_space={'agent_0': Box(0.0, 1.0, (5,), float32),
-                      'agent_1': Box(0.0, 1.0, (5,), float32),
-                      'agent_2': Box(0.0, 1.0, (5,), float32)},
-        >> n_envs=50,
-        >> buffer_size=10000,
-        >> batch_size=256,
-        >> agent_keys=['agent_0', 'agent_1', 'agent_2'],
-        >> memory = MARL_OffPolicyBuffer(agent_keys=agent_keys, state_space=state_space, obs_space=obs_space,
-                                         act_space=act_space, n_envs=n_envs, buffer_size=buffer_size,
-                                         batch_size=batch_size)
+    Examples:
+        >>> state_space=None
+        >>> obs_space={'agent_0': Box(-inf, inf, (18,), float32),
+        ...            'agent_1': Box(-inf, inf, (18,), float32),
+        ...            'agent_2': Box(-inf, inf, (18,), float32)},
+        >>> act_space={'agent_0': Box(0.0, 1.0, (5,), float32),
+        ...            'agent_1': Box(0.0, 1.0, (5,), float32),
+        ...            'agent_2': Box(0.0, 1.0, (5,), float32)},
+        >>> n_envs=50,
+        >>> buffer_size=10000,
+        >>> batch_size=256,
+        >>> agent_keys=['agent_0', 'agent_1', 'agent_2'],
+        >>> memory = MARL_OffPolicyBuffer(agent_keys=agent_keys, state_space=state_space, obs_space=obs_space,
+        ...                               act_space=act_space, n_envs=n_envs, buffer_size=buffer_size,
+        ...                               batch_size=batch_size)
     """
 
     def __init__(self,
@@ -978,6 +1037,17 @@ class MeanField_OffPolicyBuffer_RNN(MARL_OffPolicyBuffer_RNN):
         super(MeanField_OffPolicyBuffer_RNN, self).__init__(*args, **kwargs)
 
     def clear(self):
+        """
+        Clear all buffer data in the on-policy replay buffer.
+
+        This method resets all stored observations, actions, rewards, values, and other related fields to zero.
+
+        Args:
+            None
+
+        Returns:
+            None
+        """
         super().clear()
         self.data['actions_mean'] = {k: np.zeros((self.buffer_size, self.max_eps_len + 1) + self.prob_space,
                                                  dtype=np.float32) for k in self.agent_keys}

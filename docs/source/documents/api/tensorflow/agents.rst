@@ -12,11 +12,8 @@ agents
     qlearning_family <agents/qlearning_family>
 
 - :doc:`base <agents/base>`.
-- :doc:`contrastive_unsupervised_rl <agents/contrastive_unsupervised_rl>`.
 - :doc:`core <agents/core>`.
-- :doc:`model_based_rl <agents/model_based_rl>`.
 - :doc:`multi_agent_rl <agents/multi_agent_rl>`.
-- :doc:`offline_rl <agents/offline_rl>`.
 - :doc:`policy_gradient <agents/policy_gradient>`.
 - :doc:`qlearning_family <agents/qlearning_family>`.
 
