@@ -21,12 +21,12 @@ This design provides significant advantages for research and experimentation:
 
 To get started, please refer to:
 
-- :doc:`Custom Algorithms: Single-Agent <custom_algorithm/custom_drl_algorithm>`
-- :doc:`Custom Algorithms: Multi-Agent <custom_algorithm/custom_marl_algorithm>`
+- :doc:`Custom Algorithms: DRL <custom_algorithm/custom_drl_algorithm>`
+- :doc:`Custom Algorithms: MARL <custom_algorithm/custom_marl_algorithm>`
 
 .. toctree::
    :hidden:
    :maxdepth: 1
 
-   Custom Algorithms: Single-Agent <custom_algorithm/custom_drl_algorithm>
-   Custom Algorithms: Multi-Agent <custom_algorithm/custom_marl_algorithm>
+   DRL <custom_algorithm/custom_drl_algorithm>
+   MARL <custom_algorithm/custom_marl_algorithm>

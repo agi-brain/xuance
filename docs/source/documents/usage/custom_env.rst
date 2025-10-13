@@ -22,5 +22,5 @@ To get started, please refer to:
    :hidden:
    :maxdepth: 1
 
-   Custom Environments: Single-Agent <custom_env/custom_drl_env>
-   Custom Environments: Multi-Agent <custom_env/custom_marl_env>
+   Single-Agent <custom_env/custom_drl_env>
+   Multi-Agent <custom_env/custom_marl_env>

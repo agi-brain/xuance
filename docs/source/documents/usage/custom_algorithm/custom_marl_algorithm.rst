@@ -1,4 +1,4 @@
-MARL Algorithm
+Custom Algorithms: MARL
 =========================================================
 
 .. raw:: html

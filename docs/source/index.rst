@@ -202,7 +202,7 @@ XuanCe contains four main parts:
    :caption: Algorithms:
 
    Single-Agent RL <documents/algorithms/drl>
-   Multo-Agent RL <documents/algorithms/marl>
+   Multi-Agent RL <documents/algorithms/marl>
    Model-based RL <documents/algorithms/model_based_rl>
    Constructive RL <documents/algorithms/crl>
    Offline RL <documents/algorithms/offline_rl>

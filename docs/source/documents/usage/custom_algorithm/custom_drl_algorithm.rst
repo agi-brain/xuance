@@ -1,4 +1,4 @@
-Single-Agent RL Algorithm
+Custom Algorithms: DRL
 =========================================================
 
 .. raw:: html
