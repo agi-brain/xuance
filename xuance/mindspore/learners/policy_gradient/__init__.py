@@ -10,3 +10,4 @@ from .ddpg_learner import DDPG_Learner
 from .sac_learner import SAC_Learner
 from .sacdis_learner import SACDIS_Learner
 from .td3_learner import TD3_Learner
+from .npg_learner import NPG_Learner

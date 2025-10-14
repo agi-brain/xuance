@@ -26,7 +26,7 @@ This table lists some general features about Double DQN algorithm:
 
 In standard DQN, overestimation occurs due to the use of a single Q-network for both selecting and evaluating actions. 
 
-As introduced before, [**DQN**](dqn_agent.md#deep-q-netowrk) updates the Q-value for a state-action pair $Q(s, a)$ 
+As introduced before, [**DQN**](dqn.md#deep-q-netowrk) updates the Q-value for a state-action pair $Q(s, a)$ 
 by using the maximum of Q-value of the next state $\max_{a'}Q(s', a')$ as part of the target. 
 
 If the Q-network overestimates one or more state-action values, the overestimation propagates and accumulates over time.
@@ -66,7 +66,7 @@ Finally, don't forget to update the target networks: $\theta^{-} \leftarrow \the
 
 To figure out the difference between DQN and Double DQN more clearly, 
 we can rewrite the 
-[calculating of target value](dqn_agent.md#deep-q-netowrk) 
+[calculating of target value](dqn.md#deep-q-netowrk) 
 in DQN and compare them from the formulae listed as following:
 
 $$
@@ -124,7 +124,7 @@ runner.run()  # Or runner.benchmark()
 ```
 
 To learn more about the configurations, please visit the 
-[**tutorial of configs**](./../../configs/configuration_examples.rst).
+[**tutorial of configs**](./../../api/configs/configuration_examples.rst).
 
 ### Run With Custom Environment
 

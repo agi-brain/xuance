@@ -37,7 +37,7 @@ where τ is a small positive number, typically taken to be 0.005. This soft upda
 The full algorithm for training TD3 is presented in Algorithm 1:
 ![链接网址](./../../../_static/figures/pseucodes/pseucode-SAC.png)  
 **Supplement:** TD3 and SAC share similarities in multiple aspects, including network architecture, the design of dual Q-networks, soft update mechanisms, training stability, applicable scenarios, implementation characteristics, optimization objectives, and practical value. These similarities enable both of them to perform remarkably well when handling tasks in continuous action spaces. However, they differ in exploration mechanisms and policy types, which determines their applicability and performance in different tasks.  
-Check out the [TD3](./td3_agent.md)   algorithm.
+Check out the [TD3](./td3.md)   algorithm.
 
 ## Run SAC in XuanCe
 Before running SAC in XuanCe, you need to prepare a conda environment and install ```xuance``` following the
@@ -65,7 +65,7 @@ runner = xp.get_runner(method='SAC',
 runner.run()  # Or runner.benchmark()
 ```
 To learn more about the configurations, please visit the
- [**tutorial of configs**](./../../configs/configuration_examples.rst).
+ [**tutorial of configs**](./../../api/configs/configuration_examples.rst).
 ### Run With Custom Environment
 If you would like to run XuanCe’s SAC in your own environment that was not included in XuanCe, you need to 
 define the new environment following the steps in 

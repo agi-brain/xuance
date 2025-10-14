@@ -52,7 +52,7 @@ The Noisy DQN has the three main benefits:
 ## Framework
 
 Noisy DQN retains the same overall structure as 
-[**DQN**](dqn_agent.md#framework) 
+[**DQN**](dqn.md#framework) 
 (i.e., experience replay, target networks, etc.), 
 but replaces the exploration mechanism with the noisy layers in the Q-network.
 
@@ -90,7 +90,7 @@ runner.run()  # Or runner.benchmark()
 ```
 
 To learn more about the configurations, please visit the 
-[**tutorial of configs**](./../../configs/configuration_examples.rst).
+[**tutorial of configs**](./../../api/configs/configuration_examples.rst).
 
 ### Run With Custom Environment
 

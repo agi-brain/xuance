@@ -30,7 +30,7 @@ where s′ is the state encountered after state s.
 
 ### Actor
 
-Actor is also called policy network which is similar to the [**Policy Gradient(PG)**](./pg_agent.md) method. Actor directly optimizes the policy to achieve the maximum reward. Its' objective function is expressed in the following:
+Actor is also called policy network which is similar to the [**Policy Gradient(PG)**](./pg.md) method. Actor directly optimizes the policy to achieve the maximum reward. Its' objective function is expressed in the following:
 
 $$
 J(\theta) = \mathbb{E}_{\pi_{\theta}}{[\sum_{t=0}^{\infty}{\gamma^t r_t}]}.
@@ -112,7 +112,7 @@ runner = xp.get_runner(method='a2c',
 runner.run()  # Or runner.benchmark()
 ```
 
-To learn more about the configurations, please visit the [**tutorial of configs**](./../../configs/configuration_examples.rst).
+To learn more about the configurations, please visit the [**tutorial of configs**](./../../api/configs/configuration_examples.rst).
 
 ### Run With Custom Environment
 

@@ -19,7 +19,7 @@ This table lists some general features about PER DQN algorithm:
 
 ## Method
 
-In standard [**DQN**](./dqn_agent.md#deep-q-netowrk), experiences are stored in a replay buffer, 
+In standard [**DQN**](./dqn.md#deep-q-netowrk), experiences are stored in a replay buffer, 
 and the agent samples uniformly from this buffer to train its Q-network. 
 However, this uniform sampling can be inefficient, especially when certain experiences are more important for learning than others. 
 PER DQN addresses this by prioritizing experiences that are expected to provide more useful information for improving the agent's policy.
@@ -105,7 +105,7 @@ runner.run()  # Or runner.benchmark()
 ```
 
 To learn more about the configurations, please visit the 
-[**tutorial of configs**](./../../configs/configuration_examples.rst).
+[**tutorial of configs**](./../../api/configs/configuration_examples.rst).
 
 ### Run With Custom Environment
 

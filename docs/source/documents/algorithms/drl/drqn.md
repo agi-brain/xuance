@@ -3,7 +3,7 @@
 **Paper Link:** [**https://cdn.aaai.org/ocs/11673/11673-51288-1-PB.pdf**](https://cdn.aaai.org/ocs/11673/11673-51288-1-PB.pdf)
 
 The Deep Recurrent Q-Network (DRQN) is an extension of the 
-[**DQN**](dqn_agent.md) designed to handle partially observable environments. 
+[**DQN**](dqn.md) designed to handle partially observable environments. 
 Unlike DQN, which relies on fully observable 
 [Markov Decision Processes (MDPs)](https://en.wikipedia.org/wiki/Markov_decision_process), 
 DRQN incorporates recurrent neural networks (RNNs) to manage 
@@ -78,7 +78,7 @@ runner.run()  # Or runner.benchmark()
 ```
 
 To learn more about the configurations, please visit the 
-[**tutorial of configs**](./../../configs/configuration_examples.rst).
+[**tutorial of configs**](./../../api/configs/configuration_examples.rst).
 
 ### Run With Custom Environment
 

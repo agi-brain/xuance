@@ -4,7 +4,7 @@
 
 The Phasic Policy Gradient (PPG) algorithm is an advanced reinforcement learning method designed to improve the efficiency of policy optimization. 
 It builds upon the 
-[**PPO**](ppoclip_agent.md) 
+[**PPO**](ppoclip.md) 
 framework by introducing a two-phase training approach, 
 which decouples the policy optimization from auxiliary value function learning.
 
@@ -95,7 +95,7 @@ runner.run()  # Or runner.benchmark()
 ```
 
 To learn more about the configurations, please visit the 
-[**tutorial of configs**](./../../configs/configuration_examples.rst).
+[**tutorial of configs**](./../../api/configs/configuration_examples.rst).
 
 ### Run With Custom Environment
 
