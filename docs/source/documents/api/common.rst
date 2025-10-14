@@ -12,7 +12,7 @@ These tools encompass common tools, memory tools for DRL and MARL, and statistic
     common_tools <common/common_tools>
     memory_offline <common/memory_offline>
     memory_tools <common/memory_tools>
-    memory_tools_marl for MARL <common/memory_tools_marl>
+    memory_tools_marl <common/memory_tools_marl>
     offline_util <common/offline_util>
     segtree_tool <common/segtree_tool>
     statistic_tools <common/statistic_tools>
