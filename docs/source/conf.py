@@ -121,7 +121,7 @@ rst_prolog = """
 
 html_theme = "furo"  # sphinx_rtd_theme (before that is renku)
 html_title = f"<div style='text-align: center; font-size: 20px'><strong>{project}</strong></div>"
-html_short_title = f"<div style='text-align: center; font-size: 20px'><strong>{project}</strong></div>"
+html_short_title = "XuanCe"
 html_scaled_image_link = False
 html_static_path = ['_static']
 html_theme_options = {
