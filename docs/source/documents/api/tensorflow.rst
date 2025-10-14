@@ -13,6 +13,7 @@ powerful ecosystem, including modules such as tf.keras, tf.optimizers, and tf.da
     :hidden:
 
     agents <tensorflow/agents>
+    communications <tensorflow/communications>
     learners <tensorflow/learners>
     policies <tensorflow/policies>
     representations <tensorflow/representations>
@@ -20,6 +21,7 @@ powerful ecosystem, including modules such as tf.keras, tf.optimizers, and tf.da
     utils <tensorflow/utils>
 
 * :doc:`agents <tensorflow/agents>`.
+* :doc:`communications <tensorflow/communications>`.
 * :doc:`learners <tensorflow/learners>`.
 * :doc:`policies <tensorflow/policies>`.
 * :doc:`representations <tensorflow/representations>`.

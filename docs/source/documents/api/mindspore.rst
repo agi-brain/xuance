@@ -13,6 +13,7 @@ rich set of neural network components (such as mindspore.nn, mindspore.ops, and 
     :hidden:
 
     agents <mindspore/agents>
+    communications <mindspore/communications>
     learners <mindspore/learners>
     policies <mindspore/policies>
     representations <mindspore/representations>
@@ -20,6 +21,7 @@ rich set of neural network components (such as mindspore.nn, mindspore.ops, and 
     utils <mindspore/utils>
 
 * :doc:`agents <mindspore/agents>`.
+* :doc:`communications <mindspore/communications>`.
 * :doc:`learners <mindspore/learners>`.
 * :doc:`policies <mindspore/policies>`.
 * :doc:`representations <mindspore/representations>`.
