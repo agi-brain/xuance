@@ -124,6 +124,7 @@ html_title = f"<div style='text-align: center; font-size: 20px'><strong>{project
 html_short_title = "XuanCe"
 html_scaled_image_link = False
 html_static_path = ['_static']
+html_extra_path = ['_extra']
 html_theme_options = {
     # logo
     "light_logo": "figures/logo_2.png",
