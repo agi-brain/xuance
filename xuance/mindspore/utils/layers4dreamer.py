@@ -176,8 +176,8 @@ def cnn_forward(
 
     Args:
         model (nn.Module): the model.
-        input (Tensor): the input tensor of dimension (*, C_in, H, W) or (*, feature_size),
-            where * means any number of dimensions including None.
+        input (Tensor): the input tensor of dimension `(*, C_in, H, W)` or `(*, feature_size)`,
+            where `*` means any number of dimensions including None.
         input_dim (Union[torch.Size, Tuple[int, ...]]): the input dimensions,
             i.e., either (C_in, H, W) or (feature_size,).
         output_dim (Union[torch.Size, Tuple[int, ...]]): the desired dimensions in output.

@@ -6,14 +6,20 @@ agents
     :maxdepth: 1
 
     base <agents/base>
+    contrastive_unsupervised_rl <agents/contrastive_unsupervised_rl>
     core <agents/core>
+    model_based_rl <agents/model_based_rl>
     multi_agent_rl <agents/multi_agent_rl>
+    offline_rl <agents/offline_rl>
     policy_gradient <agents/policy_gradient>
     qlearning_family <agents/qlearning_family>
 
 - :doc:`base <agents/base>`.
+- :doc:`contrastive_unsupervised_rl <agents/contrastive_unsupervised_rl>`.
 - :doc:`core <agents/core>`.
+- :doc:`model_based_rl <agents/model_based_rl>`.
 - :doc:`multi_agent_rl <agents/multi_agent_rl>`.
+- :doc:`offline_rl <agents/offline_rl>`.
 - :doc:`policy_gradient <agents/policy_gradient>`.
 - :doc:`qlearning_family <agents/qlearning_family>`.
 
