@@ -60,10 +60,12 @@ XuanCe: A Comprehensive and Unified Deep Reinforcement Learning Library
    <br>
 
 **XuanCe** is an open-source ensemble of Deep Reinforcement Learning (DRL) algorithm implementations.
-We call it as **Xuan-Ce (玄策)** in Chinese.
+The name "XuanCe" (玄策) comes from two Chinese characters:
 
-- **Xuan (玄)** means incredible, mysterious, and even a bit like "black box" in Chinese.
-- **Ce (策)** means policy or strategy, which is at the core of DRL.
+- **"Xuan" (玄)** means incredible, mysterious, or profound.
+- **"Ce" (策)** means policy or strategy.
+
+Together, XuanCe represents "incredible policies", reflecting the goal of discovering optimal policies through DRL.
 
 DRL algorithms are sensitive to hyper-parameters tuning, varying in performance with different tricks,
 and suffering from unstable training processes, therefore, sometimes DRL algorithms seems elusive and "Xuan".
@@ -182,9 +184,22 @@ XuanCe contains four main parts:
 - Part III: Environments. The supported simulated environments.
 - Part IV: Algorithms. The key part to build DRL algorithms.
 
+Who Is XuanCe For?
+-----------------------------------------
+
+XuanCe is designed for a wide range of users, including:
+
+- **Researchers** exploring new reinforcement learning methods
+- **Developers** building DRL-based applications
+- **Students and beginners** learning about intelligent decision-making
+- **AI practitioners** interested in single-agent and multi-agent systems
+
 .. raw:: html
 
-   <br>
+   <br><hr>
+
+Contents
+------------------------------------------
 
 .. toctree::
    :maxdepth: 2
