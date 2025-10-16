@@ -18,8 +18,9 @@ class MFQ_Learner(LearnerMAS):
                  config: Namespace,
                  model_keys: List[str],
                  agent_keys: List[str],
-                 policy: Module):
-        super(MFQ_Learner, self).__init__(config, model_keys, agent_keys, policy)
+                 policy: Module,
+                 callback):
+        super(MFQ_Learner, self).__init__(config, model_keys, agent_keys, policy, callback)
         self.optimizer = {key: optim.Adam(params=self.policy.parameters_model[key], lr=self.config.learning_rate,
                                           eps=1e-5) for key in self.model_keys}
         self.scheduler = {key: optim.lr_scheduler.LinearLR(self.optimizer[key],
@@ -74,11 +75,10 @@ class MFQ_Learner(LearnerMAS):
         q_eval_a = q_eval[agent_key].gather(actions[agent_key].astype(ms.int32).unsqueeze(-1), axis=-1, batch_dims=-1)
         td_error = (q_eval_a.reshape(-1) - q_target) * agt_mask
         loss = (td_error ** 2).sum() / agt_mask.sum()
-        return loss, q_eval_a
+        return loss, q_eval_a, td_error
 
     def update(self, sample):
         self.iterations += 1
-        info = {}
 
         # prepare training data
         act_mean, act_mean_next = self.build_actions_mean_input(sample=sample,
@@ -105,7 +105,7 @@ class MFQ_Learner(LearnerMAS):
         else:
             bs = batch_size
 
-        # info = self.callback.on_update_start(self.iterations, method="update", policy=self.policy)
+        info = self.callback.on_update_start(self.iterations, method="update", policy=self.policy)
 
         _, q_next = self.policy.Qtarget(observation=obs_next, actions_mean=act_mean_next, agent_ids=IDs)
 
@@ -127,8 +127,8 @@ class MFQ_Learner(LearnerMAS):
             else:
                 raise NotImplementedError
 
-            (loss, q_eval_a), grads = self.grad_fn[key](obs, actions, act_mean,
-                                                        mask_values, avail_actions, IDs, q_target, key)
+            (loss, q_eval_a, td_error), grads = self.grad_fn[key](obs, actions, act_mean,
+                                                                  mask_values, avail_actions, IDs, q_target, key)
             if self.use_grad_clip:
                 grads = clip_grads(grads, Tensor(-self.grad_clip_norm), Tensor(self.grad_clip_norm))
             self.optimizer[key](grads)
@@ -142,14 +142,14 @@ class MFQ_Learner(LearnerMAS):
                 f"{key}/predictQ": q_eval_a.mean().asnumpy()
             })
 
-            # info.update(self.callback.on_update_agent_wise(self.iterations, key, info=info, method="update",
-            #                                                mask_values=mask_values, q_eval_a=q_eval_a,
-            #                                                q_next=q_next[key], q_target=q_target,
-            #                                                td_error=td_error, loss=loss))
+            info.update(self.callback.on_update_agent_wise(self.iterations, key, info=info, method="update",
+                                                           mask_values=mask_values, q_eval_a=q_eval_a,
+                                                           q_next=q_next[key], q_target=q_target,
+                                                           td_error=td_error, loss=loss))
 
         if self.iterations % self.sync_frequency == 0:
             self.policy.copy_target()
 
-        # info.update(self.callback.on_update_end(self.iterations, method="update", policy=self.policy, info=info))
+        info.update(self.callback.on_update_end(self.iterations, method="update", policy=self.policy, info=info))
 
         return info

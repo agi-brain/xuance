@@ -1,17 +1,17 @@
 import os
-import mindspore as ms
 import numpy as np
-from abc import ABC, abstractmethod
-from xuance.common import Optional, List, Union
 from argparse import Namespace
 from operator import itemgetter
-from xuance.mindspore import Tensor, Module, optim, ops
+from abc import ABC, abstractmethod
+from xuance.common import Optional, List, Union
+from xuance.mindspore import ms, nn, Tensor, Module, optim, ops
 
 
 class Learner(ABC):
     def __init__(self,
                  config: Namespace,
-                 policy: Module):
+                 policy: Module,
+                 callback):
         self.value_normalizer = None
         self.config = config
 
@@ -23,8 +23,9 @@ class Learner(ABC):
         self.use_rnn = config.use_rnn if hasattr(config, 'use_rnn') else False
         self.use_actions_mask = config.use_actions_mask if hasattr(config, 'use_actions_mask') else False
         self.policy = policy
-        self.optimizer: Union[dict, list, Optional[ms.nn.Optimizer]] = None
+        self.optimizer: Union[dict, list, Optional[nn.Optimizer]] = None
         self.scheduler: Union[dict, list, Optional[optim.lr_scheduler.LRScheduler]] = None
+        self.callback = callback
 
         self.use_grad_clip = config.use_grad_clip
         self.grad_clip_norm = config.grad_clip_norm
@@ -70,7 +71,8 @@ class LearnerMAS(ABC):
                  config: Namespace,
                  model_keys: List[str],
                  agent_keys: List[str],
-                 policy: Module):
+                 policy: Module,
+                 callback):
         self.value_normalizer = None
         self.config = config
         self.n_agents = config.n_agents
@@ -87,8 +89,10 @@ class LearnerMAS(ABC):
         self.use_rnn = config.use_rnn if hasattr(config, 'use_rnn') else False
         self.use_actions_mask = config.use_actions_mask if hasattr(config, 'use_actions_mask') else False
         self.policy = policy
-        self.optimizer: Union[dict, list, Optional[ms.nn.Optimizer]] = None
+        self.optimizer: Union[dict, list, Optional[nn.Optimizer]] = None
         self.scheduler: Union[dict, list, Optional[ms.experimental.optim.lr_scheduler.LRScheduler]] = None
+        self.callback = callback
+
         self.use_grad_clip = config.use_grad_clip
         self.grad_clip_norm = config.grad_clip_norm
         self.device = config.device

@@ -1,7 +1,6 @@
 from argparse import Namespace
-from xuance.common import Union, Optional
+from xuance.common import Union, Optional, BaseCallback
 from xuance.environment import DummyVecEnv, SubprocVecEnv
-from xuance.tensorflow.agents import BaseCallback
 from xuance.tensorflow.agents.qlearning_family.dqn_agent import DQN_Agent
 
 

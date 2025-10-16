@@ -60,10 +60,12 @@ XuanCe: A Comprehensive and Unified Deep Reinforcement Learning Library
    <br>
 
 **XuanCe** is an open-source ensemble of Deep Reinforcement Learning (DRL) algorithm implementations.
-We call it as **Xuan-Ce (玄策)** in Chinese.
+The name "XuanCe" (玄策) comes from two Chinese characters:
 
-- **Xuan (玄)** means incredible, mysterious, and even a bit like "black box" in Chinese.
-- **Ce (策)** means policy or strategy, which is at the core of DRL.
+- **"Xuan" (玄)** means incredible, mysterious, or profound.
+- **"Ce" (策)** means policy or strategy.
+
+Together, XuanCe represents "incredible policies", reflecting the goal of discovering optimal policies through DRL.
 
 DRL algorithms are sensitive to hyper-parameters tuning, varying in performance with different tricks,
 and suffering from unstable training processes, therefore, sometimes DRL algorithms seems elusive and "Xuan".
@@ -104,51 +106,68 @@ List of Algorithms
 
 **Value-based:**
 
-* :class:`DQN_Agent` : :doc:`Deep Q-Network (DQN) <documents/api/agents/drl/dqn_agent>`.
-* :class:`DDQN_Agent` : :doc:`Double Deep Q-Network (Double DQN) <documents/api/agents/drl/ddqn_agent>`.
-* :class:`DuelDQN_Agent` : :doc:`Dueling Deep Q-Network (Dueling DQN) <documents/api/agents/drl/dueldqn_agent>`.
-* :class:`PerDQN_Agent` : :doc:`DQN with Prioritized Experience Replay (PER DQN) <documents/api/agents/drl/perdqn_agent>`.
-* :class:`NoisyDQN_Agent` : :doc:`DQN with Noisy Layers (Noisy DQN) <documents/api/agents/drl/noisydqn_agent>`.
-* :class:`DRQN_Agent` : :doc:`Deep Recurrent Q-Network (DRQN) <documents/api/agents/drl/drqn_agent>`.
-* :class:`QRDQN_Agent` : :doc:`DQN with Quantile Regression (QR-DQN) <documents/api/agents/drl/qrdqn_agent>`.
-* :class:`C51_Agent` : :doc:`Categorical 51 DQN (C51) <documents/api/agents/drl/c51_agent>`.
+* :class:`DQN` : :doc:`Deep Q-Network (DQN) <documents/algorithms/drl/dqn>`.
+* :class:`DDQN` : :doc:`Double Deep Q-Network (Double DQN) <documents/algorithms/drl/ddqn>`.
+* :class:`DuelDQN` : :doc:`Dueling Deep Q-Network (Dueling DQN) <documents/algorithms/drl/dueldqn>`.
+* :class:`PerDQN` : :doc:`DQN with Prioritized Experience Replay (PER DQN) <documents/algorithms/drl/perdqn>`.
+* :class:`NoisyDQN` : :doc:`DQN with Noisy Layers (Noisy DQN) <documents/algorithms/drl/noisydqn>`.
+* :class:`DRQN` : :doc:`Deep Recurrent Q-Network (DRQN) <documents/algorithms/drl/drqn>`.
+* :class:`QRDQN` : :doc:`DQN with Quantile Regression (QR-DQN) <documents/algorithms/drl/qrdqn>`.
+* :class:`C51` : :doc:`Categorical 51 DQN (C51) <documents/algorithms/drl/c51>`.
 
 **Policy-based:**
 
-* :class:`PG_Agent` : :doc:`Policy Gradient (PG) <documents/api/agents/drl/pg_agent>`.
-* :class:`NPG_Agent` : :doc:`Natural Policy Gradient (NPG) <documents/api/agents/drl/npg_agent>`.
-* :class:`PPG_Agent` : :doc:`Phasic Policy Gradient (PPG) <documents/api/agents/drl/ppg_agent>`.
-* :class:`A2C_Agent` : :doc:`Advantage Actor Critic (A2C) <documents/api/agents/drl/a2c_agent>`.
-* :class:`SAC_Agent` : :doc:`Soft Actor-Critic (SAC) <documents/api/agents/drl/sac_agent>`.
-* :class:`PPOCLIP_Agent` : :doc:`Proximal Policy Optimization with Clipped Objective (PPO-Clip) <documents/api/agents/drl/ppoclip_agent>`.
-* :class:`PPOKL_Agent` : :doc:`Proximal Policy Optimization with KL Divergence (PPO-KL) <documents/api/agents/drl/ppokl_agent>`.
-* :class:`DDPG_Agent` : :doc:`Deep Deterministic Policy Gradient (DDPG) <documents/api/agents/drl/ddpg_agent>`.
-* :class:`TD3_Agent` : :doc:`Twin Delayed Deep Deterministic Policy Gradient (TD3) <documents/api/agents/drl/td3_agent>`.
-* :class:`PDQN_Agent` : :doc:`Parameterised Deep Q-Network (P-DQN) <documents/api/agents/drl/pdqn_agent>`.
-* :class:`MPDQN_Agent` : :doc:`Multi-pass Parameterised Deep Q-Network (MP-DQN) <documents/api/agents/drl/mpdqn_agent>`.
-* :class:`SPDQN_Agent` : :doc:`Split parameterised Deep Q-Network (SP-DQN) <documents/api/agents/drl/spdqn_agent>`.
+* :class:`PG` : :doc:`Policy Gradient (PG) <documents/algorithms/drl/pg>`.
+* :class:`NPG` : :doc:`Natural Policy Gradient (NPG) <documents/algorithms/drl/npg>`.
+* :class:`PPG` : :doc:`Phasic Policy Gradient (PPG) <documents/algorithms/drl/ppg>`.
+* :class:`A2C` : :doc:`Advantage Actor Critic (A2C) <documents/algorithms/drl/a2c>`.
+* :class:`SAC` : :doc:`Soft Actor-Critic (SAC) <documents/algorithms/drl/sac>`.
+* :class:`PPOCLIP` : :doc:`Proximal Policy Optimization with Clipped Objective (PPO-Clip) <documents/algorithms/drl/ppoclip>`.
+* :class:`PPOKL` : :doc:`Proximal Policy Optimization with KL Divergence (PPO-KL) <documents/algorithms/drl/ppokl>`.
+* :class:`DDPG` : :doc:`Deep Deterministic Policy Gradient (DDPG) <documents/algorithms/drl/ddpg>`.
+* :class:`TD3` : :doc:`Twin Delayed Deep Deterministic Policy Gradient (TD3) <documents/algorithms/drl/td3>`.
+* :class:`PDQN` : :doc:`Parameterised Deep Q-Network (P-DQN) <documents/algorithms/drl/pdqn>`.
+* :class:`MPDQN` : :doc:`Multi-pass Parameterised Deep Q-Network (MP-DQN) <documents/algorithms/drl/mpdqn>`.
+* :class:`SPDQN` : :doc:`Split parameterised Deep Q-Network (SP-DQN) <documents/algorithms/drl/spdqn>`.
 
 **MARL-based:**
 
-* :class:`IQL_Agents` : :doc:`Independent Q-Learning (IQL) <documents/api/agents/marl/iql_agents>`.
-* :class:`VDN_Agents` : :doc:`Value Decomposition Networks (VDN) <documents/api/agents/marl/vdn_agents>`.
-* :class:`QMIX_Agents` : :doc:`Q-Mixing Networks (QMIX) <documents/api/agents/marl/qmix_agents>`.
-* :class:`WQMIX_Agents` : :doc:`Weighted Q-Mixing Networks (WQMIX) <documents/api/agents/marl/wqmix_agents>`.
-* :class:`QTRAN_Agents` : :doc:`Q-Transformation (QTRAN) <documents/api/agents/marl/qtran_agents>`.
-* :class:`DCG_Agents` : :doc:`Deep Coordination Graphs (DCG) <documents/api/agents/marl/dcg_agents>`.
-* :class:`IDDPG_Agents` : :doc:`Independent Deep Deterministic Policy Gradient (IDDPG) <documents/api/agents/marl/iddpg_agents>`.
-* :class:`MADDPG_Agents` : :doc:`Multi-agent Deep Deterministic Policy Gradient (MADDPG) <documents/api/agents/marl/maddpg_agents>`.
-* :class:`IAC_Agents` : :doc:`Independent Actor-Critic (IAC) <documents/api/agents/marl/iac_agents>`.
-* :class:`COMA_Agents` : :doc:`Counterfactual Multi-agent Policy Gradient (COMA) <documents/api/agents/marl/coma_agents>`.
-* :class:`VDAC_Agents` : :doc:`Value-Decomposition Actor-Critic (VDAC) <documents/api/agents/marl/vdac_agents>`.
-* :class:`IPPO_Agents` : :doc:`Independent Proximal Policy Optimization (IPPO) <documents/api/agents/marl/ippo_agents>`.
-* :class:`MAPPO_Agents` : :doc:`Multi-agent Proximal Policy Optimization (MAPPO) <documents/api/agents/marl/mappo_agents>`.
-* :class:`MFQ_Agents` : :doc:`Mean-Field Q-Learning (MFQ) <documents/api/agents/marl/mfq_agents>`.
-* :class:`MFAC_Agents` : :doc:`Mean-Field Actor-Critic (MFAC) <documents/api/agents/marl/mfac_agents>`.
-* :class:`ISAC_Agents` : :doc:`Independent Soft Actor-Critic (ISAC) <documents/api/agents/marl/isac_agents>`.
-* :class:`MASAC_Agents` : :doc:`Multi-agent Soft Actor-Critic (MASAC) <documents/api/agents/marl/masac_agents>`.
-* :class:`MATD3_Agents` : :doc:`Multi-agent Twin Delayed Deep Deterministic Policy Gradient (MATD3) <documents/api/agents/marl/matd3_agents>`.
-* :class:`IC3Net_Agents` : :doc:`Individual Controlled Continuous Communication Model (IC3Net) <documents/api/agents/marl/ic3net_agents>`.
+* :class:`IQL` : :doc:`Independent Q-Learning (IQL) <documents/algorithms/marl/iql>`.
+* :class:`VDN` : :doc:`Value Decomposition Networks (VDN) <documents/algorithms/marl/vdn>`.
+* :class:`QMIX` : :doc:`Q-Mixing Networks (QMIX) <documents/algorithms/marl/qmix>`.
+* :class:`WQMIX` : :doc:`Weighted Q-Mixing Networks (WQMIX) <documents/algorithms/marl/wqmix>`.
+* :class:`QTRAN` : :doc:`Q-Transformation (QTRAN) <documents/algorithms/marl/qtran>`.
+* :class:`DCG` : :doc:`Deep Coordination Graphs (DCG) <documents/algorithms/marl/dcg>`.
+* :class:`IDDPG` : :doc:`Independent Deep Deterministic Policy Gradient (IDDPG) <documents/algorithms/marl/iddpg>`.
+* :class:`MADDPG` : :doc:`Multi-agent Deep Deterministic Policy Gradient (MADDPG) <documents/algorithms/marl/maddpg>`.
+* :class:`IAC` : :doc:`Independent Actor-Critic (IAC) <documents/algorithms/marl/iac>`.
+* :class:`COMA` : :doc:`Counterfactual Multi-agent Policy Gradient (COMA) <documents/algorithms/marl/coma>`.
+* :class:`VDAC` : :doc:`Value-Decomposition Actor-Critic (VDAC) <documents/algorithms/marl/vdac>`.
+* :class:`IPPO` : :doc:`Independent Proximal Policy Optimization (IPPO) <documents/algorithms/marl/ippo>`.
+* :class:`MAPPO` : :doc:`Multi-agent Proximal Policy Optimization (MAPPO) <documents/algorithms/marl/mappo>`.
+* :class:`MFQ` : :doc:`Mean-Field Q-Learning (MFQ) <documents/algorithms/marl/mfq>`.
+* :class:`MFAC` : :doc:`Mean-Field Actor-Critic (MFAC) <documents/algorithms/marl/mfac>`.
+* :class:`ISAC` : :doc:`Independent Soft Actor-Critic (ISAC) <documents/algorithms/marl/isac>`.
+* :class:`MASAC` : :doc:`Multi-agent Soft Actor-Critic (MASAC) <documents/algorithms/marl/masac>`.
+* :class:`MATD3` : :doc:`Multi-agent Twin Delayed Deep Deterministic Policy Gradient (MATD3) <documents/algorithms/marl/matd3>`.
+* :class:`IC3Net` : :doc:`Individual Controlled Continuous Communication Model (IC3Net) <documents/algorithms/marl/ic3net>`.
+
+**Model-based:**
+
+* :class:`DreamerV2` : :doc:`Dreamer V2 <documents/algorithms/mbrl/dreamer_v2>`.
+* :class:`DreamerV3` : :doc:`Dreamer V3 <documents/algorithms/mbrl/dreamer_v3>`.
+* :class:`HarmonyDreamer` : :doc:`HarmonyDreamer <documents/algorithms/mbrl/harmony_dream>`.
+
+**Contrastive RL:**
+
+* :class:`CURL` : :doc:`Contrastive Unsupervised Representations for Reinforcement Learning (CURL) <documents/algorithms/crl/curl>`.
+* :class:`DrQ` : :doc:`Data-Regularized Q-Learning (DrQ) <documents/algorithms/crl/drq>`.
+* :class:`SPR` : :doc:`Self-Predictive Representations for Reinforcement Learning (SPR) <documents/algorithms/crl/spr>`.
+
+**Offline RL:**
+
+* :class:`TD3BC` : :doc:`Twin Delayed Deep Deterministic Policy Gradient with Behavior Cloning (TD3BC) <documents/algorithms/offline/td3bc>`.
+
 
 The Framework of XuanCe
 ------------------------------------------
@@ -165,33 +184,54 @@ XuanCe contains four main parts:
 - Part III: Environments. The supported simulated environments.
 - Part IV: Algorithms. The key part to build DRL algorithms.
 
+Who Is XuanCe For?
+-----------------------------------------
+
+XuanCe is designed for a wide range of users, including:
+
+- **Researchers** exploring new reinforcement learning methods
+- **Developers** building DRL-based applications
+- **Students and beginners** learning about intelligent decision-making
+- **AI practitioners** interested in single-agent and multi-agent systems
+
+.. raw:: html
+
+   <br><hr>
+
+Contents
+------------------------------------------
+
 .. toctree::
-   :hidden:
-   :maxdepth: 1
+   :maxdepth: 2
    :caption: Tutorial:
 
    documents/usage/installation
    documents/usage/basic_usage
    documents/usage/further_usage
-   documents/usage/new_envs
-   documents/usage/new_algorithm
-
-APIs of XuanCe
-----------------
+   documents/usage/custom_env
+   documents/usage/custom_algorithm
+   documents/usage/custom_callback
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
+   :caption: Algorithms:
+
+   Single-Agent RL <documents/algorithms/drl>
+   Multi-Agent RL <documents/algorithms/marl>
+   Model-based RL <documents/algorithms/model_based_rl>
+   Constructive RL <documents/algorithms/crl>
+   Offline RL <documents/algorithms/offline_rl>
+
+.. toctree::
+   :maxdepth: 5
    :caption: APIs:
 
-   documents/api/agents
-   documents/api/environments
-   documents/api/configs
-   documents/api/runners
-   documents/api/representations
-   documents/api/policies
-   documents/api/learners
    documents/api/common
-   documents/api/utils
+   documents/api/configs
+   documents/api/environments
+   documents/api/torch
+   documents/api/tensorflow
+   documents/api/mindspore
 
 .. toctree::
    :hidden:

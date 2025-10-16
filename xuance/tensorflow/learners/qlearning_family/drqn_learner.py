@@ -82,6 +82,9 @@ class DRQN_Learner(Learner):
         rew_batch = samples['rewards']
         ter_batch = samples['terminals'].astype(np.float32)
         batch_size = obs_batch.shape[0]
+        info = self.callback.on_update_start(self.iterations,
+                                             policy=self.policy, obs=obs_batch, act=act_batch,
+                                             rew=rew_batch, termination=ter_batch, batch_size=batch_size)
 
         predictQ, loss = self.learn(batch_size, obs_batch, act_batch, rew_batch, ter_batch)
 
@@ -89,9 +92,12 @@ class DRQN_Learner(Learner):
         if self.iterations % self.sync_frequency == 0:
             self.policy.copy_target()
 
-        info = {
+        info.update({
             "Qloss": loss.numpy(),
             "predictQ": tf.math.reduce_mean(predictQ).numpy()
-        }
+        })
+
+        info.update(self.callback.on_update_end(self.iterations, policy=self.policy, info=info,
+                                                predictQ=predictQ, loss=loss))
 
         return info

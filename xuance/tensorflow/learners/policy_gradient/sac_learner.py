@@ -140,6 +140,9 @@ class SAC_Learner(Learner):
         next_batch = tf.convert_to_tensor(samples["obs_next"], dtype=tf.float32)
         rew_batch = tf.convert_to_tensor(samples['rewards'], dtype=tf.float32)
         ter_batch = tf.convert_to_tensor(samples['terminals'], dtype=tf.float32)
+        info = self.callback.on_update_start(self.iterations,
+                                             policy=self.policy, obs=obs_batch, act=act_batch,
+                                             next_obs=next_batch, rew=rew_batch, termination=ter_batch)
 
         q_loss = self.learn_critic(obs_batch, act_batch, rew_batch, next_batch, ter_batch)
         p_loss, log_pi, policy_q = self.learn_actor(obs_batch)
@@ -152,12 +155,17 @@ class SAC_Learner(Learner):
 
         self.policy.soft_update(self.tau)
 
-        info = {
+        info.update({
             "Qloss": q_loss.numpy(),
             "Ploss": p_loss.numpy(),
             "Qvalue": tf.reduce_mean(policy_q).numpy(),
             "alpha_loss": alpha_loss,
             "alpha": self.alpha,
-        }
+        })
+
+        info.update(self.callback.on_update_end(self.iterations,
+                                                policy=self.policy, info=info,
+                                                log_pi=log_pi, policy_q=policy_q, p_loss=p_loss, q_loss=q_loss,
+                                                alpha_loss=alpha_loss, alpha=self.alpha))
 
         return info

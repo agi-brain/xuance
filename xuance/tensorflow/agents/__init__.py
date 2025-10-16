@@ -1,4 +1,3 @@
-from .base.callback import BaseCallback, MultiAgentBaseCallback
 from .base import Agent, MARLAgents, RandomAgents
 from .core import OnPolicyAgent, OffPolicyAgent, OffPolicyMARLAgents, OnPolicyMARLAgents
 
@@ -115,15 +114,15 @@ REGISTRY_Agents = {
 }
 
 __all__ = [
-    "BaseCallback", "Agent", "MARLAgents", "RandomAgents",
+    "Agent", "MARLAgents", "RandomAgents",
 
-    "OnPolicyAgent", "OffPolicyAgent", "OffPolicyMARLAgents", "OnPolicyMARLAgents", "OfflineAgent",
+    "OnPolicyAgent", "OffPolicyAgent", "OffPolicyMARLAgents", "OnPolicyMARLAgents",  # "OfflineAgent",
 
     "REGISTRY_Agents",
 
     "PG_Agent", "A2C_Agent", "PPOCLIP_Agent", "PPOKL_Agent", "PPG_Agent", "DDPG_Agent", "TD3_Agent", "PDQN_Agent",
     "MPDQN_Agent", "SPDQN_Agent", "SAC_Agent", "DQN_Agent", "DuelDQN_Agent", "DDQN_Agent",
-    "NoisyDQN_Agent", "C51_Agent", "QRDQN_Agent", "PerDQN_Agent", "DRQN_Agent","NPG_Agent",
+    "NoisyDQN_Agent", "C51_Agent", "QRDQN_Agent", "PerDQN_Agent", "DRQN_Agent",  # "NPG_Agent",
 
     # "DreamerV2Agent", "DreamerV3Agent",
 

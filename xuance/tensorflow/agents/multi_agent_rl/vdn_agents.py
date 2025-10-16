@@ -1,10 +1,10 @@
 from argparse import Namespace
-from xuance.common import Union, Optional
+from xuance.common import Union, Optional, MultiAgentBaseCallback
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
 from xuance.tensorflow import Module
 from xuance.tensorflow.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions
 from xuance.tensorflow.policies import REGISTRY_Policy, VDN_mixer
-from xuance.tensorflow.agents import OffPolicyMARLAgents, BaseCallback
+from xuance.tensorflow.agents import OffPolicyMARLAgents
 
 
 class VDN_Agents(OffPolicyMARLAgents):
@@ -18,7 +18,7 @@ class VDN_Agents(OffPolicyMARLAgents):
     def __init__(self,
                  config: Namespace,
                  envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv],
-                 callback: Optional[BaseCallback] = None):
+                 callback: Optional[MultiAgentBaseCallback] = None):
         super(VDN_Agents, self).__init__(config, envs, callback)
 
         self.start_greedy, self.end_greedy = config.start_greedy, config.end_greedy

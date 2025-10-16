@@ -9,13 +9,27 @@ from .core import BasicQhead, BasicRecurrent, DuelQhead, C51Qhead, QRDQNhead, Ac
 
 
 class BasicQnetwork(Module):
+    """
+    The base class to implement DQN based policy
+
+    Args:
+        action_space (Discrete): The action space, which type is gym.spaces.Discrete.
+        representation (Module): The representation module.
+        hidden_size (Sequence[int]): List of hidden units for fully connect layers.
+        normalize (Optional[ModuleType]): The layer normalization over a minibatch of inputs.
+        initialize (Optional[Callable[..., Tensor]]): The parameters initializer.
+        activation (Optional[ModuleType]): The activation function for each layer.
+        use_distributed_training (bool): Whether to use multi-GPU for distributed training.
+    """
+
     def __init__(self,
                  action_space: Discrete,
                  representation: Module,
                  hidden_size: Sequence[int] = None,
                  normalize: Optional[ModuleType] = None,
                  initialize: Optional[Callable[..., Tensor]] = None,
-                 activation: Optional[ModuleType] = None):
+                 activation: Optional[ModuleType] = None,
+                 use_distributed_training: bool = False):
         super(BasicQnetwork, self).__init__()
         self.action_dim = action_space.n
         self.representation = representation
@@ -25,20 +39,42 @@ class BasicQnetwork(Module):
                                      normalize, initialize, activation)
         self.target_Qhead = deepcopy(self.eval_Qhead)
 
+    def trainable_params(self, recurse=True):
+        return self.representation.trainable_params() + self.eval_Qhead.trainable_params()
+
     def construct(self, observation: Tensor):
+        """
+        Returns the output of the representation, greedy actions, and the evaluated Q-values.
+
+        Parameters:
+            observation: The original observation input.
+
+        Returns:
+            outputs: The hidden state output by the representation.
+            argmax_action: The greedy actions.
+            evalQ: The evaluated Q-values.
+        """
         outputs = self.representation(observation)
         evalQ = self.eval_Qhead(outputs)
         argmax_action = evalQ.argmax(axis=-1)
         return outputs, argmax_action, evalQ
 
     def target(self, observation: Tensor):
+        """
+        Returns the output of the representation, greedy actions, and the evaluated Q-values via target networks.
+
+        Parameters:
+            observation: The original observation input.
+
+        Returns:
+            outputs_target: The hidden state output by the representation.
+            argmax_action: The greedy actions from target networks.
+            targetQ: The evaluated Q-values output by target Q-network.
+        """
         outputs_target = self.target_representation(observation)
         targetQ = self.target_Qhead(outputs_target)
         argmax_action = targetQ.argmax(axis=-1)
         return outputs_target, argmax_action, targetQ
-
-    def trainable_params(self, recurse=True):
-        return self.representation.trainable_params() + self.eval_Qhead.trainable_params()
 
     def copy_target(self):
         for ep, tp in zip(self.representation.trainable_params(), self.target_representation.trainable_params()):
@@ -100,14 +136,27 @@ class DuelQnetwork(Module):
 
 
 class NoisyQnetwork(Module):
+    """
+    The policy for noisy deep Q-networks.
+
+    Args:
+        action_space (Discrete): The action space, which type is gym.spaces.Discrete.
+        representation (Module): The representation module.
+        hidden_size: List of hidden units for fully connect layers.
+        normalize (Optional[ModuleType]): The layer normalization over a minibatch of inputs.
+        initialize (Optional[Callable[..., Tensor]]): The parameters initializer.
+        activation (Optional[ModuleType]): The activation function for each layer.
+        use_distributed_training (bool): Whether to use multi-GPU for distributed training.
+    """
+
     def __init__(self,
                  action_space: Discrete,
                  representation: ModuleType,
                  hidden_size: Sequence[int] = None,
                  normalize: Optional[ModuleType] = None,
                  initialize: Optional[Callable[..., Tensor]] = None,
-                 activation: Optional[ModuleType] = None
-                 ):
+                 activation: Optional[ModuleType] = None,
+                 use_distributed_training: bool = False):
         super(NoisyQnetwork, self).__init__()
         self.action_dim = action_space.n
         self.representation = representation
@@ -120,7 +169,11 @@ class NoisyQnetwork(Module):
         self._stdnormal = ms.ops.StandardNormal()
         self._assign = ms.ops.Assign()
 
+    def trainable_params(self, recurse=True):
+        return self.representation.trainable_params() + self.eval_Qhead.trainable_params()
+
     def update_noise(self, noisy_bound: float = 0.0):
+        """Updates the noises for network parameters."""
         self.eval_noise_parameter = []
         self.target_noise_parameter = []
         for parameter in self.eval_Qhead.trainable_params():
@@ -137,20 +190,39 @@ class NoisyQnetwork(Module):
                 _ = self._assign(parameter, parameter + noise_param)
 
     def construct(self, observation: Tensor):
+        """
+        Returns the output of the representation, greedy actions, and the evaluated Q-values.
+
+        Parameters:
+            observation: The original observation input.
+
+        Returns:
+            outputs: The hidden state output by the representation.
+            argmax_action: The greedy actions.
+            evalQ: The evaluated Q-values.
+        """
         outputs = self.representation(observation)
         evalQ = self.eval_Qhead(outputs)
         argmax_action = evalQ.argmax(axis=-1)
         return outputs, argmax_action, evalQ
 
     def target(self, observation: Tensor):
+        """
+        Returns the output of the representation, greedy actions, and the evaluated Q-values via target networks.
+
+        Parameters:
+            observation: The original observation input.
+
+        Returns:
+            outputs_target: The hidden state output by the representation.
+            argmax_action: The greedy actions from target networks.
+            targetQ: The evaluated Q-values output by target Q-network.
+        """
         outputs = self.target_representation(observation)
         self.noisy_parameters(is_target=True)
         targetQ = self.target_Qhead(outputs)
         argmax_action = targetQ.argmax(axis=-1)
         return outputs, argmax_action, targetQ
-
-    def trainable_params(self, recurse=True):
-        return self.representation.trainable_params() + self.eval_Qhead.trainable_params()
 
     def copy_target(self):
         for ep, tp in zip(self.representation.trainable_params(), self.target_representation.trainable_params()):

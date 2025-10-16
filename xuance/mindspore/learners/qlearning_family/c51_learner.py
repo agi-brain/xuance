@@ -12,8 +12,9 @@ from xuance.mindspore.learners import Learner
 class C51_Learner(Learner):
     def __init__(self,
                  config: Namespace,
-                 policy: Module):
-        super(C51_Learner, self).__init__(config, policy)
+                 policy: Module,
+                 callback):
+        super(C51_Learner, self).__init__(config, policy, callback)
         self.optimizer = optim.Adam(params=self.policy.trainable_params(), lr=self.config.learning_rate, eps=1e-5)
         self.scheduler = optim.lr_scheduler.LinearLR(self.optimizer, start_factor=1.0, end_factor=self.end_factor_lr_decay,
                                                      total_iters=self.config.running_steps)
@@ -43,7 +44,7 @@ class C51_Learner(Learner):
 
         loss = -ops.mean(ops.sum(target_dist * ops.log(current_dist + 1e-8), dim=1))
 
-        return loss, evalZ
+        return loss, evalZ, targetA, targetZ, current_dist, target_dist, current_supports, next_supports, projection
 
     def update(self, **samples):
         self.iterations += 1
@@ -53,7 +54,12 @@ class C51_Learner(Learner):
         next_batch = Tensor(samples['obs_next'])
         ter_batch = Tensor(samples['terminals'])
 
-        (loss, evalZ), grads = self.grad_fn(obs_batch, act_batch, next_batch, rew_batch, ter_batch)
+        info = self.callback.on_update_start(self.iterations,
+                                             policy=self.policy, obs=obs_batch, act=act_batch,
+                                             next_obs=next_batch, rew=rew_batch, termination=ter_batch)
+
+        (loss, evalZ, targetA, targetZ, current_dist, target_dist, current_supports, next_supports,
+         projection), grads = self.grad_fn(obs_batch, act_batch, next_batch, rew_batch, ter_batch)
         self.optimizer(grads)
 
         # hard update for target network
@@ -63,9 +69,16 @@ class C51_Learner(Learner):
         self.scheduler.step()
         lr = self.scheduler.get_last_lr()[0]
 
-        info = {
+        info.update({
             "Qloss": loss.asnumpy(),
             "learning_rate": lr.asnumpy(),
-        }
+        })
+
+        info.update(self.callback.on_update_end(self.iterations,
+                                                policy=self.policy, info=info,
+                                                evalZ=evalZ, targetA=targetA, targetZ=targetZ,
+                                                current_dist=current_dist, target_dist=target_dist,
+                                                current_supports=current_supports, next_supports=next_supports,
+                                                projection=projection, loss=loss))
 
         return info

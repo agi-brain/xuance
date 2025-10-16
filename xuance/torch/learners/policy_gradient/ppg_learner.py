@@ -42,7 +42,7 @@ class PPG_Learner(Learner):
         adv_batch = torch.as_tensor(samples['advantages'], device=self.device)
         old_dist = merge_distributions(samples['aux_batch']['old_dist'])
         old_logp_batch = old_dist.log_prob(act_batch).detach()
-        info = self.callback.on_update_start(self.iterations,
+        info = self.callback.on_update_start(self.iterations, method="update_policy",
                                              policy=self.policy, obs=obs_batch, act=act_batch, advantages=adv_batch,
                                              old_dist=old_dist, old_logp=old_logp_batch)
 
@@ -91,7 +91,8 @@ class PPG_Learner(Learner):
         self.value_iterations += 1
         obs_batch = torch.as_tensor(samples['obs'], device=self.device)
         ret_batch = torch.as_tensor(samples['returns'], device=self.device)
-        info = self.callback.on_update_start(self.iterations, policy=self.policy, obs=obs_batch, returns=ret_batch)
+        info = self.callback.on_update_start(self.iterations, method="update_critic",
+                                             policy=self.policy, obs=obs_batch, returns=ret_batch)
 
         _, _, v_pred, _ = self.policy(obs_batch)
         loss = self.mse_loss(v_pred, ret_batch)
@@ -114,7 +115,7 @@ class PPG_Learner(Learner):
         obs_batch = torch.as_tensor(samples['obs'], device=self.device)
         ret_batch = torch.as_tensor(samples['returns'], device=self.device)
         old_dist = merge_distributions(samples['aux_batch']['old_dist'])
-        info = self.callback.on_update_start(self.iterations,
+        info = self.callback.on_update_start(self.iterations, method="update_auxiliary",
                                              policy=self.policy, obs=obs_batch, returns=ret_batch, old_dist=old_dist)
 
         outputs, a_dist, v, aux_v = self.policy(obs_batch)

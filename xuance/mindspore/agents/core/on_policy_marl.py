@@ -4,7 +4,7 @@ import numpy as np
 from copy import deepcopy
 from argparse import Namespace
 from operator import itemgetter
-from xuance.common import MARL_OnPolicyBuffer, MARL_OnPolicyBuffer_RNN, Optional, List, Union
+from xuance.common import MARL_OnPolicyBuffer, MARL_OnPolicyBuffer_RNN, Optional, List, Union, MultiAgentBaseCallback
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
 from xuance.mindspore import Module, Tensor
 from xuance.mindspore.agents.base import MARLAgents
@@ -21,8 +21,9 @@ class OnPolicyMARLAgents(MARLAgents):
 
     def __init__(self,
                  config: Namespace,
-                 envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv]):
-        super(OnPolicyMARLAgents, self).__init__(config, envs)
+                 envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv],
+                 callback: Optional[MultiAgentBaseCallback] = None):
+        super(OnPolicyMARLAgents, self).__init__(config, envs, callback)
         self.continuous_control: bool = False
         self.n_epochs = config.n_epochs
         self.n_minibatch = config.n_minibatch
@@ -266,26 +267,6 @@ class OnPolicyMARLAgents(MARLAgents):
 
         return rnn_hidden_critic_new, values_dict
 
-    def train_epochs(self, n_epochs=1):
-        """
-        Train the model for numerous epochs.
-
-        Returns:
-            info_train (dict): The information of training.
-        """
-        info_train = {}
-        if self.memory.full:
-            indexes = np.arange(self.buffer_size)
-            for _ in range(n_epochs):
-                np.random.shuffle(indexes)
-                for start in range(0, self.buffer_size, self.batch_size):
-                    end = start + self.batch_size
-                    sample_idx = indexes[start:end]
-                    sample = self.memory.sample(sample_idx)
-                    info_train = self.learner.update_rnn(sample) if self.use_rnn else self.learner.update(sample)
-            self.memory.clear()
-        return info_train
-
     def train(self, n_steps):
         """
         Train the model for numerous steps.
@@ -293,29 +274,46 @@ class OnPolicyMARLAgents(MARLAgents):
         Parameters:
             n_steps (int): The number of steps to train the model.
         """
+        train_info = {}
         if self.use_rnn:
             with tqdm(total=n_steps) as process_bar:
                 step_start, step_last = deepcopy(self.current_step), deepcopy(self.current_step)
                 n_steps_all = n_steps * self.n_envs
                 while step_last - step_start < n_steps_all:
                     self.run_episodes(None, n_episodes=self.n_envs, test_mode=False)
-                    train_info = self.train_epochs(n_epochs=self.n_epochs)
-                    self.log_infos(train_info, self.current_step)
+                    update_info = self.train_epochs(n_epochs=self.n_epochs)
+                    self.log_infos(update_info, self.current_step)
+                    train_info.update(update_info)
+
+                    self.callback.on_train_epochs_end(self.current_step, policy=self.policy, memory=self.memory,
+                                                      current_episode=self.current_episode, n_steps=n_steps,
+                                                      update_info=update_info)
+
                     process_bar.update((self.current_step - step_last) // self.n_envs)
                     step_last = deepcopy(self.current_step)
                 process_bar.update(n_steps - process_bar.last_print_n)
-            return
+                self.callback.on_train_step_end(self.current_step, envs=self.envs, policy=self.policy,
+                                                n_steps=n_steps, train_info=train_info)
+            return train_info
 
         obs_dict = self.envs.buf_obs
         avail_actions = self.envs.buf_avail_actions if self.use_actions_mask else None
         state = self.envs.buf_state if self.use_global_state else None
         for _ in tqdm(range(n_steps)):
-            step_info = {}
             policy_out = self.action(obs_dict=obs_dict, state=state, avail_actions_dict=avail_actions, test_mode=False)
             actions_dict, log_pi_a_dict = policy_out['actions'], policy_out['log_pi']
             values_dict = policy_out['values']
             next_obs_dict, rewards_dict, terminated_dict, truncated, info = self.envs.step(actions_dict)
+            next_state = self.envs.buf_state if self.use_global_state else None
             next_avail_actions = self.envs.buf_avail_actions if self.use_actions_mask else None
+
+            self.callback.on_train_step(self.current_step, envs=self.envs, policy=self.policy,
+                                        obs=obs_dict, policy_out=policy_out, acts=actions_dict, next_obs=next_obs_dict,
+                                        rewards=rewards_dict, state=state, next_state=next_state,
+                                        avail_actions=avail_actions, next_avail_actions=next_avail_actions,
+                                        terminals=terminated_dict, truncations=truncated, infos=info,
+                                        n_steps=n_steps, values_dict=values_dict)
+
             self.store_experience(obs_dict, avail_actions, actions_dict, log_pi_a_dict, rewards_dict, values_dict,
                                   terminated_dict, info, **{'state': state})
             if self.memory.full:
@@ -323,14 +321,15 @@ class OnPolicyMARLAgents(MARLAgents):
                     if all(terminated_dict[i].values()):
                         value_next = {key: 0.0 for key in self.agent_keys}
                     else:
-                        state_i = state[i] if self.use_global_state else None
-                        _, value_next = self.values_next(i_env=i, obs_dict=next_obs_dict[i], state=state_i)
+                        next_state_i = next_state[i] if self.use_global_state else None
+                        _, value_next = self.values_next(i_env=i, obs_dict=next_obs_dict[i], state=next_state_i)
                     self.memory.finish_path(i_env=i, value_next=value_next,
                                             value_normalizer=self.learner.value_normalizer)
-            train_info = self.train_epochs(n_epochs=self.n_epochs)
-            self.log_infos(train_info, self.current_step)
+            update_info = self.train_epochs(n_epochs=self.n_epochs)
+            self.log_infos(update_info, self.current_step)
+            train_info.update(update_info)
             obs_dict, avail_actions = deepcopy(next_obs_dict), deepcopy(next_avail_actions)
-            state = self.envs.buf_state if self.use_global_state else None
+            state = deepcopy(next_state) if self.use_global_state else None
 
             for i in range(self.n_envs):
                 if all(terminated_dict[i].values()) or truncated[i]:
@@ -349,16 +348,30 @@ class OnPolicyMARLAgents(MARLAgents):
                     if self.use_global_state:
                         state[i] = info[i]["reset_state"]
                         self.envs.buf_state[i] = info[i]["reset_state"]
+                    self.current_episode[i] += 1
                     if self.use_wandb:
-                        step_info["Train-Results/Episode-Steps/env-%d" % i] = info[i]["episode_step"]
-                        step_info["Train-Results/Episode-Rewards/env-%d" % i] = info[i]["episode_score"]
+                        episode_info = {
+                            f"Train-Results/Episode-Steps/env-%d" % i: info[i]["episode_step"],
+                            f"Train-Results/Episode-Rewards/env-%d" % i: info[i]["episode_score"]
+                        }
                     else:
-                        step_info["Train-Results/Episode-Steps"] = {"env-%d" % i: info[i]["episode_step"]}
-                        step_info["Train-Results/Episode-Rewards"] = {
-                            "env-%d" % i: np.mean(itemgetter(*self.agent_keys)(info[i]["episode_score"]))}
-                    self.log_infos(step_info, self.current_step)
+                        episode_info = {
+                            f"Train-Results/Episode-Steps": {"env-%d" % i: info[i]["episode_step"]},
+                            f"Train-Results/Episode-Rewards": {
+                                "env-%d" % i: np.mean(itemgetter(*self.agent_keys)(info[i]["episode_score"]))}
+                        }
+                    self.log_infos(episode_info, self.current_step)
+                    train_info.update(episode_info)
+                    self.callback.on_train_episode_info(envs=self.envs, policy=self.policy, env_id=i,
+                                                        infos=info, use_wandb=self.use_wandb,
+                                                        current_step=self.current_step,
+                                                        current_episode=self.current_episode,
+                                                        n_steps=n_steps)
 
             self.current_step += self.n_envs
+            self.callback.on_train_step_end(self.current_step, envs=self.envs, policy=self.policy,
+                                            n_steps=n_steps, train_info=train_info)
+        return train_info
 
     def run_episodes(self, env_fn=None, n_episodes: int = 1, test_mode: bool = False):
         """
@@ -374,8 +387,8 @@ class OnPolicyMARLAgents(MARLAgents):
         """
         envs = self.envs if env_fn is None else env_fn()
         num_envs = envs.num_envs
-        videos, episode_videos = [[] for _ in range(num_envs)], []
-        episode_count, scores, best_score = 0, [0.0 for _ in range(num_envs)], -np.inf
+        videos, episode_videos, images = [[] for _ in range(num_envs)], [], None
+        _current_episode, _current_step, scores, best_score = 0, 0, [], -np.inf
         obs_dict, info = envs.reset()
         avail_actions = envs.buf_avail_actions if self.use_actions_mask else None
         state = envs.buf_state if self.use_global_state else None
@@ -389,8 +402,7 @@ class OnPolicyMARLAgents(MARLAgents):
                 self.memory.clear_episodes()
         rnn_hidden_actor, rnn_hidden_critic = self.init_rnn_hidden(num_envs)
 
-        while episode_count < n_episodes:
-            step_info = {}
+        while _current_episode < n_episodes:
             policy_out = self.action(obs_dict=obs_dict, state=state, avail_actions_dict=avail_actions,
                                      rnn_hidden_actor=rnn_hidden_actor, rnn_hidden_critic=rnn_hidden_critic,
                                      test_mode=test_mode)
@@ -398,6 +410,7 @@ class OnPolicyMARLAgents(MARLAgents):
             actions_dict, log_pi_a_dict = policy_out['actions'], policy_out['log_pi']
             values_dict = policy_out['values']
             next_obs_dict, rewards_dict, terminated_dict, truncated, info = envs.step(actions_dict)
+            next_state = envs.buf_state if self.use_global_state else None
             next_avail_actions = envs.buf_avail_actions if self.use_actions_mask else None
             if test_mode:
                 if self.config.render_mode == "rgb_array" and self.render:
@@ -407,12 +420,21 @@ class OnPolicyMARLAgents(MARLAgents):
             else:
                 self.store_experience(obs_dict, avail_actions, actions_dict, log_pi_a_dict, rewards_dict, values_dict,
                                       terminated_dict, info, **{'state': state})
+
+            self.callback.on_test_step(envs=envs, policy=self.policy, images=images, test_mode=test_mode,
+                                       obs=obs_dict, policy_out=policy_out, acts=actions_dict,
+                                       next_obs=next_obs_dict, rewards=rewards_dict,
+                                       terminals=terminated_dict, truncations=truncated, infos=info,
+                                       state=state, next_state=next_state,
+                                       current_train_step=self.current_step, n_episodes=n_episodes,
+                                       current_step=_current_step, current_episode=_current_episode)
+
             obs_dict, avail_actions = deepcopy(next_obs_dict), deepcopy(next_avail_actions)
-            state = envs.buf_state if self.use_global_state else None
+            state = deepcopy(next_state) if self.use_global_state else None
 
             for i in range(num_envs):
                 if all(terminated_dict[i].values()) or truncated[i]:
-                    episode_count += 1
+                    _current_episode += 1
                     episode_score = float(np.mean(itemgetter(*self.agent_keys)(info[i]["episode_score"])))
                     scores.append(episode_score)
                     if test_mode:
@@ -422,12 +444,13 @@ class OnPolicyMARLAgents(MARLAgents):
                             best_score = episode_score
                             episode_videos = videos[i].copy()
                         if self.config.test_mode:
-                            print("Episode: %d, Score: %.2f" % (episode_count, episode_score))
+                            print("Episode: %d, Score: %.2f" % (_current_episode, episode_score))
                     else:
                         if all(terminated_dict[i].values()):
                             value_next = {key: 0.0 for key in self.agent_keys}
                         else:
-                            _, value_next = self.values_next(i_env=i, obs_dict=obs_dict[i], state=state[i],
+                            _, value_next = self.values_next(i_env=i, obs_dict=obs_dict[i],
+                                                             state=None if state is None else state[i],
                                                              rnn_hidden_critic=rnn_hidden_critic)
                         self.memory.finish_path(i_env=i, i_step=info[i]['episode_step'], value_next=value_next,
                                                 value_normalizer=self.learner.value_normalizer)
@@ -435,19 +458,30 @@ class OnPolicyMARLAgents(MARLAgents):
                             rnn_hidden_actor, rnn_hidden_critic = self.init_hidden_item(i, rnn_hidden_actor,
                                                                                         rnn_hidden_critic)
                         if self.use_wandb:
-                            step_info["Train-Results/Episode-Steps/env-%d" % i] = info[i]["episode_step"]
-                            step_info["Train-Results/Episode-Rewards/env-%d" % i] = info[i]["episode_score"]
+                            episode_info = {
+                                "Train-Results/Episode-Steps/env-%d" % i: info[i]["episode_step"],
+                                "Train-Results/Episode-Rewards/env-%d" % i: info[i]["episode_score"]
+                            }
                         else:
-                            step_info["Train-Results/Episode-Steps"] = {"env-%d" % i: info[i]["episode_step"]}
-                            step_info["Train-Results/Episode-Rewards"] = {
-                                "env-%d" % i: np.mean(itemgetter(*self.agent_keys)(info[i]["episode_score"]))}
+                            episode_info = {
+                                "Train-Results/Episode-Steps": {"env-%d" % i: info[i]["episode_step"]},
+                                "Train-Results/Episode-Rewards": {
+                                    "env-%d" % i: np.mean(itemgetter(*self.agent_keys)(info[i]["episode_score"]))}
+                            }
                         self.current_step += info[i]["episode_step"]
-                        self.log_infos(step_info, self.current_step)
+                        self.log_infos(episode_info, self.current_step)
+                        self.callback.on_train_episode_info(envs=self.envs, policy=self.policy, env_id=i,
+                                                            infos=info, use_wandb=self.use_wandb,
+                                                            current_step=self.current_step,
+                                                            current_episode=self.current_episode,
+                                                            n_episodes=n_episodes)
+
                     obs_dict[i] = info[i]["reset_obs"]
                     envs.buf_obs[i] = info[i]["reset_obs"]
                     if self.use_actions_mask:
                         avail_actions[i] = info[i]["reset_avail_actions"]
                         envs.buf_avail_actions[i] = info[i]["reset_avail_actions"]
+            _current_step += num_envs
 
         if test_mode:
             if self.config.render_mode == "rgb_array" and self.render:
@@ -463,9 +497,38 @@ class OnPolicyMARLAgents(MARLAgents):
                 "Test-Results/Episode-Rewards/Std-Score": np.std(scores),
             }
             self.log_infos(test_info, self.current_step)
+
+            self.callback.on_test_end(envs=envs, policy=self.policy,
+                                      current_train_step=self.current_step,
+                                      current_step=_current_step, current_episode=_current_episode,
+                                      scores=scores, best_score=best_score)
+
             if env_fn is not None:
                 envs.close()
         return scores
+
+    def train_epochs(self, n_epochs=1):
+        """
+        Train the model for numerous epochs.
+
+        Returns:
+            info_train (dict): The information of training.
+        """
+        info_train = {}
+        if self.memory.full:
+            indexes = np.arange(self.buffer_size)
+            for _ in range(n_epochs):
+                np.random.shuffle(indexes)
+                for start in range(0, self.buffer_size, self.batch_size):
+                    end = start + self.batch_size
+                    sample_idx = indexes[start:end]
+                    sample = self.memory.sample(sample_idx)
+                    info_train = self.learner.update_rnn(sample) if self.use_rnn else self.learner.update(sample)
+            self.callback.on_train_epochs_end(self.current_step, policy=self.policy, memory=self.memory,
+                                              current_episode=self.current_episode, n_epochs=n_epochs,
+                                              buffer_size=self.buffer_size, update_info=info_train)
+            self.memory.clear()
+        return info_train
 
     def test(self, env_fn, n_episodes):
         """

@@ -34,6 +34,7 @@ class IQL_Learner(LearnerMAS):
 
         for key in self.model_keys:
             with tf.GradientTape() as tape:
+                mask_values = agent_mask[key]
                 _, _, q_eval = self.policy(observation=obs, agent_ids=IDs, avail_actions=avail_actions, agent_key=key)
                 _, q_next = self.policy.Qtarget(observation=obs_next, agent_ids=IDs, agent_key=key)
 
@@ -54,8 +55,8 @@ class IQL_Learner(LearnerMAS):
                 q_target = rewards[key] + (1 - terminals[key]) * self.gamma * q_next_a
 
                 # calculate the loss function
-                td_error = (q_eval_a - tf.stop_gradient(q_target)) * agent_mask[key]
-                loss = tf.reduce_sum(td_error ** 2) / tf.reduce_sum(agent_mask[key])
+                td_error = (q_eval_a - tf.stop_gradient(q_target)) * mask_values
+                loss = tf.reduce_sum(td_error ** 2) / tf.reduce_sum(mask_values)
 
                 gradients[key] = tape.gradient(loss, self.policy.parameters_model(key))
                 if self.use_grad_clip:
@@ -69,6 +70,12 @@ class IQL_Learner(LearnerMAS):
                     f"{key}/predictQ": tf.reduce_mean(q_eval_a)
                 })
 
+                info_train.update(self.callback.on_update_agent_wise(self.iterations, key,
+                                                                     info=info_train, method="update",
+                                                                     mask_values=mask_values, q_eval_a=q_eval_a,
+                                                                     q_next_a=q_next_a, q_target=q_target,
+                                                                     td_error=td_error, loss=loss))
+
         return info_train
 
     @tf.function
@@ -81,7 +88,6 @@ class IQL_Learner(LearnerMAS):
 
     def update(self, sample):
         self.iterations += 1
-        info = {}
 
         # prepare training data
         sample_Tensor = self.build_training_data(sample=sample,
@@ -105,6 +111,9 @@ class IQL_Learner(LearnerMAS):
         else:
             bs = batch_size
 
+        info = self.callback.on_update_start(self.iterations, method="update",
+                                             policy=self.policy, sample_Tensor=sample_Tensor, bs=bs)
+
         info_train = self.learn(bs, obs, actions, rewards, obs_next, terminals,
                                 agent_mask, avail_actions, avail_actions_next, IDs)
         for k, v in info_train.items():
@@ -113,5 +122,7 @@ class IQL_Learner(LearnerMAS):
 
         if self.iterations % self.sync_frequency == 0:
             self.policy.copy_target()
+
+        info.update(self.callback.on_update_end(self.iterations, method="update_rnn", policy=self.policy, info=info))
 
         return info

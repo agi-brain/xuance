@@ -4,7 +4,7 @@ from collections import deque
 try:
     import cv2
 except ImportError:
-    print("The module opencv-python might not be installed."
+    print("The module opencv-python might not be installed. "
           "Please ensure you have installed opencv-python via `pip install opencv-python==4.5.4.58`.")
 
 

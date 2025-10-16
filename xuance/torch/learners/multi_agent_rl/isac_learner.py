@@ -73,7 +73,7 @@ class ISAC_Learner(LearnerMAS):
         # feedforward
         _, actions_eval, log_pi_eval = self.policy(observation=obs, agent_ids=IDs)
         _, actions_next, log_pi_next = self.policy(observation=obs_next, agent_ids=IDs)
-        _, _, action_q_1, action_q_2 = self.policy.Qaction(observation=obs, actions=actions, agent_ids=IDs)
+        _, _, action_q_1, action_q_2 = self.policy.Qpolicy(observation=obs, actions=actions, agent_ids=IDs)
         _, _, next_q = self.policy.Qtarget(next_observation=obs_next, next_actions=actions_next, agent_ids=IDs)
 
         for key in self.model_keys:
@@ -183,7 +183,7 @@ class ISAC_Learner(LearnerMAS):
 
         _, actions_eval, log_pi_eval = self.policy(observation=obs, agent_ids=IDs, rnn_hidden=rnn_hidden_actor)
         obs_t = {k: v[:, :-1] for k, v in obs.items()}
-        _, _, action_q_1, action_q_2 = self.policy.Qaction(observation=obs_t, actions=actions, agent_ids=IDs_t,
+        _, _, action_q_1, action_q_2 = self.policy.Qpolicy(observation=obs_t, actions=actions, agent_ids=IDs_t,
                                                            rnn_hidden_critic_1=rnn_hidden_critic,
                                                            rnn_hidden_critic_2=rnn_hidden_critic)
         _, _, next_q = self.policy.Qtarget(next_observation=obs, next_actions=actions_eval, agent_ids=IDs,

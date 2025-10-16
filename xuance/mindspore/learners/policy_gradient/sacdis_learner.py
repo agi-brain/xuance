@@ -13,8 +13,9 @@ from xuance.mindspore.learners import Learner
 class SACDIS_Learner(Learner):
     def __init__(self,
                  config: Namespace,
-                 policy: Module):
-        super(SACDIS_Learner, self).__init__(config, policy)
+                 policy: Module,
+                 callback):
+        super(SACDIS_Learner, self).__init__(config, policy, callback)
         self.optimizer = {
             'actor': optim.Adam(params=self.policy.actor_parameters, lr=self.config.learning_rate, eps=1e-5),
             'critic': optim.Adam(params=self.policy.critic_parameters, lr=self.config.learning_rate, eps=1e-5),
@@ -54,7 +55,7 @@ class SACDIS_Learner(Learner):
         action_prob, log_pi, policy_q_1, policy_q_2 = self.policy.Qpolicy(obs_batch)
         policy_q = ops.minimum(policy_q_1, policy_q_2)
         p_loss = (action_prob * (self.alpha * log_pi - policy_q)).sum(axis=1).mean()
-        return p_loss, log_pi, policy_q
+        return p_loss, action_prob, log_pi, policy_q_1, policy_q_2, policy_q
 
     def forward_fn_critic(self, obs_batch, act_batch, rew_batch, next_batch, ter_batch):
         action_q_1, action_q_2 = self.policy.Qaction(obs_batch)
@@ -68,7 +69,7 @@ class SACDIS_Learner(Learner):
         q_loss_1 = self.mse_loss(action_q_1.reshape([-1]), ops.stop_gradient(backup))
         q_loss_2 = self.mse_loss(action_q_2.reshape([-1]), ops.stop_gradient(backup))
         q_loss = q_loss_1 + q_loss_2
-        return q_loss, action_q_1, action_q_2
+        return q_loss, action_q_1, action_q_2, action_prob_next, log_pi_next, target_q, backup
 
     def update(self, **samples):
         self.iterations += 1
@@ -79,12 +80,17 @@ class SACDIS_Learner(Learner):
         ter_batch = Tensor(samples['terminals'])
         act_batch = ops.expand_dims(act_batch, -1)
 
-        (q_loss, _, _), grads_critic = self.grad_fn_critic(obs_batch, act_batch, rew_batch, next_batch, ter_batch)
+        info = self.callback.on_update_start(self.iterations,
+                                             policy=self.policy, obs=obs_batch, act=act_batch,
+                                             next_obs=next_batch, rew=rew_batch, termination=ter_batch)
+
+        (q_loss, action_q_1, action_q_2, action_prob_next, log_pi_next, target_q,
+         backup), grads_critic = self.grad_fn_critic(obs_batch, act_batch, rew_batch, next_batch, ter_batch)
         if self.use_grad_clip:
             grads_critic = ops.clip_by_norm(grads_critic, self.grad_clip_norm)
         self.optimizer['critic'](grads_critic)
 
-        (p_loss, log_pi, policy_q), grads_actor = self.grad_fn_actor(obs_batch)
+        (p_loss, action_prob, log_pi, policy_q_1, policy_q_2, policy_q), grads_actor = self.grad_fn_actor(obs_batch)
         if self.use_grad_clip:
             grads_actor = ops.clip_by_norm(grads_actor, self.grad_clip_norm)
         self.optimizer['actor'](grads_actor)
@@ -103,17 +109,27 @@ class SACDIS_Learner(Learner):
         actor_lr = self.scheduler['actor'].get_last_lr()[0]
         critic_lr = self.scheduler['critic'].get_last_lr()[0]
 
-        info = {
+        info.update({
             "Qloss": q_loss.asnumpy(),
             "Ploss": p_loss.asnumpy(),
             "Qvalue": policy_q.mean().asnumpy(),
             "actor_lr": actor_lr.asnumpy(),
             "critic_lr": critic_lr.asnumpy(),
-        }
+        })
         if self.use_automatic_entropy_tuning:
             info.update({
                 "alpha_loss": alpha_loss.asnumpy(),
                 "alpha": self.alpha.asnumpy(),
             })
+
+        info.update(self.callback.on_update_end(self.iterations,
+                                                policy=self.policy, info=info,
+                                                action_prob=action_prob, log_pi=log_pi,
+                                                policy_q_1=policy_q_1, policy_q_2=policy_q_2,
+                                                policy_q=policy_q, p_loss=p_loss,
+                                                action_q_1=action_q_1, action_q_2=action_q_2,
+                                                action_prob_next=action_prob_next, log_pi_next=log_pi_next,
+                                                target_q=target_q, backup=backup, q_loss=q_loss,
+                                                alpha_loss=alpha_loss, alpha=self.alpha))
 
         return info

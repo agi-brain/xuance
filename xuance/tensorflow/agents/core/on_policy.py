@@ -2,11 +2,11 @@ import numpy as np
 from tqdm import tqdm
 from copy import deepcopy
 from argparse import Namespace
-from xuance.common import Optional, Union, DummyOnPolicyBuffer, DummyOnPolicyBuffer_Atari
+from xuance.common import Optional, Union, DummyOnPolicyBuffer, DummyOnPolicyBuffer_Atari, BaseCallback
 from xuance.environment import DummyVecEnv, SubprocVecEnv
 from xuance.tensorflow import Module
 from xuance.tensorflow.utils import split_distributions
-from xuance.tensorflow.agents.base import Agent, BaseCallback
+from xuance.tensorflow.agents.base import Agent
 
 
 class OnPolicyAgent(Agent):

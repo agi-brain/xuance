@@ -4,12 +4,12 @@ from operator import itemgetter
 from argparse import Namespace
 from tqdm import tqdm
 from copy import deepcopy
-from xuance.common import List, Union, Optional, MeanField_OffPolicyBuffer, MeanField_OffPolicyBuffer_RNN
+from xuance.common import List, Union, Optional, MeanField_OffPolicyBuffer, MeanField_OffPolicyBuffer_RNN, MultiAgentBaseCallback
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
 from xuance.torch import Module
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
 from xuance.torch.policies import REGISTRY_Policy
-from xuance.torch.agents import OffPolicyMARLAgents, BaseCallback
+from xuance.torch.agents import OffPolicyMARLAgents
 
 
 class MFQ_Agents(OffPolicyMARLAgents):
@@ -24,7 +24,7 @@ class MFQ_Agents(OffPolicyMARLAgents):
     def __init__(self,
                  config: Namespace,
                  envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv],
-                 callback: Optional[BaseCallback] = None):
+                 callback: Optional[MultiAgentBaseCallback] = None):
         super(MFQ_Agents, self).__init__(config, envs, callback)
 
         self.n_actions_list = [a_space.n for a_space in self.action_space.values()]

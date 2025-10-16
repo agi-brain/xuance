@@ -1,7 +1,6 @@
 from argparse import Namespace
-from xuance.common import Union, Optional
+from xuance.common import Union, Optional, BaseCallback
 from xuance.environment import DummyVecEnv, SubprocVecEnv
-from xuance.torch.agents import BaseCallback
 from xuance.torch.agents.qlearning_family.dqn_agent import DQN_Agent
 
 

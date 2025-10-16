@@ -1,7 +1,9 @@
-import d4rl
 import numpy as np
 import gymnasium as gym
-
+try:
+    import d4rl
+except ImportError:
+    d4rl = object
 
 def load_d4rl_dataset(dataset_name: str, max_episode_steps, obsnorm=False, rewnorm=True):
     # create environment

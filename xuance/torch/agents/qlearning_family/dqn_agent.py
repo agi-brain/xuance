@@ -1,11 +1,11 @@
 import torch
 from argparse import Namespace
-from xuance.common import Union, Optional
+from xuance.common import Union, Optional, BaseCallback
 from xuance.environment import DummyVecEnv, SubprocVecEnv
 from xuance.torch import Module
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
 from xuance.torch.policies import REGISTRY_Policy
-from xuance.torch.agents import OffPolicyAgent, BaseCallback
+from xuance.torch.agents import OffPolicyAgent
 
 
 class DQN_Agent(OffPolicyAgent):

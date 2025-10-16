@@ -19,7 +19,6 @@
 [![pettingzoo](https://img.shields.io/badge/PettingZoo-%3E%3D1.23.0-blue)](https://pettingzoo.farama.org/)
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/xuance)
 
-
 **[Full Documentation](https://xuance.readthedocs.io/en/latest/)**
 | **[README_CN.md](README_CN.md)**
 | **[中文文档](https://xuance.readthedocs.io/zh/latest/)**

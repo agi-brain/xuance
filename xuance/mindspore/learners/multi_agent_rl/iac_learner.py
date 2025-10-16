@@ -17,8 +17,9 @@ class IAC_Learner(LearnerMAS):
                  config: Namespace,
                  model_keys: List[str],
                  agent_keys: List[str],
-                 policy: Module):
-        super(IAC_Learner, self).__init__(config, model_keys, agent_keys, policy)
+                 policy: Module,
+                 callback):
+        super(IAC_Learner, self).__init__(config, model_keys, agent_keys, policy, callback)
         self.build_optimizer()
         self.use_value_clip, self.value_clip_range = config.use_value_clip, config.value_clip_range
         self.use_huber_loss, self.huber_delta = config.use_huber_loss, config.huber_delta
@@ -156,7 +157,7 @@ class IAC_Learner(LearnerMAS):
 
     def forward_fn(self, *args):
         bs, obs, actions, agent_mask, avail_actions, values, returns, advantages, IDs = args
-        value_pred = {}
+        info_forward = {}
         pi_dist_mu, pi_dist_std, pi_dist_logits = {}, {}, {}
 
         # feedforward
@@ -216,18 +217,24 @@ class IAC_Learner(LearnerMAS):
                     loss_v = ((value_pred_i - value_target) ** 2) * mask_values
                 loss_c.append(loss_v.sum() / mask_values.sum())
 
-            value_pred.update({
+            info_forward.update({
                 f"predict_value/{key}": value_pred_i.mean().asnumpy()
             })
+
+            info_forward.update(self.callback.on_update_agent_wise(self.iterations, key, info=info_forward,
+                                                                   method="update", mask_values=mask_values,
+                                                                   log_pi=log_pi, pg_loss=pg_loss,
+                                                                   entropy=entropy, entropy_loss=entropy_loss,
+                                                                   value_pred_i=value_pred_i, value_target=value_target,
+                                                                   values_i=values_i, loss_v=loss_v))
 
         # Total loss
         loss = sum(loss_a) + self.vf_coef * sum(loss_c) - self.ent_coef * sum(loss_e)
 
-        return loss, sum(loss_a), sum(loss_e), sum(loss_c), value_pred
+        return loss, sum(loss_a), sum(loss_e), sum(loss_c), info_forward
 
     def update(self, sample):
         self.iterations += 1
-        info = {}
 
         # prepare training data
         sample_Tensor = self.build_training_data(sample=sample,
@@ -245,9 +252,12 @@ class IAC_Learner(LearnerMAS):
 
         bs = batch_size * self.n_agents if self.use_parameter_sharing else batch_size
 
+        info = self.callback.on_update_start(self.iterations, method="update",
+                                             policy=self.policy, sample_Tensor=sample_Tensor, bs=bs)
+
         # feedforward
-        (loss, loss_a, loss_e, loss_c, value_pred), grads = self.grad_fn(bs, obs, actions, agent_mask, avail_actions,
-                                                                         values, returns, advantages, IDs)
+        (loss, loss_a, loss_e, loss_c, info_forward), grads = self.grad_fn(bs, obs, actions, agent_mask, avail_actions,
+                                                                           values, returns, advantages, IDs)
         if self.use_grad_clip:
             grads = clip_grads(grads, Tensor(-self.grad_clip_norm), Tensor(self.grad_clip_norm))
         self.optimizer(grads)  # backpropagation
@@ -262,6 +272,8 @@ class IAC_Learner(LearnerMAS):
             "entropy_loss": loss_e.asnumpy(),
             "loss": loss.asnumpy(),
         })
-        info.update(value_pred)
+        info.update(info_forward)
+
+        info.update(self.callback.on_update_end(self.iterations, method="update", policy=self.policy, info=info))
 
         return info

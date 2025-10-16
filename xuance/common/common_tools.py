@@ -22,11 +22,11 @@ def recursive_dict_update(basic_dict, target_dict):
         A dict mapping keys of basic_dict to the values of the same keys in target_dict.
         For example:
 
-        basic_dict = {'a': 1, 'b': 2}
-        target_dict = {'a': 3, 'c': 4}
-        out_dict = recursive_dict_update(basic_dict, target_dict)
+            basic_dict = {'a': 1, 'b': 2}
+            target_dict = {'a': 3, 'c': 4}
+            out_dict = recursive_dict_update(basic_dict, target_dict)
 
-        output_dict = {'a': 3, 'b': 2, 'c': 4}
+            output_dict = {'a': 3, 'b': 2, 'c': 4}
     """
     out_dict = deepcopy(basic_dict)
     for key, value in target_dict.items():
@@ -54,12 +54,12 @@ def get_configs(file_dir):
 
 
 def get_arguments(method, env, env_id, config_path=None, parser_args=None, is_test=False):
-    """Get arguments from .yaml files
+    """Get arguments from ``.yaml`` files
     Args:
         method: the algorithm name that will be implemented,
         env: The name of the environment,
         env_id: The name of the scenario in the environment.
-        config_path: default is None, if None, the default configs (xuance/configs/.../*.yaml) will be loaded.
+        config_path: default is None, if None, the default configs (``xuance/configs/.../*.yaml``) will be loaded.
         parser_args: arguments that specified by parser tools.
 
     Returns:
@@ -152,7 +152,7 @@ def get_runner(method,
         method: the algorithm name that will be implemented,
         env: The name of the environment,
         env_id: The name of the scenario in the environment.
-        config_path: default is None, if None, the default configs (xuance/configs/.../*.yaml) will be loaded.
+        config_path: default is None, if None, the default configs (``xuance/configs/.../*.yaml``) will be loaded.
         parser_args: arguments that specified by parser tools.
         is_test: default is False, if True, it will load the models and run the environment with rendering.
 
@@ -291,8 +291,7 @@ def combined_shape(length: int, shape=None):
     Returns:
         tuple: A new shape expanded from the input shape.
 
-    Examples
-    --------
+    Examples:
         >>> length = 2
         >>> shape_1 = None
         >>> shape_2 = 3
@@ -397,11 +396,10 @@ def discount_cumsum(x, discount=0.99):
     Returns:
         The discounted cumulative returns for each step.
 
-    Examples
-    --------
-    >>> x = [0, 1, 2, 2]
-    >>> y = discount_cumsum(x, discount=0.99)
-    [4.890798, 4.9402, 3.98, 2.0]
+    Examples:
+        >>> x = [0, 1, 2, 2]
+        >>> y = discount_cumsum(x, discount=0.99)
+        [4.890798, 4.9402, 3.98, 2.0]
     """
     return scipy.signal.lfilter([1], [1, float(-discount)], x[::-1], axis=0)[::-1]
 

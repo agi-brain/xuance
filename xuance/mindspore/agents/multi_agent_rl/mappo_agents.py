@@ -1,7 +1,7 @@
 import numpy as np
 from argparse import Namespace
 from operator import itemgetter
-from xuance.common import Optional, List, Union
+from xuance.common import Optional, List, Union, MultiAgentBaseCallback
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
 from xuance.mindspore import Tensor, Module
 from xuance.mindspore.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions
@@ -15,12 +15,14 @@ class MAPPO_Agents(IPPO_Agents):
     Args:
         config: the Namespace variable that provides hyperparameters and other settings.
         envs: the vectorized environments.
+        callback: A user-defined callback function object to inject custom logic during training.
     """
 
     def __init__(self,
                  config: Namespace,
-                 envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv]):
-        super(MAPPO_Agents, self).__init__(config, envs)
+                 envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv],
+                 callback: Optional[MultiAgentBaseCallback] = None):
+        super(MAPPO_Agents, self).__init__(config, envs, callback)
 
     def _build_policy(self) -> Module:
         """

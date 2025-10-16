@@ -12,8 +12,9 @@ from xuance.mindspore.learners import Learner
 class DuelDQN_Learner(Learner):
     def __init__(self,
                  config: Namespace,
-                 policy: Module):
-        super(DuelDQN_Learner, self).__init__(config, policy)
+                 policy: Module,
+                 callback):
+        super(DuelDQN_Learner, self).__init__(config, policy, callback)
         self.optimizer = optim.Adam(params=self.policy.trainable_params(), lr=self.config.learning_rate, eps=1e-5)
         self.scheduler = optim.lr_scheduler.LinearLR(self.optimizer, start_factor=1.0, end_factor=self.end_factor_lr_decay,
                                                      total_iters=self.config.running_steps)
@@ -32,10 +33,10 @@ class DuelDQN_Learner(Learner):
         targetQ = targetQ.max(axis=-1)
         targetQ = rew_batch + self.gamma * (1 - ter_batch) * targetQ
 
-        predict_Q = self.gather(evalQ, act_batch, axis=-1).reshape(-1)
-        loss = self.mse_loss(logits=predict_Q, labels=ops.stop_gradient(targetQ))
+        predictQ = self.gather(evalQ, act_batch, axis=-1).reshape(-1)
+        loss = self.mse_loss(logits=predictQ, labels=ops.stop_gradient(targetQ))
 
-        return loss, predict_Q
+        return loss, evalQ, targetQ, predictQ
 
     def update(self, **samples):
         self.iterations += 1
@@ -45,7 +46,11 @@ class DuelDQN_Learner(Learner):
         next_batch = Tensor(samples['obs_next'])
         ter_batch = Tensor(samples['terminals'])
 
-        (loss, predictQ), grads = self.grad_fn(obs_batch, act_batch, next_batch, rew_batch, ter_batch)
+        info = self.callback.on_update_start(self.iterations,
+                                             policy=self.policy, obs=obs_batch, act=act_batch,
+                                             next_obs=next_batch, rew=rew_batch, termination=ter_batch)
+
+        (loss, evalQ, targetQ, predictQ), grads = self.grad_fn(obs_batch, act_batch, next_batch, rew_batch, ter_batch)
         self.optimizer(grads)
 
         # hard update for target network
@@ -55,10 +60,14 @@ class DuelDQN_Learner(Learner):
         self.scheduler.step()
         lr = self.scheduler.get_last_lr()[0]
 
-        info = {
+        info.update({
             "Qloss": loss.asnumpy(),
             "predictQ": predictQ.mean().asnumpy(),
             "learning_rate": lr.asnumpy(),
-        }
+        })
+
+        info.update(self.callback.on_update_end(self.iterations,
+                                                policy=self.policy, info=info,
+                                                evalQ=evalQ, predictQ=predictQ, targetQ=targetQ, loss=loss))
 
         return info

@@ -3,11 +3,11 @@ import numpy as np
 from copy import deepcopy
 from argparse import Namespace
 from operator import itemgetter
-from xuance.common import Optional, List, Union, MARL_OffPolicyBuffer, MARL_OffPolicyBuffer_RNN
+from xuance.common import Optional, List, Union, MARL_OffPolicyBuffer, MARL_OffPolicyBuffer_RNN, MultiAgentBaseCallback
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
 from xuance.torch import Tensor, Module
 from xuance.torch.utils.distributions import Categorical
-from xuance.torch.agents.base import MARLAgents, BaseCallback
+from xuance.torch.agents.base import MARLAgents
 
 
 class OffPolicyMARLAgents(MARLAgents):
@@ -24,7 +24,7 @@ class OffPolicyMARLAgents(MARLAgents):
     def __init__(self,
                  config: Namespace,
                  envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv],
-                 callback: Optional[BaseCallback] = None):
+                 callback: Optional[MultiAgentBaseCallback] = None):
         super(OffPolicyMARLAgents, self).__init__(config, envs, callback)
         self.on_policy = False
         self.start_greedy = getattr(config, "start_greedy", None)

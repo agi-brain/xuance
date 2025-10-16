@@ -2,18 +2,18 @@ import numpy as np
 from argparse import Namespace
 from operator import itemgetter
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
-from xuance.common import List, Optional, Union
+from xuance.common import List, Optional, Union, MultiAgentBaseCallback
 from xuance.tensorflow import tf, Module
 from xuance.tensorflow.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions
 from xuance.tensorflow.policies import REGISTRY_Policy, VDN_mixer, QMIX_mixer
-from xuance.tensorflow.agents import OnPolicyMARLAgents, BaseCallback
+from xuance.tensorflow.agents import OnPolicyMARLAgents
 
 
 class VDAC_Agents(OnPolicyMARLAgents):
     def __init__(self,
                  config: Namespace,
                  envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv],
-                 callback: Optional[BaseCallback] = None):
+                 callback: Optional[MultiAgentBaseCallback] = None):
         super(VDAC_Agents, self).__init__(config, envs, callback)
         self.state_space = envs.state_space
         self.mixer = config.mixer

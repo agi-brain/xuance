@@ -85,7 +85,7 @@ __all__ = [
     "DreamerV2_Learner", "DreamerV3_Learner",
 
     "IQL_Learner", "VDN_Learner", "QMIX_Learner", "WQMIX_Learner", "QTRAN_Learner",
-    "IAC_Learner", "VDAC_Learner", "COMA_Learner", "IPPO_Learner", "MAPPO_Clip_Learner",
+    "IAC_Learner", "VDAC_Learner", "COMA_Learner", "IPPO_Learner", "MAPPO_Learner",
     "MFQ_Learner", "MFAC_Learner",
     "IDDPG_Learner", "MADDPG_Learner", "MATD3_Learner",
     "ISAC_Learner", "ISACDIS_Learner", "MASAC_Learner", "MADDPG_Learner",

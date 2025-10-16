@@ -158,24 +158,36 @@ class PPG_Learner(Learner):
             act_batch = tf.convert_to_tensor(samples["actions"][:, None], dtype=tf.int32)
         old_dist = merge_distributions(samples['aux_batch']['old_dist'])
         old_log_prob_batch = tf.stop_gradient(old_dist.log_prob(act_batch))
+        info = self.callback.on_update_start(self.iterations,
+                                             policy=self.policy, obs=obs_batch, act=act_batch, advantages=adv_batch,
+                                             old_dist=old_dist, old_logp=old_log_prob_batch)
 
         a_loss, e_loss = self.learn_policy(obs_batch, act_batch, adv_batch, old_log_prob_batch)
-        info = {"actor-loss": a_loss.numpy(), "entropy": e_loss.numpy()}
+        info.update({"actor-loss": a_loss.numpy(), "entropy": e_loss.numpy()})
         self.policy_iterations += 1
+        info.update(self.callback.on_update_end(self.iterations, method="update_policy",
+                                                policy=self.policy, info=info,
+                                                a_loss=a_loss, e_loss=e_loss))
         return info
 
     def update_critic(self, **samples):
+        self.value_iterations += 1
         obs_batch = tf.convert_to_tensor(samples["obs"], dtype=tf.float32)
         ret_batch = tf.convert_to_tensor(samples["returns"], dtype=tf.float32)
+        info = self.callback.on_update_start(self.iterations, policy=self.policy, obs=obs_batch, returns=ret_batch)
+
         loss = self.learn_critic(obs_batch, ret_batch)
-        info = {"critic-loss": loss.numpy()}
-        self.value_iterations += 1
+        info.update({"critic-loss": loss.numpy()})
+        info.update(self.callback.on_update_end(self.iterations, method="update_critic",
+                                                policy=self.policy, info=info, loss=loss))
         return info
 
     def update_auxiliary(self, **samples):
         obs_batch = tf.convert_to_tensor(samples["obs"], dtype=tf.float32)
         ret_batch = tf.convert_to_tensor(samples["returns"], dtype=tf.float32)
         old_dists = merge_distributions(samples['aux_batch']['old_dist'])
+        info = self.callback.on_update_start(self.iterations,
+                                             policy=self.policy, obs=obs_batch, returns=ret_batch, old_dist=old_dists)
         if self.is_continuous:
             old_mu = old_dists.mu
             old_std = old_dists.std
@@ -183,7 +195,9 @@ class PPG_Learner(Learner):
         else:
             old_logits = old_dists.logits
             loss = self.learn_auxiliary(obs_batch, ret_batch, old_logits)
-        info = {"kl-loss": loss.numpy()}
+        info.update({"kl-loss": loss.numpy()})
+        info.update(self.callback.on_update_end(self.iterations, method="update_auxiliary",
+                                                policy=self.policy, info=info, loss=loss))
         return info
 
     def update(self):

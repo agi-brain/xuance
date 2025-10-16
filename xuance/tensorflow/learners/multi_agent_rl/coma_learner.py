@@ -105,7 +105,6 @@ class COMA_Learner(IAC_Learner):
 
     def update(self, sample, epsilon=0.0):
         self.iterations += 1
-        info = {}
 
         # prepare training data
         sample_Tensor = self.build_training_data(sample=sample,
@@ -123,6 +122,9 @@ class COMA_Learner(IAC_Learner):
 
         bs = batch_size * self.n_agents if self.use_parameter_sharing else batch_size
 
+        info = self.callback.on_update_start(self.iterations, method="update",
+                                             policy=self.policy, sample_Tensor=sample_Tensor, bs=bs)
+
         loss_coma, loss_critic = self.learn(bs, batch_size, obs, state, actions,
                                             agent_mask, avail_actions, returns, IDs, epsilon)
 
@@ -133,5 +135,7 @@ class COMA_Learner(IAC_Learner):
             "actor_loss": loss_coma.numpy(),
             "critic_loss": loss_critic.numpy(),
         })
+
+        info.update(self.callback.on_update_end(self.iterations, method="update", policy=self.policy, info=info))
 
         return info

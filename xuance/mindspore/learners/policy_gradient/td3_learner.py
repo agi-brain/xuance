@@ -13,16 +13,19 @@ from xuance.mindspore.utils import clip_grads
 class TD3_Learner(Learner):
     def __init__(self,
                  config: Namespace,
-                 policy: Module):
-        super(TD3_Learner, self).__init__(config, policy)
+                 policy: Module,
+                 callback):
+        super(TD3_Learner, self).__init__(config, policy, callback)
         self.optimizer = {
             'actor': optim.Adam(params=self.policy.actor_parameters, lr=self.config.learning_rate, eps=1e-5),
             'critic': optim.Adam(params=self.policy.critic_parameters, lr=self.config.learning_rate, eps=1e-5),
         }
         self.scheduler = {
-            'actor': optim.lr_scheduler.LinearLR(self.optimizer['actor'], start_factor=1.0, end_factor=self.end_factor_lr_decay,
+            'actor': optim.lr_scheduler.LinearLR(self.optimizer['actor'], start_factor=1.0,
+                                                 end_factor=self.end_factor_lr_decay,
                                                  total_iters=self.config.running_steps),
-            'critic': optim.lr_scheduler.LinearLR(self.optimizer['critic'], start_factor=1.0, end_factor=self.end_factor_lr_decay,
+            'critic': optim.lr_scheduler.LinearLR(self.optimizer['critic'], start_factor=1.0,
+                                                  end_factor=self.end_factor_lr_decay,
                                                   total_iters=self.config.running_steps)
         }
         self.tau = config.tau
@@ -43,31 +46,35 @@ class TD3_Learner(Learner):
 
     def forward_fn_critic(self, obs_batch, act_batch, next_batch, rew_batch, ter_batch):
         next_q = self.policy.Qtarget(next_batch).reshape([-1])
-        backup = rew_batch + self.gamma * (1 - ter_batch) * next_q
+        target_q = rew_batch + self.gamma * (1 - ter_batch) * next_q
 
         action_q_A, action_q_B = self.policy.Qaction(obs_batch, act_batch)
         action_q_A = action_q_A.reshape([-1])
         action_q_B = action_q_B.reshape([-1])
-        loss_q_A = self.mse_loss(logits=action_q_A, labels=ops.stop_gradient(backup))
-        loss_q_B = self.mse_loss(logits=action_q_B, labels=ops.stop_gradient(backup))
+        loss_q_A = self.mse_loss(logits=action_q_A, labels=ops.stop_gradient(target_q))
+        loss_q_B = self.mse_loss(logits=action_q_B, labels=ops.stop_gradient(target_q))
         loss_q = loss_q_A + loss_q_B
-        return loss_q, action_q_A, action_q_B
+        return loss_q, next_q, action_q_A, action_q_B, target_q
 
     def update(self, **samples):
         self.iterations += 1
-        info = {}
         obs_batch = Tensor(samples['obs'])
         act_batch = Tensor(samples['actions'])
         rew_batch = Tensor(samples['rewards'])
         next_batch = Tensor(samples['obs_next'])
         ter_batch = Tensor(samples['terminals'])
 
-        (q_loss, action_q_A, action_q_B), grads_critic = self.grad_fn_critic(obs_batch, act_batch, next_batch,
-                                                                             rew_batch, ter_batch)
+        info = self.callback.on_update_start(self.iterations,
+                                             policy=self.policy, obs=obs_batch, act=act_batch,
+                                             next_obs=next_batch, rew=rew_batch, termination=ter_batch)
+
+        (q_loss, next_q, action_q_A, action_q_B, target_q), grads_critic = self.grad_fn_critic(
+            obs_batch, act_batch, next_batch, rew_batch, ter_batch)
         if self.use_grad_clip:
             grads_critic = clip_grads(grads_critic, Tensor(-self.grad_clip_norm), Tensor(self.grad_clip_norm))
         self.optimizer['critic'](grads_critic)
 
+        policy_q, p_loss = None, None
         if self.iterations % self.actor_update_delay == 0:
             (p_loss, policy_q), grads_actor = self.grad_fn_actor(obs_batch)
             if self.use_grad_clip:
@@ -88,5 +95,11 @@ class TD3_Learner(Learner):
             "actor_lr": actor_lr.numpy(),
             "critic_lr": critic_lr.numpy()
         })
+
+        info.update(self.callback.on_update_end(self.iterations,
+                                                policy=self.policy, info=info,
+                                                action_q_A=action_q_A, action_q_B=action_q_B,
+                                                next_q=next_q, target_q=target_q, q_loss=q_loss,
+                                                policy_q=policy_q, p_loss=p_loss))
 
         return info

@@ -13,8 +13,9 @@ from xuance.mindspore.learners import Learner
 class PPOKL_Learner(Learner):
     def __init__(self,
                  config: Namespace,
-                 policy: Module):
-        super(PPOKL_Learner, self).__init__(config, policy)
+                 policy: Module,
+                 callback):
+        super(PPOKL_Learner, self).__init__(config, policy, callback)
         self.optimizer = optim.Adam(params=self.policy.trainable_params(), lr=self.config.learning_rate, eps=1e-5)
         self.scheduler = optim.lr_scheduler.LinearLR(self.optimizer, start_factor=1.0, end_factor=self.end_factor_lr_decay,
                                                      total_iters=self.config.running_steps)
@@ -59,7 +60,7 @@ class PPOKL_Learner(Learner):
         c_loss = self.mse_loss(logits=v_pred, labels=ops.stop_gradient(ret_batch))
         e_loss = ops.mean(entropy)
         loss = a_loss - self.ent_coef * e_loss + self.vf_coef * c_loss
-        return loss, a_loss, c_loss, e_loss, kl, v_pred
+        return loss, a_loss, c_loss, e_loss, outputs, log_prob, ratio, kl, v_pred
 
     def update(self, **samples):
         self.iterations += 1
@@ -71,15 +72,20 @@ class PPOKL_Learner(Learner):
         else:
             act_batch = Tensor(samples['actions'], dtype=ms.int32)
         old_dists = merge_distributions(samples['aux_batch']['old_dist'])
+
+        info = self.callback.on_update_start(self.iterations,
+                                             policy=self.policy, obs=obs_batch, act=act_batch,
+                                             returns=ret_batch, advantages=adv_batch, old_dists=old_dists)
+
         if self.is_continuous:
             old_mu = old_dists.mu
             old_std = old_dists.std
-            (loss, a_loss, c_loss, e_loss, kl, v_pred), grads = self.grad_fn(obs_batch, act_batch, ret_batch, adv_batch,
-                                                                             old_mu, old_std)
+            (loss, a_loss, c_loss, e_loss, outputs, log_prob, ratio, kl, v_pred), grads = self.grad_fn(
+                obs_batch, act_batch, ret_batch, adv_batch, old_mu, old_std)
         else:
             old_logits = old_dists.logits
-            (loss, a_loss, c_loss, e_loss, kl, v_pred), grads = self.grad_fn(obs_batch, act_batch, ret_batch, adv_batch,
-                                                                             old_logits)
+            (loss, a_loss, c_loss, e_loss, outputs, log_prob, ratio, kl, v_pred), grads = self.grad_fn(
+                obs_batch, act_batch, ret_batch, adv_batch, old_logits)
         if self.use_grad_clip:
             grads = ops.clip_by_norm(grads, self.grad_clip_norm)
         self.optimizer(grads)
@@ -93,13 +99,18 @@ class PPOKL_Learner(Learner):
             self.kl_coef = self.kl_coef / 2.
         self.kl_coef = ops.clip_by_value(self.kl_coef, 0.1, 20)
 
-        info = {
+        info.update({
             "actor-loss": a_loss.asnumpy(),
             "critic-loss": c_loss.asnumpy(),
             "entropy": e_loss.asnumpy(),
             "learning_rate": lr.asnumpy(),
             "kl": kl.asnumpy(),
             "predict_value": v_pred.mean().asnumpy()
-        }
+        })
+
+        info.update(self.callback.on_update_end(self.iterations,
+                                                policy=self.policy, info=info, rep_output=outputs,
+                                                v_pred=v_pred, log_prob=log_prob, kl=kl, ratio=ratio,
+                                                a_loss=a_loss, c_loss=c_loss, e_loss=e_loss, loss=loss))
 
         return info

@@ -111,7 +111,6 @@ class MASAC_Learner(ISAC_Learner):
 
     def update(self, sample):
         self.iterations += 1
-        info = {}
 
         # Prepare training data.
         sample_Tensor = self.build_training_data(sample,
@@ -139,6 +138,10 @@ class MASAC_Learner(ISAC_Learner):
             next_obs_joint = tf.reshape(tf.stack(itemgetter(*self.agent_keys)(obs_next), axis=-1), [batch_size, -1])
             actions_joint = tf.reshape(tf.stack(itemgetter(*self.agent_keys)(actions), axis=-1), [batch_size, -1])
 
+        info = self.callback.on_update_start(self.iterations, method="update", policy=self.policy,
+                                             sample_Tensor=sample_Tensor, bs=bs, obs_joint=obs_joint,
+                                             next_obs_joint=next_obs_joint, actions_joint=actions_joint)
+
         info_train = self.learn(batch_size, bs, obs, obs_joint, actions, actions_joint, rewards,
                                 obs_next, next_obs_joint, terminals, IDs, agent_mask)
         for k, v in info_train.items():
@@ -146,5 +149,7 @@ class MASAC_Learner(ISAC_Learner):
         info.update(info_train)
 
         self.policy.soft_update(self.tau)
+
+        info.update(self.callback.on_update_end(self.iterations, method="update", policy=self.policy, info=info))
 
         return info

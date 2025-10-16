@@ -87,13 +87,20 @@ class A2C_Learner(Learner):
         else:
             act_batch = tf.convert_to_tensor(samples["actions"][:, None], dtype=tf.int32)
 
+        info = self.callback.on_update_start(self.iterations,
+                                             policy=self.policy, obs=obs_batch, act=act_batch,
+                                             returns=ret_batch, advantages=adv_batch)
+
         a_loss, c_loss, e_loss, v_pred = self.learn(obs_batch, act_batch, ret_batch, adv_batch)
 
-        info = {
+        info.update({
             "actor-loss": a_loss.numpy(),
             "critic-loss": c_loss.numpy(),
             "entropy": e_loss.numpy(),
             "predict_value": tf.math.reduce_mean(v_pred).numpy()
-        }
+        })
+
+        info.update(self.callback.on_update_end(self.iterations, policy=self.policy, info=info,
+                                                v_pred=v_pred, a_loss=a_loss, c_loss=c_loss, e_loss=e_loss))
 
         return info
