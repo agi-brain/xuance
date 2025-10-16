@@ -1,2 +1,1 @@
-Independent Proximal Policy Optimization (IPPO)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+# Independent Proximal Policy Optimization (IPPO)

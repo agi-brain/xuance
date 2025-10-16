@@ -1,2 +1,1 @@
-Multi-agent Twin Delayed Deep Deterministic Policy Gradient (MATD3)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+# Multi-agent Twin Delayed Deep Deterministic Policy Gradient (MATD3)

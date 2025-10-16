@@ -1,2 +1,1 @@
-Independent Soft Actor-Critic (ISAC)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+# Independent Soft Actor-Critic (ISAC)

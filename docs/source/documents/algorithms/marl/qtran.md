@@ -1,2 +1,1 @@
-Q-Transformation (QTRAN)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+# Q-Transformation (QTRAN)

@@ -1,2 +1,2 @@
-Deep Coordination Graphs (DCG)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+# Deep Coordination Graphs (DCG)
+

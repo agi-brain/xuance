@@ -1,2 +1,1 @@
-Multi-agent Soft Actor-Critic (MASAC)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+# Multi-agent Soft Actor-Critic (MASAC)

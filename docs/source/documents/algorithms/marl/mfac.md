@@ -1,2 +1,1 @@
-Mean-Field Actor-Critic (MFAC)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+# Mean-Field Actor-Critic (MFAC)

@@ -1,2 +1,1 @@
-Mean-Field Q-Learning (MFQ)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+# Mean-Field Q-Learning (MFQ)

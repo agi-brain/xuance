@@ -1,2 +1,1 @@
-Independent Deep Deterministic Policy Gradient (IDDPG)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+# Independent Deep Deterministic Policy Gradient (IDDPG)

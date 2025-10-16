@@ -1,2 +1,1 @@
-Multi-agent Proximal Policy Optimization (MAPPO)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+# Multi-agent Proximal Policy Optimization (MAPPO)

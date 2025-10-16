@@ -1,2 +1,1 @@
-Weighted Q-Mixing Networks (WQMIX)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+# Weighted Q-Mixing Networks (WQMIX)

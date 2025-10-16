@@ -1,2 +1,1 @@
-Value-Decomposition Actor-Critic (VDAC)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+# Value-Decomposition Actor-Critic (VDAC)

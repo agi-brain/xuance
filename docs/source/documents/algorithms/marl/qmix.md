@@ -1,2 +1,1 @@
-Q-Mixing Networks (QMIX)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+# Q-Mixing Networks (QMIX)

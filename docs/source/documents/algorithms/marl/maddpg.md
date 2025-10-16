@@ -1,2 +1,1 @@
-Multi-agent Deep Deterministic Policy Gradient (MADDPG)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+# Multi-agent Deep Deterministic Policy Gradient (MADDPG)
