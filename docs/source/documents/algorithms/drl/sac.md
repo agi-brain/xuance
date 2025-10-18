@@ -4,6 +4,7 @@
 Soft Actor-Critic (SAC) is a state-of-the-art model-free deep reinforcement learning algorithm that combines the actor-critic framework with the principles of maximum entropy reinforcement learning. Introduced in 2018, it has gained significant attention for its effectiveness in handling continuous action spaces and its robust performance across various complex tasks.
 
 This table lists some general features about SAC algorithm:
+
 | Features of Double DQN  | Values | Description                                              |
 |-------------------------|--------|----------------------------------------------------------|
 | On-policy               | ❌      | The evaluate policy is the same as the target policy.    |
