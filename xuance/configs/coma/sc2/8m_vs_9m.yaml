@@ -1,0 +1,61 @@
+agent: "COMA"  # the learning algorithms_marl
+env_name: "StarCraft2"  # Name of the environment.
+env_id: "8m_vs_9m"  # Environment map.
+env_seed: 1  # The random seed of the environment.
+fps: 15  # Frames per second.
+learner: "COMA_Learner"  # Name of learner.
+policy: "Categorical_COMA_Policy"  # Name of policy.
+representation: "Basic_RNN"  # Name of representation.
+vectorize: "Subproc_StarCraft2"  # Method to vectorize the environment.
+runner: "RunnerStarCraft2"  # Runner.
+
+use_rnn: True  # Whether to use recurrent neural networks.
+rnn: "GRU"  # Choice of recurrent networks: GRU or LSTM.
+N_recurrent_layers: 1  # Number of recurrent layers.
+fc_hidden_sizes: [64, ]  # The fully connected layer for Basic_RNN representation.
+recurrent_hidden_size: 64  # The size of hidden layers of recurrent networks.
+dropout: 0  # dropout should be a number in range [0, 1], the probability of an element being zeroed.
+normalize: "LayerNorm"  # Layer normalization.
+initialize: "orthogonal"  # Network initializer.
+gain: 0.01  # Gain value for network initialization.
+
+actor_hidden_size: [64, ]  # A list of hidden units for each layer of actor network.
+critic_hidden_size: [128, 128]  # A list of hidden units for each layer of critic network.
+activation: "relu"  # The activation function of each hidden layer.
+use_parameter_sharing: True  # If to use parameter sharing for all agents' policies.
+use_actions_mask: False  # If to use actions mask for unavailable actions.
+
+seed: 1  # Random seeds.
+parallels: 8  # Number of environments that to be implemented in parallel.
+buffer_size: 8  # Total buffer size.
+n_epochs: 1  # Number of epochs to update the model.
+n_minibatch: 1  # Number of minibatch.
+learning_rate_actor: 0.0007  # Learning rate of actor.
+learning_rate_critic: 0.0007  # Learning rate of critic.
+weight_decay: 0  # The steps to decay the greedy epsilon.
+
+start_greedy: 0.5  # The start value of greedy epsilon.
+end_greedy: 0.01  # The end value of greedy epsilon.
+decay_step_greedy: 2500000  # The steps to decay the greedy epsilon.
+sync_frequency: 200  # The frequency to synchronize target networks.
+
+vf_coef: 0.1  # Coefficient factor for critic loss.
+ent_coef: 0.01  # Coefficient factor for entropy loss.
+gamma: 0.95  # Discount factor.
+
+# tricks
+use_linear_lr_decay: False  # If to use linear learning rate decay.
+end_factor_lr_decay: 0.5  # The end factor for learning rate scheduler.
+use_advnorm: False  # Whether to use advantage normalization.
+use_gae: True  # Use GAE trick.
+gae_lambda: 0.8  # The GAE lambda.
+use_grad_clip: True  # Gradient normalization.
+grad_clip_norm: 10.0  # The max norm of the gradient.
+clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm().
+
+running_steps: 10000000  # The total running steps.
+eval_interval: 100000  # The interval between every two trainings.
+test_episode: 16  # The episodes to test in each test period.
+
+log_dir: "./logs/coma/"  # The directory to store logger file.
+model_dir: "./models/coma/"  # The directory to store model file.

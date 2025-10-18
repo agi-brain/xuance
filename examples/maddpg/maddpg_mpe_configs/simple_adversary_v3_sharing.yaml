@@ -1,0 +1,64 @@
+# MADDPG Simple Adversary - 好智能体参数共享版本
+dl_toolbox: "torch"
+project_name: "XuanCe_MADDPG_Adversary_Sharing"
+logger: "tensorboard"
+wandb_user_name: "your_user_name"
+render: False
+render_mode: 'rgb_array'
+fps: 30
+test_mode: False
+device: "cuda:0"
+distributed_training: False
+master_port: '12361'
+
+# 算法配置
+agent: "MADDPG"
+env_name: "mpe"
+env_id: "simple_adversary_v3"
+env_seed: 1
+continuous_action: True  # MADDPG使用连续动作空间
+learner: "MADDPG_Learner"
+policy: "MADDPG_Policy"
+representation: "Basic_Identical"
+vectorize: "SubprocVecMultiAgentEnv"
+runner: "RunnerCompetition"
+
+# 网络架构
+representation_hidden_size: []
+actor_hidden_size: [128, 128]
+critic_hidden_size: [128, 128]
+activation: 'relu'
+activation_action: 'tanh'
+
+# 参数共享配置
+use_parameter_sharing: False  # 全局参数共享关闭
+good_agents_parameter_sharing: True  # 好智能体参数共享开启
+use_actions_mask: False
+
+# 训练参数
+seed: 1
+parallels: 8
+buffer_size: 100000
+batch_size: 256
+learning_rate_actor: 0.001   # Actor学习率
+learning_rate_critic: 0.01   # Critic学习率
+gamma: 0.95
+tau: 0.005  # 软更新系数
+
+# 探索参数
+start_noise: 1.0
+end_noise: 0.1
+sigma: 0.15
+start_training: 5000
+running_steps: 500000
+training_frequency: 25
+
+# 正则化
+use_grad_clip: True
+grad_clip_norm: 5.0
+
+# 评估和日志
+eval_interval: 50000
+test_episode: 20
+log_dir: "./logs/maddpg_adversary_sharing/"
+model_dir: "./models/maddpg_adversary_sharing/"

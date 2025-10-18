@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="52px" height="84px" viewBox="0 0 48 40">
+  <g>
+    <g>
+      <defs>
+        <path id="SVGID_1_" d="M47.5 17.6L25 4.8v52.6l9-5.2V37.4l6.8 3.9-.1-10.1-6.7-3.9v-5.9l13.5 7.9z"/>
+      </defs>
+      <clipPath id="SVGID_2_">
+        <use xlink:href="#SVGID_1_" overflow="visible"/>
+      </clipPath>
+      <g clip-path="url(#SVGID_2_)">
+        <linearGradient id="SVGID_3_" gradientUnits="userSpaceOnUse" x1="-1.6" y1="335.05" x2="53.6" y2="335.05" gradientTransform="translate(0 -304)">
+          <stop offset="0" stop-color="#ff6f00"/>
+          <stop offset="1" stop-color="#ffa800"/>
+        </linearGradient>
+        <path d="M-1.6 4.6h55.2v52.9H-1.6V4.6z" fill="url(#SVGID_3_)"/>
+      </g>
+    </g>
+  </g>
+  <g>
+    <g>
+      <defs>
+        <path id="SVGID_4_" d="M.5 17.6L23 4.8v52.6l-9-5.2V21.4L.5 29.3z"/>
+      </defs>
+      <clipPath id="SVGID_5_">
+        <use xlink:href="#SVGID_4_" overflow="visible"/>
+      </clipPath>
+      <g clip-path="url(#SVGID_5_)">
+        <linearGradient id="SVGID_6_" gradientUnits="userSpaceOnUse" x1="-1.9" y1="335.05" x2="53.3" y2="335.05" gradientTransform="translate(0 -304)">
+          <stop offset="0" stop-color="#ff6f00"/>
+          <stop offset="1" stop-color="#ffa800"/>
+        </linearGradient>
+        <path d="M-1.9 4.6h55.2v52.9H-1.9V4.6z" fill="url(#SVGID_6_)"/>
+      </g>
+    </g>
+  </g>
+</svg>

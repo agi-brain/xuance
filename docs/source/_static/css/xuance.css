@@ -1,0 +1,40 @@
+.nowrap {
+    white-space: nowrap;
+}
+
+.sidebar-brand-text {
+    font-size: 1.25rem !important;
+}
+
+tbody > tr > th.stub {
+    font-weight: normal;
+    text-align: left;
+}
+
+/* Set the Font Size */
+body {
+    font-size: 16px; /* Set the base font size */
+}
+
+h1 {
+    font-size: 2.0em; /* Adjust heading sizes as needed */
+}
+
+h2 {
+    font-size: 1.7em;
+}
+
+h3 {
+    font-size: 1.4em;
+}
+
+.scrollable-output {
+    max-height: 400px; /* Set a maximum height for the output block */
+    overflow-y: auto; /* Enable vertical scrolling */
+    background-color: #fafae4; /* Optional: Light background color for distinction */
+    color: #d4d4d4;
+    font-family: monospace;
+    /*padding: 10px; !* Add some padding *!*/
+    border-radius: 5px;
+    border: 1px solid #ddd; /* Optional: Add a border for better separation */
+}

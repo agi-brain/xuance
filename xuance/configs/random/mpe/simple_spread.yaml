@@ -1,0 +1,9 @@
+agent: "RANDOM"
+learner: "RANDOM"
+env_name: "mpe"  # Name of the environment.
+env_id: "simple_spread_v3"
+env_seed: 1  # The random seed of the environment.
+runner: "MARL"  # Runner
+
+model_dir: ""
+log_dir: ""

@@ -1,0 +1,63 @@
+dl_toolbox: "torch"  # The deep learning toolbox. Choices: "torch", "mindspore", "tensorlayer"
+project_name: "XuanCe_Benchmark"
+logger: "tensorboard"  # Choices: tensorboard, wandb.
+wandb_user_name: "your_user_name"
+render: False
+render_mode: 'rgb_array' # Choices: 'human', 'rgb_array'.
+fps: 50
+test_mode: False
+device: "cuda:0"  # Choose an calculating device. PyTorch: "cpu", "cuda:0"; TensorFlow: "cpu"/"CPU", "gpu"/"GPU"; MindSpore: "CPU", "GPU", "Ascend", "Davinci".
+distributed_training: False  # Whether to use multi-GPU for distributed training.
+master_port: '12355'  # The master port for current experiment when use distributed training.
+
+agent: "PPG"
+env_name: "Box2D"
+env_id: "CarRacing-v2"
+env_seed: 1
+vectorize: "DummyVecEnv"
+representation: "Basic_CNN"
+policy: "Categorical_PPG"
+learner: "PPG_Learner"
+
+# the following three arguments are for "Basic_CNN" representation.
+filters: [16, 16, 32]  #  [16, 16, 32, 32]
+kernels: [8, 4, 3]  # [8, 6, 4, 4]
+strides: [4, 2, 1]  # [2, 2, 2, 2]
+fc_hidden_sizes: [512, ]  # fully connected layer hidden sizes.
+actor_hidden_size: []
+critic_hidden_size: []
+activation: "relu"  # The activation function of each hidden layer.
+
+seed: 1
+parallels: 2
+running_steps: 300000
+horizon_size: 256  # the horizon size for an environment, buffer_size = horizon_size * parallels.
+n_epochs: 8
+policy_nepoch: 2
+value_nepoch: 4
+aux_nepoch: 8
+n_minibatch: 8
+learning_rate: 0.0004
+
+ent_coef: 0.01
+clip_range: 0.2
+kl_beta: 1.0
+gamma: 0.99
+use_gae: True
+gae_lambda: 0.95  # gae_lambda: Lambda parameter for calculating N-step advantage
+use_advnorm: True
+
+use_grad_clip: True  # gradient normalization
+clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
+grad_clip_norm: 0.5
+use_actions_mask: False
+use_obsnorm: False
+use_rewnorm: False
+obsnorm_range: 5
+rewnorm_range: 5
+
+test_steps: 10000
+eval_interval: 50000
+test_episode: 3
+log_dir: "./logs/ppg/"
+model_dir: "./models/ppg/"

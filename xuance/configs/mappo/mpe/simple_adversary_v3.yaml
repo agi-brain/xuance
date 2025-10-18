@@ -1,0 +1,66 @@
+agent: "MAPPO"
+env_name: "mpe"  # Name of the environment.
+env_id: "simple_adversary_v3"
+env_seed: 1  # The random seed of the environment.
+continuous_action: True  # Continuous action space or not.
+learner: "MAPPO_Clip_Learner"
+policy: "Gaussian_MAAC_Policy"
+representation: "Basic_MLP"
+vectorize: "SubprocVecMultiAgentEnv"
+runner: "RunnerCompetition"
+
+# recurrent settings for Basic_RNN representation
+use_rnn: False  # If to use recurrent neural network as representation. (The representation should be "Basic_RNN").
+rnn: "GRU"  # The type of recurrent layer.
+fc_hidden_sizes: [64, 64, 64]  # The hidden size of feed forward layer in RNN representation.
+recurrent_hidden_size: 64  # The hidden size of the recurrent layer.
+N_recurrent_layers: 1  # The number of recurrent layer.
+dropout: 0  # dropout should be a number in range [0, 1], the probability of an element being zeroed.
+normalize: "LayerNorm"  # Layer normalization.
+initialize: "orthogonal"  # Network initializer.
+gain: 0.01
+
+representation_hidden_size: [64, ]  # A list of hidden units for each layer of Basic_MLP representation networks.
+actor_hidden_size: [64, ]
+critic_hidden_size: [256, ]
+activation: "relu"  # The activation function of each hidden layer.
+activation_action: "sigmoid"  # The activation function for the last layer of the actor.
+use_parameter_sharing: True  # If to use parameter sharing for all agents' policies.
+use_actions_mask: False  # If to use actions mask for unavailable actions.
+
+seed: 1
+parallels: 128
+buffer_size: 3200
+n_epochs: 10
+n_minibatch: 1
+learning_rate: 0.0007
+weight_decay: 0
+
+vf_coef: 0.5
+ent_coef: 0.01
+target_kl: 0.25  # for MAPPO_KL learner
+clip_range: 0.2  # ratio clip range, for MAPPO_Clip learner
+clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
+gamma: 0.95  # discount factor
+
+# tricks
+use_linear_lr_decay: False  # if use linear learning rate decay
+end_factor_lr_decay: 0.5
+use_global_state: False  # if use global state to replace merged observations
+use_value_clip: True  # limit the value range
+value_clip_range: 0.2
+use_value_norm: True  # use running mean and std to normalize rewards.
+use_huber_loss: True  # True: use huber loss; False: use MSE loss.
+huber_delta: 10.0
+use_advnorm: True
+use_gae: True
+gae_lambda: 0.95
+use_grad_clip: True  # gradient normalization
+grad_clip_norm: 10.0
+
+running_steps: 10000000
+eval_interval: 100000
+test_episode: 5
+
+log_dir: "./logs/mappo/"
+model_dir: "./models/mappo/"

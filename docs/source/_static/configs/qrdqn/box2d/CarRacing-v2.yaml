@@ -1,0 +1,48 @@
+agent: "QRDQN"
+env_name: "Box2D"
+env_id: "CarRacing-v2"
+env_seed: 1
+vectorize: "DummyVecEnv"
+learner: "QRDQN_Learner"
+policy: "QR_Q_network"
+representation: "Basic_CNN"
+runner: "DRL"
+
+# the following three arguments are for "Basic_CNN" representation.
+filters: [16, 16, 32]  #  [16, 16, 32, 32]
+kernels: [8, 4, 3]  # [8, 6, 4, 4]
+strides: [4, 2, 1]  # [2, 2, 2, 2]
+
+q_hidden_size: [512,]
+activation: 'relu'
+
+seed: 1
+parallels: 2
+buffer_size: 20000
+batch_size: 32
+learning_rate: 0.0001
+gamma: 0.99
+quantile_num: 20
+
+start_greedy: 0.5
+end_greedy: 0.01
+decay_step_greedy: 500000
+sync_frequency: 500
+training_frequency: 1
+running_steps: 2000000
+start_training: 1000
+
+use_grad_clip: False  # gradient normalization
+clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
+grad_clip_norm: 0.5
+use_actions_mask: False
+use_obsnorm: False
+use_rewnorm: False
+obsnorm_range: 5
+rewnorm_range: 5
+
+test_steps: 10000
+eval_interval: 100000
+test_episode: 1
+log_dir: "./logs/qrdqn/"
+model_dir: "./models/qrdqn/"

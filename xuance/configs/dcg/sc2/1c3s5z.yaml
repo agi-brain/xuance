@@ -1,0 +1,59 @@
+agent: "DCG"  # Options: DCG, DCG_S
+env_name: "StarCraft2"  # Name of the environment.
+env_id: "1c3s5z"  # Environment ID
+env_seed: 1  # The random seed of the environment.
+fps: 15  # Frames per second.
+learner: "DCG_Learner"  # Name of learner
+policy: "DCG_Policy"  # Name of policy
+representation: "Basic_RNN"
+vectorize: "Subproc_StarCraft2"
+runner: "RunnerStarCraft2"
+
+# recurrent settings for Basic_RNN representation
+use_rnn: True  # Whether to use recurrent neural networks.
+rnn: "GRU"  # Choice of recurrent networks: GRU or LSTM.
+N_recurrent_layers: 1  # Number of recurrent layers.
+fc_hidden_sizes: [64, ]
+recurrent_hidden_size: 64
+dropout: 0  # dropout should be a number in range [0, 1], the probability of an element being zeroed.
+
+representation_hidden_size: [64, ]
+q_hidden_size: [64, ]  # the units for each hidden layer
+hidden_utility_dim: 64  # hidden units of the utility function
+hidden_payoff_dim: 64  # hidden units of the payoff function
+bias_net: "Basic_MLP"
+hidden_bias_dim: [64, ]  # hidden units of the bias network with global states as input
+activation: "relu"  # The activation function of each hidden layer.
+use_parameter_sharing: True
+use_actions_mask: True
+
+low_rank_payoff: False  # low-rank approximation of payoff function
+payoff_rank: 5  # the rank K in the paper
+graph_type: "FULL"  # specific type of the coordination graph
+n_msg_iterations: 8  # number of iterations for message passing during belief propagation
+msg_normalized: True  # Message normalization during greedy action selection (Kok and Vlassis, 2006)
+
+seed: 1
+parallels: 8
+buffer_size: 5000
+batch_size: 32
+learning_rate: 0.0007
+gamma: 0.99  # discount factor
+double_q: True  # use double q learning
+
+start_greedy: 1.0
+end_greedy: 0.05
+decay_step_greedy: 50000
+start_training: 1000  # start training after n steps
+running_steps: 2000000  # 2M
+n_epochs: 8  # The number of training epochs after interaction.
+sync_frequency: 200
+
+use_grad_clip: False
+grad_clip_norm: 0.5
+
+eval_interval: 20000
+test_episode: 16
+
+log_dir: "./logs/dcg/"
+model_dir: "./models/dcg/"

@@ -1,0 +1,44 @@
+agent: "DDPG"
+env_name: "MuJoCo"
+env_id: "Ant-v4"
+env_seed: 1  # The random seed of the environment.
+vectorize: "DummyVecEnv"
+policy: "DDPG_Policy"
+representation: "Basic_Identical"
+learner: "DDPG_Learner"
+runner: "DRL"
+
+representation_hidden_size:  # If you choose Basic_Identical representation, then ignore this value
+actor_hidden_size: [400, 300]
+critic_hidden_size: [400, 300]
+activation: "leaky_relu"
+activation_action: 'tanh'
+
+seed: 19089
+parallels: 4  # number of environments
+buffer_size: 200000  # replay buffer size
+batch_size: 100
+learning_rate_actor: 0.001
+learning_rate_critic: 0.001
+gamma: 0.99
+tau: 0.005
+
+start_noise: 0.5
+end_noise: 0.1
+training_frequency: 1
+running_steps: 1000000  # 1M
+start_training: 10000
+
+use_grad_clip: False  # gradient normalization
+grad_clip_norm: 0.5
+use_obsnorm: False  # Whether to use observation normalization trick.
+use_rewnorm: False  # Whether to use reward normalization trick.
+obsnorm_range: 5
+rewnorm_range: 5
+
+test_steps: 10000
+eval_interval: 5000
+test_episode: 5
+
+log_dir: "./logs/ddpg/"
+model_dir: "./models/ddpg/"

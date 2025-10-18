@@ -1,0 +1,49 @@
+agent: "C51DQN"  # Name of agent
+env_name: "Box2D"  # Name of environment.
+env_id: "CarRacing-v2"  # Name of environment ID.
+env_seed: 1  # Random seed for the environment.
+vectorize: "DummyVecEnv"  # Method to vectorize the environment.
+learner: "C51_Learner"  # Name of the learner.
+policy: "C51_Q_network"  # Name of the policy.
+representation: "Basic_CNN"  # Name of the representation.
+runner: "DRL"  # Name of the runner.
+
+# the following three arguments are for "Basic_CNN" representation.
+filters: [16, 16, 32]  #  [16, 16, 32, 32]
+kernels: [8, 4, 3]  # [8, 6, 4, 4]
+strides: [4, 2, 1]  # [2, 2, 2, 2]
+
+q_hidden_size: [512,]  # The hidden units for Q-network.
+activation: 'relu'  # The activation function for hidden layers.
+
+seed: 1  # The random seed.
+parallels: 2  # Number of environments that to be implemented in parallel.
+buffer_size: 20000  # The size of replay buffer
+batch_size: 32  # The batch size for training.
+learning_rate: 0.0001  # The learning rate.
+gamma: 0.99  # The discount factor.  # The discount factor.
+v_min: 0
+v_max: 200
+atom_num: 51
+
+start_greedy: 0.5  # The start epsilon greedy.
+end_greedy: 0.01  # The end epsilon greedy.
+decay_step_greedy: 50000  # Number of steps for the decay of epsilon greedy.
+sync_frequency: 500  # The frequency to update target networks.
+training_frequency: 1  # The frequency to update the RL model.
+running_steps: 200000  # The total running steps.
+start_training: 1000  # The running steps before training.
+
+use_grad_clip: False  # gradient normalization
+grad_clip_norm: 0.5  # The norm value for gradient clip.
+use_actions_mask: False  # Whether to use actions mask when the environment provides available actions values.
+use_obsnorm: False  # Whether to use observation normalization trick.
+use_rewnorm: False  # Whether to use reward normalization trick.
+obsnorm_range: 5  # The observation normalization range.
+rewnorm_range: 5  # The reward normalization range.
+
+test_steps: 10000  # Number of steps to test the model.
+eval_interval: 5000  # Frequency to evaluate the model.
+test_episode: 1  # Number of episodes to test.
+log_dir: "./logs/c51/"  # The directory to store logger file.
+model_dir: "./models/c51/"  # The directory to store model file.

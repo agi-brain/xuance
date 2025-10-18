@@ -1,0 +1,65 @@
+dl_toolbox: "torch"  # The deep learning toolbox. Choices: "torch", "mindspore", "tensorlayer"
+project_name: "XuanCe_Benchmark"
+logger: "tensorboard"  # Choices: tensorboard, wandb.
+wandb_user_name: "your_user_name"
+render: True
+render_mode: 'rgb_array' # Choices: 'human', 'rgb_array'.
+fps: 50
+test_mode: False
+device: "cuda:0"  # Choose an calculating device. PyTorch: "cpu", "cuda:0"; TensorFlow: "cpu"/"CPU", "gpu"/"GPU"; MindSpore: "CPU", "GPU", "Ascend", "Davinci".
+distributed_training: False  # Whether to use multi-GPU for distributed training.
+master_port: '12355'  # The master port for current experiment when use distributed training.
+
+agent: "ISAC"  # the learning algorithms_marl
+env_name: "mpe"  # Name of the environment.
+env_id: "simple_spread_v3"
+env_seed: 1
+continuous_action: True  # Continuous action space or not.
+learner: "ISAC_Learner"
+policy: "Gaussian_ISAC_Policy"
+representation: "Basic_Identical"
+vectorize: "SubprocVecMultiAgentEnv"
+runner: "MARL"  # Runner
+
+# recurrent settings for Basic_RNN representation.
+use_rnn: False  # If to use recurrent neural network as representation. (The representation should be "Basic_RNN").
+rnn: "GRU"  # The type of recurrent layer.
+fc_hidden_sizes: [64, 64, 64]  # The hidden size of feed forward layer in RNN representation.
+recurrent_hidden_size: 64  # The hidden size of the recurrent layer.
+N_recurrent_layers: 1  # The number of recurrent layer.
+dropout: 0  # dropout should be a number in range [0, 1], the probability of an element being zeroed.
+normalize: "LayerNorm"  # Layer normalization.
+initialize: "orthogonal"  # Network initializer.
+gain: 0.01
+
+representation_hidden_size: []  # the units for each hidden layer
+actor_hidden_size: [64, 64]
+critic_hidden_size: [64, 64]
+activation: 'leaky_relu'
+activation_action: 'sigmoid'
+use_parameter_sharing: True
+use_actions_mask: False
+
+seed: 1
+parallels: 16
+buffer_size: 100000
+batch_size: 256
+learning_rate_actor: 0.01  # learning rate for actor
+learning_rate_critic: 0.001  # learning rate for critic
+gamma: 0.95  # discount factor
+tau: 0.001  # soft update for target networks
+alpha: 0.01
+use_automatic_entropy_tuning: True
+
+start_training: 1000  # start training after n steps
+running_steps: 10000000
+training_frequency: 25
+
+use_grad_clip: True
+grad_clip_norm: 0.5
+
+eval_interval: 100000
+test_episode: 5
+
+log_dir: "./logs/isac/"
+model_dir: "./models/isac/"

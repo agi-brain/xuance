@@ -1,0 +1,117 @@
+<style>
+  .env-grid-minigrid {
+    display: flex; /* Align items horizontally */
+    justify-content: center; /* Space items evenly, with equal space between each */
+    flex-wrap: wrap; /* Allow items to wrap to the next line if the container is too small */
+    gap: 10px 20px; /* Add space between items */
+  }
+
+  .env-grid-minigrid__cell {
+    text-align: center; /* Center the content inside each item */
+  }
+
+  .cell__image-container img {
+    max-width: 100%; /* Make sure the images don't overflow */
+    height: auto; /* Maintain aspect ratio */
+  }
+</style>
+
+<div class="env-grid-minigrid">
+
+        <a href="https://minigrid.farama.org/environments/minigrid/GoToDoorEnv">
+            <div class="env-grid-minigrid__cell">
+                <div class="cell__image-container">
+                    <img src="../../../../_static/figures/minigrid/GoToDoorEnv.gif" width="130px">
+                </div>
+                <div class="cell__title">
+                    <span>GoToDoorEnv</span>
+                </div>
+            </div>
+        </a>
+
+        <a href="https://minigrid.farama.org/environments/minigrid/LockedRoomEnv">
+            <div class="env-grid-minigrid__cell">
+                <div class="cell__image-container">
+                    <img src="../../../../_static/figures/minigrid/LockedRoomEnv.gif" width="130px">
+                </div>
+                <div class="cell__title">
+                    <span>LockedRoomEnv</span>
+                </div>
+            </div>
+        </a>
+
+        <a href="https://minigrid.farama.org/environments/minigrid/MemoryEnv">
+            <div class="env-grid-minigrid__cell">
+                <div class="cell__image-container">
+                    <img src="../../../../_static/figures/minigrid/MemoryEnv.gif" width="130px">
+                </div>
+                <div class="cell__title">
+                    <span>MemoryEnv</span>
+                </div>
+            </div>
+        </a>
+
+        <a href="https://minigrid.farama.org/environments/minigrid/PlaygroundEnv">
+            <div class="env-grid-minigrid__cell">
+                <div class="cell__image-container">
+                    <img src="../../../../_static/figures/minigrid/PlaygroundEnv.gif" width="130px">
+                </div>
+                <div class="cell__title">
+                    <span>PlaygroundEnv</span>
+                </div>
+            </div>
+        </a>
+
+        <a href="https://minigrid.farama.org/environments/minigrid/BlockedUnlockPickupEnv">
+            <div class="env-grid-minigrid__cell">
+                <div class="cell__image-container">
+                    <img src="../../../../_static/figures/minigrid/BlockedUnlockPickupEnv.gif" width="203px">
+                </div>
+                <div class="cell__title">
+                    <span>BlockedUnlockPickupEnv</span>
+                </div>
+            </div>
+        </a>
+
+        <a href="https://minigrid.farama.org/environments/minigrid/RedBlueDoorEnv">
+            <div class="env-grid-minigrid__cell">
+                <div class="cell__image-container">
+                    <img src="../../../../_static/figures/minigrid/RedBlueDoorEnv.gif" width="220px">
+                </div>
+                <div class="cell__title">
+                    <span>RedBlueDoorEnv</span>
+                </div>
+            </div>
+        </a>
+
+</div>
+
+<style>
+  .button-container {
+    display: flex; /* Use Flexbox for alignment */
+    justify-content: center; /* Center horizontally */
+    align-items: center; /* Center vertically */
+    height: 100px; /* Set a height to align vertically (adjust as needed) */
+  }
+
+  .more-btn {
+    padding: 7px 20px;
+    font-size: 16px;
+    color: white;
+    background-color: #266433; /* Button background color */
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    text-align: center;
+  }
+
+  .more-btn:hover {
+    background-color: #266b84; /* Darker shade on hover */
+  }
+</style>
+
+<div class="button-container">
+  <a href="https://minigrid.farama.org/environments/minigrid/">
+    <button class="more-btn">See More MiniGrid Environments</button>
+  </a>
+</div>

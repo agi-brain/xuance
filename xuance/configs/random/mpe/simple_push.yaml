@@ -1,0 +1,9 @@
+agent: "RANDOM"
+env_name: "mpe"  # Name of the environment.
+env_id: "simple_push_v3"
+env_seed: 1  # The random seed of the environment.
+learner: "RANDOM"
+runner: "RunnerCompetition"
+
+model_dir: ""
+log_dir: ""

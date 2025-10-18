@@ -1,0 +1,53 @@
+agent: "A2C"  # The learning algorithms.
+vectorize: "Dummy_Atari"  # Method to vectorize the environment.
+env_name: "Atari"  # Environment name.
+env_id: "ALE/Breakout-v5"  # Environment id
+env_seed: 1  # The random seed of the environment.
+obs_type: "grayscale"  # choice for Atari env: ram, rgb, grayscale
+img_size: [84, 84]  # default is 210 x 160 in gym[Atari]
+num_stack: 4  # frame stack trick
+frame_skip: 4  # frame skip trick
+noop_max: 30  # Do no-op action for a number of steps in [1, noop_max].
+learner: "A2C_Learner"  # Name of learner.
+policy: "Categorical_AC"  # Name of policy.
+representation: "Basic_CNN"  # Name of representation.
+runner: "DRL"  # Runner.
+
+# the following three arguments are for "Basic_CNN" representation.
+filters: [32, 32, 64, 64]
+kernels: [8, 4, 4, 4]
+strides: [4, 2, 2, 2]
+actor_hidden_size: [128, 128]  # A list of hidden units for each layer of actor network.
+critic_hidden_size: [128, 128]  # A list of hidden units for each layer of critic network.
+activation: 'leaky_relu'  # The activation function of each hidden layer.
+
+seed: 1  # Random seeds.
+parallels: 5  # Number of environments that to be implemented in parallel.
+running_steps: 10000000  # The total running steps.
+horizon_size: 256  # the horizon size for an environment, buffer_size = horizon_size * parallels.  #
+n_epochs: 4  # Number of epochs to update the model.
+n_minibatch: 8  # Number of minibatch.
+learning_rate: 0.0007  # The learning rate.
+
+vf_coef: 0.25  # Coefficient factor for critic loss.
+ent_coef: 0.01  # Coefficient factor for entropy loss.
+gamma: 0.99  # Discount factor.
+use_gae: True  # Use GAE trick.
+gae_lambda: 0.95  # The GAE lambda.
+use_advnorm: True  # Whether to use advantage normalization.
+
+use_grad_clip: True  # gradient normalization
+clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
+grad_clip_norm: 0.5  # The max norm of the gradient.
+use_actions_mask: False  # Whether to use actions mask for unavailable actions.
+use_obsnorm: False  # Whether to use observation normalization trick.
+use_rewnorm: False  # Whether to use reward normalization trick.
+obsnorm_range: 5  # The observation normalization range.
+rewnorm_range: 5  # The reward normalization range.
+
+test_steps: 10000  # The test steps.
+eval_interval: 100000  # The interval between every two trainings.
+test_episode: 3  # The episodes to test in each test period.
+
+log_dir: "./logs/a2c/"  # The directory to store logger file.
+model_dir: "./models/a2c/"  # The directory to store model file.

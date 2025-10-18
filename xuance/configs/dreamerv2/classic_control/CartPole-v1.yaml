@@ -1,0 +1,109 @@
+agent: "DreamerV2"
+env_name: "Classic Control"
+env_id: "CartPole-v1"
+env_seed: 1  # The random seed of the environment.
+vectorize: "DummyVecEnv"
+representation: "DreamerV2WorldModel"
+learner: "DreamerV2_Learner"
+policy: "DreamerV2Policy"
+runner: "DRL"
+
+# world_model & actor_critic start
+harmony: False
+
+distribution:
+  validate_args: false
+  type: auto
+pixel: False
+env_config:
+  screen_size: 64
+activation: 'elu'
+
+actor:
+  ent_coef: 0.0001  # 1e-4
+  min_std: 0.1
+  init_std: 0.0
+  objective_mix: 1.0  # 1.0 for discrete action; 0.0 for continuous control
+  mlp_layers: 4
+  layer_norm: false
+  dense_units: 400
+  clip_gradients: 100.0
+critic:
+  mlp_layers: 4
+  layer_norm: false
+  dense_units: 400
+  hard_update_freq: 100  # 100 grad_step per hard_update
+  clip_gradients: 100.0
+world_model:
+  discrete_size: 32
+  stochastic_size: 32
+  kl_balancing_alpha: 0.8
+  kl_free_nats: 1.0
+  kl_free_avg: true
+  kl_regularizer: 1.0
+  discount_scale_factor: 1.0
+  use_continues: true  # false in dmc; true in cartpole (important)!!!
+  clip_gradients: 100.0
+  encoder:
+    cnn_channels_multiplier: 48
+    mlp_layers: 4
+    layer_norm: false
+    dense_units: 400
+  recurrent_model:
+    recurrent_state_size: 200
+    layer_norm: true
+    dense_units: 400
+  transition_model:
+    hidden_size: 200
+    layer_norm: false
+  representation_model:
+    hidden_size: 200
+    layer_norm: false
+  observation_model:
+    cnn_channels_multiplier: 48
+    mlp_layers: 4
+    layer_norm: false
+    dense_units: 400
+  reward_model:
+    mlp_layers: 4
+    layer_norm: false
+    dense_units: 400
+  discount_model:
+    learnable: true
+    mlp_layers: 4
+    layer_norm: false
+    dense_units: 400
+
+gamma: 0.999
+lmbda: 0.95
+horizon: 15
+# world_model & actor_critic end
+
+seed: 1
+parallels: 1
+buffer_size: 2000000  # 2e6
+batch_size: 16
+seq_len: 50
+learning_rate_model: 0.0001  # 1e-4
+learning_rate_actor: 0.00003  # 3e-5
+learning_rate_critic: 0.00003  # 3e-5
+
+replay_ratio: 0.2  # gradient_step / replay_step
+running_steps: 50000  # 50k
+start_training: 1024
+
+use_grad_clip: False  # gradient normalization
+clip_type: 1
+grad_clip_norm: 100.0
+use_actions_mask: False
+use_obsnorm: False  # Whether to use observation normalization trick.
+use_rewnorm: False  # Whether to use reward normalization trick.
+obsnorm_range: 5
+rewnorm_range: 5
+
+test_steps: 10000
+eval_interval: 200
+test_episode: 3
+
+log_dir: "./logs/dreamer-v2/"
+model_dir: "./models/dreamer-v2/"

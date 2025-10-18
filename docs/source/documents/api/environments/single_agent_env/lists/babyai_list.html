@@ -1,0 +1,117 @@
+<style>
+  .env-grid-babyai {
+    display: flex; /* Align items horizontally */
+    justify-content: center; /* Space items evenly, with equal space between each */
+    flex-wrap: wrap; /* Allow items to wrap to the next line if the container is too small */
+    gap: 5px 5px; /* Add space between items */
+  }
+
+  .env-grid-babyai__cell {
+    text-align: center; /* Center the content inside each item */
+  }
+
+  .cell__image-container img {
+    max-width: 100%; /* Make sure the images don't overflow */
+    height: auto; /* Maintain aspect ratio */
+  }
+</style>
+
+<div class="env-grid-babyai">
+
+        <a href="https://minigrid.farama.org/environments/babyai/GoToRedBallGrey">
+            <div class="env-grid-babyai__cell">
+                <div class="cell__image-container">
+                    <img src="../../../../_static/figures/minigrid/GoToRedBallGrey.gif" width="100px">
+                </div>
+                <div class="cell__title">
+                    <span>GoToRedBallGrey</span>
+                </div>
+            </div>
+        </a>
+
+        <a href="https://minigrid.farama.org/environments/babyai/GoToRedBall">
+            <div class="env-grid-babyai__cell">
+                <div class="cell__image-container">
+                    <img src="../../../../_static/figures/minigrid/GoToRedBall.gif" width="100px">
+                </div>
+                <div class="cell__title">
+                    <span>GoToRedBall</span>
+                </div>
+            </div>
+        </a>
+
+        <a href="https://minigrid.farama.org/environments/babyai/GoToRedBallNoDists">
+            <div class="env-grid-babyai__cell">
+                <div class="cell__image-container">
+                    <img src="../../../../_static/figures/minigrid/GoToRedBallNoDists.gif" width="100px">
+                </div>
+                <div class="cell__title">
+                    <span>GoToRedBallNoDists</span>
+                </div>
+            </div>
+        </a>
+
+        <a href="https://minigrid.farama.org/environments/babyai/GoToObj">
+            <div class="env-grid-babyai__cell">
+                <div class="cell__image-container">
+                    <img src="../../../../_static/figures/minigrid/GoToObj.gif" width="100px">
+                </div>
+                <div class="cell__title">
+                    <span>GoToObj</span>
+                </div>
+            </div>
+        </a>
+
+        <a href="https://minigrid.farama.org/environments/babyai/GoToLocal">
+            <div class="env-grid-babyai__cell">
+                <div class="cell__image-container">
+                    <img src="../../../../_static/figures/minigrid/GoToLocal.gif" width="100px">
+                </div>
+                <div class="cell__title">
+                    <span>GoToLocal</span>
+                </div>
+            </div>
+        </a>
+
+        <a href="https://minigrid.farama.org/environments/babyai/GoTo">
+            <div class="env-grid-babyai__cell">
+                <div class="cell__image-container">
+                    <img src="../../../../_static/figures/minigrid/GoTo.gif" width="100px">
+                </div>
+                <div class="cell__title">
+                    <span>GoTo</span>
+                </div>
+            </div>
+        </a>
+
+</div>
+
+<style>
+  .button-container {
+    display: flex; /* Use Flexbox for alignment */
+    justify-content: center; /* Center horizontally */
+    align-items: center; /* Center vertically */
+    height: 100px; /* Set a height to align vertically (adjust as needed) */
+  }
+
+  .more-btn {
+    padding: 7px 20px;
+    font-size: 16px;
+    color: white;
+    background-color: #266433; /* Button background color */
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    text-align: center;
+  }
+
+  .more-btn:hover {
+    background-color: #266b84; /* Darker shade on hover */
+  }
+</style>
+
+<div class="button-container">
+  <a href="https://minigrid.farama.org/environments/babyai/">
+    <button class="more-btn">See More BabyAI Tasks</button>
+  </a>
+</div>

@@ -1,0 +1,147 @@
+agent: "DreamerV3"
+env_name: "Classic Control"
+env_id: "CartPole-v1"
+env_seed: 1  # The random seed of the environment.
+vectorize: "DummyVecEnv"
+representation: "DreamerV3WorldModel"
+learner: "DreamerV3_Learner"
+policy: "DreamerV3Policy"
+runner: "DRL"
+
+# world_model & actor_critic start
+harmony: False
+
+distribution:
+  validate_args: false
+  type: auto
+pixel: False
+env_config:
+  screen_size: 64
+activation: 'silu'
+
+actor:
+  ent_coef: 0.0003
+  min_std: 0.1
+  max_std: 1.0
+  init_std: 2.0
+  mlp_layers: 2
+  layer_norm:
+    kw:
+      eps: 0.001
+  dense_units: 512
+  clip_gradients: 100.0
+  unimix: 0.01
+  action_clip: 1.0
+  moments:
+    decay: 0.99
+    max: 1.0
+    percentile:
+      low: 0.05
+      high: 0.95
+critic:
+  mlp_layers: 2
+  layer_norm:
+    kw:
+      eps: 0.001
+  dense_units: 512
+  soft_update_freq: 1
+  tau: 0.02
+  bins: 255
+  clip_gradients: 100.0
+world_model:
+  discrete_size: 32
+  stochastic_size: 32
+  kl_dynamic: 0.5
+  kl_representation: 0.1
+  kl_free_nats: 1.0
+  kl_regularizer: 1.0
+  continue_scale_factor: 1.0
+  clip_gradients: 1000.0
+  learnable_initial_recurrent_state: true
+  encoder:
+    cnn_channels_multiplier: 32
+    mlp_layers: 2
+    cnn_layer_norm:
+      kw:
+        eps: 0.001
+    mlp_layer_norm:
+      kw:
+        eps: 0.001
+    dense_units: 512
+  recurrent_model:
+    recurrent_state_size: 512
+    layer_norm:
+      kw:
+        eps: 0.001
+    dense_units: 512
+  transition_model:
+    hidden_size: 512
+    layer_norm:
+      kw:
+        eps: 0.001
+  representation_model:
+    hidden_size: 512
+    layer_norm:
+      kw:
+        eps: 0.001
+  observation_model:
+    cnn_channels_multiplier: 32
+    mlp_layers: 2
+    cnn_layer_norm:
+      kw:
+        eps: 0.001
+    mlp_layer_norm:
+      kw:
+        eps: 0.001
+    dense_units: 512
+  reward_model:
+    mlp_layers: 2
+    layer_norm:
+      kw:
+        eps: 0.001
+    dense_units: 512
+    bins: 255
+  discount_model:
+    learnable: true
+    mlp_layers: 2
+    layer_norm:
+      kw:
+        eps: 0.001
+    dense_units: 512
+
+gamma: 0.996996996996997
+lmbda: 0.95
+horizon: 15
+
+unimix: 0.01
+hafner_initialization: True
+# world_model & actor_critic end
+
+seed: 1
+parallels: 1
+buffer_size: 1000000  # 1e6
+batch_size: 16
+seq_len: 64
+learning_rate_model: 0.0001  # 1e-4
+learning_rate_actor: 0.00008  # 8e-5
+learning_rate_critic: 0.00008  # 8e-5
+
+replay_ratio: 1  # gradient_step / replay_step
+running_steps: 10000  # 10k
+start_training: 1024
+
+use_grad_clip: False  # gradient normalization
+clip_type: 1
+grad_clip_norm: 100.0
+use_actions_mask: False
+use_obsnorm: False  # Whether to use observation normalization trick.
+use_rewnorm: False  # Whether to use reward normalization trick.
+obsnorm_range: 5
+rewnorm_range: 5
+
+test_steps: 10000
+eval_interval: 200
+test_episode: 3
+
+log_dir: "./logs/dreamer-v3/"
+model_dir: "./models/dreamer-v3/"

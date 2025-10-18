@@ -1,0 +1,66 @@
+agent: "IPPO"  # The agent name.
+env_name: "mpe"  # The environment name.
+env_id: "simple_spread_v3"  # The environment id.
+env_seed: 1
+continuous_action: True  # If to use continuous control.
+learner: "IPPO_Learner"  # The learner name.
+policy: "Gaussian_MAAC_Policy"  # The policy name.
+representation: "Basic_MLP"  # The representation name.
+vectorize: "SubprocVecMultiAgentEnv"  # The method to vectorize your environment such that can run in parallel.
+runner: "MARL"  # The runner.
+
+# recurrent settings for Basic_RNN representation.
+use_rnn: False  # If to use recurrent neural network as representation. (The representation should be "Basic_RNN").
+rnn: "GRU"  # The type of recurrent layer.
+fc_hidden_sizes: [64, 64, 64]  # The hidden size of feed forward layer in RNN representation.
+recurrent_hidden_size: 64  # The hidden size of the recurrent layer.
+N_recurrent_layers: 1  # The number of recurrent layer.
+dropout: 0  # dropout should be a number in range [0, 1], the probability of an element being zeroed.
+normalize: "LayerNorm"  # Layer normalization.
+initialize: "orthogonal"  # Network initializer.
+gain: 0.01  # Gain value for network initialization.
+
+representation_hidden_size: [64, ]  # A list of hidden units for each layer of Basic_MLP representation networks.
+actor_hidden_size: [64, ]  # A list of hidden units for each layer of actor network.
+critic_hidden_size: [64, ]  # A list of hidden units for each layer of critic network.
+activation: "relu"  # The activation function of each hidden layer.
+activation_action: "sigmoid"  # The activation function for the last layer of the actor.
+use_parameter_sharing: True  # If to use parameter sharing for all agents' policies.
+use_actions_mask: False  # If to use actions mask for unavailable actions.
+
+seed: 1  # Random seed.
+parallels: 16  # The number of environments to run in parallel.
+buffer_size: 3200  # Number of the transitions (use_rnn is False), or the episodes (use_rnn is True) in replay buffer.
+n_epochs: 10  # Number of epochs to train.
+n_minibatch: 1 # Number of minibatch to sample and train.  batch_size = buffer_size // n_minibatch.
+learning_rate: 0.0007  # Learning rate.
+weight_decay: 0  # The steps to decay the greedy epsilon.
+
+vf_coef: 0.5  # Coefficient factor for critic loss.
+ent_coef: 0.01  # Coefficient factor for entropy loss.
+target_kl: 0.25  # For MAPPO_KL learner.
+clip_range: 0.2  # The clip range for ratio in MAPPO_Clip learner.
+gamma: 0.99  # Discount factor.
+
+# tricks
+use_linear_lr_decay: False  # If to use linear learning rate decay.
+end_factor_lr_decay: 0.5  # The end factor for learning rate scheduler.
+use_global_state: False  # If to use global state to replace merged observations.
+use_value_clip: True  # Limit the value range.
+value_clip_range: 0.2  # The value clip range.
+use_value_norm: True  # Use running mean and std to normalize rewards.
+use_huber_loss: True  # True: use huber loss; False: use MSE loss.
+huber_delta: 10.0  # The threshold at which to change between delta-scaled L1 and L2 loss. (For huber loss).
+use_advnorm: True  # If to use advantage normalization.
+use_gae: True  # Use GAE trick.
+gae_lambda: 0.95  # The GAE lambda.
+use_grad_clip: True  # Gradient normalization.
+grad_clip_norm: 10.0  # The max norm of the gradient.
+clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm().
+
+running_steps: 10000000  # The total running steps.
+eval_interval: 100000  # The interval between every two trainings.
+test_episode: 5  # The episodes to test in each test period.
+
+log_dir: "./logs/ippo/"
+model_dir: "./models/ippo/"

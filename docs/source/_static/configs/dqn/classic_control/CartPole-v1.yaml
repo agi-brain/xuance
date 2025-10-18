@@ -1,0 +1,42 @@
+agent: "DQN"
+env_name: "Classic Control"
+env_id: "CartPole-v1"
+env_seed: 1
+vectorize: "DummyVecEnv"
+policy: "Basic_Q_network"
+representation: "Basic_MLP"
+learner: "DQN_Learner"
+runner: "DRL"
+
+representation_hidden_size: [128,]
+q_hidden_size: [128,]
+activation: 'relu'
+
+seed: 1
+parallels: 10
+buffer_size: 100000
+batch_size: 256
+learning_rate: 0.001
+gamma: 0.99
+
+start_greedy: 0.5
+end_greedy: 0.01
+decay_step_greedy: 100000
+sync_frequency: 50
+training_frequency: 1
+running_steps: 200000  # 200k
+start_training: 1000
+
+use_grad_clip: False  # gradient normalization
+grad_clip_norm: 0.5
+use_actions_mask: False
+use_obsnorm: False
+use_rewnorm: False
+obsnorm_range: 5
+rewnorm_range: 5
+
+test_steps: 10000
+eval_interval: 20000
+test_episode: 1
+log_dir: "./logs/dqn/"
+model_dir: "./models/dqn/"

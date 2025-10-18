@@ -1,0 +1,67 @@
+agent: "VDAC"
+env_name: "StarCraft2"  # Name of the environment.
+env_id: "25m"
+env_seed: 1  # The random seed of the environment.
+fps: 15  # Frames per second.
+learner: "VDAC_Learner"
+policy: "Categorical_MAAC_Policy"
+representation: "Basic_RNN"
+vectorize: "Subproc_StarCraft2"
+runner: "RunnerStarCraft2"
+on_policy: True
+
+# recurrent settings for Basic_RNN representation
+use_rnn: True  # Whether to use recurrent neural networks.
+rnn: "GRU"  # Choice of recurrent networks: GRU or LSTM.
+N_recurrent_layers: 1  # Number of recurrent layers.
+fc_hidden_sizes: [64, ]
+recurrent_hidden_size: 64
+dropout: 0  # dropout should be a number in range [0, 1], the probability of an element being zeroed.
+normalize: "LayerNorm"
+initialize: "orthogonal"
+gain: 0.01
+
+actor_hidden_size: []
+critic_hidden_size: []
+activation: "relu"  # The activation function of each hidden layer.
+use_parameter_sharing: True  # If to use parameter sharing for all agents' policies.
+use_actions_mask: True  # If to use actions mask for unavailable actions.
+
+mixer: "QMIX"  # choices: VDN (sum), QMIX (monotonic)
+hidden_dim_mixing_net: 32  # hidden units of mixing network
+hidden_dim_hyper_net: 64  # hidden units of hyper network
+
+seed: 1
+parallels: 8
+buffer_size: 8
+n_epochs: 1
+n_minibatch: 1
+learning_rate: 0.0007  # 7e-4
+weight_decay: 0
+
+vf_coef: 1.0
+ent_coef: 0.01
+gamma: 0.99  # discount factor
+
+# tricks
+use_linear_lr_decay: False  # if use linear learning rate decay
+end_factor_lr_decay: 0.5
+use_global_state: False  # if use global state to replace joint observations
+use_value_clip: True  # limit the value range
+value_clip_range: 0.2
+use_value_norm: True  # use running mean and std to normalize rewards.
+use_huber_loss: True  # True: use huber loss; False: use MSE loss.
+huber_delta: 10.0
+use_advnorm: True  # use advantage normalization.
+use_gae: True  # use GAE trick to calculate returns.
+gae_lambda: 0.95
+use_grad_clip: True  # gradient normalization
+grad_clip_norm: 10.0
+clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
+
+running_steps: 5000000  # 5M
+eval_interval: 25000
+test_episode: 16
+
+log_dir: "./logs/vdac/"
+model_dir: "./models/vdac/"

@@ -1,0 +1,44 @@
+agent: "SAC"
+env_name: "Classic Control"
+env_id: "Acrobot-v1"
+env_seed: 1  # The random seed of the environment.
+vectorize: "DummyVecEnv"
+learner: "SACDIS_Learner"
+policy: "Categorical_SAC"
+representation: "Basic_MLP"
+runner: "DRL"
+
+representation_hidden_size: [128,]
+actor_hidden_size: [128,]
+critic_hidden_size: [128,]
+activation: "relu"  # The activation function of each hidden layer.
+
+seed: 1
+parallels: 10
+buffer_size: 200000
+batch_size: 256
+learning_rate_actor: 0.001
+learning_rate_critic: 0.001
+gamma: 0.99
+alpha: 0.2
+use_automatic_entropy_tuning: True
+tau: 0.005
+
+training_frequency: 2
+running_steps: 500000
+start_training: 2000
+
+use_grad_clip: False  # gradient normalization
+clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
+grad_clip_norm: 0.5
+use_actions_mask: False
+use_obsnorm: False  # Whether to use observation normalization trick.
+use_rewnorm: False  # Whether to use reward normalization trick.
+obsnorm_range: 5
+rewnorm_range: 5
+
+test_steps: 10000
+eval_interval: 50000
+test_episode: 5
+log_dir: "./logs/sac/"
+model_dir: "./models/sac/"

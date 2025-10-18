@@ -1,0 +1,57 @@
+dl_toolbox: "torch"  # The deep learning toolbox. Choices: "torch", "mindspore", "tensorlayer"
+project_name: "XuanCe_Benchmark"
+logger: "tensorboard"  # Choices: tensorboard, wandb.
+wandb_user_name: "your_user_name"
+render: False
+render_mode: 'rgb_array' # Choices: 'human', 'rgb_array'.
+fps: 15
+test_mode: False
+device: "cuda:0"  # Choose an calculating device. PyTorch: "cpu", "cuda:0"; TensorFlow: "cpu"/"CPU", "gpu"/"GPU"; MindSpore: "CPU", "GPU", "Ascend", "Davinci".
+distributed_training: False  # Whether to use multi-GPU for distributed training.
+master_port: '12355'  # The master port for current experiment when use distributed training.
+
+agent: "DCG"  # the learning algorithms_marl
+env_name: "RoboticWarehouse"
+env_id: "rware-tiny-2ag-v1"
+env_seed: 1
+max_episode_steps: 100
+learner: "DCG_Learner"
+policy: "DCG_Policy"
+representation: "Basic_MLP"
+vectorize: "Dummy_RoboticWarehouse"
+runner: "MARL"  # Runner
+
+use_rnn: False  # Whether to use recurrent neural networks.
+rnn:
+representation_hidden_size: [64, ]
+q_hidden_size: [128, ]  # the units for each hidden layer
+activation: "relu"  # The activation function of each hidden layer.
+use_parameter_sharing: True
+use_actions_mask: False
+
+hidden_dim_mixing_net: 64  # hidden units of mixing network
+hidden_dim_hyper_net: 64  # hidden units of hyper network
+
+seed: 1
+parallels: 16
+buffer_size: 100000
+batch_size: 256
+learning_rate: 0.001
+gamma: 0.99  # discount factor
+double_q: True  # use double q learning
+
+start_greedy: 1.0
+end_greedy: 0.05
+decay_step_greedy: 2500000
+start_training: 1000  # start training after n steps
+running_steps: 10000000  # 10M
+sync_frequency: 100
+
+use_grad_clip: False
+grad_clip_norm: 0.5
+
+eval_interval: 100000
+test_episode: 5
+
+log_dir: "./logs/dcg/"
+model_dir: "./models/dcg/"

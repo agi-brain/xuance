@@ -1,0 +1,52 @@
+agent: "MFQ"  # the learning algorithms_marl
+env_name: "MAgent2"
+env_id: "adversarial_pursuit_v4"
+env_seed: 1  # The random seed of the environment.
+minimap_mode: False
+max_cycles: 500
+extra_features: False
+map_size: 45
+render_mode: "rgb_array"
+learner: "MFQ_Learner"
+policy: "MF_Q_network"
+representation: "Basic_Identical"
+vectorize: "DummyVecMultiAgentEnv"
+runner: "MARL"
+
+use_rnn: False  # Whether to use recurrent neural networks.
+rnn: "GRU"  # Choice of recurrent networks: GRU or LSTM.
+N_recurrent_layers: 1  # Number of recurrent layers.
+fc_hidden_sizes: [64, ]
+recurrent_hidden_size: 64
+dropout: 0  # dropout should be a number in range [0, 1], the probability of an element being zeroed.
+
+representation_hidden_size: [512, ]
+q_hidden_size: [512, ]  # the units for each hidden layer
+activation: "relu"  # The activation function of each hidden layer.
+
+seed: 1
+parallels: 10
+buffer_size: 2000
+batch_size: 256
+learning_rate: 0.001
+gamma: 0.95  # discount factor
+policy_type: "greedy"  # choice of policy: Boltzmann policy or greedy policy. (Default is 'greedy')
+temperature: 0.1  # softmax for policy
+
+start_greedy: 1.0
+end_greedy: 0.95
+decay_step_greedy: 5000
+start_training: 1000  # start training after n steps
+running_steps: 1000000
+training_frequency: 1
+sync_frequency: 200
+
+use_grad_clip: False
+grad_clip_norm: 0.5
+use_parameter_sharing: True
+use_actions_mask: False
+
+eval_interval: 10000
+test_episode: 5
+log_dir: "./logs/mfq/"
+model_dir: "./models/mfq/"

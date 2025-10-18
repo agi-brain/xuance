@@ -1,0 +1,73 @@
+agent: "IC3Net"  # The name of the agent.
+env_name: "mpe"  # Choose of environment.
+env_id: "simple_spread_v3"  # Choose of environment id.
+env_seed: 1  # The random seed for the first environment.
+continuous_action: False  # Whether to use continuous actions for MPE.
+learner: "IC3Net_Learner"  # The name of learner.
+policy: "IC3Net_Policy"
+representation: "Basic_RNN"  # Choose of representation module.
+vectorize: "SubprocVecMultiAgentEnv"  # Method to vectorize the environments.
+runner: "MARL"  # The runner.
+
+# recurrent settings for Basic_RNN representation
+use_rnn: True  # Whether to use RNN, default is True for IC3Net.
+rnn: "LSTM"  # The type of recurrent layer.
+fc_hidden_sizes: [64, 64, 64]  # The hidden size of feed forward layer in RNN representation.
+recurrent_hidden_size: 64  # The hidden size of the recurrent layer.
+N_recurrent_layers: 1  # The number of recurrent layer.
+dropout: 0  # dropout should be a number in range [0, 1], the probability of an element being zeroed.
+normalize: "LayerNorm"  # Layer normalization.
+initialize: "orthogonal"  # Network initializer.
+gain: 0.01  # Gain value for network initialization.
+
+obs_encode_dim: 64  # The output of encoder of observations.
+communicator_hidden_size: 64  # The hidden size of IC3Net module.
+n_action_heads: 2  # Number of action heads.
+gate_hidden_size: [64, ]  # A list of hidden units for each layer of gate networks.
+representation_hidden_size: [64, ]  # A list of hidden units for each layer of Basic_MLP representation networks.
+actor_hidden_size: [64, ]  # A list of hidden units for each layer of actor network.
+critic_hidden_size: [64, ]  # A list of hidden units for each layer of critic network.
+activation: "relu"  # The activation function of each hidden layer.
+activation_action: "sigmoid"  # The activation function for the last layer of the actor.
+use_parameter_sharing: True  # If to use parameter sharing for all agents' policies.
+use_actions_mask: False  # If to use actions mask for unavailable actions.
+continuous: False  # Whether to use continuous actions.
+
+seed: 1  # Random seed.
+parallels: 16  # The number of environments to run in parallel.
+buffer_size: 32  # Number of the transitions (use_rnn is False), or the episodes (use_rnn is True) in replay buffer.
+n_epochs: 1  # Number of epochs to train.
+n_minibatch: 1 # Number of minibatch to sample and train.  batch_size = buffer_size // n_minibatch.
+learning_rate: 0.0005  # Learning rate.
+weight_decay: 0  # The steps to decay the greedy epsilon.
+
+vf_coef: 1.0  # Coefficient factor for critic loss.
+ent_coef: 0.01  # Coefficient factor for entropy loss.
+target_kl: 0.25
+clip_range: 0.2
+gamma: 0.99  # discount factor
+comm_passes: 2  # Number of comm passes per step over the model.
+
+# tricks
+use_linear_lr_decay: False  # If to use linear learning rate decay.
+end_factor_lr_decay: 0.5  # The end factor for learning rate scheduler.
+lr_decay_steps: 500     #The steps required for learning rate decay.
+use_global_state: False  # If to use global state to replace merged observations.
+use_value_clip: False  # Limit the value range.
+value_clip_range: 0.2  # The value clip range.
+use_value_norm: False  # Use running mean and std to normalize rewards.
+use_huber_loss: False  # True: use huber loss; False: use MSE loss.
+huber_delta: 10.0  # The threshold at which to change between delta-scaled L1 and L2 loss. (For huber loss).
+use_advnorm: False  # If to use advantage normalization.
+use_gae: True  # Use GAE trick.
+gae_lambda: 0.8  # The GAE lambda.
+use_grad_clip: True  # Gradient normalization.
+grad_clip_norm: 10.0  # The max norm of the gradient.
+clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm().
+
+running_steps: 10000000  # The total running steps.
+eval_interval: 100000  # The interval between every two trainings.
+test_episode: 5  # The episodes to test in each test period.
+
+log_dir: "./logs/ic3net/"  # Directory of logger information.
+model_dir: "./models/ic3net/"  # Directory of model that will be saved.
