@@ -1,10 +1,11 @@
 # Soft Actor-Critic (SAC)
-**Paper link:[arxiv](https://arxiv.org/abs/1802.09477)**.
+**Paper link:[arxiv](https://arxiv.org/abs/1802.09477)**。
 
 Soft Actor-Critic (SAC) is a state-of-the-art model-free deep reinforcement learning algorithm that combines the actor-critic framework with the principles of maximum entropy reinforcement learning. Introduced in 2018, it has gained significant attention for its effectiveness in handling continuous action spaces and its robust performance across various complex tasks.
 
 This table lists some general features about SAC algorithm:
-| Features of Double DQN  | Values | Description                                              |
+
+| Features of Double DQN  | Values |描述|
 |-------------------------|--------|----------------------------------------------------------|
 | On-policy               | ❌      | The evaluate policy is the same as the target policy.    |
 | Off-policy              | ✅      | The evaluate policy is different from the target policy. |
@@ -22,7 +23,7 @@ $$
 where:
 + $\mathcal{H}(π(⋅|s_t))$ represents the entropy of policy π in state st.
 + $α$ is a hyperparameter that controls the importance of entropy.
-+ 
+
 This objective introduces an $\alpha\mathcal{H}(π(⋅|s_t))$ entropy term , encouraging the agent to maintain a certain degree of randomness while pursuing rewards, thereby enhancing the exploration ability. The temperature parameter $\alpha$ determines the relative importance of the entropy term and the reward, controlling the degree of randomness of the optimal policy. When , the traditional maximum expected reward objective can be recovered. This objective setting enables the agent to explore multiple behavior patterns and find better strategies in complex environments.
 
 **Twin Q-Network Design:**
@@ -34,9 +35,9 @@ $\theta_{\text{target}} \leftarrow \tau \theta + (1 - \tau) \theta_{\text{target
 where τ is a small positive number, typically taken to be 0.005. This soft update mechanism smooths the parameter updates of the target network, preventing drastic changes in the target network parameters.
 
 ## Algorithm
-The full algorithm for training TD3 is presented in Algorithm 1:
+The full algorithm for training SAC is presented in Algorithm 1:
 ![链接网址](./../../../_static/figures/pseucodes/pseucode-SAC.png)  
-**Supplement:** TD3 and SAC share similarities in multiple aspects, including network architecture, the design of dual Q-networks, soft update mechanisms, training stability, applicable scenarios, implementation characteristics, optimization objectives, and practical value. These similarities enable both of them to perform remarkably well when handling tasks in continuous action spaces. However, they differ in exploration mechanisms and policy types, which determines their applicability and performance in different tasks.  
+**Supplement:** TD3 and SAC share similarities in multiple aspects, including network architecture, the design of dual Q-networks, soft update mechanisms, training stability, applicable scenarios, implementation characteristics, optimization objectives, 和 practical value. These similarities enable both of them to perform remarkably well when handling tasks in continuous action spaces. However, they differ in exploration mechanisms and policy types, which determines their applicability and performance in different tasks.  
 Check out the [TD3](./td3.md)   algorithm.
 
 ## Run SAC in XuanCe
@@ -90,6 +91,7 @@ Agent = SAC_Agent(config=configs, envs=envs)  # Create a SAC agent from XuanCe.
 Agent.train(configs.running_steps // configs.parallels)  # Train the model for numerous steps.
 Agent.save_model("final_train_model.pth")  # Save the model to model_dir.
 Agent.finish()  # Finish the training.
+```
 
 ## Citation
 ```
