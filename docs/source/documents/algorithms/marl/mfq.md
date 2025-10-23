@@ -21,7 +21,7 @@ This table lists some general features about MFQ algorithm:
 The Nash equilibrium is a core concept in game theory, referring to a stable state where no participant can improve their own payoff by unilaterally changing their strategy. In stochastic games, the Nash equilibrium is described as follows:
 
 $$
-v^{j}(s; \mathbf{\pi_{*}}) = v^{j}(s; \pi_{*}^{j}, \mathbf{\pi_{*}}^{-j}) \geq v^{j}(s; \pi^{j}, \mathbf{\pi_{*}}^{-j})
+v^j(s; \mathbf{\pi_*}) = v^j(s; \pi_*^j, \mathbf{\pi_*}^{-j}) \geq v^j(s; \pi^j, \mathbf{\pi_*}^{-j})
 $$
 
 Here,$s$ is the state,$\pi_*$ is all agents adopt the equilibrium strategy(where $\pi_*^{j}$ the equilibrium strategy of agent $j$ and $\pi_*^{-j}$ is the equilibrium strategy profile of all agents except ${j}$),$v^{j}(s,\pi_*)$ is the value of agent $j$. This formula can be understood as: No agent can increase its own value in the current state by unilaterally changing its strategy.
@@ -49,10 +49,12 @@ Where $\mathcal{N}(j)$ is the index set of the neighboring agens of agent $j$ wi
 Compute the second-order Taylor derivative for $Q^{j}(s, \mathbf{a})$ with respect to the action $a_k=\bar{a}^j$:
 
 $$
+\begin{aligned}
 Q^j(s,\mathbf{a}) = \frac{1}{N^j} \sum_k Q^j(s, a^j, a^k)
-\\= \frac{1}{N^j} \sum_k \left[ Q^j(s, a^j, \bar{a}^j) + \nabla_{\bar{a}^j} Q^j(s, a^j, \bar{a}^j) \cdot \delta a^{j,k} + \frac{1}{2} \delta a^{j,k} \cdot \nabla_{ \tilde{a}^{j,k}}^2 Q^j(s, a^j, \tilde{a}^{j,k}) \cdot \delta a^{j,k} \right]
-\\= Q^j(s, a^j, \bar{a}^j) + \nabla_{\bar{a}^j} Q^j(s, a^j, \bar{a}^j) \cdot \left[ \frac{1}{N^j} \sum_k \delta a^{j,k} \right] + \frac{1}{2N^j} \sum_k \left[ \delta a^{j,k} \cdot \nabla_{\tilde{a}^{j,k}}^2 Q^j(s, a^j, \tilde{a}^{j,k}) \cdot \delta a^{j,k} \right]
-\\= Q^j(s, a^j, \bar{a}^j) + \frac{1}{2N^j} \sum_k R^j_{s,a^j}(a^k) \approx Q^j(s, a^j, \bar{a}^j)
+\\ & = \frac{1}{N^j} \sum_k \left[ Q^j(s, a^j, \bar{a}^j) + \nabla_{\bar{a}^j} Q^j(s, a^j, \bar{a}^j) \cdot \delta a^{j,k} + \frac{1}{2} \delta a^{j,k} \cdot \nabla_{ \tilde{a}^{j,k}}^2 Q^j(s, a^j, \tilde{a}^{j,k}) \cdot \delta a^{j,k} \right]
+\\ & = Q^j(s, a^j, \bar{a}^j) + \nabla_{\bar{a}^j} Q^j(s, a^j, \bar{a}^j) \cdot \left[ \frac{1}{N^j} \sum_k \delta a^{j,k} \right] + \frac{1}{2N^j} \sum_k \left[ \delta a^{j,k} \cdot \nabla_{\tilde{a}^{j,k}}^2 Q^j(s, a^j, \tilde{a}^{j,k}) \cdot \delta a^{j,k} \right]
+\\ & = Q^j(s, a^j, \bar{a}^j) + \frac{1}{2N^j} \sum_k R^j_{s,a^j}(a^k) \approx Q^j(s, a^j, \bar{a}^j)
+\end{aligned}
 $$
 
 Where,$\sum_k R^j_{s,a^j}(a^k) \triangleq  \sum_k \left[ \delta a^{j,k} \cdot \nabla_{\tilde{a}^{j,k}}^2 Q^j(s, a^j, \tilde{a}^{j,k}) \cdot \delta a^{j,k} \right] $ denotes the Taylor polynomial’s remainder with $\tilde{a}^{j,k} = \bar{a}^{j} + \epsilon^{j,k} \delta a^{j,k}$, $\epsilon^{j,k} \in [0,1]$. Here, Represent $a^j$ using one-hot encoding: $a^j \triangleq [a_1^j, \dots, a_N^j]$, $\bar{a}^j$ is the mean action of the agent's neighbors $\mathcal{N}(j)$. The action $a_k$ of each neighbor is expressed as the sum of $\bar{a}^j$ and a small fluctuation $\delta a^{j,k}$:
