@@ -22,7 +22,6 @@ The Nash equilibrium is a core concept in game theory, referring to a stable sta
 
 $$
 v^{j}(s;\mathbf{\pi_*})=v^{j}(s;\pi_*^{j},\mathbf{\pi_*}^{-j}) \geq v^{j}(s;\pi^{j},\mathbf{\pi_*}^{-j})
-
 $$
 
 Here,$s$ is the state,$\pi_*$ is all agents adopt the equilibrium strategy(where $\pi_*^{j}$ the equilibrium strategy of agent $j$ and $\pi_*^{-j}$ is the equilibrium strategy profile of all agents except ${j}$),$v^{j}(s,\pi_*)$ is the value of agent $j$. This formula can be understood as: No agent can increase its own value in the current state by unilaterally changing its strategy.
@@ -31,7 +30,6 @@ In a Nash equilibrium,give a Nash policy $\pi_*$,the Nash value function $\mathb
 
 $$
 \mathcal{H}^{\text{Nash}} \mathbf{Q}(s, \mathbf{a}) = \mathbb{E}_{s' \sim p} \left[ \mathbf{r}(s, \mathbf{a}) + \gamma \mathbf{v}^{\text{Nash}}(s') \right]
-
 $$
 
 Here,$\begin{cases} \mathbf{Q} \triangleq [Q^1, \dots, Q^N], \\ \mathbf{r}(s, \mathbf{a}) \triangleq [r^1(s, \mathbf{a}), \dots, r^N(s, \mathbf{a})]\end{cases}$
@@ -42,7 +40,6 @@ The dimension of the joint action space grows proportionally with respect to the
 
 $$
 Q^{j}(s, \mathbf{a}) = \frac{1}{N^{j}} \sum_{k \in \mathcal{N}(j)} Q^{j}(s, a^{j}, a^{k})
-
 $$
 
 Where $\mathcal{N}(j)$ is the index set of the neighboring agens of agent $j$ with the size $N(j)=|\mathcal{N}(j)|$ determined by the settings of different applications.
@@ -56,14 +53,12 @@ Q^j(s,\mathbf{a}) = \frac{1}{N^j} \sum_k Q^j(s, a^j, a^k)
 \\= \frac{1}{N^j} \sum_k \left[ Q^j(s, a^j, \bar{a}^j) + \nabla_{\bar{a}^j} Q^j(s, a^j, \bar{a}^j) \cdot \delta a^{j,k} + \frac{1}{2} \delta a^{j,k} \cdot \nabla_{ \tilde{a}^{j,k}}^2 Q^j(s, a^j, \tilde{a}^{j,k}) \cdot \delta a^{j,k} \right]
 \\= Q^j(s, a^j, \bar{a}^j) + \nabla_{\bar{a}^j} Q^j(s, a^j, \bar{a}^j) \cdot \left[ \frac{1}{N^j} \sum_k \delta a^{j,k} \right] + \frac{1}{2N^j} \sum_k \left[ \delta a^{j,k} \cdot \nabla_{\tilde{a}^{j,k}}^2 Q^j(s, a^j, \tilde{a}^{j,k}) \cdot \delta a^{j,k} \right]
 \\= Q^j(s, a^j, \bar{a}^j) + \frac{1}{2N^j} \sum_k R^j_{s,a^j}(a^k) \approx Q^j(s, a^j, \bar{a}^j)
-
 $$
 
 Where,$\sum_k R^j_{s,a^j}(a^k) \triangleq  \sum_k \left[ \delta a^{j,k} \cdot \nabla_{\tilde{a}^{j,k}}^2 Q^j(s, a^j, \tilde{a}^{j,k}) \cdot \delta a^{j,k} \right] $ denotes the Taylor polynomial’s remainder with $\tilde{a}^{j,k} = \bar{a}^{j} + \epsilon^{j,k} \delta a^{j,k}$, $\epsilon^{j,k} \in [0,1]$. Here, Represent $a^j$ using one-hot encoding: $a^j \triangleq [a_1^j, \dots, a_N^j]$, $\bar{a}^j$ is the mean action of the agent's neighbors $\mathcal{N}(j)$. The action $a_k$ of each neighbor is expressed as the sum of $\bar{a}^j$ and a small fluctuation $\delta a^{j,k}$:
 
 $$
 a^k = \bar{a}^j + \delta a^{j,k}, \quad \text{where} \ \bar{a}^j = \frac{1}{N^j} \sum_k a^k
-
 $$
 
 Thus, Many agent interactions are effectively converted into two agent interactions, $Q^j(s,\mathbf{a})\approx Q^j(s, a^j, \bar{a}^j)$. Developing practical mean field Q-learning and mean field Actor-Critic algorithms.
@@ -74,14 +69,12 @@ MFAC algorithm updates the Q-function through Temporal Difference (TD) learning,
 
 $$
 Q_{t+1}^j(s, a^j, \bar{a}^j) = (1 - \alpha) Q_t^j(s, a^j, \bar{a}^j) + \alpha \left[ r^j + \gamma v^j_t(s') \right]
-
 $$
 
 Where $\alpha$ is the learning rate, $\gamma$ is the discount factor, the mean field value function $ v^j(s')$ is:
 
 $$
 v_t^j(s') = \sum_{a^j} \pi^j_t(a^j | s', \bar{a}^j) \mathbb{E}_{\bar{a}^j(\mathbf{a}^{-j}) \sim \ \mathbf{\pi}^{-j}} \left[ Q_t^j(s', a^j,\bar{a}^j) \right]
-
 $$
 
 To distinguish from the Nash value function $\mathbf{v}^{\text{Nash}}(s)$, the above formula as $\mathbf{v}^{\text{MF}}(s)\triangleq[v^1(s),\dots,v^N(s)]$. Defining the mean field operator $\mathcal{H}^{\text{MF}}:\mathcal{H}^{\text{MF}}\mathbf{Q}(s, \mathbf{a}) = \mathbb{E}_{s' \sim p} \left[ \mathbf{r}(s, \mathbf{a}) + \gamma \mathbf{v}^{\text{MF}}(s') \right]$. In fact, when $\mathcal{H}^{\text{MF}}$ forms a contraction mapping, that is, one updates $\mathbf{Q}$ by iteratively applying the mean field operator $\mathcal{H}^{\text{MF}}$, the mean field Q-function will eventually converge to the Nash Q-value under certain assumptions. (Specific assumptions and convergence proofs can be found in the paper.)
@@ -105,7 +98,6 @@ In MFAC, agent $j$ is trained by minimizing the loss function:
 
 $$
 \mathcal{L}(\phi^j) = \left( y^j - Q_{\phi^j}(s, a^j, \bar{a}^j) \right)^2
-
 $$
 
 Where $y^j = r^j + \gamma v_{\phi^j_-}^{\text{MF}}(s')$, and $\phi^j_-$ is the parameters of the target network.
@@ -114,7 +106,6 @@ Finally, Don't forget update the parameters of the target $Q$ network:
 
 $$
 \phi^j_- \leftarrow \tau_\phi \phi^j + (1 - \tau_\phi) \phi_-^{j}
-
 $$
 
 Here, $\tau_\phi$ is learning rate.
@@ -127,7 +118,6 @@ Under state $s$, agent $j$'s action $a^j=\pi_{\theta^{j}}(s)$, new mean action $
 
 $$
 \bar{a}^j = \frac{1}{N^j} \sum_k a^k, a^k \sim \pi_t^k(\cdot |s,{\bar{a}^k}_\_)
-
 $$
 
 Here, agent $j’s$ $N_j$ neighbors from the policies $\pi^k_t$ parametrized by their previous mean actions ${\bar{a}^k}_\_$. Just like MFQ, store the experience tuple $(s, \mathbf{a}, \mathbf{r}, s', \mathbf{\bar{a}})$ in the experience replay buffer $\mathcal{D}$.
@@ -136,14 +126,12 @@ Update the actor using the sampled policy gradient:
 
 $$
 \nabla_{\theta^j} \mathcal{J}(\theta^j) \approx  \sum \left. \nabla_{\theta^j} \log \pi_{\theta^j}(s') Q_{\phi^j_-}(s', {a^j}_\_, {\bar{a}^j}_\_) \right|_{{a^j}_\_ = {\pi_{\theta^j}}_\_(s')}
-
 $$
 
 Finally, Don't forget update the parameters of the target policy network:
 
 $$
 \theta^j_- \leftarrow \tau_\theta \theta^j + (1 - \tau_\theta) \theta_-^{j}
-
 $$
 
 Here, $\tau_\theta$ is learning rate.
