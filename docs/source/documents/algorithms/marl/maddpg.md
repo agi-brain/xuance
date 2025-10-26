@@ -22,7 +22,6 @@ This table lists some general features about MADDPG algorithm:
 | Continuous Action                                       | ✅      | Deal with continuous action space.                                                                            |
 
 ## Framework
-
 The following figure shows the algorithm structure of MADDPG.
 
 ```{eval-rst}
@@ -31,41 +30,40 @@ The following figure shows the algorithm structure of MADDPG.
     :align: center
 ```
 
-Where $\pi  = \left( {{\pi _1}, \dots ,{\pi _N}} \right)$ represents the strategy of N agents,which are respectively fitted by N Actor networks with parameter $\theta  = \left( {{\theta _1}, \dots ,{\theta _N}} \right)$.
+Where $\pi  = \left( {{\pi _1}, \ldots ,{\pi _N}} \right)$ represents the strategy of N agents,which are respectively fitted by N Actor networks with parameter $\theta  = \left( {{\theta _1}, \ldots ,{\theta _N}} \right)$.
 
 ## Key Ideas of MADDPG
 
 ### Multi-Agent Actor Critic
 
-MADDPG operate under the following constraints:
-
-- The learned policies can only use local information(their own observation) at execution time.
-- It does not assume a differentiable model of the environment dynamics.
-- It does not assume any particular structure on the communication method between agents(it doesn’t assume a differentiable communication channel).
+MADDPG operate under the following constraints:  
+(1). The learned policies can only use local information(their own observation) at execution time.  
+(2). It does not assume a differentiable model of the environment dynamics.  
+(3). It does not assume any particular structure on the communication method between agents(it doesn’t assume a differentiable communication channel).
 
 Based on the above constraints,we can write the gradient of the expected return for agent $i$, $J\left( {{\theta _i}} \right) = {\Bbb E}\left( {{R_i}} \right)$ as:
 
 $$
-{\nabla _{{\theta _i}}}J\left( {{\theta _i}} \right) = {{\Bbb E}_{s \sim {p^\mu },{a_i} \sim {\pi _i}}}\left[ {{\nabla _{{\theta _i}}}\log {\pi _i}\left( {{a_i}\left| {{o_i}} \right.} \right)Q_i^\pi \left( {x,{a_1}, \dots ,{a_N}} \right)} \right]
+{\nabla _{{\theta _i}}}J\left( {{\theta _i}} \right) = {{\Bbb E}_{s \sim {p^\mu },{a_i} \sim {\pi _i}}}\left[ {{\nabla _{{\theta _i}}}\log {\pi _i}\left( {{a_i}\left| {{o_i}} \right.} \right)Q_i^\pi \left( {x,{a_1}, \ldots ,{a_N}} \right)} \right]
 $$
 
-Where ${Q_i^\pi \left( {x,{a_1}, \dots ,{a_N}} \right)}$ is a centralized action-value function.Besides state information $x$,it also takes all actions of agent ${{a_1}, \dots ,{a_N}}$ as input,
-and finally outputs the Q-value of agent $i$ . For $x = \left( {{o_1}, \dots ,{o_N},{\rm X}} \right)$ ,it could consist of the observations of all agents, and other useful additional information that may exist.  
+Where ${Q_i^\pi \left( {x,{a_1}, \ldots ,{a_N}} \right)}$ is a centralized action-value function.Besides state information $x$,it also takes all actions of agent ${{a_1}, \ldots ,{a_N}}$ as input,
+and finally outputs the Q-value of agent $i$ . For $x = \left( {{o_1}, \ldots ,{o_N},{\rm X}} \right)$ ,it could consist of the observations of all agents, and other useful additional information that may exist.  
 For deterministic policy gradient,we could consider N continuous policies ${\mu _{{\theta _i}}}$ ,then the gradient can be written as:
 
 $$
-{\nabla _{{\theta _i}}}J\left( {{\mu _{{\theta _i}}}} \right) = {{\Bbb E}_{x,a \sim D}}\left[ {{\nabla _{{\theta _i}}}{\mu _{{\theta _i}}}\left( {{a_i}\left| {{o_i}} \right.} \right){\nabla _{{a_i}}}Q_i^\mu \left( {x,{a_1}, \dots ,{a_N}\left| {_{{a_i} = {\mu _{{\theta _i}}}\left( {{o_i}} \right)}} \right.} \right)} \right]
+{\nabla _{{\theta _i}}}J\left( {{\mu _{{\theta _i}}}} \right) = {{\Bbb E}_{x,a \sim D}}\left[ {{\nabla _{{\theta _i}}}{\mu _{{\theta _i}}}\left( {{a_i}\left| {{o_i}} \right.} \right){\nabla _{{a_i}}}Q_i^\mu \left( {x,{a_1}, \ldots ,{a_N}\left| {_{{a_i} = {\mu _{{\theta _i}}}\left( {{o_i}} \right)}} \right.} \right)} \right]
 $$
 
-Where the experience replay buffer $D$ contains the data $\left( {x,x',{a_1}, \dots ,{a_N},{r_1}, \dots ,{r_N}} \right)$ ,which includes the experience of all agents.  
+Where the experience replay buffer $D$ contains the data $\left( {x,x',{a_1}, \ldots ,{a_N},{r_1}, \ldots ,{r_N}} \right)$ ,which includes the experience of all agents.  
 For the centralized action-value function ${Q_i^\mu }$ ,it can be updated with the following loss function:
 
 $$
-L\left( {{\theta _i}} \right) = {{\Bbb E}_{x,a,r,x'}}\left[ {{{\left( {Q_i^\mu \left( {x,{a_1}, \dots ,{a_N}} \right) - y} \right)}^2}} \right]
+L\left( {{\theta _i}} \right) = {{\Bbb E}_{x,a,r,x'}}\left[ {{{\left( {Q_i^\mu \left( {x,{a_1}, \ldots ,{a_N}} \right) - y} \right)}^2}} \right]
 $$
 
-Where $y = {r_i} + \gamma Q_i^{\mu '}\left( {x',{{a'}_1}, \dots ,{{a'}_N}} \right)\left| {_{{{a'}_j} = {{\mu '}_j}\left( {{o_j}} \right)}} \right.$ ,
-in the y equation, $\mu ' = \left( {{{\mu '}_{{\theta _1}}}, \dots ,{{\mu '}_{{\theta _N}}}} \right)$ is the set of target policies used in updating the value function.
+Where $y = {r_i} + \gamma Q_i^{\mu '}\left( {x',{{a'}_1}, \ldots ,{{a'}_N}} \right)\left| {_{{{a'}_j} = {{\mu '}_j}\left( {{o_j}} \right)}} \right.$ ,
+in the y equation, $\mu ' = \left( {{{\mu '}_{{\theta _1}}}, \ldots ,{{\mu '}_{{\theta _N}}}} \right)$ is the set of target policies used in updating the value function.
 
 ### Agents with Policy Ensembles
 
@@ -81,7 +79,7 @@ Where ${unif\left( {1,K} \right)}$ represents the sub-policy index set, $K$ repr
 Then the corresponding policy gradient can be rewritten as:
 
 $$
-{\nabla _{{\theta _i}^{\left( k \right)}}}{J_e}\left( {{\mu _{{\theta _i}}}} \right) = \frac{1}{K}{{\Bbb E}_{x,a \sim {D_i}^{\left( k \right)}}}\left[ {{\nabla _{{\theta _i}^{\left( k \right)}}}{\mu _{{\theta _i}}}^{\left( k \right)}\left( {{a_i}\left| {{o_i}} \right.} \right){\nabla _{{a_i}}}{Q^{{\mu _i}}}\left( {x,{a_1}, \dots ,{a_N}\left| {_{{a_i} = {\mu _{_{{\theta _i}}}}^{\left( k \right)}\left( {{o_i}} \right)}} \right.} \right)} \right]
+{\nabla _{{\theta _i}^{\left( k \right)}}}{J_e}\left( {{\mu _{{\theta _i}}}} \right) = \frac{1}{K}{{\Bbb E}_{x,a \sim {D_i}^{\left( k \right)}}}\left[ {{\nabla _{{\theta _i}^{\left( k \right)}}}{\mu _{{\theta _i}}}^{\left( k \right)}\left( {{a_i}\left| {{o_i}} \right.} \right){\nabla _{{a_i}}}{Q^{{\mu _i}}}\left( {x,{a_1}, \ldots ,{a_N}\left| {_{{a_i} = {\mu _{_{{\theta _i}}}}^{\left( k \right)}\left( {{o_i}} \right)}} \right.} \right)} \right]
 $$
 
 ## Algorithm
@@ -96,12 +94,12 @@ The full algorithm for training MADDPG is presented in Algorithm 1:
 
 ## Run MADDPG in XuanCe
 
-Before running DDPG in XuanCe, you need to prepare a conda environment and install ``xuance`` following 
+Before running MADDPG in XuanCe, you need to prepare a conda environment and install ``xuance`` following 
 the [**installation steps**](./../../usage/installation.rst#install-xuance).
 
 ### Run Build-in Demos
 
-After completing the installation, you can open a Python console and run Noisy DQN directly using the following commands:
+After completing the installation, you can open a Python console and run MADDPG directly using the following commands:
 
 ```python3
 import xuance
@@ -129,7 +127,7 @@ The "adversary"s are MADDPG agents, and the "agent"s are IDDPG agents.
 ### Run With Self-defined Configs
 
 If you want to run MADDPG with different configurations, you can build a new ``.yaml`` file, e.g., ``my_config.yaml``.
-Then, run the DDPG by the following code block:
+Then, run the MADDPG by the following code block:
 
 ```python3
 import xuance as xp
@@ -143,6 +141,7 @@ runner.run()  # Or runner.benchmark()
 
 To learn more about the configurations, please visit the 
 [**tutorial of configs**](./../../api/configs/configuration_examples.rst).
+
 
 ### Run With Custom Environment
 
@@ -173,7 +172,6 @@ Agent.finish()  # Finish the training.
 ```
 
 ## Citation
-
 ```{code-block} bash
 @article{lowe2017multi,
   title={Multi-Agent Actor-Critic for Mixed Cooperative-Competitive Environments},
