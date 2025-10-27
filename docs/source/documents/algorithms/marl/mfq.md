@@ -1,1 +1,211 @@
 # Mean-Field Q-Learning (MFQ)
+
+**Paper Link:** [**https://proceedings.mlr.press/v80/yang18d/yang18d.pdf**](https://proceedings.mlr.press/v80/yang18d/yang18d.pdf)
+
+The Mean Field Multi-Q-Learning (MFQ) is an improved algorithm for multi-agent reinforcement learning (MARL) that aims to address the scalability and complexity challenges of traditional multi-agent Q-learning. It introduces the "mean field approximation" to model the collective behavior of all agents, rather than explicitly considering the interaction between every pair of agents, thereby simplifying the learning process in large-scale multi-agent systems.
+
+This table lists some general features about MFQ algorithm:
+
+
+| Features of MFQ   | Values | Description                                              |
+| ------------------- | -------- | ---------------------------------------------------------- |
+| On-policy         | ❌     | The evaluate policy is the same as the target policy.    |
+| Off-policy        | ✅     | The evaluate policy is different from the target policy. |
+| Model-free        | ✅     | No need to prepare an environment dynamics model.        |
+| Model-based       | ❌     | Need an environment model to train the policy.           |
+| Discrete Action   | ✅     | Deal with discrete action space.                         |
+| Continuous Action | ❌     | Deal with continuous action space.                       |
+
+## Nash Q-learning
+
+The Nash equilibrium is a core concept in game theory, referring to a stable state where no participant can improve their own payoff by unilaterally changing their strategy. In stochastic games, the Nash equilibrium is described as follows:
+
+$$
+v^j(s; \mathbf{\pi}_{*}) = v^j(s; \pi_{*}^j, \mathbf{\pi}_{*}^{-j}) \geq v^j(s; \pi^j, \mathbf{\pi}_{*}^{-j})
+$$
+
+Here,$s$ is the state, $\pi_*$ is all agents adopt the equilibrium strategy(where $\pi_*^{j}$ the equilibrium strategy of agent $j$ and $\pi_*^{-j}$ is the equilibrium strategy profile of all agents except ${j}$),$v^{j}(s,\pi_*)$ is the value of agent $j$. This formula can be understood as: No agent can increase its own value in the current state by unilaterally changing its strategy.
+
+In a Nash equilibrium,give a Nash policy $\pi_*$,the Nash value function $\mathbf{v}^{nash}(s)\triangleq[v^{1}_{\pi_*}(s),\dots,v^{N}_{\pi_*}(s)]$, the Nash value function represent the Q function:
+
+$$
+\mathcal{H}^{\text{Nash}} \mathbf{Q}(s, \mathbf{a}) = \mathbb{E}_{s' \sim p} \left[ \mathbf{r}(s, \mathbf{a}) + \gamma \mathbf{v}^{\text{Nash}}(s') \right]
+$$
+
+Here, $\begin{cases} \mathbf{Q} \triangleq [Q^1, \dots, Q^N], \\ \mathbf{r}(s, \mathbf{a}) \triangleq [r^1(s, \mathbf{a}), \dots, r^N(s, \mathbf{a})]\end{cases}$
+
+## Mean Field MARL
+
+The dimension of the joint action space grows proportionally with respect to the number of agents $N$.To address this issue, The Q-function is factorized by leveraging only pairwise local interactions:
+
+$$
+Q^{j}(s, \mathbf{a}) = \frac{1}{N^{j}} \sum_{k \in \mathcal{N}(j)} Q^{j}(s, a^{j}, a^{k})
+$$
+
+Where $\mathcal{N}(j)$ is the index set of the neighboring agens of agent $j$ with the size $N(j)=|\mathcal{N}(j)|$ determined by the settings of different applications.
+
+### Mean Field Approximation
+
+Compute the second-order Taylor derivative for $Q^{j}(s, \mathbf{a})$ with respect to the action $a_k=\bar{a}^j$:
+
+$$
+\begin{aligned}
+Q^j(s,\mathbf{a}) = \frac{1}{N^j} \sum_k Q^j(s, a^j, a^k)
+\\ & = \frac{1}{N^j} \sum_k \left[ Q^j(s, a^j, \bar{a}^j) + \nabla_{\bar{a}^j} Q^j(s, a^j, \bar{a}^j) \cdot \delta a^{j,k} + \frac{1}{2} \delta a^{j,k} \cdot \nabla_{ \tilde{a}^{j,k}}^2 Q^j(s, a^j, \tilde{a}^{j,k}) \cdot \delta a^{j,k} \right]
+\\ & = Q^j(s, a^j, \bar{a}^j) + \nabla_{\bar{a}^j} Q^j(s, a^j, \bar{a}^j) \cdot \left[ \frac{1}{N^j} \sum_k \delta a^{j,k} \right] + \frac{1}{2N^j} \sum_k \left[ \delta a^{j,k} \cdot \nabla_{\tilde{a}^{j,k}}^2 Q^j(s, a^j, \tilde{a}^{j,k}) \cdot \delta a^{j,k} \right]
+\\ & = Q^j(s, a^j, \bar{a}^j) + \frac{1}{2N^j} \sum_k R^j_{s,a^j}(a^k) \approx Q^j(s, a^j, \bar{a}^j)
+\end{aligned}
+$$
+
+Where,$\sum_k R^j_{s,a^j}(a^k) \triangleq  \sum_k \left[ \delta a^{j,k} \cdot \nabla_{\tilde{a}^{j,k}}^2 Q^j(s, a^j, \tilde{a}^{j,k}) \cdot \delta a^{j,k} \right] $ denotes the Taylor polynomial’s remainder with $\tilde{a}^{j,k} = \bar{a}^{j} + \epsilon^{j,k} \delta a^{j,k}$, $\epsilon^{j,k} \in [0,1]$. Here, Represent $a^j$ using one-hot encoding: $a^j \triangleq [a_1^j, \dots, a_N^j]$, $\bar{a}^j$ is the mean action of the agent's neighbors $\mathcal{N}(j)$. The action $a_k$ of each neighbor is expressed as the sum of $\bar{a}^j$ and a small fluctuation $\delta a^{j,k}$:
+
+$$
+a^k = \bar{a}^j + \delta a^{j,k}, \quad \text{where} \ \bar{a}^j = \frac{1}{N^j} \sum_k a^k
+$$
+
+Thus, Many agent interactions are effectively converted into two agent interactions, $Q^j(s,\mathbf{a})\approx Q^j(s, a^j, \bar{a}^j)$. Developing practical mean field Q-learning and mean field Actor-Critic algorithms.
+
+### Iteration Of Q-function
+
+MFQ algorithm updates the Q-function through Temporal Difference (TD) learning, whose core idea is to "correct the current Q-value using the currently estimated future Q-value". At this point, given an experience $e = (s, \{a^{k}\}, \{r^{j}\}, s')$ the update function of the mean field Q-function is:
+
+$$
+Q_{t+1}^j(s, a^j, \bar{a}^j) = (1 - \alpha) Q_t^j(s, a^j, \bar{a}^j) + \alpha \left[ r^j + \gamma v^j_t(s') \right]
+$$
+
+Where $\alpha$ is the learning rate, $\gamma$ is the discount factor, the mean field value function $ v^j(s')$ is:
+
+$$
+v_t^j(s') = \sum_{a^j} \pi^j_t(a^j | s', \bar{a}^j) \mathbb{E}_{\bar{a}^j(\mathbf{a}^{-j}) \sim \ \mathbf{\pi}^{-j}} \left[ Q_t^j(s', a^j,\bar{a}^j) \right]
+$$
+
+To distinguish from the Nash value function $\mathbf{v}^{\text{Nash}}(s)$, the above formula as $\mathbf{v}^{\text{MF}}(s)\triangleq[v^1(s),\dots,v^N(s)]$. Defining the mean field operator $\mathcal{H}^{\text{MF}}:\mathcal{H}^{\text{MF}}\mathbf{Q}(s, \mathbf{a}) = \mathbb{E}_{s' \sim p} \left[ \mathbf{r}(s, \mathbf{a}) + \gamma \mathbf{v}^{\text{MF}}(s') \right]$. In fact, when $\mathcal{H}^{\text{MF}}$ forms a contraction mapping, that is, one updates $\mathbf{Q}$ by iteratively applying the mean field operator $\mathcal{H}^{\text{MF}}$, the mean field Q-function will eventually converge to the Nash Q-value under certain assumptions. (Specific assumptions and convergence proofs can be found in the paper.)
+
+## Policy Update
+
+To balance exploration and exploitation, MFQ typically adopt the Boltzmann (Softmax) policy to select actions. The new Boltzmann policy is determined for each agent $j$:
+
+$$
+\pi_t^j(a^j | s, \bar{a}^j) = \frac{\exp\left(-\beta Q_t^j(s, a^j, \bar{a}^j)\right)}{\sum_{a^{j'} \in \mathcal{A}^j} \exp\left(-\beta Q_t^j(s, a^{j'}, \bar{a}^j)\right)}
+$$
+
+Here, $\beta$ is exploration rate.
+
+Here, A iterative procedure is defined to compute for $\bar{a}^j$ ($j’s$ $N_j$ neighbors from the policies $\pi^k_t$ parametrized by their previous mean actions ${\bar{a}^k}_\_$):
+
+$$
+\bar{a}^j = \frac{1}{N^j} \sum_k a^k, a^k \sim \pi_t^k(\cdot |s,{\bar{a}^k}_\_)
+$$
+
+MFQ draws on the stable training techniques of DQN in deep reinforcement learning and adopts the ideas of experience replay and target network.
+
+By interacting with the environment,Execute the joint action $\mathbf{a} = [a^1, \dots, a^N]$, and observe the reward $\mathbf{r} = [r^1, \dots, r^N]$ and the next state $s'$. Store the experience tuple $(s, \mathbf{a}, \mathbf{r}, s', \mathbf{\bar{a}})$ in the experience replay buffer $\mathcal{D}$ (where $\mathbf{\bar{a}}$ = $[\bar{a}^1, \dots, \bar{a}^N]$ is the set of mean actions of all agents).
+
+## Update Q Network
+
+- **sampling experience**: Sample minibatch experiences $(s, \mathbf{a}, \mathbf{r}, s', \mathbf{\bar{a}})$ from the experience replay buffer $\mathcal{D}$
+- **Inherited Average Action**: Sample the action $a^j_-$ from the target network $Q_{\phi^j_-}$, and let the target network inherit the current average action estimation.
+
+In MFQ, agent $j$ is trained by minimizing the loss function:
+
+$$
+\mathcal{L}(\phi^j) = \left( y^j - Q_{\phi^j}(s, a^j, \bar{a}^j) \right)^2
+$$
+
+Where $y^j = r^j + \gamma v_{\phi^j_-}^{\text{MF}}(s')$, and $\phi^j_-$ is the parameters of the target network.
+
+Finally, Don't forget update the parameters of the target network:
+
+$$
+\phi^j_- \leftarrow \tau \phi^j + (1 - \tau) \phi_-^{j}
+$$
+
+Here, $\tau$ is learning rate.
+
+Strengths of MFQ:
+
+- The algorithm adopts Q-learning as its framework, learns the Q-function to guide action selection, and updates the Q-value using the temporal difference error.
+- The algorithm employs mean field theory, using the "mean value of the collective actions" to approximate the influence of other agents on the current agent, thereby solving the problem of state space explosion in multi-agent scenarios.
+- Draw on the stable training techniques of DQN, such as experience replay and target network.
+
+## Algorithm
+
+The full algorithm for training MFQ is presented in Algorithm 1:
+
+```{eval-rst}
+.. image:: ./../../../_static/figures/pseucodes/pseucode-MFQ.png
+    :width: 80%
+    :align: center
+```
+
+## Run MFQ in XuanCe
+
+Before running MFQ in XuanCe, you need to prepare a conda environment and install ``xuance`` following
+the [**installation steps**](./../../usage/installation.rst#install-xuance).
+
+### Run Build-in Demos
+
+After completing the installation, you can open a Python console and run MFQ directly using the following commands:
+
+```python3
+import xuance
+runner = xuance.get_runner(method='mfq',
+                           env='classic_control',  # Choices: claasi_control, box2d, atari.
+                           env_id='CartPole-v1',  # Choices: CartPole-v1, LunarLander-v2, ALE/Breakout-v5, etc.
+                           is_test=False)
+runner.run()  # Or runner.benchmark()
+```
+
+To learn more about the configurations, please visit the
+[**tutorial of configs**](./../../api/configs/configuration_examples.rst).
+
+### Run With Custom Environment
+
+If you would like to run XuanCe's MFQ in your own environment that was not included in XuanCe,
+you need to define the new environment following the steps in
+[**New Environment Tutorial**](./../../usage/custom_env/custom_drl_env.rst).
+Then, [**prepapre the configuration file**](./../../usage/custom_env/custom_drl_env.rst#step-2-create-the-config-file-and-read-the-configurations)
+``mfq_myenv.yaml``.
+
+After that, you can run MFQ in your own environment with the following code:
+
+```python3
+import argparse
+from xuance.common import get_configs
+from xuance.environment import REGISTRY_ENV
+from xuance.environment import make_envs
+from xuance.torch.agents import MFQ_Agent
+
+configs_dict = get_configs(file_dir="mfq_myenv.yaml")
+configs = argparse.Namespace(**configs_dict)
+REGISTRY_ENV[configs.env_name] = MyNewEnv
+
+envs = make_envs(configs)  # Make parallel environments.
+Agent = MFQ_Agent(config=configs, envs=envs)  # Create a MFQ agent from XuanCe.
+Agent.train(configs.running_steps // configs.parallels)  # Train the model for numerous steps.
+Agent.save_model("final_train_model.pth")  # Save the model to model_dir.
+Agent.finish()  # Finish the training.
+```
+
+## Citation
+
+```{code-block} bash
+
+@InProceedings{pmlr-v80-yang18d,
+  title = 	 {Mean Field Multi-Agent Reinforcement Learning},
+  author = 	 {Yang, Yaodong and Luo, Rui and Li, Minne and Zhou, Ming and Zhang, Weinan and Wang, Jun},
+  booktitle = 	 {Proceedings of the 35th International Conference on Machine Learning},
+  pages = 	 {5571-5580},
+  year = 	 {2018},
+  editor = 	 {Dy, Jennifer and Krause, Andreas.},
+  volume = 	 {80},
+  series = 	 {International Conference on Machine Learning},
+  address = 	 {Stockholmsmässan, Stockholm Sweden},
+  month = 	 {10--15 July},
+  publisher =    {PMLR},
+  pdf = 	 {https://proceedings.mlr.press/v80/yang18d/yang18d.pdf},
+  url = 	 {https://proceedings.mlr.press/v80/yang18d.html},
+  abstract = 	 {Existing multi-agent reinforcement learning methods are limited typically to a small number of agents. When the agent number increases largely, the learning becomes intractable due to the curse of the dimensionality and the exponential growth of agent interactions. In this paper, we present Mean Field Reinforcement Learning where the interactions within the population of agents are approximated by those between a single agent and the average effect from the overall population or neighboring agents; the interplay between the two entities is mutually reinforced: the learning of the individual agent’s optimal policy depends on the dynamics of the population, while the dynamics of the population change according to the collective patterns of the individual policies. We develop practical mean field Q-learning and mean field Actor-Critic algorithms and analyze the convergence of the solution to Nash equilibrium. Experiments on Gaussian squeeze, Ising model, and battle games justify the learning effectiveness of our mean field approaches. In addition, we report the first result to solve the Ising model via model-free reinforcement learning methods.}
+}
+
+```
