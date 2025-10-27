@@ -31,7 +31,7 @@ The following figure shows the algorithm structure of MADDPG.
     :align: center
 ```
 
-Where $\pi  = \left( {{\pi _1}, \dots ,{\pi _N}} \right)$ represents the strategy of N agents,which are respectively fitted by N Actor networks with parameter $\theta  = \left( {{\theta _1}, \dots ,{\theta _N}} \right)$.
+Where $\pi=(\pi_1,\ldots,\pi_N)$ represents the strategy of N agents,which are respectively fitted by N Actor networks with parameter $\theta=(\theta_1,\ldots,\theta_N).$
 
 ## Key Ideas of MADDPG
 
@@ -43,29 +43,29 @@ MADDPG operate under the following constraints:
 - It does not assume a differentiable model of the environment dynamics.
 - It does not assume any particular structure on the communication method between agents(it doesn’t assume a differentiable communication channel).
 
-Based on the above constraints,we can write the gradient of the expected return for agent $i$, $J\left( {{\theta _i}} \right) = {\Bbb E}\left( {{R_i}} \right)$ as:
+Based on the above constraints,we can write the gradient of the expected return for agent $i$, $J \left( \theta_i \right)=\mathbb{E} \left( R_i \right)$ as:
 
 $$
-{\nabla _{{\theta _i}}}J\left( {{\theta _i}} \right) = {{\Bbb E}_{s \sim {p^\mu },{a_i} \sim {\pi _i}}}\left[ {{\nabla _{{\theta _i}}}\log {\pi _i}\left( {{a_i}\left| {{o_i}} \right.} \right)Q_i^\pi \left( {x,{a_1}, \dots ,{a_N}} \right)} \right]
+\nabla_{\theta_i} J \left( \theta_i \right) = \mathbb{E}_{s \sim p^\mu,a_i \sim \pi_i} \left[ \nabla_{\theta_i} \log \pi_i \left( a_i \left| o_i \right. \right) Q_i^\pi\left(x,a_1,\ldots,a_N\right) \right]
 $$
 
-Where ${Q_i^\pi \left( {x,{a_1}, \dots ,{a_N}} \right)}$ is a centralized action-value function.Besides state information $x$,it also takes all actions of agent ${{a_1}, \dots ,{a_N}}$ as input,
-and finally outputs the Q-value of agent $i$ . For $x = \left( {{o_1}, \dots ,{o_N},{\rm X}} \right)$ ,it could consist of the observations of all agents, and other useful additional information that may exist.  
-For deterministic policy gradient,we could consider N continuous policies ${\mu _{{\theta _i}}}$ ,then the gradient can be written as:
+Where $Q_i^\pi\left(x,a_1,\ldots,a_N\right)$ is a centralized action-value function.Besides state information $x$,it also takes all actions of agent $a_1,\ldots,a_N$ as input,
+and finally outputs the Q-value of agent $i$ . For $x=(o_1,\ldots,o_N,\mathrm{X})$,it could consist of the observations of all agents, and other useful additional information that may exist.  
+For deterministic policy gradient,we could consider N continuous policies $\mu_{\theta_i}$ ,then the gradient can be written as:
 
 $$
-{\nabla _{{\theta _i}}}J\left( {{\mu _{{\theta _i}}}} \right) = {{\Bbb E}_{x,a \sim D}}\left[ {{\nabla _{{\theta _i}}}{\mu _{{\theta _i}}}\left( {{a_i}\left| {{o_i}} \right.} \right){\nabla _{{a_i}}}Q_i^\mu \left( {x,{a_1}, \dots ,{a_N}\left| {_{{a_i} = {\mu _{{\theta _i}}}\left( {{o_i}} \right)}} \right.} \right)} \right]
+\nabla_{\theta_{i}}J\left(\mu_{\theta_{i}}\right)=\mathbb{E}_{x,a\sim D}\left[\nabla_{\theta_{i}}\mu_{\theta_{i}}\left(a_{i}\left|o_{i}\right)\nabla_{a_{i}}Q_{i}^{\mu}\left(x,a_{1},\ldots,a_{N}\left|\right._{a_{i}=\mu_{\theta_{i}}(o_{i})}\right)\right]\right.
 $$
 
-Where the experience replay buffer $D$ contains the data $\left( {x,x',{a_1}, \dots ,{a_N},{r_1}, \dots ,{r_N}} \right)$ ,which includes the experience of all agents.  
-For the centralized action-value function ${Q_i^\mu }$ ,it can be updated with the following loss function:
+Where the experience replay buffer $D$ contains the data $(x,x^{\prime},a_1,\ldots,a_N,r_1,\ldots,r_N)$ ,which includes the experience of all agents.  
+For the centralized action-value function $Q_i^\mu$ ,it can be updated with the following loss function:
 
 $$
-L\left( {{\theta _i}} \right) = {{\Bbb E}_{x,a,r,x'}}\left[ {{{\left( {Q_i^\mu \left( {x,{a_1}, \dots ,{a_N}} \right) - y} \right)}^2}} \right]
+L\left(\theta_i\right)=\mathbb{E}_{x,a,r,x^{\prime}}\left[\left(Q_i^\mu\left(x,a_1,\ldots,a_N\right)-y\right)^2\right]
 $$
 
-Where $y = {r_i} + \gamma Q_i^{\mu '}\left( {x',{{a'}_1}, \dots ,{{a'}_N}} \right)\left| {_{{{a'}_j} = {{\mu '}_j}\left( {{o_j}} \right)}} \right.$ ,
-in the y equation, $\mu ' = \left( {{{\mu '}_{{\theta _1}}}, \dots ,{{\mu '}_{{\theta _N}}}} \right)$ is the set of target policies used in updating the value function.
+Where $y=r_i+\gamma Q_i^{\mu^{\prime}}(x^{\prime},a_1^{\prime},\ldots,a_N^{\prime})|_{a^{\prime}_j=\mu^{\prime}_j(o_j)}$ ,
+in the y equation, $\mu^{\prime}=(\mu_{\theta_1}^{\prime},\ldots,\mu_{\theta_N}^{\prime})$ is the set of target policies used in updating the value function.
 
 ### Agents with Policy Ensembles
 
@@ -74,14 +74,14 @@ In order to solve this problem,the author puts forward the concept of **policy e
 For agent $i$,its objective function can be changed to:
 
 $$
-{J_e}\left( {{\mu _i}} \right) = {{\Bbb E}_{k \sim unif\left( {1,K} \right),s \sim {p^\mu },a \sim {\mu _i}^{\left( k \right)}}}\left[ {{R_i}\left( {s,a} \right)} \right]
+J_e\left(\mu_i\right)=\mathbb{E}_{k\sim unif(1,K),s\sim p^\mu,a\sim\mu_i^{(k)}}\left[R_i\left(s,a\right)\right]
 $$
 
-Where ${unif\left( {1,K} \right)}$ represents the sub-policy index set, $K$ represents the sub-policy index.
+Where $unif\left(1,K\right)$ represents the sub-policy index set, $K$ represents the sub-policy index.
 Then the corresponding policy gradient can be rewritten as:
 
 $$
-{\nabla _{{\theta _i}^{\left( k \right)}}}{J_e}\left( {{\mu _{{\theta _i}}}} \right) = \frac{1}{K}{{\Bbb E}_{x,a \sim {D_i}^{\left( k \right)}}}\left[ {{\nabla _{{\theta _i}^{\left( k \right)}}}{\mu _{{\theta _i}}}^{\left( k \right)}\left( {{a_i}\left| {{o_i}} \right.} \right){\nabla _{{a_i}}}{Q^{{\mu _i}}}\left( {x,{a_1}, \dots ,{a_N}\left| {_{{a_i} = {\mu _{_{{\theta _i}}}}^{\left( k \right)}\left( {{o_i}} \right)}} \right.} \right)} \right]
+\nabla_{\theta_{i}^{(k)}}J_{e}\left(\mu_{\theta_{i}}\right)=\frac{1}{K}\mathbb{E}_{x,a\sim D_{i}^{(k)}}\left[\nabla_{\theta_{i}^{(k)}}\mu_{\theta_{i}^{(k)}}\left(a_{i}\left|o_{i}\right)\nabla_{a_{i}}Q^{\mu_{i}}\left(x,a_{1},\ldots,a_{N}\right|_{a_{i}=\mu_{\theta_{i}^{(k)}}(o_{i})}\right)\right]
 $$
 
 ## Algorithm
