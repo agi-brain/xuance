@@ -193,8 +193,8 @@ you can build a new ``.yaml`` file, e.g. ``my_config.yaml``.
 Then, run the **PPO** by the following code block:
 
 ```python3
-import xuance as xp
-runner = xp.get_runner(method='ppo',
+import xuance
+runner = xuance.get_runner(method='ppo',
                        env='classic_control',  # Choices: claasi_control, box2d, atari, etc.
                        env_id='CartPole-v1',  # Choices: CartPole-v1, Pendulum-v1, etc.
                        config_path="my_config.yaml",  # The path of my_config.yaml file should be correct.

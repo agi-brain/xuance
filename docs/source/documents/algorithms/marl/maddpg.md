@@ -132,8 +132,8 @@ If you want to run MADDPG with different configurations, you can build a new ``.
 Then, run the DDPG by the following code block:
 
 ```python3
-import xuance as xp
-runner = xp.get_runner(method='maddpg',
+import xuance
+runner = xuance.get_runner(method='maddpg',
                        env='mpe',  # Choices: mpe, Drones, NewEnv_MAS.
                        env_id='simple_spread_v3',  # Choices: simple_spread_v3, etc.
                        config_path="my_config.yaml",  # The path of my_config.yaml file should be correct.

@@ -116,8 +116,8 @@ If you want to run DrQ with different configurations, you can build a new ``.yam
 Then, run the DrQ by the following code block:
 
 ```python3
-import xuance as xp
-runner = xp.get_runner(method='drq',
+import xuance
+runner = xuance.get_runner(method='drq',
                        env='atari',  # Choices: atari.
                        env_id='ALE/Breakout-v5',  # Choices: ALE/Breakout-v5, ALE/Pong-v5, etc.
                        config_path="my_config.yaml",  # The path of my_config.yaml file should be correct.
