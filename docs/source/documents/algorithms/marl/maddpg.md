@@ -62,7 +62,7 @@ $$
 L\left( {{\theta _i}} \right) = {{\Bbb E}_{x,a,r,x'}}\left[ {{{\left( {Q_i^\mu \left( {x,{a_1}, \ldots ,{a_N}} \right) - y} \right)}^2}} \right]
 $$
 
-Where $y = {r_i} + \gamma Q_i^{\mu '}\left( {x',{{a'}_1}, \ldots ,{{a'}_N}} \right)\left| {_{{{a'}_j} = {{\mu '}_j}\left( {{o_j}} \right)}} \right.$ ,
+Where $y = {r_i} + \gamma Q_i^{\mu '}\left( {x',{{a'}_1}, \ldots ,{{a'}_N}} \right)\left| {_{{{a'}_j} = {{\mu '}_j}\left( {{o_j}} \right)}} \right.$,
 in the y equation, $\mu ' = \left( {{{\mu '}_{{\theta _1}}}, \ldots ,{{\mu '}_{{\theta _N}}}} \right)$ is the set of target policies used in updating the value function.
 
 ### Agents with Policy Ensembles
