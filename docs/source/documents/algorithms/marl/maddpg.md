@@ -2,7 +2,7 @@
 
 **Paper Link:** [**https://arxiv.org/abs/1706.02275**](https://arxiv.org/abs/1706.02275)
 
-Multi-agent deep deterministic policy gradient (MA DDPG) is a multi-agent deep reinforcement learning algorithm 
+Multi-agent deep deterministic policy gradient (MA-DDPG) is a multi-agent deep reinforcement learning algorithm 
 which consider DDPG algorithm as the baseline and centralized training and decentralized execution as the training method.
 This method is applicable not only to cooperative interaction,
 but also to competitive or mixed interaction involving both physical and communicative behavior.

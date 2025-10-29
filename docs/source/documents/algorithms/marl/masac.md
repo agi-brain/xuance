@@ -2,10 +2,10 @@
 
 **Paper Link:** [**https://arxiv.org/abs/2104.06655**](https://arxiv.org/abs/2104.06655)
 
-Multi-agent Soft Actor-Critic (MA SAC) is a multi-agent deep reinforcement learning algorithm
-which consider SAC algorithm as the baseline and centralized training and decentralized execution as the training method.
-It supports efficient off-policy learning and addresses credit assignment problem partially in both
-discrete and continuous action spaces.
+Multi-agent Soft Actor-Critic (MA-SAC) is a multi-agent deep reinforcement learning algorithm
+that integrates the fundamental framework of the SAC algorithm with value function decomposition.
+It follows the paradigm of centralized training and decentralized execution (CTDE), enabling efficient off-policy learning.
+Moreover, it partially alleviates the credit assignment problem in both discrete and continuous action spaces.
 
 This table lists some general features about MASAC algorithm:   
 
@@ -22,6 +22,7 @@ This table lists some general features about MASAC algorithm:
 | Continuous Action                                       | ✅      | Deal with continuous action space.                                                                            |
 
 ## Framework
+
 The following figure shows the algorithm structure of MASAC.
 
 ```{eval-rst}
@@ -30,27 +31,55 @@ The following figure shows the algorithm structure of MASAC.
     :align: center
 ```
 
+In this framework, Left: mixing network structure. Red figures are the hyper-networks that produce the weights
+and biases for the mixing network layers. Middle: the overall Qmix architecture. Right: agent’s local Q
+network, which is in green, the $i$ means the corresponding one-hot vector to distinguish different agents.
+
 ## Key Ideas of MASAC
+
+### Value Function Decomposition
+
+Each agent learns a local Q-value function, which are then aggregated by a learnable mixing network to produce the global joint Q-value.
+
+$$
+Q^{\mathrm{tot}}(\tau,\mathbf{a})=q^{mix}(s,\left[q^i\left(\tau^i,a^i\right)\right])
+$$
+
+$q^{mix}$ represents a non-linear monotonic factorization structure.
 
 ### multi-agent Soft Actor-Critic
 
 This method adopts the practical approximation to soft policy iteration, the critic loss function of the MASAC method in multi-agent setting is:
 
 $$
-\mathcal{L}(\phi)=\mathbb{E}_{\mathcal{D}}\left[\left(r_t+\gamma*\min_{j\in1,2}\hat{Q}_{\phi_j^{\prime}}^{targ}-Q_\phi^{tot}\left(s_t,\tau_t,{a}_t\right)\right)^2\right]
+\mathcal{L}(\phi)=\mathbb{E}_{\mathcal{D}} \left[\left(r_t + \gamma \min_{j\in\{1,2\}} \hat{Q}_{\phi_j^{\prime}}^{\mathrm{targ}} - Q_\phi^{\mathrm{tot}}(s_t,\tau_t,a_t)\right)^2\right]
 $$
 
-Where ${{r_t} + \gamma *{{\min }_{j \in 1,2}}\hat Q_{\phi _j^\prime }^{targ}}$ as target value.Where ${\hat Q_{\phi _j^\prime }^{targ}}$ can be written as:
+Where $\phi$ denotes the parameters of the current Q-network, and $\phi_j^{\prime}$ denotes the parameters of the target Q-network.The target value is defined as:
 
 $$
-\hat Q_{\phi _j^\prime }^{targ} = {{\Bbb E}_{{\pi _\theta }}}\left[ {Q_{\phi _j^\prime }^{tot}\left( {{s_{t + 1}},{\tau _{t + 1}},{a_{t + 1}}} \right) - \alpha \log \pi \left( {{a_{t + 1}}\mid {\tau _{t + 1}}} \right)} \right]
+r_t+\gamma\min_{j\in\{1,2\}}\hat{Q}_{\phi_j^{\prime}}^{\mathrm{targ}}
 $$
 
-Where ${\alpha \log \pi \left( {{a_{t + 1}}\mid {\tau _{t + 1}}} \right)}$ is regarded as an entropy regularization term.$\alpha$ is a hyper-parameter that
+Where $\hat{Q}_{\phi_j^{\prime}}^{\mathrm{targ}}$ can be written as:
+
+$$
+\hat{Q}_{\phi_j^{\prime}}^{\mathrm{targ}}=\mathbb{E}_{\pi_\theta}\left[Q_{\phi_j^{\prime}}^{\mathrm{tot}}(s_{t+1},\tau_{t+1},a_{t+1})-\alpha\mathrm{log}\pi(a_{t+1}|\tau_{t+1})\right]
+$$
+
+Where $\alpha\log\pi\left(a_{t+1}\mid\tau_{t+1}\right)$ is regarded as an entropy regularization term.
+
+Iterative proces based on soft policy, the objective for policy update is below:
+
+$$
+\mathcal{L}(\theta)=\mathbb{E}_{\mathcal{D}} \left[\alpha\log\pi(a_t|\tau_t)-Q_{\phi^{\prime}}^{\mathrm{tot}}(s_t,\tau_t,a_t)\right]
+$$
+
+$\alpha$ is a hyper-parameter that
 controls the trade-off between maximizing the entropy of policy and the expected discounted return.It can be designed to learn dynamically similar to SAC:
 
 $$
-L(\alpha)=\mathbb{E}_{a_t\sim\pi_t} \begin{bmatrix} -\alpha\log\pi_t\left(a_t\mid\tau_t\right)-\alpha\overline{\mathcal{H}} \end{bmatrix}
+\mathcal{L}(\alpha)=\mathbb{E}_{a_t\sim\pi_t} \left[-\alpha\log\pi_t(a_t|\tau_t)-\alpha\overline{\mathcal{H}} \right]
 $$
 
 ## Algorithm
@@ -87,8 +116,8 @@ If you want to run MASAC with different configurations, you can build a new ``.y
 Then, run the MASAC by the following code block:
 
 ```python3
-import xuance as xp
-runner = xp.get_runner(method='masac',
+import xuance 
+runner = xuance.get_runner(method='masac',
                        env='mpe',
                        env_id='simple_spread_v3',
                        config_path="my_config.yaml",
@@ -115,7 +144,7 @@ import argparse
 from xuance.common import get_configs
 from xuance.environment import REGISTRY_ENV
 from xuance.environment import make_envs
-from xuance.torch.agents import IDDPG_Agents, MASAC_Agents
+from xuance.torch.agents import MASAC_Agents
 
 configs_dict = get_configs(file_dir="masac_myenv.yaml")
 configs = argparse.Namespace(**configs_dict)
@@ -129,6 +158,7 @@ Agent.finish()  # Finish the training.
 ```
 
 ## Citation
+
 ```{code-block} bash
 @misc{pu2021decomposedsoftactorcriticmethod,
       title={Decomposed Soft Actor-Critic Method for Cooperative Multi-Agent Reinforcement Learning}, 
