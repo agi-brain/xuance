@@ -2,11 +2,10 @@
 
 **Paper Link:** [**https://arxiv.org/abs/2104.06655**](https://arxiv.org/abs/2104.06655)
 
-Multi-agent Soft Actor-Critic (MA SAC) is a multi-agent deep reinforcement learning algorithm
-which combines the basic framework of SAC algorithm and the decomposition of value function.
-It adopts the paradigm of centralized training and decentralized execution.
-It supports efficient off-policy learning and addresses credit assignment problem partially in both
-discrete and continuous action spaces.
+Multi-agent Soft Actor-Critic (MA-SAC) is a multi-agent deep reinforcement learning algorithm
+that integrates the fundamental framework of the SAC algorithm with value function decomposition.
+It follows the paradigm of centralized training and decentralized execution (CTDE), enabling efficient off-policy learning.
+Moreover, it partially alleviates the credit assignment problem in both discrete and continuous action spaces.
 
 This table lists some general features about MASAC algorithm:   
 
@@ -43,7 +42,7 @@ network, which is in green, the $i$ means the corresponding one-hot vector to di
 Each agent learns a local Q-value function, which are then aggregated by a learnable mixing network to produce the global joint Q-value.
 
 $$
-Q^{tot}(\tau,\mathbf{a})=q^{mix}(s,\left[q^i\left(\tau^i,a^i\right)\right])
+Q^{\mathrm{tot}}(\tau,\mathbf{a})=q^{mix}(s,\left[q^i\left(\tau^i,a^i\right)\right])
 $$
 
 $q^{mix}$ represents a non-linear monotonic factorization structure.
