@@ -116,8 +116,8 @@ If you want to run MASAC with different configurations, you can build a new ``.y
 Then, run the MASAC by the following code block:
 
 ```python3
-import xuance as xp
-runner = xp.get_runner(method='masac',
+import xuance 
+runner = xuance.get_runner(method='masac',
                        env='mpe',
                        env_id='simple_spread_v3',
                        config_path="my_config.yaml",
