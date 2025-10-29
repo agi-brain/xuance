@@ -261,8 +261,8 @@ If you want to run QTRAN with different configurations, you can build a new ``.y
 Then, run the QTRAN by the following code block:
 
 ```python3
-import xuance as xp
-runner = xp.get_runner(method='qtran',
+import xuance
+runner = xuance.get_runner(method='qtran',
                        env='sc2',  # Choices: mpe.
                        env_id='8m', # Choices: 1c3sc5, 3m, MMM2, 25m.
                        config_path="my_config.yaml",  # The path of my_config.yaml file should be correct.
