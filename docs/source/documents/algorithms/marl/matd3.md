@@ -48,7 +48,7 @@ Where $i$ expresses each agent.
 The deterministic policy of agent $i$ can be optimized by gradient descent:
 
 $$
-\nabla_{\theta_i}J\left(\mu_i\right)=\mathbb{E}_{x,a\sim D}\left[\nabla_{\theta_i}\mu_i\left(a_{i}\left|o_{i}\right)\nabla_{a_i}Q_{i,\theta_j}^\pi\left(x,a_1,\ldots,a_N\left|\right._{a_i=\mu_i(o_i)}\right)\right]\right.
+\nabla_{\theta_i}J\left(\mu_i\right)=\mathbb{E}_{x,a\sim D}\left[\nabla_{\theta_i}\mu_i\left(a_{i}\left|o_{i}\right)\nabla_{a_i}Q_{i,\theta_j}^\mu\left(x,a_1,\ldots,a_N\left|\right._{a_i=\mu_i(o_i)}\right)\right]\right.
 $$
 
 Where $\mu_i$ being short for $\mu_{\theta_{i}}$.
