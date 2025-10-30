@@ -57,27 +57,27 @@ Target critics network function $\hat{Q}^1$, $\hat{Q}^2$ initialized with $\hat{
 **Output:**
 Trained policy $\pi$.
 
-- **For** episode = 0,...,M **Do**
-   - t=0;Initialize state $o_t$  
-   - **While** t < TimeLimit **Do**
-     - **For** agent = 0,...,K **Do**
-        - Sample action $a_k^t \sim \pi(o_k^t)$
-     - **End For**
-     - Combine actions $a_k^t$ into joint action $a_t$  
-     - Execute $a_t$, observe reward $r_t$, next observation $o_{t+1}$ and done flag $d_{t+1}$  
-     - Store $(o_t, a_t, r_t, o_{t+1}, d_{t+1})$ in buffer $D$
-     - **For** e = 0,...,E **Do**
-        - Sample batch from $D$
-        - Compute target $y_t=r_t+(1-d_t)\gamma\mathbb{E}_{a_{t+1}\sim\pi}[\min_{j\in\{1,2\}}(\hat{Q}^j(a_{t+1},o_{t+1}))-\alpha\log\pi(a_{t+1}|o_{t+1})]$
-        - Update $Q^i$'s weight $\phi_i\leftarrow\phi_i-\omega\nabla \mathcal{L}_{q_i}(\phi),\quad\forall i\in\{1,2\}$
-        - Update $\pi$'s weight $\theta\leftarrow\theta-\lambda\nabla \mathcal{J}_{\pi}(\theta)$
-        - Update $\hat{Q}^i$'s weight $\hat{\phi}_i \leftarrow \tau \phi_i + (1-\tau)\hat{\phi}_i, \quad\forall i\in\{1,2\}$
-     - **End For**
-     - **If** $d_{t+1}$ **then**
-        - break
-     - **End If**
-   - **End While**
-- **End For**
+**For** episode = 0,...,M **Do**  
+&nbsp;&nbsp;&nbsp;&nbsp;t=0;Initialize state $o_t$  
+&nbsp;&nbsp;&nbsp;&nbsp;**While** t < TimeLimit **Do**  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**For** agent = 0,...,K **Do**  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Sample action $a_k^t \sim \pi(o_k^t)$  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**End For**  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Combine actions $a_k^t$ into joint action $a_t$    
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Execute $a_t$, observe reward $r_t$, next observation $o_{t+1}$ and done flag $d_{t+1}$  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Store $(o_t, a_t, r_t, o_{t+1}, d_{t+1})$ in buffer $D$  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**For** e = 0,...,E **Do**  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Sample batch from $D$  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Compute target $y_t=r_t+(1-d_t)\gamma\mathbb{E}_{a_{t+1}\sim\pi}[\min_{j\in\{1,2\}}(\hat{Q}^j(a_{t+1},o_{t+1}))-\alpha\log\pi(a_{t+1}|o_{t+1})]$  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Update $Q^i$'s weight $\phi_i\leftarrow\phi_i-\omega\nabla \mathcal{L}_{q_i}(\phi),\quad\forall i\in\{1,2\}$  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Update $\pi$'s weight $\theta\leftarrow\theta-\lambda\nabla \mathcal{J}_{\pi}(\theta)$  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Update $\hat{Q}^i$'s weight $\hat{\phi}_i \leftarrow \tau \phi_i + (1-\tau)\hat{\phi}_i, \quad\forall i\in\{1,2\}$  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**End For**  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**If** $d_{t+1}$ **then**  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**End If**  
+&nbsp;&nbsp;&nbsp;&nbsp;**End While**  
+**End For**
 
 ## Run ISAC in XuanCe
 
