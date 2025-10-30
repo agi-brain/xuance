@@ -64,7 +64,7 @@ $$
 L\left(\theta_i\right)=\mathbb{E}_{x,a,r,x^{\prime}}\left[\left(Q_i^\mu\left(x,a_1,\ldots,a_N\right)-y\right)^2\right]
 $$
 
-Where $y=r_i+\gamma{Q_i}^{\mu^\prime}(x^\prime,a_1^\prime,\ldots,a_N^\prime)|_{a^\prime_j=\mu^\prime_j(o_j)}$,
+Where $y=r_i+\gamma{Q_i}^{\mu^\prime}(x^\prime,a_1^\prime,\ldots,a_N^\prime)\left|\right._{a^\prime_j=\mu^\prime_j(o_j)}$,
 in the y equation, $\mu^\prime=(\mu_{\theta_1}^\prime,\ldots,\mu_{\theta_N}^\prime)$ is the set of target policies used in updating the value function.
 
 ### Agents with Policy Ensembles
