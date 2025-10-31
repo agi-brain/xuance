@@ -112,7 +112,7 @@ The following figure shows the algorithm structure of VDAC-sum.
 The following figure shows the algorithm structure of VDAC-mix.
 
 ```{eval-rst}
-.. figure:: ./../../../_static/figures/algo_framework//VDACsmix_framework.png
+.. figure:: ./../../../_static/figures/algo_framework//VDACvmix_framework.png
     :width: 100%
     :align: center
 
