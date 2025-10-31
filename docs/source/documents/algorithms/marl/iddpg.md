@@ -2,7 +2,7 @@
 
 **Paper Link:** [**https://arxiv.org/abs/1706.02275**](https://arxiv.org/abs/1706.02275)
 
-Independent Deep Deterministic Policy Gradient (I DDPG) is a multi-agent deep reinforcement learning algorithm 
+Independent Deep Deterministic Policy Gradient (I-DDPG) is a multi-agent deep reinforcement learning algorithm 
 which consider DDPG algorithm as the baseline and fully decentralized as the training method.
 It means that multiple single agents are applied to multi-agent environment,
 each agent learns independently, and from the perspective of each agent, the decisions of other agents are part of the environment. 
@@ -23,7 +23,28 @@ This table lists some general features about IDDPG algorithm:
 
 ## Key Ideas of IDDPG
 
-In comparison with MADDPG algorithm,
+Each agent trains its own actor and critic network independently,
+**does not share parameters**, and **does not directly perceive the strategies of other agents**.
+
+### Critic update
+
+Critic's target is to minimize TD error which is similar to DDPG:
+
+$$
+\mathcal{L}(\phi_i)=\mathbb{E}_{(o_i,a_i,r_i,\sigma_i^{\prime})\sim\mathcal{D}}\left[\left(Q_i(o_i,a_i;\phi_i)-y_i\right)^2\right]
+$$
+
+Where $y_i=r_i+\gamma Q_i^\prime(o_i^\prime,\pi_i^\prime(o_i^\prime;\theta_i^\prime))$, $\phi_i$ represents Q network parameters, $\theta_i^\prime$ represents policy target network parameters.
+
+### Actor update
+
+Actor's policy gradient direction is similar to DDPG:
+
+$$
+\nabla_{\theta_i}J(\theta_i)=\mathbb{E}_{o_i\sim\mathcal{D}}\left[\nabla_{\theta_i}\pi_i(o_i;\theta_i)\nabla_{a_i}Q_i(o_i,a_i;\phi_i)|_{a_i=\pi_i(o_i;\theta_i)}\right]
+$$
+
+Each agent updates the actor independently through its critic gradient feedback.
 
 ## Run IDDPG in XuanCe
 
@@ -49,8 +70,8 @@ If you want to run IDDPG with different configurations, you can build a new ``.y
 Then, run the IDDPG by the following code block:
 
 ```python3
-import xuance as xp
-runner = xp.get_runner(method='iddpg',
+import xuance
+runner = xuance.get_runner(method='iddpg',
                        env='mpe',
                        env_id='simple_spread_v3',
                        config_path="my_config.yaml",
@@ -91,6 +112,7 @@ Agent.finish()  # Finish the training.
 ```
 
 ## Citation
+
 ```{code-block} bash
 @article{lowe2017multi,
   title={Multi-Agent Actor-Critic for Mixed Cooperative-Competitive Environments},
