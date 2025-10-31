@@ -13,7 +13,7 @@ making it a very popular reinforcement learning algorithm.
 
 This table lists some general features about **PPO** algorithm:
 
-| Features of PPO   | Values |描述|
+| Features of PPO   | Values | Description                                              |
 |-------------------|--------|----------------------------------------------------------|
 | On-policy         | ✅      | The evaluate policy is the same as the target policy.    |
 | Off-policy        | ❌      | The evaluate policy is different from the target policy. | 
