@@ -7,10 +7,10 @@ However, during the process of obtaining the runner, it is necessary to specify 
 
 .. code-block:: python
 
-    import xuance as xp
-    runner = xp.get_runner(method='dqn',
-                           env='classic_control',
-                           env_id='CartPole-v1',
-                           config_path="xxx/xxx.yaml",
-                           is_test=False)
+    import xuance
+    runner = xuance.get_runner(method='dqn',
+                               env='classic_control',
+                               env_id='CartPole-v1',
+                               config_path="xxx/xxx.yaml",
+                               is_test=False)
     runner.run()

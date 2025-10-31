@@ -1,11 +1,11 @@
 # Soft Actor-Critic (SAC)
-**Paper link:[arxiv](https://arxiv.org/abs/1802.09477)**.
+**Paper link:[arxiv](https://arxiv.org/abs/1802.09477)**。
 
 Soft Actor-Critic (SAC) is a state-of-the-art model-free deep reinforcement learning algorithm that combines the actor-critic framework with the principles of maximum entropy reinforcement learning. Introduced in 2018, it has gained significant attention for its effectiveness in handling continuous action spaces and its robust performance across various complex tasks.
 
 This table lists some general features about SAC algorithm:
 
-| Features of Double DQN  | Values | Description                                              |
+| Features of Double DQN  | Values |描述|
 |-------------------------|--------|----------------------------------------------------------|
 | On-policy               | ❌      | The evaluate policy is the same as the target policy.    |
 | Off-policy              | ✅      | The evaluate policy is different from the target policy. |
@@ -37,7 +37,7 @@ where τ is a small positive number, typically taken to be 0.005. This soft upda
 ## Algorithm
 The full algorithm for training SAC is presented in Algorithm 1:
 ![链接网址](./../../../_static/figures/pseucodes/pseucode-SAC.png)  
-**Supplement:** TD3 and SAC share similarities in multiple aspects, including network architecture, the design of dual Q-networks, soft update mechanisms, training stability, applicable scenarios, implementation characteristics, optimization objectives, and practical value. These similarities enable both of them to perform remarkably well when handling tasks in continuous action spaces. However, they differ in exploration mechanisms and policy types, which determines their applicability and performance in different tasks.  
+**Supplement:** TD3 and SAC share similarities in multiple aspects, including network architecture, the design of dual Q-networks, soft update mechanisms, training stability, applicable scenarios, implementation characteristics, optimization objectives, 和 practical value. These similarities enable both of them to perform remarkably well when handling tasks in continuous action spaces. However, they differ in exploration mechanisms and policy types, which determines their applicability and performance in different tasks.  
 Check out the [TD3](./td3.md)   algorithm.
 
 ## Run SAC in XuanCe
@@ -57,8 +57,8 @@ runner.run()  # Or runner.benchmark()
 If you want to run SAC with different configurations, you can build a new ```.yaml``` file, e.g., 
 ```my_config.yaml```. Then, run the SAC by the following code block:
 ```
-import xuance as xp
-runner = xp.get_runner(method='SAC',
+import xuance
+runner = xuance.get_runner(method='SAC',
                        env='classic_control',  # Choices: claasi_control, box2d, .
                        env_id='Pendulum-v1',  
                        config_path="my_config.yaml",  # The path of my_config.yaml file should be correct.
@@ -92,7 +92,6 @@ Agent.train(configs.running_steps // configs.parallels)  # Train the model for n
 Agent.save_model("final_train_model.pth")  # Save the model to model_dir.
 Agent.finish()  # Finish the training.
 ```
-
 
 ## Citation
 ```
