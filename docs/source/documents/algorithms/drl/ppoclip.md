@@ -13,7 +13,7 @@ making it a very popular reinforcement learning algorithm.
 
 This table lists some general features about **PPO** algorithm:
 
-| Features of PPO   | Values |描述|
+| Features of PPO   | Values | Description                                              |
 |-------------------|--------|----------------------------------------------------------|
 | On-policy         | ✅      | The evaluate policy is the same as the target policy.    |
 | Off-policy        | ❌      | The evaluate policy is different from the target policy. | 
@@ -28,12 +28,12 @@ This section focuses on PPO-Clip.*
 
 
 ## TRPO
-Since the PPO algorithm is an improved method proposed based on the TRPO algorithm, 
-in order to have a deeper understanding of the principle of the PPO algorithm, 
+Since the PPO algorithm is an improved method proposed based on the TRPO algorithm,
+in order to have a deeper understanding of the principle of the PPO algorithm,
 it is necessary to first analyze the core idea of the TRPO algorithm.
 
 The TRPO algorithm was originally proposed by John Schulman et al. in [**Trust Region Policy Optimization**](https://proceedings.mlr.press/v37/schulman15.pdf) in 2015.
-The paper introduced the concepts of a **trust region and a KL divergence constraint**。 
+The paper introduced the concepts of a **trust region and a KL divergence constraint**.
 Its key idea is to provide a security guarantee for policy performance when updating a policy within a trust region.
 TRPO describes an iterative process for optimizing a policy that theoretically guarantees monotonic performance of 
 policy learning and has achieved better results than the policy gradient algorithm in practical applications.
@@ -179,7 +179,7 @@ and optimized using minibatch stochastic gradient descent (SGD) for K epochs.
 
 ## Run PPO in XuanCe
 
-Before running **PPO** in XuanCe, you need to prepare a conda environment and install ``xuance`` 关注
+Before running **PPO** in XuanCe, you need to prepare a conda environment and install ``xuance`` following
 the [**installation steps**](./../../usage/installation.rst#install-xuance).
 
 ### Run Build-in Demos
@@ -212,15 +212,15 @@ runner.run()  # Or runner.benchmark()
 ```
 
 To learn more about the configurations, please visit the 
-[**tutorial of configs**](./../../api/configs/configuration_examples.rst)。
+[**tutorial of configs**](./../../api/configs/configuration_examples.rst).
 
 ### Run With Custom Environment
 
 If you would like to run XuanCe's **PPO** in your own environment that was not included in XuanCe, 
 you need to define the new environment following the steps in 
-[**New Environment Tutorial**](./../../usage/custom_env/custom_drl_env.rst)。
+[**New Environment Tutorial**](./../../usage/custom_env/custom_drl_env.rst).
 Then, [**prepapre the configuration file**](./../../usage/custom_env/custom_drl_env.rst#step-2-create-the-config-file-and-read-the-configurations) 
-``ppo_myenv.yaml``。
+``ppo_myenv.yaml``.
 
 After that, you can run **PPO** in your own environment with the following code:
 

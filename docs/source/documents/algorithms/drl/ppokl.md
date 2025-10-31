@@ -13,7 +13,7 @@ making it a very popular reinforcement learning algorithm.
 
 This table lists some general features about **PPO** algorithm:
 
-| Features of PPO   | Values |描述|
+| Features of PPO   | Values | Description                                              |
 |-------------------|--------|----------------------------------------------------------|
 | On-policy         | ✅      | The evaluate policy is the same as the target policy.    |
 | Off-policy        | ❌      | The evaluate policy is different from the target policy. | 
@@ -170,7 +170,7 @@ and optimized using minibatch stochastic gradient descent (SGD) for K epochs.
 
 ## Run PPO in XuanCe
 
-Before running **PPO** in XuanCe, you need to prepare a conda environment and install ``xuance`` 关注
+Before running **PPO** in XuanCe, you need to prepare a conda environment and install ``xuance`` following
 the [**installation steps**](./../../usage/installation.rst#install-xuance).
 
 ### Run Build-in Demos
@@ -203,7 +203,7 @@ runner.run()  # Or runner.benchmark()
 ```
 
 To learn more about the configurations, please visit the 
-[**tutorial of configs**](./../../api/configs/configuration_examples.rst)。
+[**tutorial of configs**](./../../api/configs/configuration_examples.rst).
 
 ### Run With Custom Environment
 
