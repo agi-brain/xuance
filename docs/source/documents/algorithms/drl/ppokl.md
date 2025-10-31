@@ -180,7 +180,7 @@ After completing the installation, you can open a Python console and run **PPO**
 ```python3
 import xuance
 runner = xuance.get_runner(method='ppo',  # Note: The default yaml file uses PPO_Clip
-                           env='classic_control',  # Choices: claasi_control, box2d, atari, etc.
+                           env='classic_control',  # Choices: classic_control, box2d, atari, etc.
                            env_id='CartPole-v1',  # Choices: CartPole-v1, Pendulum-v1, etc.
                            is_test=False)
 runner.run()  # Or runner.benchmark()
@@ -195,7 +195,7 @@ Then, run the **PPO** by the following code block:
 ```python3
 import xuance
 runner = xuance.get_runner(method='ppo',
-                       env='classic_control',  # Choices: claasi_control, box2d, atari, etc.
+                       env='classic_control',  # Choices: classic_control, box2d, atari, etc.
                        env_id='CartPole-v1',  # Choices: CartPole-v1, Pendulum-v1, etc.
                        config_path="my_config.yaml",  # The path of my_config.yaml file should be correct.
                        is_test=False)
