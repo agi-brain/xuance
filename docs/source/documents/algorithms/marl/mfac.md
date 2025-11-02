@@ -114,9 +114,7 @@ Here, $\tau_\phi$ is learning rate.
 
 ### Update Actor
 
-{% raw %}
 Actor is also called policy network, for each agent $j$, MFAC provides current policy network $\pi_{\theta^{j}}$ and target policy network $\pi_{{\theta^{j}}_\_}$, $\theta^j$ and ${\theta^{j}}_\_$ are parameters.
-{% endraw %}
 
 Under state $s$, agent $j$'s action $a^j=\pi_{\theta^{j}}(s)$, new mean action $\mathbf{\bar{a}}$ = $[\bar{a}^1, \dots, \bar{a}^N]$ and the calculation formula:
 
@@ -128,11 +126,9 @@ Here, agent $j’s$ $N_j$ neighbors from the policies $\pi^k_t$ parametrized by 
 
 Update the actor using the sampled policy gradient:
 
-{% raw %}
 $$
 \nabla_{\theta^j} \mathcal{J}(\theta^j) \approx  \sum \left. \nabla_{\theta^j} \log \pi_{\theta^j}(s') Q_{\phi^j_-}(s', {a^j}_\_, {\bar{a}^j}_\_) \right|_{{a^j}_\_ = {\pi_{\theta^j}}_\_(s')}
 $$
-{% endraw %}
 
 Finally, Don't forget update the parameters of the target policy network:
 
