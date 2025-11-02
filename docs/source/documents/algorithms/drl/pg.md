@@ -73,8 +73,8 @@ If you want to run PG with different configurations, you can build a new ``.yaml
 Then, run the PG by the following code block:
 
 ```python3
-import xuance as xp
-runner = xp.get_runner(method='pg',
+import xuance
+runner = xuance.get_runner(method='pg',
                        env='classic_control',  # Choices: claasi_control, box2d, atari.
                        env_id='CartPole-v1',  # Choices: CartPole-v1, LunarLander-v2, ALE/Breakout-v5, etc.
                        config_path="my_config.yaml",  # The path of my_config.yaml file should be correct.

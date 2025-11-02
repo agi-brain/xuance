@@ -195,8 +195,8 @@ If you want to run SPR with different configurations, you can build a new ``.yam
 Then, run the SPR by the following code block:
 
 ```python3
-import xuance as xp
-runner = xp.get_runner(method='spr',
+import xuance
+runner = xuance.get_runner(method='spr',
                        env='atari',  # Currently only atari environments are supported.
                        env_id='ALE/Breakout-v5',  # Choices: ALE/Breakout-v5, ALE/Pong-v5, etc.
                        config_path="my_config.yaml",  # The path of my_config.yaml file should be correct.

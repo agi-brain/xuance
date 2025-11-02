@@ -15,7 +15,7 @@ Therefore, the DQN algorithm parameter configurations for these two scenarios ar
     * xuance/configs/dqn/box2d/CarRacing-v2.yaml
     * xuance/configs/dqn/box2d/LunarLander-v2.yaml
 
-Within the following content, we provid the preset arguments for each implementation that can be run by following the steps in :doc:`Quick Start </documents/usage/basic_usage>`.
+Within the following content, we provide the preset arguments for each implementation that can be run by following the steps in :doc:`Quick Start </documents/usage/basic_usage>`.
 
 .. include:: example_value_based.rst
 .. include:: example_policy_based.rst
