@@ -181,7 +181,7 @@ If you would like to run XuanCe's MFAC in your own environment that was not incl
 you need to define the new environment following the steps in
 [**New Environment Tutorial**](./../../usage/custom_env/custom_drl_env.rst).
 Then, [**prepapre the configuration file**](./../../usage/custom_env/custom_drl_env.rst#step-2-create-the-config-file-and-read-the-configurations)
-``mfq_myenv.yaml``.
+``mfac_myenv.yaml``.
 
 After that, you can run MFAC in your own environment with the following code:
 
