@@ -14,8 +14,9 @@ class IQL_Learner(LearnerMAS):
                  config: Namespace,
                  model_keys: List[str],
                  agent_keys: List[str],
-                 policy: Module):
-        super(IQL_Learner, self).__init__(config, model_keys, agent_keys, policy)
+                 policy: Module,
+                 callback):
+        super(IQL_Learner, self).__init__(config, model_keys, agent_keys, policy, callback)
         self.optimizer = {key: optim.Adam(params=self.policy.parameters_model[key], lr=self.config.learning_rate,
                                           eps=1e-5) for key in self.model_keys}
         self.scheduler = {key: optim.lr_scheduler.LinearLR(self.optimizer[key], start_factor=1.0, end_factor=self.end_factor_lr_decay,
@@ -34,13 +35,12 @@ class IQL_Learner(LearnerMAS):
         _, _, q_eval = self.policy(observation=obs, agent_ids=ids, avail_actions=avail_actions,
                                    agent_key=agent_key, rnn_hidden=rnn_hidden)
         q_eval_a = q_eval[agent_key].gather(actions[agent_key].astype(ms.int32).unsqueeze(-1), axis=-1, batch_dims=-1)
-        td_error = (q_eval_a.reshape(-1) - q_target) * agt_mask[agent_key]
-        loss = (td_error ** 2).sum() / agt_mask[agent_key].sum()
-        return loss, q_eval_a
+        td_error = (q_eval_a.reshape(-1) - q_target) * agt_mask
+        loss = (td_error ** 2).sum() / agt_mask.sum()
+        return loss, q_eval_a, td_error
 
     def update(self, sample):
         self.iterations += 1
-        info = {}
 
         # prepare training data
         sample_Tensor = self.build_training_data(sample=sample,
@@ -64,9 +64,14 @@ class IQL_Learner(LearnerMAS):
         else:
             bs = batch_size
 
+        info = self.callback.on_update_start(self.iterations, method="update",
+                                             policy=self.policy, sample_Tensor=sample_Tensor, bs=bs)
+
         _, q_next = self.policy.Qtarget(observation=obs_next, agent_ids=IDs)
 
         for key in self.model_keys:
+            mask_values = agent_mask[key]
+
             if self.use_actions_mask:
                 q_next[key][avail_actions_next[key] == 0] = -1e10
 
@@ -78,7 +83,8 @@ class IQL_Learner(LearnerMAS):
 
             q_target = rewards[key] + (1 - terminals[key]) * self.gamma * q_next_a
 
-            (loss, q_eval_a), grads = self.grad_fn[key](obs, actions, agent_mask, avail_actions, IDs, q_target, key)
+            (loss, q_eval_a, td_error), grads = self.grad_fn[key](obs, actions, mask_values,
+                                                                  avail_actions, IDs, q_target, key)
             if self.use_grad_clip:
                 grads = clip_grads(grads, Tensor(-self.grad_clip_norm), Tensor(self.grad_clip_norm))
             self.optimizer[key](grads)
@@ -92,7 +98,14 @@ class IQL_Learner(LearnerMAS):
                 f"{key}/predictQ": q_eval_a.mean().asnumpy()
             })
 
+            info.update(self.callback.on_update_agent_wise(self.iterations, key, info=info, method="update",
+                                                           mask_values=mask_values, q_eval_a=q_eval_a,
+                                                           q_next_a=q_next_a, q_target=q_target,
+                                                           td_error=td_error, loss=loss))
+
         if self.iterations % self.sync_frequency == 0:
             self.policy.copy_target()
+
+        info.update(self.callback.on_update_end(self.iterations, method="update", policy=self.policy, info=info))
 
         return info

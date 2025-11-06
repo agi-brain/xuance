@@ -97,12 +97,14 @@ class TD3_Learner(Learner):
 
     def update(self, **samples):
         self.iterations += 1
-        info = {}
         obs_batch = samples['obs']
         act_batch = samples['actions']
         next_batch = samples['obs_next']
         rew_batch = samples['rewards']
         ter_batch = samples['terminals']
+        info = self.callback.on_update_start(self.iterations,
+                                             policy=self.policy, obs=obs_batch, act=act_batch,
+                                             next_obs=next_batch, rew=rew_batch, termination=ter_batch)
 
         q_loss, action_q_A, action_q_B = self.learn_critic(obs_batch, act_batch, rew_batch, next_batch, ter_batch)
         if self.iterations % self.actor_update_delay == 0:
@@ -115,5 +117,8 @@ class TD3_Learner(Learner):
             "QvalueA": tf.math.reduce_mean(action_q_A).numpy(),
             "QvalueB": tf.math.reduce_mean(action_q_B).numpy(),
         })
+
+        info.update(self.callback.on_update_end(self.iterations, policy=self.policy, info=info,
+                                                action_q_A=action_q_A, action_q_B=action_q_B, q_loss=q_loss))
 
         return info

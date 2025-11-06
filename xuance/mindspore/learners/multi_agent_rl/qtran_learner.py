@@ -4,115 +4,198 @@ Paper link:
 http://proceedings.mlr.press/v97/son19a/son19a.pdf
 Implementation: MindSpore
 """
-from xuance.mindspore import ms, Module, Tensor, optim
-from xuance.mindspore.learners import LearnerMAS
-from xuance.common import List
 from argparse import Namespace
+from operator import itemgetter
+from xuance.common import List
+from xuance.mindspore import ms, Module, nn, Tensor, optim, ops
+from xuance.mindspore.learners import LearnerMAS
+from xuance.mindspore.utils import clip_grads
 
 
 class QTRAN_Learner(LearnerMAS):
-    class PolicyNetWithLossCell(Module):
-        def __init__(self, backbone, dim_act, n_agents, agent_name, lambda_opt, lambda_nopt):
-            super(QTRAN_Learner.PolicyNetWithLossCell, self).__init__(auto_prefix=False)
-            self._backbone = backbone
-            self.dim_act = dim_act
-            self.n_agents = n_agents
-            self.agent = agent_name
-            self._lambda_opt = lambda_opt
-            self._lambda_nopt = lambda_nopt
-
-            self._expand_dims = ops.ExpandDims()
-            self._onehot = ms.ops.OneHot()
-
-        def construct(self, o, ids, a, a_onehot, agt_mask, act_mask, hidden_mask, y_dqn):
-            _, hidden_state, _, q_eval = self._backbone(o, ids)
-            q_joint, v_joint = self._backbone.qtran_net(hidden_state * hidden_mask,
-                                                        a_onehot * act_mask)
-            loss_td = ((q_joint - y_dqn) ** 2).sum() / agt_mask.sum()
-
-            action_greedy = q_eval.argmax(axis=-1).astype(ms.int32)  # \bar{u}
-            q_eval_greedy_a = GatherD()(q_eval, -1, action_greedy.view(-1, self.n_agents, 1))
-            q_tot_greedy = self._backbone.q_tot(q_eval_greedy_a * agt_mask)
-            q_joint_greedy_hat, _ = self._backbone.qtran_net(hidden_state * hidden_mask,
-                                                             self._onehot(action_greedy, self.dim_act,
-                                                                          ms.Tensor(1.0, ms.float32),
-                                                                          ms.Tensor(0.0, ms.float32)) * act_mask)
-            error_opt = q_tot_greedy - q_joint_greedy_hat + v_joint
-            loss_opt = (error_opt ** 2).mean()
-
-            q_eval_a = GatherD()(q_eval, -1, a)
-            if self.agent == "QTRAN_base":
-                q_tot = self._backbone.q_tot(q_eval_a * agt_mask)
-                q_joint_hat, _ = self._backbone.qtran_net(hidden_state * hidden_mask, a_onehot * act_mask)
-                error_nopt = q_tot - q_joint_hat + v_joint
-                error_nopt = ops.clip_by_value(error_nopt, clip_value_max=ms.Tensor(0.0, ms.float32))
-                loss_nopt = (error_nopt ** 2).mean()
-            elif self.agent == "QTRAN_alt":
-                q_tot_counterfactual = self._backbone.qtran_net.counterfactual_values(q_eval, q_eval_a) * act_mask
-                q_joint_hat_counterfactual = self._backbone.qtran_net.counterfactual_values_hat(
-                    hidden_state * hidden_mask, a_onehot * act_mask)
-                error_nopt = q_tot_counterfactual - q_joint_hat_counterfactual + ops.broadcast_to(
-                    self._expand_dims(v_joint, -1), (-1, -1, self.dim_act))
-                error_nopt_min = error_nopt.min(axis=-1)
-                loss_nopt = (error_nopt_min ** 2).mean()
-            else:
-                raise ValueError("Mixer {} not recognised.".format(self.args.agent))
-
-            loss = loss_td + self._lambda_opt * loss_opt + self._lambda_nopt * loss_nopt
-            return loss
-
     def __init__(self,
                  config: Namespace,
                  model_keys: List[str],
                  agent_keys: List[str],
-                 policy: Module):
-        self.gamma = gamma
-        self.sync_frequency = sync_frequency
+                 policy: Module,
+                 callback):
+        self.sync_frequency = config.sync_frequency
         self.mse_loss = nn.MSELoss()
-        super(QTRAN_Learner, self).__init__(config, model_keys, agent_keys, policy)
-        self._mean = ops.ReduceMean(keep_dims=False)
-        self.loss_net = self.PolicyNetWithLossCell(policy, self.dim_act, self.n_agents, self.args.agent,
-                                                   self.args.lambda_opt, self.args.lambda_nopt)
-        self.policy_train = nn.TrainOneStepCell(self.loss_net, optimizer)
-        self.policy_train.set_train()
+        super(QTRAN_Learner, self).__init__(config, model_keys, agent_keys, policy, callback)
+        self.optimizer = optim.Adam(params=self.policy.parameters_model, lr=config.learning_rate, eps=1e-5)
+        self.scheduler = optim.lr_scheduler.LinearLR(self.optimizer, start_factor=1.0,
+                                                     end_factor=self.end_factor_lr_decay,
+                                                     total_iters=self.config.running_steps)
+        self.n_actions = {k: self.policy.action_space[k].n for k in self.model_keys}
+        # Get gradient function
+        self.grad_fn = ms.value_and_grad(self.forward_fn, None, self.optimizer.parameters, has_aux=True)
+        self.policy.set_train()
+
+    def forward_fn(self, bs, batch_size, state, obs, actions, state_next, obs_next,
+                   agent_mask, avail_actions, avail_actions_next,
+                   rewards_tot, terminals_tot, IDs):
+        info = {}
+        _, hidden_state, actions_greedy, q_eval = self.policy(obs, agent_ids=IDs, avail_actions=avail_actions)
+        _, hidden_state_next, q_next = self.policy.Qtarget(obs_next, agent_ids=IDs)
+
+        q_eval_a, q_eval_greedy_a, q_next_a = {}, {}, {}
+        actions_next_greedy = {}
+        for key in self.model_keys:
+            mask_values = agent_mask[key]
+            q_eval_a[key] = q_eval[key].gather(-1, actions[key].long().unsqueeze(-1)).reshape(bs)
+            q_eval_greedy_a[key] = q_eval[key].gather(-1, actions_greedy[key].long().unsqueeze(-1)).reshape(bs)
+
+            if self.use_actions_mask:
+                q_next[key][avail_actions_next[key] == 0] = -1e10
+
+            if self.config.double_q:
+                _, _, act_next, _ = self.policy(observation=obs_next, agent_ids=IDs,
+                                                avail_actions=avail_actions, agent_key=key)
+                actions_next_greedy[key] = act_next[key]
+                q_next_a[key] = q_next[key].gather(-1, act_next[key].long().unsqueeze(-1)).reshape(bs)
+            else:
+                actions_next_greedy[key] = q_next[key].argmax(dim=-1, keepdim=False)
+                q_next_a[key] = q_next[key].max(dim=-1, keepdim=True).values.reshape(bs)
+
+            q_eval_a[key] *= mask_values
+            q_eval_greedy_a[key] *= mask_values
+            q_next_a[key] *= mask_values
+
+            info.update(self.callback.on_update_agent_wise(self.iterations, key, info=info, method="update",
+                                                           mask_values=mask_values, q_eval_a=q_eval_a,
+                                                           q_eval_greedy_a=q_eval_greedy_a))
+
+        if self.config.agent == "QTRAN_base":
+            # -- TD Loss --
+            q_joint, v_joint = self.policy.Q_tran(state, hidden_state, actions, agent_mask)
+            q_joint_next, _ = self.policy.Q_tran_target(state_next, hidden_state_next, actions_next_greedy, agent_mask)
+
+            y_dqn = rewards_tot + (1 - terminals_tot) * self.gamma * q_joint_next
+            loss_td = self.mse_loss(q_joint, ops.stop_gradient(y_dqn))  # TD loss
+
+            # -- Opt Loss --
+            # Argmax across the current agents' actions
+            q_tot_greedy = self.policy.Q_tot(q_eval_greedy_a)
+            q_joint_greedy_hat, _ = self.policy.Q_tran(state, hidden_state, actions_greedy, agent_mask)
+            error_opt = q_tot_greedy - ops.stop_gradient(q_joint_greedy_hat) + v_joint
+            loss_opt = ops.reduce_mean(error_opt ** 2)  # Opt loss
+
+            # -- Nopt Loss --
+            q_tot = self.policy.Q_tot(q_eval_a)
+            q_joint_hat = q_joint
+            error_nopt = q_tot - ops.stop_gradient(q_joint_hat) + v_joint
+            error_nopt = error_nopt.clamp(max=0)
+            loss_nopt = ops.reduce_mean(error_nopt ** 2)  # NOPT loss
+
+            info["Q_joint"] = q_joint.mean().asnumpy()
+
+        elif self.config.agent == "QTRAN_alt":
+            # -- TD Loss -- (Computed for all agents)
+            q_count, v_joint = self.policy.Q_tran(state, hidden_state, actions, agent_mask)
+            actions_choosen = ops.stack(itemgetter(*self.model_keys)(actions), axis=0).reshape(-1, self.n_agents, 1)
+            q_joint_choosen = q_count.gather(-1, actions_choosen.long()).reshape(-1, self.n_agents)
+            q_next_count, _ = self.policy.Q_tran_target(state_next, hidden_state_next, actions_next_greedy, agent_mask)
+            actions_next_choosen = ops.stack(itemgetter(*self.model_keys)(actions_next_greedy), axis=0)
+            actions_next_choosen = actions_next_choosen.reshape(-1, self.n_agents, 1)
+            q_joint_next_choosen = q_next_count.gather(-1, actions_next_choosen.long()).reshape(-1, self.n_agents)
+
+            y_dqn = rewards_tot + (1 - terminals_tot) * self.gamma * q_joint_next_choosen
+            loss_td = self.mse_loss(q_joint_choosen, ops.stop_gradient(y_dqn))  # TD loss
+
+            # -- Opt Loss -- (Computed for all agents)
+            q_tot_greedy = self.policy.Q_tot(q_eval_greedy_a)
+            q_joint_greedy_hat, _ = self.policy.Q_tran(state, hidden_state, actions_greedy, agent_mask)
+            actions_greedy_current = ops.stack(itemgetter(*self.model_keys)(actions_greedy), axis=0)
+            actions_greedy_current = actions_greedy_current.reshape(-1, self.n_agents, 1)
+            q_joint_greedy_hat_all = q_joint_greedy_hat.gather(
+                -1, actions_greedy_current.long()).reshape(-1, self.n_agents)
+            error_opt = q_tot_greedy - ops.stop_gradient(q_joint_greedy_hat_all) + v_joint
+            loss_opt = ops.reduce_mean(error_opt ** 2)  # Opt loss
+
+            # -- Nopt Loss --
+            q_eval_count = ops.stack(itemgetter(*self.model_keys)(q_eval),
+                                     axis=0).reshape(batch_size * self.n_agents, -1)
+            q_sums = ops.stack(itemgetter(*self.model_keys)(q_eval_a), axis=0).reshape(-1, self.n_agents)
+            q_sums_repeat = ops.repeat_elements(q_sums.unsqueeze(1), rep=self.n_agents, axis=1)
+            agent_mask_diag = ops.repeat_elements((1 - ops.eye(self.n_agents, dtype=ms.float32)).unsqueeze(0),
+                                                  rep=batch_size, axis=0)
+            q_sum_mask = (q_sums_repeat * agent_mask_diag).sum(axis=-1)
+            q_count_for_nopt = q_count.view(batch_size * self.n_agents, -1)
+            v_joint_repeated = ops.repeat_elements(v_joint, rep=self.n_agents, axis=1).reshape(-1, 1)
+            error_nopt = q_eval_count + q_sum_mask.view(-1, 1) - ops.stop_gradient(q_count_for_nopt) + v_joint_repeated
+            error_nopt_min, _ = ops.min(error_nopt, axis=-1)
+            loss_nopt = ops.reduce_mean(error_nopt_min ** 2)  # NOPT loss
+
+            info["Q_joint"] = q_joint_choosen.mean().asnumpy()
+
+        else:
+            raise ValueError("Mixer {} not recognised.".format(self.config.agent))
+
+        # calculate the loss function
+        loss = loss_td + self.config.lambda_opt * loss_opt + self.config.lambda_nopt * loss_nopt
+
+        return loss, loss_td, loss_opt, loss_nopt, \
+            v_joint, y_dqn, q_tot_greedy, q_joint_greedy_hat, error_opt, error_nopt
 
     def update(self, sample):
         self.iterations += 1
-        obs = Tensor(sample['obs'])
-        actions = Tensor(sample['actions'])
-        actions_onehot = self.onehot_action(actions, self.dim_act)
-        actions = actions.view(-1, self.n_agents, 1).astype(ms.int32)
-        obs_next = Tensor(sample['obs_next'])
-        rewards = self._mean(Tensor(sample['rewards']), 1)
-        terminals = Tensor(sample['terminals']).view(-1, self.n_agents, 1).all(axis=1, keep_dims=True).astype(ms.float32)
-        agent_mask = Tensor(sample['agent_mask']).view(-1, self.n_agents, 1)
-        batch_size = obs.shape[0]
-        IDs = ops.broadcast_to(self.expand_dims(self.eye(self.n_agents, self.n_agents, ms.float32), 0),
-                               (batch_size, -1, -1))
 
-        actions_mask = ops.broadcast_to(agent_mask, (-1, -1, int(self.dim_act)))
-        hidden_mask = ops.broadcast_to(agent_mask, (-1, -1, self.policy.representation_info_shape['state'][0]))
+        # prepare training data
+        sample_Tensor = self.build_training_data(sample=sample,
+                                                 use_parameter_sharing=self.use_parameter_sharing,
+                                                 use_actions_mask=self.use_actions_mask,
+                                                 use_global_state=True)
+        batch_size = sample_Tensor['batch_size']
+        state = sample_Tensor['state']
+        state_next = sample_Tensor['state_next']
+        obs = sample_Tensor['obs']
+        actions = sample_Tensor['actions']
+        obs_next = sample_Tensor['obs_next']
+        rewards = sample_Tensor['rewards']
+        terminals = sample_Tensor['terminals']
+        agent_mask = sample_Tensor['agent_mask']
+        avail_actions = sample_Tensor['avail_actions']
+        avail_actions_next = sample_Tensor['avail_actions_next']
+        IDs = sample_Tensor['agent_ids']
 
-        _, hidden_state_next, q_next_eval = self.policy.target_Q(obs_next.view(batch_size, self.n_agents, -1), IDs)
-        if self.args.double_q:
-            _, _, actions_next_greedy, _ = self.policy(obs_next, IDs)
+        if self.use_parameter_sharing:
+            key = self.model_keys[0]
+            bs = batch_size * self.n_agents
+            rewards_tot = rewards[key].mean(dim=1).reshape(batch_size, 1)
+            terminals_tot = terminals[key].all(dim=1, keepdim=False).float().reshape(batch_size, 1)
         else:
-            actions_next_greedy = q_next_eval.argmax(axis=-1, keepdim=False)
-        q_joint_next, _ = self.policy.target_qtran_net(hidden_state_next * hidden_mask,
-                                                       self.onehot_action(actions_next_greedy,
-                                                                          self.dim_act) * actions_mask)
-        y_dqn = rewards + (1 - terminals) * self.args.gamma * q_joint_next
+            bs = batch_size
+            rewards_tot = ops.stack(itemgetter(*self.agent_keys)(rewards), axis=1).mean(dim=-1, keepdim=True)
+            terminals_tot = ops.stack(itemgetter(*self.agent_keys)(terminals), axis=1).all(dim=1, keepdim=True).float()
 
-        # calculate the loss function
-        loss = self.policy_train(obs, IDs, actions, actions_onehot, agent_mask, actions_mask, hidden_mask, y_dqn)
+        info = self.callback.on_update_start(self.iterations, method="update",
+                                             policy=self.policy, sample_Tensor=sample_Tensor, bs=bs,
+                                             rewards_tot=rewards_tot, terminals_tot=terminals_tot)
+
+        (loss, loss_td, loss_opt, loss_nopt, v_joint, y_dqn, q_tot_greedy, q_joint_greedy_hat, error_opt,
+         error_nopt), grads = self.grad_fn(bs, batch_size, state, obs, actions, state_next, obs_next, agent_mask,
+                                           avail_actions, avail_actions_next, rewards_tot, terminals_tot, IDs)
+        if self.use_grad_clip:
+            grads = clip_grads(grads, Tensor(-self.grad_clip_norm), Tensor(self.grad_clip_norm))
+        self.optimizer(grads)
+
         if self.iterations % self.sync_frequency == 0:
             self.policy.copy_target()
 
-        lr = self.scheduler(self.iterations).asnumpy()
+        self.scheduler.step()
+        lr = self.scheduler.get_last_lr()[0]
 
-        info = {
-            "learning_rate": lr,
+        info.update({
+            "learning_rate": lr.asnumpy(),
+            "loss_td": loss_td.asnumpy(),
+            "loss_opt": loss_opt.asnumpy(),
+            "loss_nopt": loss_nopt.asnumpy(),
             "loss": loss.asnumpy()
-        }
+        })
+
+        info.update(self.callback.on_update_end(self.iterations, method="update", policy=self.policy, info=info,
+                                                v_joint=v_joint, y_dqn=y_dqn, q_tot_greedy=q_tot_greedy,
+                                                q_joint_greedy_hat=q_joint_greedy_hat, error_opt=error_opt,
+                                                error_nopt=error_nopt))
 
         return info

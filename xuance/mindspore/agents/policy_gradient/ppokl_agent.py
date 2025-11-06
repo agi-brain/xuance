@@ -1,7 +1,7 @@
 from tqdm import tqdm
 from copy import deepcopy
 from argparse import Namespace
-from xuance.common import Union
+from xuance.common import Union, Optional, BaseCallback
 from xuance.environment import DummyVecEnv, SubprocVecEnv
 from xuance.mindspore import Module
 from xuance.mindspore.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions
@@ -19,12 +19,13 @@ class PPOKL_Agent(OnPolicyAgent):
     """
     def __init__(self,
                  config: Namespace,
-                 envs: Union[DummyVecEnv, SubprocVecEnv]):
-        super(PPOKL_Agent, self).__init__(config, envs)
+                 envs: Union[DummyVecEnv, SubprocVecEnv],
+                 callback: Optional[BaseCallback] = None):
+        super(PPOKL_Agent, self).__init__(config, envs, callback)
         self.auxiliary_info_shape = {"old_dist": None}
         self.memory = self._build_memory(self.auxiliary_info_shape)  # build memory
         self.policy = self._build_policy()  # build policy
-        self.learner = self._build_learner(self.config, self.policy)  # build learner
+        self.learner = self._build_learner(self.config, self.policy, self.callback)  # build learner
 
     def _build_policy(self) -> Module:
         normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None
@@ -64,15 +65,21 @@ class PPOKL_Agent(OnPolicyAgent):
         return aux_info
 
     def train(self, train_steps):
+        train_info = {}
         obs = self.envs.buf_obs
         for _ in tqdm(range(train_steps)):
-            step_info = {}
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
             policy_out = self.action(obs, return_dists=True, return_logpi=False)
             acts, vals = policy_out['actions'], policy_out['values']
             next_obs, rewards, terminals, truncations, infos = self.envs.step(acts)
             aux_info = self.get_aux_info(policy_out)
+
+            self.callback.on_train_step(self.current_step, envs=self.envs, policy=self.policy,
+                                        obs=obs, policy_out=policy_out, acts=acts, vals=vals, next_obs=next_obs,
+                                        rewards=rewards, terminals=terminals, truncations=truncations,
+                                        infos=infos, aux_info=aux_info, train_steps=train_steps)
+
             self.memory.store(obs, acts, self._process_reward(rewards), vals, terminals, aux_info)
             if self.memory.full:
                 vals = self.get_terminated_values(next_obs, rewards)
@@ -81,8 +88,12 @@ class PPOKL_Agent(OnPolicyAgent):
                         self.memory.finish_path(0.0, i)
                     else:
                         self.memory.finish_path(vals[i], i)
-                train_info = self.train_epochs(n_epochs=self.n_epochs)
-                self.log_infos(train_info, self.current_step)
+                update_info = self.train_epochs(self.n_epochs)
+                self.log_infos(update_info, self.current_step)
+                train_info.update(update_info)
+                self.callback.on_train_epochs_end(self.current_step, policy=self.policy, memory=self.memory,
+                                                  current_episode=self.current_episode, train_steps=train_steps,
+                                                  update_info=update_info)
                 self.memory.clear()
 
             self.returns = self.gamma * self.returns + rewards
@@ -103,10 +114,23 @@ class PPOKL_Agent(OnPolicyAgent):
                         self.envs.buf_obs[i] = obs[i]
                         self.current_episode[i] += 1
                         if self.use_wandb:
-                            step_info["Episode-Steps/env-%d" % i] = infos[i]["episode_step"]
-                            step_info["Train-Episode-Rewards/env-%d" % i] = infos[i]["episode_score"]
+                            episode_info = {
+                                f"Episode-Steps/env-{i}": infos[i]["episode_step"],
+                                f"Train-Episode-Rewards/env-{i}": infos[i]["episode_score"]
+                            }
                         else:
-                            step_info["Episode-Steps"] = {"env-%d" % i: infos[i]["episode_step"]}
-                            step_info["Train-Episode-Rewards"] = {"env-%d" % i: infos[i]["episode_score"]}
-                        self.log_infos(step_info, self.current_step)
+                            episode_info = {
+                                f"Episode-Steps": {f"env-{i}": infos[i]["episode_step"]},
+                                f"Train-Episode-Rewards": {f"env-{i}": infos[i]["episode_score"]}
+                            }
+                        self.log_infos(episode_info, self.current_step)
+                        train_info.update(episode_info)
+                        self.callback.on_train_episode_info(envs=self.envs, policy=self.policy, env_id=i,
+                                                            infos=infos, use_wandb=self.use_wandb,
+                                                            current_step=self.current_step,
+                                                            current_episode=self.current_episode,
+                                                            train_steps=train_steps)
             self.current_step += self.n_envs
+            self.callback.on_train_step_end(self.current_step, envs=self.envs, policy=self.policy,
+                                            train_steps=train_steps, train_info=train_info)
+        return train_info

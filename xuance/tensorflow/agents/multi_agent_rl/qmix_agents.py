@@ -1,10 +1,10 @@
 from argparse import Namespace
-from xuance.common import Union, Optional
+from xuance.common import Union, Optional, MultiAgentBaseCallback
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
 from xuance.tensorflow import Module
 from xuance.tensorflow.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions
 from xuance.tensorflow.policies import REGISTRY_Policy, QMIX_mixer
-from xuance.tensorflow.agents import OffPolicyMARLAgents, BaseCallback
+from xuance.tensorflow.agents import OffPolicyMARLAgents
 
 
 class QMIX_Agents(OffPolicyMARLAgents):
@@ -19,7 +19,7 @@ class QMIX_Agents(OffPolicyMARLAgents):
     def __init__(self,
                  config: Namespace,
                  envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv],
-                 callback: Optional[BaseCallback] = None):
+                 callback: Optional[MultiAgentBaseCallback] = None):
         super(QMIX_Agents, self).__init__(config, envs, callback)
         self.state_space = envs.state_space
         self.use_global_state = True

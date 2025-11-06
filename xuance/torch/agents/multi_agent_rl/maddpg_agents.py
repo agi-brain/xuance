@@ -1,11 +1,10 @@
 import torch
 from argparse import Namespace
-from xuance.common import Union, Optional
+from xuance.common import Union, Optional, MultiAgentBaseCallback
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
 from xuance.torch import Module
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
 from xuance.torch.policies import REGISTRY_Policy
-from xuance.torch.agents import BaseCallback
 from xuance.torch.agents.multi_agent_rl.iddpg_agents import IDDPG_Agents
 
 
@@ -20,7 +19,7 @@ class MADDPG_Agents(IDDPG_Agents):
     def __init__(self,
                  config: Namespace,
                  envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv],
-                 callback: Optional[BaseCallback] = None):
+                 callback: Optional[MultiAgentBaseCallback] = None):
         super(MADDPG_Agents, self).__init__(config, envs, callback)
 
     def _build_policy(self) -> Module:

@@ -18,8 +18,9 @@ class VDN_Learner(LearnerMAS):
                  config: Namespace,
                  model_keys: List[str],
                  agent_keys: List[str],
-                 policy: Module):
-        super(VDN_Learner, self).__init__(config, model_keys, agent_keys, policy)
+                 policy: Module,
+                 callback):
+        super(VDN_Learner, self).__init__(config, model_keys, agent_keys, policy, callback)
         self.optimizer = optim.Adam(params=self.policy.trainable_params(), lr=config.learning_rate, eps=1e-5)
         self.scheduler = optim.lr_scheduler.LinearLR(self.optimizer, start_factor=1.0, end_factor=self.end_factor_lr_decay,
                                                      total_iters=self.config.running_steps)
@@ -43,7 +44,6 @@ class VDN_Learner(LearnerMAS):
 
     def update(self, sample):
         self.iterations += 1
-        info = {}
 
         # prepare training data
         sample_Tensor = self.build_training_data(sample=sample,
@@ -71,9 +71,14 @@ class VDN_Learner(LearnerMAS):
             terminals_tot = ops.stack(itemgetter(*self.agent_keys)(terminals),
                                       axis=1).all(axis=1).astype(ms.float32).reshape(batch_size, 1)
 
+        info = self.callback.on_update_start(self.iterations, method="update",
+                                             policy=self.policy, sample_Tensor=sample_Tensor, bs=bs,
+                                             rewards_tot=rewards_tot, terminals_tot=terminals_tot)
+
         _, q_next = self.policy.Qtarget(observation=obs_next, agent_ids=IDs)
         q_next_a = {}
         for key in self.model_keys:
+            mask_values = agent_mask[key]
             if self.use_actions_mask:
                 q_next[key][avail_actions_next[key] == 0] = -1e10
 
@@ -83,7 +88,11 @@ class VDN_Learner(LearnerMAS):
                 q_next_a[key] = q_next[key].gather(act_next[key].astype(ms.int32).unsqueeze(-1), -1, -1).reshape(bs)
             else:
                 q_next_a[key] = q_next[key].max(axis=-1, keepdim=True).values.reshape(bs)
-            q_next_a[key] *= agent_mask[key]
+            q_next_a[key] *= mask_values
+
+            info.update(self.callback.on_update_agent_wise(self.iterations, key, info=info, method="update",
+                                                           mask_values=mask_values,
+                                                           q_next_a=q_next_a))
 
         q_tot_next = self.policy.Qtarget_tot(q_next_a)
         q_tot_target = rewards_tot + (1 - terminals_tot) * self.gamma * q_tot_next
@@ -105,4 +114,9 @@ class VDN_Learner(LearnerMAS):
 
         if self.iterations % self.sync_frequency == 0:
             self.policy.copy_target()
+
+        info.update(self.callback.on_update_end(self.iterations, method="update", policy=self.policy, info=info,
+                                                q_tot_eval=q_tot_eval, q_tot_next=q_tot_next,
+                                                q_tot_target=q_tot_target))
+
         return info

@@ -5,10 +5,11 @@ from argparse import Namespace
 from operator import itemgetter
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
 from xuance.tensorflow import Module, tf
-from xuance.common import List, Optional, Union, MeanField_OnPolicyBuffer, MeanField_OnPolicyBuffer_RNN
+from xuance.common import List, Optional, Union, MeanField_OnPolicyBuffer, MeanField_OnPolicyBuffer_RNN, \
+    MultiAgentBaseCallback
 from xuance.tensorflow.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions
 from xuance.tensorflow.policies import REGISTRY_Policy
-from xuance.tensorflow.agents import OnPolicyMARLAgents, BaseCallback
+from xuance.tensorflow.agents import OnPolicyMARLAgents
 
 
 class MFAC_Agents(OnPolicyMARLAgents):
@@ -23,7 +24,7 @@ class MFAC_Agents(OnPolicyMARLAgents):
     def __init__(self,
                  config: Namespace,
                  envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv],
-                 callback: Optional[BaseCallback] = None):
+                 callback: Optional[MultiAgentBaseCallback] = None):
         super(MFAC_Agents, self).__init__(config, envs, callback)
 
         self.n_actions_list = [a_space.n for a_space in self.action_space.values()]

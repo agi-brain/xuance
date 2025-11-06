@@ -7,7 +7,7 @@ import numpy as np
 from argparse import Namespace
 from operator import itemgetter
 from xuance.common import List
-from xuance.tensorflow import tf, tk, Module
+from xuance.tensorflow import tk, Module
 from xuance.tensorflow import tf
 from xuance.tensorflow.learners.multi_agent_rl.iac_learner import IAC_Learner
 
@@ -135,7 +135,6 @@ class VDAC_Learner(IAC_Learner):
 
     def update(self, sample):
         self.iterations += 1
-        info = {}
 
         # prepare training data
         sample_Tensor = self.build_training_data(sample=sample,
@@ -155,6 +154,9 @@ class VDAC_Learner(IAC_Learner):
 
         bs = batch_size * self.n_agents if self.use_parameter_sharing else batch_size
 
+        info = self.callback.on_update_start(self.iterations, method="update",
+                                             policy=self.policy, sample_Tensor=sample_Tensor, bs=bs)
+
         loss, a_loss, c_loss, e_loss, v_pred = self.learn(batch_size, bs, state, obs, actions, agent_mask,
                                                           avail_actions, values, returns, advantages, IDs)
 
@@ -167,5 +169,7 @@ class VDAC_Learner(IAC_Learner):
             "entropy_loss": sum(e_loss).numpy(),
             "loss": loss.numpy(),
         })
+
+        info.update(self.callback.on_update_end(self.iterations, method="update", policy=self.policy, info=info))
 
         return info

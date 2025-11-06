@@ -113,7 +113,7 @@ REGISTRY = {
     "CtrlAviary": CtrlAviary,
     "HoverAviary": HoverAviary,
     "VelocityAviary": VelocityAviary,
-    # you can add your customized scenarios here.
+    # you can add your custom scenarios here.
 }
 
 

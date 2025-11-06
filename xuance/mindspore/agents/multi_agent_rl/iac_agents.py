@@ -1,11 +1,9 @@
 import numpy as np
-import torch
 from argparse import Namespace
-from operator import itemgetter
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
-from xuance.common import List, Optional, Union
+from xuance.common import List, Optional, Union, MultiAgentBaseCallback
 from xuance.mindspore import Module
-from xuance.mindspore.utils import NormalizeFunctions, ActivationFunctions
+from xuance.mindspore.utils import NormalizeFunctions, InitializeFunctions, ActivationFunctions
 from xuance.mindspore.policies import REGISTRY_Policy
 from xuance.mindspore.agents import OnPolicyMARLAgents
 
@@ -21,11 +19,12 @@ class IAC_Agents(OnPolicyMARLAgents):
 
     def __init__(self,
                  config: Namespace,
-                 envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv]):
-        super(IAC_Agents, self).__init__(config, envs)
+                 envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv],
+                 callback: Optional[MultiAgentBaseCallback] = None):
+        super(IAC_Agents, self).__init__(config, envs, callback)
         self.policy = self._build_policy()  # build policy
         self.memory = self._build_memory()  # build memory
-        self.learner = self._build_learner(self.config, self.model_keys, self.agent_keys, self.policy)
+        self.learner = self._build_learner(self.config, self.model_keys, self.agent_keys, self.policy, self.callback)
 
     def _build_policy(self) -> Module:
         """
@@ -35,7 +34,7 @@ class IAC_Agents(OnPolicyMARLAgents):
             policy (torch.nn.Module): A dict of policies.
         """
         normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None
-        initializer = torch.nn.init.orthogonal_
+        initializer = InitializeFunctions[self.config.initialize] if hasattr(self.config, "initialize") else None
         activation = ActivationFunctions[self.config.activation]
         agent = self.config.agent
 
@@ -110,7 +109,8 @@ class IAC_Agents(OnPolicyMARLAgents):
                avail_actions_dict: Optional[List[dict]] = None,
                rnn_hidden_actor: Optional[dict] = None,
                rnn_hidden_critic: Optional[dict] = None,
-               test_mode: Optional[bool] = False):
+               test_mode: Optional[bool] = False,
+               **kwargs):
         """
         Returns actions for agents.
 
@@ -133,36 +133,47 @@ class IAC_Agents(OnPolicyMARLAgents):
         rnn_hidden_critic_new, log_pi_a_dict, values_dict = {}, {}, {}
 
         obs_input, agents_id, avail_actions_input = self._build_inputs(obs_dict, avail_actions_dict)
-        rnn_hidden_actor_new, pi_dists = self.policy(observation=obs_input,
-                                                     agent_ids=agents_id,
-                                                     avail_actions=avail_actions_input,
-                                                     rnn_hidden=rnn_hidden_actor)
+        if self.continuous_control:
+            rnn_hidden_actor_new, pi_mu, pi_std = self.policy(observation=obs_input,
+                                                              agent_ids=agents_id,
+                                                              avail_actions=avail_actions_input,
+                                                              rnn_hidden=rnn_hidden_actor)
+        else:
+            rnn_hidden_actor_new, pi_logits = self.policy(observation=obs_input,
+                                                          agent_ids=agents_id,
+                                                          avail_actions=avail_actions_input,
+                                                          rnn_hidden=rnn_hidden_actor)
         if not test_mode:
             rnn_hidden_critic_new, values_dict = self.policy.get_values(observation=obs_input,
                                                                         agent_ids=agents_id,
                                                                         rnn_hidden=rnn_hidden_critic)
             if self.use_parameter_sharing:
-                values_dict = {k: values_dict[self.model_keys[0]].detach().cpu().numpy().reshape(n_env, -1)[:, i]
+                values_dict = {k: values_dict[self.model_keys[0]].asnumpy().reshape(n_env, -1)[:, i]
                                for i, k in enumerate(self.agent_keys)}
             else:
-                values_dict = {k: v.detach().cpu().numpy().reshape(n_env) for k, v in values_dict.items()}
+                values_dict = {k: v.asnumpy().reshape(n_env) for k, v in values_dict.items()}
 
         if self.use_parameter_sharing:
             key = self.agent_keys[0]
-            actions_sample = pi_dists[key].stochastic_sample()
             if self.continuous_control:
-                actions_out = actions_sample.reshape(n_env, self.n_agents, -1)
+                pi_dists = self.policy.actor[key].distribution(mu=pi_mu[key], std=pi_std[key])
+                actions_sample = pi_dists.stochastic_sample()
+                actions_out = actions_sample.asnumpy().reshape(n_env, self.n_agents, -1)
             else:
-                actions_out = actions_sample.reshape(n_env, self.n_agents)
-            actions_dict = [{k: actions_out[e, i].cpu().detach().numpy() for i, k in enumerate(self.agent_keys)}
-                            for e in range(n_env)]
+                pi_dists = self.policy.actor[key].distribution(logits=pi_logits[key])
+                actions_sample = pi_dists.stochastic_sample()
+                actions_out = actions_sample.asnumpy().reshape(n_env, self.n_agents)
+            actions_dict = [{k: actions_out[e, i] for i, k in enumerate(self.agent_keys)} for e in range(n_env)]
         else:
-            actions_sample = {k: pi_dists[k].stochastic_sample() for k in self.agent_keys}
             if self.continuous_control:
-                actions_dict = [{k: actions_sample[k].cpu().detach().numpy()[e].reshape([-1]) for k in self.agent_keys}
+                pi_dists = {k: self.policy.actor[k].distribution(pi_mu[k], pi_std[k]) for k in self.agent_keys}
+                actions_sample = {k: pi_dists[k].stochastic_sample() for k in self.agent_keys}
+                actions_dict = [{k: actions_sample[k].asnumpy()[e].reshape([-1]) for k in self.agent_keys}
                                 for e in range(n_env)]
             else:
-                actions_dict = [{k: actions_sample[k].cpu().detach().numpy()[e].reshape([]) for k in self.agent_keys}
+                pi_dists = {k: self.policy.actor[k].distribution(logits=pi_logits[k]) for k in self.agent_keys}
+                actions_sample = {k: pi_dists[k].stochastic_sample() for k in self.agent_keys}
+                actions_dict = [{k: actions_sample[k].asnumpy()[e].reshape([]) for k in self.agent_keys}
                                 for e in range(n_env)]
 
         return {"rnn_hidden_actor": rnn_hidden_actor_new, "rnn_hidden_critic": rnn_hidden_critic_new,
@@ -186,34 +197,13 @@ class IAC_Agents(OnPolicyMARLAgents):
             rnn_hidden_critic_new (dict): The new RNN hidden states of critic representation (if self.use_rnn=True).
             values_dict: The critic values.
         """
-        n_env = 1
-        rnn_hidden_critic_i = None
+        obs_input, agents_id, avail_actions_input = self._build_inputs([obs_dict])
+        rnn_hidden_critic_new, values_dict = self.policy.get_values(observation=obs_input,
+                                                                    agent_ids=agents_id,
+                                                                    rnn_hidden=rnn_hidden_critic)
         if self.use_parameter_sharing:
-            key = self.agent_keys[0]
-            if self.use_rnn:
-                hidden_item_index = np.arange(i_env * self.n_agents, (i_env + 1) * self.n_agents)
-                rnn_hidden_critic_i = {key: self.policy.critic_representation[key].get_hidden_item(
-                    hidden_item_index, *rnn_hidden_critic[key])}
-                batch_size = n_env * self.n_agents
-                obs_array = np.array(itemgetter(*self.agent_keys)(obs_dict))
-                obs_input = {key: obs_array.reshape([batch_size, 1, -1])}
-                agents_id = torch.eye(self.n_agents).unsqueeze(0).expand(n_env, -1, -1).reshape(batch_size, 1, -1).to(
-                    self.device)
-            else:
-                obs_input = {key: np.array([itemgetter(*self.agent_keys)(obs_dict)])}
-                agents_id = torch.eye(self.n_agents).unsqueeze(0).expand(n_env, -1, -1).to(self.device)
-
-            rnn_hidden_critic_new, values_dict = self.policy.get_values(observation=obs_input,
-                                                                        agent_ids=agents_id,
-                                                                        rnn_hidden=rnn_hidden_critic_i)
-            values_out = values_dict[key].detach().cpu().numpy().reshape(-1)
-            values_dict = {k: values_out[i] for i, k in enumerate(self.agent_keys)}
+            values_dict = {k: values_dict[self.model_keys[0]].asnumpy().reshape(-1)[i]
+                           for i, k in enumerate(self.agent_keys)}
         else:
-            if self.use_rnn:
-                rnn_hidden_critic_i = {k: self.policy.critic_representation[k].get_hidden_item(
-                    [i_env, ], *rnn_hidden_critic[k]) for k in self.agent_keys}
-            obs_input = {k: obs_dict[k][None, None, :] for k in self.agent_keys} if self.use_rnn else obs_dict
-            rnn_hidden_critic_new, values_dict = self.policy.get_values(observation=obs_input,
-                                                                        rnn_hidden=rnn_hidden_critic_i)
-            values_dict = {k: v.detach().cpu().numpy().reshape([]) for k, v in values_dict.items()}
+            values_dict = {k: v.asnumpy().reshape([]) for k, v in values_dict.items()}
         return rnn_hidden_critic_new, values_dict

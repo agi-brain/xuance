@@ -3,11 +3,11 @@ import torch
 from argparse import Namespace
 from operator import itemgetter
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
-from xuance.common import List, Optional, Union
+from xuance.common import List, Optional, Union, MultiAgentBaseCallback
 from xuance.torch import Module
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
 from xuance.torch.policies import REGISTRY_Policy
-from xuance.torch.agents import OnPolicyMARLAgents, BaseCallback
+from xuance.torch.agents import OnPolicyMARLAgents
 
 
 class IAC_Agents(OnPolicyMARLAgents):
@@ -22,7 +22,7 @@ class IAC_Agents(OnPolicyMARLAgents):
     def __init__(self,
                  config: Namespace,
                  envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv],
-                 callback: Optional[BaseCallback] = None):
+                 callback: Optional[MultiAgentBaseCallback] = None):
         super(IAC_Agents, self).__init__(config, envs, callback)
         self.policy = self._build_policy()  # build policy
         self.memory = self._build_memory()  # build memory

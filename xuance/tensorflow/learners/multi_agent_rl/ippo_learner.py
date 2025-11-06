@@ -140,7 +140,6 @@ class IPPO_Learner(IAC_Learner):
 
     def update(self, sample):
         self.iterations += 1
-        info = {}
 
         # prepare training data
         sample_Tensor = self.build_training_data(sample=sample,
@@ -159,6 +158,9 @@ class IPPO_Learner(IAC_Learner):
 
         bs = batch_size * self.n_agents if self.use_parameter_sharing else batch_size
 
+        info = self.callback.on_update_start(self.iterations, method="update",
+                                             policy=self.policy, sample_Tensor=sample_Tensor, bs=bs)
+
         loss, a_loss, c_loss, e_loss, v_pred = self.learn(bs, obs, actions, log_pi_old, agent_mask, avail_actions,
                                                           values, returns, advantages, IDs)
 
@@ -171,5 +173,7 @@ class IPPO_Learner(IAC_Learner):
             "entropy_loss": sum(e_loss).numpy(),
             "loss": loss.numpy(),
         })
+
+        info.update(self.callback.on_update_end(self.iterations, method="update", policy=self.policy, info=info))
 
         return info

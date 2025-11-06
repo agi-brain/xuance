@@ -3,11 +3,10 @@ from copy import deepcopy
 from operator import itemgetter
 from gymnasium.spaces import Discrete
 from xuance.common import Sequence, Optional, Union, Dict, List
-from xuance.tensorflow.representations import Basic_MLP
 from xuance.tensorflow.policies import CategoricalActorNet, ActorNet
 from xuance.tensorflow.policies.core import CriticNet, BasicQhead
 from xuance.tensorflow.utils import CategoricalDistribution
-from xuance.tensorflow.representations import Basic_Identical
+from xuance.tensorflow.representations import Basic_Identical, Basic_MLP
 from xuance.tensorflow import tf, tk, Tensor, Module
 
 
@@ -23,9 +22,9 @@ class MAAC_Policy(Module):
         mixer (Module): The mixer module that mix together the individual values to the total value.
         actor_hidden_size (Sequence[int]): A list of hidden layer sizes for actor network.
         critic_hidden_size (Sequence[int]): A list of hidden layer sizes for critic network.
-        normalize (Optional[ModuleType]): The layer normalization over a minibatch of inputs.
-        initializer (Optional[Callable[..., Tensor]]): The parameters initializer.
-        activation (Optional[ModuleType]): The activation function for each layer.
+        normalize (Optional[tk.layers.Layer]): The layer normalization over a minibatch of inputs.
+        initializer (Optional[tk.initializers.Initializer]): The parameters initializer.
+        activation (Optional[tk.layers.Layer]): The activation function for each layer.
         use_distributed_training (bool): Whether to use multi-GPU for distributed training.
         **kwargs: The other args.
     """
@@ -109,7 +108,7 @@ class MAAC_Policy(Module):
 
         Returns:
             rnn_hidden_new (Optional[Dict[str, List[Tensor]]]): The new RNN hidden states of actor representation.
-            pi_dists (dict): The stochastic policy distributions.
+            pi_logits (dict): The logits of stochastic policy distributions.
         """
         rnn_hidden_new, pi_logits = {}, {}
         agent_list = self.model_keys if agent_key is None else [agent_key]
@@ -184,13 +183,13 @@ class MAAC_Policy_Share(MAAC_Policy):
     Args:
         action_space (Optional[Dict[str, Discrete]]): The discrete action space.
         n_agents (int): The number of agents.
-        representation (ModuleDict): A dict of representation modules.
+        representation (dict): A dict of representation modules.
         mixer (Module): The mixer module that mix together the individual values to the total value.
         actor_hidden_size (Sequence[int]): A list of hidden layer sizes for actor network.
         critic_hidden_size (Sequence[int]): A list of hidden layer sizes for critic network.
-        normalize (Optional[ModuleType]): The layer normalization over a minibatch of inputs.
-        initialize (Optional[Callable[..., Tensor]]): The parameters initializer.
-        activation (Optional[ModuleType]): The activation function for each layer.
+        normalize (Optional[tk.layers.Layer]): The layer normalization over a minibatch of inputs.
+        initialize (Optional[tk.initializers.Initializer]): The parameters initializer.
+        activation (Optional[tk.layers.Layer]): The activation function for each layer.
         use_distributed_training (bool): Whether to use multi-GPU for distributed training.
         **kwargs: The other args.
     """
@@ -271,6 +270,306 @@ class MAAC_Policy_Share(MAAC_Policy):
             return params + self.representation.trainable_variables
 
 
+class CommNet_Policy(MAAC_Policy):
+
+    def __init__(self,
+                 action_space: Optional[Dict[str, Discrete]],
+                 n_agents: int,
+                 representation_actor: dict,
+                 representation_critic: dict,
+                 mixer: Optional[Module] = None,
+                 actor_hidden_size: Sequence[int] = None,
+                 critic_hidden_size: Sequence[int] = None,
+                 normalize: Optional[tk.layers.Layer] = None,
+                 initialize: Optional[tk.initializers.Initializer] = None,
+                 activation: Optional[tk.layers.Layer] = None,
+                 use_distributed_training: bool = False,
+                 **kwargs):
+        super(CommNet_Policy, self).__init__(action_space=action_space, n_agents=n_agents, representation_actor=representation_actor,
+                                             representation_critic=representation_critic, mixer=mixer, actor_hidden_size=actor_hidden_size,
+                                             critic_hidden_size=critic_hidden_size, normalize=normalize, initialize=initialize, activation=activation,
+                                             use_distributed_training=use_distributed_training, **kwargs)
+        self.communicator = kwargs['communicator']
+        self.agent_keys = kwargs['agent_keys']
+        self.comm_passes = kwargs['comm_passes']
+
+    @property
+    def parameters_model(self):
+        parameters = list(self.actor_representation.parameters()) + list(self.actor.parameters()) + list(
+            self.critic_representation.parameters()) + list(self.critic.parameters()) + list(self.communicator.parameters())
+        if self.mixer is not None:
+            parameters += list(self.mixer.parameters())
+        return parameters
+
+    def forward(self, observation: Dict[str, Tensor], agent_ids: Optional[Tensor] = None,
+                avail_actions: Dict[str, Tensor] = None, agent_key: str = None,
+                rnn_hidden: Optional[Dict[str, List[Tensor]]] = None, alive_ally: Optional[dict] = None):
+        rnn_hidden_new, pi_dists = {}, {}
+        agent_list = self.model_keys if agent_key is None else [agent_key]
+        seq_length = observation['agent_0'].shape[1]
+        if avail_actions is not None:
+            avail_actions = {key: Tensor(avail_actions[key]) for key in agent_list}
+        observation = {k: self.communicator[k].obs_encode(observation[k]) for k in agent_list}
+        actor_inputs = {k: [] for k in agent_list}
+        for i in range(seq_length):
+            alive_ally_i = {k: alive_ally[k][:, i:i + 1, :] for k in self.agent_keys}
+            observation_i = {k: observation[k][:, i:i + 1, :] for k in agent_list}
+            msg_send = {k: rnn_hidden[k][0].transpose(0, 1) for k in self.model_keys}
+            for _ in range(self.comm_passes):
+                msg_receive = {k: self.communicator[k](observation_i[k], msg_send, alive_ally_i) for k in self.model_keys}
+                msg_send = {k: observation_i[k] + msg_receive[k] for k in self.model_keys}
+            observation_i = msg_send
+            for key in agent_list:
+                if self.use_rnn:
+                    outputs = self.actor_representation[key](observation_i[key], *rnn_hidden[key])
+                    rnn_hidden_new[key] = (outputs['rnn_hidden'], outputs['rnn_cell'])
+                else:
+                    outputs = self.actor_representation[key](observation[key])
+                    rnn_hidden_new[key] = [None, None]
+
+                if self.use_parameter_sharing:
+                    agent_ids_i = agent_ids[:, i:i + 1, :]
+                    actor_input = torch.concat([outputs['state'], agent_ids_i], dim=-1)
+                else:
+                    actor_input = outputs['state']
+                actor_inputs[key].append(actor_input)
+            rnn_hidden = deepcopy(rnn_hidden_new)
+        for key in agent_list:
+            actor_input = torch.cat(actor_inputs[key], dim=1)
+            avail_actions_input = None if avail_actions is None else avail_actions[key]
+            pi_dists[key] = self.actor[key](actor_input, avail_actions_input)
+        return rnn_hidden_new, pi_dists
+
+    def get_values(self, observation: Dict[str, Tensor], agent_ids: Tensor = None, agent_key: str = None,
+                   rnn_hidden: Optional[Dict[str, List[Tensor]]] = None, alive_ally: Optional[dict] = None):
+        rnn_hidden_new, values = {}, {}
+        agent_list = self.model_keys if agent_key is None else [agent_key]
+        batch_size, seq_length = observation['agent_0'].shape[0], observation['agent_0'].shape[1]
+        observation = {k: self.communicator[k].obs_encode(observation[k]) for k in agent_list}
+        critic_inputs = {k: [] for k in agent_list}
+        for i in range(seq_length):
+            alive_ally_i = {k: alive_ally[k][:, i:i + 1, :] for k in self.agent_keys}
+            observation_i = {k: observation[k][:, i:i + 1, :] for k in agent_list}
+            msg_send = {k: rnn_hidden[k][0].transpose(0, 1) for k in self.model_keys}
+            for _ in range(self.comm_passes):
+                msg_receive = {k: self.communicator[k](observation_i[k], msg_send, alive_ally_i) for k in self.model_keys}
+                msg_send = {k: observation_i[k] + msg_receive[k][0] for k in self.model_keys}
+            observation_i = msg_send
+            for key in agent_list:
+                if self.use_rnn:
+                    outputs = self.critic_representation[key](observation_i[key], *rnn_hidden[key])
+                    rnn_hidden_new[key] = (outputs['rnn_hidden'], outputs['rnn_cell'])
+                else:
+                    outputs = self.critic_representation[key](observation[key])
+                    rnn_hidden_new[key] = [None, None]
+
+                if self.use_parameter_sharing:
+                    agent_ids_i = agent_ids[:, i:i + 1, :]
+                    critic_input = torch.concat([outputs['state'], agent_ids_i], dim=-1)
+                else:
+                    critic_input = outputs['state']
+                critic_inputs[key].append(critic_input)
+            rnn_hidden = deepcopy(rnn_hidden_new)
+
+        for key in agent_list:
+            critic_input = torch.cat(critic_inputs[key], dim=1)
+            values[key] = self.critic[key](critic_input)
+
+        return rnn_hidden_new, values
+
+
+class IC3Net_Policy(CommNet_Policy):
+
+    def __init__(self,
+                 action_space: Optional[Dict[str, Discrete]],
+                 n_agents: int,
+                 representation_actor: dict,
+                 representation_critic: dict,
+                 mixer: Optional[Module] = None,
+                 actor_hidden_size: Sequence[int] = None,
+                 critic_hidden_size: Sequence[int] = None,
+                 normalize: Optional[tk.layers.Layer] = None,
+                 initialize: Optional[tk.initializers.Initializer] = None,
+                 activation: Optional[tk.layers.Layer] = None,
+                 use_distributed_training: bool = False,
+                 **kwargs):
+        super(IC3Net_Policy, self).__init__(action_space=action_space, n_agents=n_agents,
+                                             representation_actor=representation_actor,
+                                             representation_critic=representation_critic, mixer=mixer,
+                                             actor_hidden_size=actor_hidden_size,
+                                             critic_hidden_size=critic_hidden_size, normalize=normalize,
+                                             initialize=initialize, activation=activation,
+                                             use_distributed_training=use_distributed_training, **kwargs)
+
+        self.config = kwargs['config']
+        self.gate = {k: self.communicator[k].create_mlp(self.config.recurrent_hidden_size, self.config.gate_hidden_size, 2, nn.LeakyReLU())
+                     for k in self.model_keys}
+
+    def forward(self, observation: Dict[str, Tensor], agent_ids: Optional[Tensor] = None,
+                avail_actions: Dict[str, Tensor] = None, agent_key: str = None,
+                rnn_hidden: Optional[Dict[str, List[Tensor]]] = None, alive_ally: Optional[dict] = None):
+        rnn_hidden_new, pi_dists = {}, {}
+        agent_list = self.model_keys if agent_key is None else [agent_key]
+        seq_length = observation['agent_0'].shape[1]
+        if avail_actions is not None:
+            avail_actions = {key: Tensor(avail_actions[key]) for key in agent_list}
+        observation = {k: self.communicator[k].obs_encode(observation[k]) for k in agent_list}
+        actor_inputs = {k: [] for k in agent_list}
+        gate_log_probs = {k: [] for k in agent_list}
+        for i in range(seq_length):
+            alive_ally_i = {k: alive_ally[k][:, i:i + 1, :] for k in self.agent_keys}
+            observation_i = {k: observation[k][:, i:i + 1, :] for k in agent_list}
+            msg_send = {k: rnn_hidden[k][0].transpose(0, 1) for k in self.model_keys}
+            for comm_time in range(self.comm_passes):
+                # calculate gate_control
+                gate_prob = {k: self.gate[k](msg_send[k]) for k in agent_list}
+                gate_dist = {k: Categorical(logits=gate_prob[k]) for k in agent_list}
+                gate_control = {k: gate_dist[k].sample() for k in agent_list}
+                gate_log_prob = {k: gate_dist[k].log_prob(gate_control[k]) for k in agent_list}
+                comm_out = {k: self.communicator[k](observation_i[k], msg_send, alive_ally_i, gate_control) for k in self.model_keys}
+                msg_send = {k: observation_i[k] + comm_out[k] for k in self.model_keys}
+                if comm_time == self.comm_passes - 1:
+                    for k in agent_list:
+                        gate_log_probs[k].append(gate_log_prob[k])
+            observation_i = msg_send
+            for key in agent_list:
+                if self.use_rnn:
+                    outputs = self.actor_representation[key](observation_i[key], *rnn_hidden[key])
+                    rnn_hidden_new[key] = (outputs['rnn_hidden'], outputs['rnn_cell'])
+                else:
+                    outputs = self.actor_representation[key](observation[key])
+                    rnn_hidden_new[key] = [None, None]
+
+                if self.use_parameter_sharing:
+                    agent_ids_i = agent_ids[:, i:i + 1, :]
+                    actor_input = torch.concat([outputs['state'], agent_ids_i], dim=-1)
+                else:
+                    actor_input = outputs['state']
+                actor_inputs[key].append(actor_input)
+            rnn_hidden = deepcopy(rnn_hidden_new)
+        for key in agent_list:
+            actor_input = torch.cat(actor_inputs[key], dim=1)
+            avail_actions_input = None if avail_actions is None else avail_actions[key]
+            pi_dists[key] = self.actor[key](actor_input, avail_actions_input)
+        gate_log_probs = {k: torch.cat(gate_log_probs[k], dim=1) for k in self.model_keys}
+        return rnn_hidden_new, pi_dists, gate_log_probs
+
+    def get_values(self, observation: Dict[str, Tensor], agent_ids: Tensor = None, agent_key: str = None,
+                   rnn_hidden: Optional[Dict[str, List[Tensor]]] = None, alive_ally: Optional[dict] = None):
+        rnn_hidden_new, values = {}, {}
+        agent_list = self.model_keys if agent_key is None else [agent_key]
+        batch_size, seq_length = observation['agent_0'].shape[0], observation['agent_0'].shape[1]
+        observation = {k: self.communicator[k].obs_encode(observation[k]) for k in agent_list}
+        critic_inputs = {k: [] for k in agent_list}
+        for i in range(seq_length):
+            alive_ally_i = {k: alive_ally[k][:, i:i + 1, :] for k in self.agent_keys}
+            observation_i = {k: observation[k][:, i:i + 1, :] for k in agent_list}
+            msg_send = {k: rnn_hidden[k][0].transpose(0, 1) for k in self.model_keys}
+            for comm_time in range(self.comm_passes):
+                # calculate gate_control
+                gate_prob = {k: self.gate[k](msg_send[k]) for k in agent_list}
+                gate_dist = {k: Categorical(logits=gate_prob[k]) for k in agent_list}
+                gate_control = {k: gate_dist[k].sample() for k in agent_list}
+                comm_out = {k: self.communicator[k](observation_i[k], msg_send, alive_ally_i, gate_control) for k in
+                            self.model_keys}
+                msg_send = {k: observation_i[k] + comm_out[k] for k in self.model_keys}
+            observation_i = msg_send
+            for key in agent_list:
+                if self.use_rnn:
+                    outputs = self.critic_representation[key](observation_i[key], *rnn_hidden[key])
+                    rnn_hidden_new[key] = (outputs['rnn_hidden'], outputs['rnn_cell'])
+                else:
+                    outputs = self.critic_representation[key](observation[key])
+                    rnn_hidden_new[key] = [None, None]
+
+                if self.use_parameter_sharing:
+                    agent_ids_i = agent_ids[:, i:i + 1, :]
+                    critic_input = torch.concat([outputs['state'], agent_ids_i], dim=-1)
+                else:
+                    critic_input = outputs['state']
+                critic_inputs[key].append(critic_input)
+            rnn_hidden = deepcopy(rnn_hidden_new)
+
+        for key in agent_list:
+            critic_input = torch.cat(critic_inputs[key], dim=1)
+            values[key] = self.critic[key](critic_input)
+
+        return rnn_hidden_new, values
+
+
+class TarMAC_Policy(IC3Net_Policy):
+
+    def __init__(self,
+                 action_space: Optional[Dict[str, Discrete]],
+                 n_agents: int,
+                 representation_actor: dict,
+                 representation_critic: dict,
+                 mixer: Optional[Module] = None,
+                 actor_hidden_size: Sequence[int] = None,
+                 critic_hidden_size: Sequence[int] = None,
+                 normalize: Optional[tk.layers.Layer] = None,
+                 initialize: Optional[tk.initializers.Initializer] = None,
+                 activation: Optional[tk.layers.Layer] = None,
+                 use_distributed_training: bool = False,
+                 **kwargs):
+        super(TarMAC_Policy, self).__init__(action_space=action_space, n_agents=n_agents,
+                                             representation_actor=representation_actor,
+                                             representation_critic=representation_critic, mixer=mixer,
+                                             actor_hidden_size=actor_hidden_size,
+                                             critic_hidden_size=critic_hidden_size, normalize=normalize,
+                                             initialize=initialize, activation=activation,
+                                             use_distributed_training=use_distributed_training, **kwargs)
+
+    def forward(self, observation: Dict[str, Tensor], agent_ids: Optional[Tensor] = None,
+                avail_actions: Dict[str, Tensor] = None, agent_key: str = None,
+                rnn_hidden: Optional[Dict[str, List[Tensor]]] = None, alive_ally: Optional[dict] = None):
+        rnn_hidden_new, pi_dists = {}, {}
+        agent_list = self.model_keys if agent_key is None else [agent_key]
+        seq_length = observation['agent_0'].shape[1]
+        if avail_actions is not None:
+            avail_actions = {key: Tensor(avail_actions[key]) for key in agent_list}
+        observation = {k: self.communicator[k].obs_encode(observation[k]) for k in agent_list}
+        actor_inputs = {k: [] for k in agent_list}
+        gate_log_probs = {k: [] for k in agent_list}
+        for i in range(seq_length):
+            alive_ally_i = {k: alive_ally[k][:, i:i + 1, :] for k in self.agent_keys}
+            observation_i = {k: observation[k][:, i:i + 1, :] for k in agent_list}
+            msg_send = {k: rnn_hidden[k][0].transpose(0, 1) for k in self.model_keys}
+            for comm_time in range(self.comm_passes):
+                # calculate gate_control
+                gate_prob = {k: self.gate[k](msg_send[k]) for k in agent_list}
+                gate_dist = {k: Categorical(logits=gate_prob[k]) for k in agent_list}
+                gate_control = {k: gate_dist[k].sample() for k in agent_list}
+                gate_log_prob = {k: gate_dist[k].log_prob(gate_control[k]) for k in agent_list}
+                comm_out = {k: self.communicator[k](observation_i[k], msg_send, alive_ally_i, gate_control) for k in self.model_keys}
+                msg_send = {k: observation_i[k] + comm_out[k] for k in self.model_keys}
+                if comm_time == self.comm_passes - 1:
+                    for k in agent_list:
+                        gate_log_probs[k].append(gate_log_prob[k])
+            observation_i = msg_send
+            for key in agent_list:
+                if self.use_rnn:
+                    outputs = self.actor_representation[key](observation_i[key], *rnn_hidden[key])
+                    rnn_hidden_new[key] = (outputs['rnn_hidden'], outputs['rnn_cell'])
+                else:
+                    outputs = self.actor_representation[key](observation[key])
+                    rnn_hidden_new[key] = [None, None]
+
+                if self.use_parameter_sharing:
+                    agent_ids_i = agent_ids[:, i:i + 1, :]
+                    actor_input = torch.concat([outputs['state'], agent_ids_i], dim=-1)
+                else:
+                    actor_input = outputs['state']
+                actor_inputs[key].append(actor_input)
+            rnn_hidden = deepcopy(rnn_hidden_new)
+        for key in agent_list:
+            actor_input = torch.cat(actor_inputs[key], dim=1)
+            avail_actions_input = None if avail_actions is None else avail_actions[key]
+            pi_dists[key] = self.actor[key](actor_input, avail_actions_input)
+        gate_log_probs = {k: torch.cat(gate_log_probs[k], dim=1) for k in self.model_keys}
+        return rnn_hidden_new, pi_dists, gate_log_probs
+
+
 class COMA_Policy(Module):
     """
     COMA_Policy: Counterfactual Multi-Agent Actor-Critic Policy with categorical distributions.
@@ -278,14 +577,14 @@ class COMA_Policy(Module):
     Args:
         action_space (Optional[Dict[str, Discrete]]): The discrete action space.
         n_agents (int): The number of agents.
-        representation_actor (ModuleDict): A dict of representation modules for each agent's actor.
-        representation_critic (ModuleDict): A dict of representation modules for each agent's critic.
+        representation_actor (dict): A dict of representation modules for each agent's actor.
+        representation_critic (dict): A dict of representation modules for each agent's critic.
         mixer (Module): The mixer module that mix together the individual values to the total value.
         actor_hidden_size (Sequence[int]): A list of hidden layer sizes for actor network.
         critic_hidden_size (Sequence[int]): A list of hidden layer sizes for critic network.
-        normalize (Optional[ModuleType]): The layer normalization over a minibatch of inputs.
-        initialize (Optional[Callable[..., Tensor]]): The parameters initializer.
-        activation (Optional[ModuleType]): The activation function for each layer.
+        normalize (Optional[tk.layers.Layer]): The layer normalization over a minibatch of inputs.
+        initialize (Optional[tk.initializers.Initializer]): The parameters initializer.
+        activation (Optional[tk.layers.Layer]): The activation function for each layer.
         use_distributed_training (bool): Whether to use multi-GPU for distributed training.
         **kwargs: The other args.
     """
@@ -552,28 +851,28 @@ class COMA_Policy(Module):
 class MeanFieldActorCriticPolicy(Module):
     """Mean-field actor-critic policy.
 
-        This policy maintains separate actor and critic networks for each agent type (model key),
-        embeds the mean action of neighboring agents, and produces Boltzmann policies.
+    This policy maintains separate actor and critic networks for each agent type (model key),
+    embeds the mean action of neighboring agents, and produces Boltzmann policies.
 
-        Args:
-            action_space (Discrete): A mapping from model keys to discrete action spaces.
-            n_agents (int): Total number of agents in the environment.
-            representation_actor (Optional[Dict[str, Module]]): Actor state encoder modules for each model key.
-            representation_critic (Optional[Dict[str, Module]]): Critic state encoder modules for each model key.
-            actor_hidden_size (Sequence[int], optional): Hidden layer sizes for actor networks.
-            critic_hidden_size (Sequence[int], optional): Hidden layer sizes for critic networks.
-            normalize (Optional[tk.layers.Layer]): Normalization layer to apply after each hidden layer.
-            initialize (Optional[tk.initializers.Initializer]): Weight initialization function.
-            activation (Optional[tk.layers.Layer]): Activation function class for hidden layers.
-            use_distributed_training (bool): If True, wrap components in DistributedDataParallel.
-            **kwargs: Additional keyword arguments:
-                use_parameter_sharing (bool): Whether to share parameters across agent types.
-                model_keys (List[str]): Keys identifying different agent types.
-                rnn (str): RNN type, e.g., "LSTM" or "GRU".
-                use_rnn (bool): Flag indicating whether to include RNN layers.
-                action_embedding_hidden_size (Sequence[int]): Hidden sizes for action mean embedding.
-                temperature (float): Temperature parameter for Boltzmann policy.
-        """
+    Args:
+        action_space (Discrete): A mapping from model keys to discrete action spaces.
+        n_agents (int): Total number of agents in the environment.
+        representation_actor (Optional[Dict[str, Module]]): Actor state encoder modules for each model key.
+        representation_critic (Optional[Dict[str, Module]]): Critic state encoder modules for each model key.
+        actor_hidden_size (Sequence[int], optional): Hidden layer sizes for actor networks.
+        critic_hidden_size (Sequence[int], optional): Hidden layer sizes for critic networks.
+        normalize (Optional[tk.layers.Layer]): Normalization layer to apply after each hidden layer.
+        initialize (Optional[tk.initializers.Initializer]): Weight initialization function.
+        activation (Optional[tk.layers.Layer]): Activation function class for hidden layers.
+        use_distributed_training (bool): If True, wrap components in DistributedDataParallel.
+        **kwargs: Additional keyword arguments:
+            use_parameter_sharing (bool): Whether to share parameters across agent types.
+            model_keys (List[str]): Keys identifying different agent types.
+            rnn (str): RNN type, e.g., "LSTM" or "GRU".
+            use_rnn (bool): Flag indicating whether to include RNN layers.
+            action_embedding_hidden_size (Sequence[int]): Hidden sizes for action mean embedding.
+            temperature (float): Temperature parameter for Boltzmann policy.
+    """
 
     def __init__(self,
                  action_space: Discrete,
@@ -775,3 +1074,77 @@ class MeanFieldActorCriticPolicy(Module):
             values[key] = self.critic[key](critic_input)
 
         return rnn_hidden_new, values
+
+
+class Basic_ISAC_Policy(Module):
+    """
+    Basic_ISAC_Policy: The basic policy for independent soft actor-critic.
+
+    Args:
+        action_space (Box): The continuous action space.
+        n_agents (int): The number of agents.
+        actor_representation (dict): A dict of representation modules for each agent's actor.
+        critic_representation (dict): A dict of representation modules for each agent's critic.
+        actor_hidden_size (Sequence[int]): A list of hidden layer sizes for actor network.
+        critic_hidden_size (Sequence[int]): A list of hidden layer sizes for critic network.
+        normalize (Optional[tk.layers.Layer]): The layer normalization over a minibatch of inputs.
+        initialize (Optional[tk.initializers.Initializer]): The parameters initializer.
+        activation (Optional[tk.layers.Layer]): The activation function for each layer.
+        activation_action (Optional[tk.layers.Layer]): The activation of final layer to bound the actions.
+        use_distributed_training (bool): Whether to use multi-GPU for distributed training.
+        **kwargs: Other arguments.
+    """
+
+    def __init__(self,
+                 action_space: Optional[Dict[str, Discrete]],
+                 n_agents: int,
+                 actor_representation: dict,
+                 critic_representation: dict,
+                 actor_hidden_size: Sequence[int],
+                 critic_hidden_size: Sequence[int],
+                 normalize: Optional[tk.layers.Layer] = None,
+                 initialize: Optional[tk.initializers.Initializer] = None,
+                 activation: Optional[tk.layers.Layer] = None,
+                 use_distributed_training: bool = False,
+                 **kwargs):
+        super(Basic_ISAC_Policy, self).__init__()
+
+
+class MASAC_Policy(Basic_ISAC_Policy):
+    """
+    Basic_ISAC_Policy: The basic policy for independent soft actor-critic.
+
+    Args:
+        action_space (Box): The continuous action space.
+        n_agents (int): The number of agents.
+        actor_representation (dict): A dict of representation modules for each agent's actor.
+        critic_representation (dict): A dict of representation modules for each agent's critic.
+        actor_hidden_size (Sequence[int]): A list of hidden layer sizes for actor network.
+        critic_hidden_size (Sequence[int]): A list of hidden layer sizes for critic network.
+        normalize (Optional[tk.layers.Layer]): The layer normalization over a minibatch of inputs.
+        initialize (Optional[tk.initializers.Initializer]): The parameters initializer.
+        activation (Optional[tk.layers.Layer]): The activation function for each layer.
+        activation_action (Optional[tk.layers.Layer]): The activation of final layer to bound the actions.
+        use_distributed_training (bool): Whether to use multi-GPU for distributed training.
+        **kwargs: Other arguments.
+    """
+
+    def __init__(self,
+                 action_space: Optional[Dict[str, Discrete]],
+                 n_agents: int,
+                 actor_representation: dict,
+                 critic_representation: dict,
+                 actor_hidden_size: Sequence[int],
+                 critic_hidden_size: Sequence[int],
+                 normalize: Optional[tk.layers.Layer] = None,
+                 initialize: Optional[tk.initializers.Initializer] = None,
+                 activation: Optional[tk.layers.Layer] = None,
+                 activation_action: Optional[tk.layers.Layer] = None,
+                 use_distributed_training: bool = False,
+                 **kwargs):
+        super(MASAC_Policy, self).__init__(action_space, n_agents, actor_representation, critic_representation,
+                                           actor_hidden_size, critic_hidden_size,
+                                           normalize, initialize, activation,
+                                           use_distributed_training, **kwargs)
+
+    

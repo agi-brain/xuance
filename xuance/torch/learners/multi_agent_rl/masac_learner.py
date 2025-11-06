@@ -59,7 +59,7 @@ class MASAC_Learner(ISAC_Learner):
             actions_next_joint = actions_next[key].reshape(batch_size, self.n_agents, -1).reshape(batch_size, -1)
         else:
             actions_next_joint = self.get_joint_input(actions_next, (batch_size, -1))
-        _, _, action_q_1, action_q_2 = self.policy.Qaction(joint_observation=obs_joint, joint_actions=actions_joint,
+        _, _, action_q_1, action_q_2 = self.policy.Qpolicy(joint_observation=obs_joint, joint_actions=actions_joint,
                                                            agent_ids=IDs)
         _, _, target_q = self.policy.Qtarget(joint_observation=next_obs_joint, joint_actions=actions_next_joint,
                                              agent_ids=IDs)
@@ -189,7 +189,7 @@ class MASAC_Learner(ISAC_Learner):
                 1, 2).reshape(batch_size, seq_len + 1, -1)
         else:
             actions_eval_joint = self.get_joint_input(actions_eval, (batch_size, seq_len + 1, -1))
-        _, _, action_q_1, action_q_2 = self.policy.Qaction(joint_observation=obs_joint[:, :-1],
+        _, _, action_q_1, action_q_2 = self.policy.Qpolicy(joint_observation=obs_joint[:, :-1],
                                                            joint_actions=actions_joint,
                                                            agent_ids=IDs_t,
                                                            rnn_hidden_critic_1=rnn_hidden_critic,

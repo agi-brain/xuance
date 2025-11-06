@@ -106,6 +106,9 @@ class PPOKL_Learner(Learner):
         else:
             act_batch = tf.convert_to_tensor(samples["actions"][:, None], dtype=tf.int32)
         old_dists = merge_distributions(samples['aux_batch']['old_dist'])
+        info = self.callback.on_update_start(self.iterations,
+                                             policy=self.policy, obs=obs_batch, act=act_batch,
+                                             returns=ret_batch, advantages=adv_batch, old_dists=old_dists)
         if self.is_continuous:
             old_mu = old_dists.mu
             old_std = old_dists.std
@@ -120,11 +123,15 @@ class PPOKL_Learner(Learner):
             self.kl_coef = self.kl_coef / 2.
         self.kl_coef = tf.clip_by_value(self.kl_coef, 0.1, 20)
 
-        info = {
+        info.update({
             "actor-loss": a_loss.numpy(),
             "critic-loss": c_loss.numpy(),
             "entropy": e_loss.numpy(),
             "kl": kl.numpy(),
             "predict_value": tf.math.reduce_mean(v_pred).numpy()
-        }
+        })
+
+        info.update(self.callback.on_update_end(self.iterations,
+                                                policy=self.policy, info=info,
+                                                v_pred=v_pred, kl=kl, a_loss=a_loss, c_loss=c_loss, e_loss=e_loss))
         return info

@@ -12,8 +12,9 @@ from xuance.mindspore.learners import Learner
 class PG_Learner(Learner):
     def __init__(self,
                  config: Namespace,
-                 policy: Module):
-        super(PG_Learner, self).__init__(config, policy)
+                 policy: Module,
+                 callback):
+        super(PG_Learner, self).__init__(config, policy, callback)
         self.optimizer = optim.Adam(params=self.policy.trainable_params(), lr=self.config.learning_rate, eps=1e-5)
         self.scheduler = optim.lr_scheduler.LinearLR(self.optimizer, start_factor=1.0, end_factor=self.end_factor_lr_decay,
                                                      total_iters=self.config.running_steps)
@@ -31,9 +32,9 @@ class PG_Learner(Learner):
         if self.is_continuous:
             outputs, mu, std, v_pred = self.policy(obs_batch)
             log_prob = self.a_dist._log_prob(value=act_batch, mean=mu, sd=std)
-            log_prob = log_prob.squeeze(-1)
+            log_prob = ops.reduce_sum(x=log_prob, axis=-1)
             entropy = self.a_dist._entropy(mean=mu, sd=std)
-            entropy = entropy.squeeze(-1)
+            entropy = ops.reduce_sum(x=entropy, axis=-1)
         else:
             outputs, logits, v_pred = self.policy(obs_batch)
             probs = self.softmax(logits)
@@ -44,25 +45,29 @@ class PG_Learner(Learner):
         e_loss = ops.mean(entropy)
 
         loss = a_loss - self.ent_coef * e_loss
-        return loss, a_loss, e_loss
+        return loss, a_loss, e_loss, outputs, log_prob
 
     def update(self, **samples):
         self.iterations += 1
         obs_batch = Tensor(samples['obs'])
         act_batch = Tensor(samples['actions'])
         ret_batch = Tensor(samples['returns'])
+        info = self.callback.on_update_start(self.iterations,
+                                             policy=self.policy, obs=obs_batch, act=act_batch, returns=ret_batch)
 
-        (loss, a_loss, e_loss), grads = self.grad_fn(obs_batch, act_batch, ret_batch)
+        (loss, a_loss, e_loss, outputs, log_prob), grads = self.grad_fn(obs_batch, act_batch, ret_batch)
         self.optimizer(grads)
 
         self.scheduler.step()
         lr = self.scheduler.get_last_lr()[0]
 
-        info = {
+        info.update({
             "total-loss": loss.asnumpy(),
             "actor-loss": a_loss.asnumpy(),
             "entropy": e_loss.asnumpy(),
             "learning_rate": lr.asnumpy(),
-        }
-
+        })
+        info.update(self.callback.on_update_end(self.iterations,
+                                                policy=self.policy, info=info, rep_output=outputs,
+                                                log_prob=log_prob, a_loss=a_loss, e_loss=e_loss, loss=loss))
         return info

@@ -1,6 +1,6 @@
 import mindspore as ms
 import mindspore.nn.probability.distribution as msd
-from mindspore import Tensor, ops
+from mindspore import Tensor, ops, nn
 from mindspore.nn import Cell as Module
 from mindspore.nn import CellDict as ModuleDict
 from mindspore.experimental import optim
@@ -11,6 +11,7 @@ from xuance.mindspore.agents import REGISTRY_Agents
 
 __all__ = [
     "ms",
+    "nn",
     "msd",
     "Tensor",
     "Module",

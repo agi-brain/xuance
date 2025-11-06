@@ -8,7 +8,8 @@ from argparse import Namespace
 from mpi4py import MPI
 from gymnasium.spaces import Dict, Space
 from torch.utils.tensorboard import SummaryWriter
-from xuance.common import get_time_string, create_directory, RunningMeanStd, space2shape, EPS, Optional, Union
+from xuance.common import get_time_string, create_directory, RunningMeanStd, space2shape, EPS, Optional, Union, \
+    BaseCallback
 from xuance.environment import DummyVecEnv, SubprocVecEnv
 from xuance.mindspore import REGISTRY_Representation, REGISTRY_Learners, Module, ms
 from xuance.mindspore.utils import InitializeFunctions, NormalizeFunctions, ActivationFunctions
@@ -22,9 +23,11 @@ class Agent(ABC):
         envs: the vectorized environments.
         callback: A user-defined callback function object to inject custom logic during training.
     """
+
     def __init__(self,
                  config: Namespace,
-                 envs: Union[DummyVecEnv, SubprocVecEnv]):
+                 envs: Union[DummyVecEnv, SubprocVecEnv],
+                 callback: Optional[BaseCallback] = None):
         # Training settings.
         self.config = config
         self.use_rnn = config.use_rnn if hasattr(config, "use_rnn") else False
@@ -104,6 +107,7 @@ class Agent(ABC):
         self.policy: Optional[Module] = None
         self.learner: Optional[Module] = None
         self.memory: Optional[object] = None
+        self.callback = callback or BaseCallback()
 
     def save_model(self, model_name):
         # save the neural networks

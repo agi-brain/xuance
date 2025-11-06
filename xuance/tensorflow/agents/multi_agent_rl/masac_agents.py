@@ -1,10 +1,9 @@
 from argparse import Namespace
-from xuance.common import Union, Optional
+from xuance.common import Union, Optional, MultiAgentBaseCallback
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
 from xuance.tensorflow import Module
 from xuance.tensorflow.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions
 from xuance.tensorflow.policies import REGISTRY_Policy
-from xuance.tensorflow.agents import BaseCallback
 from xuance.tensorflow.agents.multi_agent_rl.isac_agents import ISAC_Agents
 
 
@@ -19,7 +18,7 @@ class MASAC_Agents(ISAC_Agents):
     def __init__(self,
                  config: Namespace,
                  envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv],
-                 callback: Optional[BaseCallback] = None):
+                 callback: Optional[MultiAgentBaseCallback] = None):
         super(MASAC_Agents, self).__init__(config, envs, callback)
 
     def _build_policy(self) -> Module:

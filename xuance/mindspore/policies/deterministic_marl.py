@@ -1,22 +1,40 @@
+from operator import itemgetter
 import mindspore as ms
-from mindspore.nn.probability.distribution import Categorical
 from copy import deepcopy
+from mindspore.nn.probability.distribution import Categorical
 from gymnasium.spaces import Discrete, Box
 from xuance.common import Sequence, Optional, Callable, Dict, List
 from xuance.mindspore.utils import ModuleType
-from xuance.mindspore import Tensor, Module, ops
-from .core import BasicQhead, ActorNet, CriticNet, VDN_mixer, QTRAN_base, QMIX_FF_mixer
+from xuance.mindspore import Tensor, Module, ModuleDict, ops
+from .core import BasicQhead, ActorNet, CriticNet, VDN_mixer, QMIX_FF_mixer
+from xuance.mindspore.representations import Basic_MLP
 
 
 class BasicQnetwork(Module):
+    """
+    The base class to implement DQN based policy
+
+    Args:
+        action_space (Optional[Dict[str, Discrete]]): The action space, which type is gym.spaces.Discrete.
+        n_agents (int): The number of agents.
+        representation (ModuleDict): A dict of the representation module for all agents.
+        hidden_size (Sequence[int]): List of hidden units for fully connect layers.
+        normalize (Optional[ModuleType]): The layer normalization over a minibatch of inputs.
+        initialize (Optional[Callable[..., Tensor]]): The parameters' initializer.
+        activation (Optional[ModuleType]): The activation function for each layer.
+        use_distributed_training (bool): Whether to use multi-GPU for distributed training.
+        **kwargs: Other arguments.
+    """
+
     def __init__(self,
                  action_space: Optional[Dict[str, Discrete]],
                  n_agents: int,
-                 representation: Dict[str, Module],
+                 representation: ModuleDict,
                  hidden_size: Sequence[int] = None,
                  normalize: Optional[ModuleType] = None,
                  initialize: Optional[Callable[..., Tensor]] = None,
                  activation: Optional[ModuleType] = None,
+                 use_distributed_training: bool = False,
                  **kwargs):
         super(BasicQnetwork, self).__init__()
         self.action_space = action_space
@@ -31,7 +49,7 @@ class BasicQnetwork(Module):
         self.target_representation = deepcopy(self.representation)
 
         self.dim_input_Q, self.n_actions = {}, {}
-        self.eval_Qhead, self.target_Qhead = {}, {}
+        self.eval_Qhead, self.target_Qhead = ModuleDict(), ModuleDict()
         for key in self.model_keys:
             self.n_actions[key] = self.action_space[key].n
             self.dim_input_Q[key] = self.representation_info_shape[key]['state'][0]
@@ -146,7 +164,7 @@ class MixingQnetwork(BasicQnetwork):
     def __init__(self,
                  action_space: Optional[Dict[str, Discrete]],
                  n_agents: int,
-                 representation: Dict[str, Module],
+                 representation: ModuleDict,
                  mixer: Optional[VDN_mixer] = None,
                  hidden_size: Sequence[int] = None,
                  normalize: Optional[ModuleType] = None,
@@ -159,9 +177,7 @@ class MixingQnetwork(BasicQnetwork):
         self.target_Qtot = deepcopy(self.eval_Qtot)
 
     def trainable_params(self, recurse=True):
-        params = self.eval_Qtot.trainable_params()
-        for key in self.model_keys:
-            params = params + self.representation[key].trainable_params() + self.eval_Qhead[key].trainable_params()
+        params = self.eval_Qtot.trainable_params() + self.representation.trainable_params() + self.eval_Qhead.trainable_params()
         return params
 
     def Q_tot(self, individual_values: Dict[str, Tensor], states: Optional[Tensor] = None):
@@ -408,60 +424,269 @@ class Weighted_MixingQnetwork(MixingQnetwork):
             tp.assign_value(ep)
 
 
-class Qtran_MixingQnetwork(Module):
+class Qtran_MixingQnetwork(BasicQnetwork):
+    """
+    The base class to implement weighted value-decomposition based policy.
+
+    Args:
+        action_space (Optional[Dict[str, Discrete]]): The action space, which type is gym.spaces.Discrete.
+        n_agents (int): The number of agents.
+        representation (ModuleDict): A dict of the representation module for all agents.
+        mixer (Module): The mixer module that mix together the individual values to the total value.
+        qtran_mixer (Module): The feedforward mixer module that mix together the individual values to the total value.
+        hidden_size (Sequence[int]): List of hidden units for fully connect layers.
+        normalize (Optional[ModuleType]): The layer normalization over a minibatch of inputs.
+        initialize (Optional[Callable[..., Tensor]]): The parameters initializer.
+        activation (Optional[ModuleType]): The activation function for each layer.
+        use_distributed_training (bool): Whether to use multi-GPU for distributed training.
+        **kwargs: Other arguments.
+    """
+
     def __init__(self,
-                 action_space: Discrete,
+                 action_space: Optional[Dict[str, Discrete]],
                  n_agents: int,
-                 representation: Dict[str, Module],
+                 representation: ModuleDict,
                  mixer: Optional[VDN_mixer] = None,
-                 qtran_mixer: Optional[QTRAN_base] = None,
+                 qtran_mixer: Module = None,
                  hidden_size: Sequence[int] = None,
                  normalize: Optional[ModuleType] = None,
                  initialize: Optional[Callable[..., Tensor]] = None,
                  activation: Optional[ModuleType] = None,
+                 use_distributed_training: bool = False,
                  **kwargs):
-        super(Qtran_MixingQnetwork, self).__init__()
-        self.action_dim = action_space.n
-        self.representation = representation
-        self.target_representation = deepcopy(self.representation)
-        self.representation_info_shape = self.representation.output_shapes
-        self.lstm = True if kwargs["rnn"] == "LSTM" else False
-        self.use_rnn = True if kwargs["use_rnn"] else False
-        self.eval_Qhead = BasicQhead(self.representation.output_shapes['state'][0], self.action_dim, n_agents,
-                                     hidden_size, normalize, initialize, activation)
-        self.target_Qhead = deepcopy(self.eval_Qhead)
+        super(Qtran_MixingQnetwork, self).__init__(action_space, n_agents, representation, hidden_size,
+                                                   normalize, initialize, activation, use_distributed_training,
+                                                   **kwargs)
+        self.n_actions_list = [a_space.n for a_space in action_space.values()]
+        self.n_actions_max = int(max(self.n_actions_list))
         self.qtran_net = qtran_mixer
         self.target_qtran_net = deepcopy(qtran_mixer)
         self.q_tot = mixer
-        self._concat = ms.ops.Concat(axis=-1)
 
-    def construct(self, observation: Tensor, agent_ids: Tensor,
-                  *rnn_hidden: Tensor, avail_actions=None):
-        if self.use_rnn:
-            outputs = self.representation(observation, *rnn_hidden)
-            rnn_hidden = (outputs['rnn_hidden'], outputs['rnn_cell'])
-        else:
-            outputs = self.representation(observation)
-            rnn_hidden = None
-        q_inputs = self._concat([outputs, agent_ids])
-        evalQ = self.eval_Qhead(q_inputs)
+    @property
+    def parameters_model(self):
+        parameters_model = self.qtran_net.trainable_params() + self.q_tot.trainable_params() + self.representation.trainable_params() + self.eval_Qhead.trainable_params()
+        return parameters_model
+
+    def construct(self, observation: Dict[str, Tensor], agent_ids: Tensor = None,
+                  avail_actions: Dict[str, Tensor] = None, agent_key: str = None,
+                  rnn_hidden: Optional[Dict[str, List[Tensor]]] = None, **kwargs):
+        """
+        Returns actions of the policy.
+
+        Parameters:
+            observation (Dict[Tensor]): The input observations for the policies.
+            agent_ids (Tensor): The agents' ids (for parameter sharing).
+            avail_actions (Dict[str, Tensor]): Actions mask values, default is None.
+            agent_key (str): Calculate actions for specified agent.
+            rnn_hidden (Optional[Dict[str, List[Tensor]]]): The hidden variables of the RNN.
+
+        Returns:
+            rnn_hidden_new (Optional[Dict[str, List[Tensor]]]): The new hidden variables of the RNN.
+            rep_hidden_state (Dict[str, Tensor]): The hidden states.
+            argmax_action (Dict[str, Tensor]): The actions output by the policies.
+            evalQ (Dict[str, Tensor])： The evaluations of observation-action pairs.
+        """
+        rnn_hidden_new, argmax_action, evalQ = {}, {}, {}
+        agent_list = self.model_keys if agent_key is None else [agent_key]
+        rep_hidden_state = {}
+
         if avail_actions is not None:
-            evalQ_detach = deepcopy(evalQ)
-            evalQ_detach[avail_actions == 0] = -1e10
-            argmax_action = evalQ_detach.argmax(axis=-1, keepdim=False)
-        else:
-            argmax_action = evalQ.argmax(axis=-1, keepdim=False)
-        return rnn_hidden, outputs, argmax_action, evalQ
+            avail_actions = {key: Tensor(avail_actions[key]) for key in agent_list}
 
-    def target_Q(self, observation: Tensor, agent_ids: Tensor, *rnn_hidden: Tensor):
-        if self.use_rnn:
-            outputs = self.target_representation(observation, *rnn_hidden)
-            rnn_hidden = (outputs['rnn_hidden'], outputs['rnn_cell'])
+        for key in agent_list:
+            if self.use_rnn:
+                outputs = self.representation[key](observation[key], *rnn_hidden[key])
+                rnn_hidden_new[key] = (outputs['rnn_hidden'], outputs['rnn_cell'])
+            else:
+                outputs = self.representation[key](observation[key])
+                rnn_hidden_new[key] = [None, None]
+
+            if self.use_parameter_sharing:
+                q_inputs = ops.cat([outputs, agent_ids], axis=-1)
+            else:
+                q_inputs = outputs
+            rep_hidden_state[key] = outputs
+
+            evalQ[key] = self.eval_Qhead[key](q_inputs)
+
+            if avail_actions is not None:
+                evalQ_detach = evalQ[key].clone().detach()
+                evalQ_detach[avail_actions[key] == 0] = -1e10
+                argmax_action[key] = self.argmax(evalQ_detach)
+            else:
+                argmax_action[key] = self.argmax(evalQ[key])
+
+        return rnn_hidden_new, rep_hidden_state, argmax_action, evalQ
+
+    def Qtarget(self, observation: Dict[str, Tensor], agent_ids: Dict[str, Tensor],
+                agent_key: str = None,
+                rnn_hidden: Optional[Dict[str, List[Tensor]]] = None):
+        """
+        Returns the Q^target of next observations and actions pairs.
+
+        Parameters:
+            observation (Dict[Tensor]): The observations.
+            agent_ids (Dict[Tensor]): The agents' ids (for parameter sharing).
+            agent_key (str): Calculate actions for specified agent.
+            rnn_hidden (Optional[Dict[str, List[Tensor]]]): The hidden variables of the RNN.
+
+        Returns:
+            rnn_hidden_new (Optional[Dict[str, List[Tensor]]]): The new hidden variables of the RNN.
+            rep_hidden_state (Dict[str, Tensor]): The hidden states.
+            q_target: The evaluations of Q^target.
+        """
+        rnn_hidden_new, q_target, rep_hidden_state = {}, {}, {}
+        agent_list = self.model_keys if agent_key is None else [agent_key]
+        for key in agent_list:
+            if self.use_rnn:
+                outputs = self.target_representation[key](observation[key], *rnn_hidden[key])
+                rnn_hidden_new[key] = (outputs['rnn_hidden'], outputs['rnn_cell'])
+            else:
+                outputs = self.target_representation[key](observation[key])
+                rnn_hidden_new[key] = [None, None]
+
+            if self.use_parameter_sharing:
+                q_inputs = ops.cat([outputs, agent_ids], axis=-1)
+            else:
+                q_inputs = outputs
+            rep_hidden_state[key] = outputs
+
+            q_target[key] = self.target_Qhead[key](q_inputs)
+
+        return rnn_hidden_new, rep_hidden_state, q_target
+
+    def Q_tot(self, individual_values: Dict[str, Tensor], states: Optional[Tensor] = None):
+        """
+        Returns the total Q values.
+
+        Parameters:
+            individual_values (Dict[str, Tensor]): The individual Q values of all agents.
+            states (Optional[Tensor]): The global states if necessary, default is None.
+
+        Returns:
+            evalQ_tot (Tensor): The evaluated total Q values for the multi-agent team.
+        """
+        if self.use_parameter_sharing:
+            """
+            From dict to tensor. For example:
+                individual_values: {'agent_0': batch * n_agents * 1} -> 
+                individual_inputs: batch * n_agents * 1
+            """
+            individual_inputs = individual_values[self.model_keys[0]].reshape([-1, self.n_agents, 1])
         else:
-            outputs = self.target_representation(observation)
-            rnn_hidden = None
-        q_inputs = self._concat([outputs, agent_ids])
-        return rnn_hidden, outputs, self.target_Qhead(q_inputs)
+            """
+            From dict to tensor. For example: 
+                individual_values: {'agent_0': batch * 1, 'agent_1': batch * 1, 'agent_2': batch * 1} -> 
+                individual_inputs: batch * 2 * 1
+            """
+            individual_inputs = ops.cat([individual_values[k] for k in self.model_keys],
+                                        axis=-1).reshape([-1, self.n_agents, 1])
+
+        eval_Q_tot = self.q_tot(individual_inputs, states)
+        return eval_Q_tot
+
+    def Q_tran(self, states: Tensor, hidden_states: Dict[str, Tensor], actions: Dict[str, Tensor],
+               agent_mask: Dict[str, Tensor] = None, avail_actions: Dict[str, Tensor] = None):
+        """
+        Returns the total Q values.
+
+        Parameters:
+            states (Tensor): The global states.
+            hidden_states (Dict[str, Tensor]): The hidden states.
+            actions (Dict[str, Tensor]): The executed actions.
+            agent_mask (Dict[str, Tensor]): Agent mask values, default is None.
+            avail_actions (Dict[str, Tensor]): Actions mask values, default is None.
+
+        Returns:
+            q_jt (Tensor): The evaluated joint Q values.
+            v_jt (Tensor): The evaluated joint V values.
+        """
+        seq_len = states.shape[1] if self.use_rnn else 1
+        batch_size = states.shape[0]
+        if self.use_parameter_sharing:
+            key = self.model_keys[0]
+            dim_hidden_state = hidden_states[key].shape[-1]
+            actions_onehot = ops.one_hot(actions[key].long(), depth=self.action_space[key].n).astype(ms.float32)
+            if self.use_rnn:
+                actions_onehot = actions_onehot.reshape(batch_size, self.n_agents, seq_len, -1)
+                hidden_states_input = hidden_states[key].reshape([-1, self.n_agents, seq_len, dim_hidden_state])
+            else:
+                actions_onehot = actions_onehot.reshape(batch_size, self.n_agents, -1)
+                hidden_states_input = hidden_states[key].reshape([-1, self.n_agents, dim_hidden_state])
+
+            if avail_actions is not None:
+                actions_onehot *= avail_actions[key]
+            if agent_mask is not None:
+                if self.use_rnn:
+                    agent_mask = ops.repeat_elements(agent_mask[key].reshape(batch_size, self.n_agents, seq_len, 1),
+                                                     rep=dim_hidden_state, axis=-1)
+                else:
+                    agent_mask = ops.repeat_elements(agent_mask[key].reshape(batch_size, self.n_agents, 1),
+                                                     rep=dim_hidden_state, axis=-1)
+                hidden_states_input = hidden_states_input * agent_mask
+            if self.use_rnn:
+                states = states.reshape(batch_size * seq_len, -1)
+                hidden_states_input = hidden_states_input.transpose(1, 2).reshape(-1, self.n_agents, dim_hidden_state)
+                actions_onehot = actions_onehot.transpose(1, 2).reshape(-1, self.n_agents, self.n_actions_max)
+        else:
+            hidden_states_input = ops.cat([hidden_states[k].unsqueeze(1) for k in self.model_keys], axis=1)
+            actions_onehot = ops.cat([ops.one_hot(actions[k].long(),
+                                                  depth=self.n_actions_max).unsqueeze(1).astype(ms.float32)
+                                      for k in self.model_keys], axis=1)
+        q_jt, v_jt = self.qtran_net(states, hidden_states_input, actions_onehot)
+        return q_jt, v_jt
+
+    def Q_tran_target(self, states: Tensor, hidden_states: Dict[str, Tensor], actions: Dict[str, Tensor],
+                      agent_mask: Dict[str, Tensor] = None, avail_actions: Dict[str, Tensor] = None):
+        """
+        Returns the total Q values.
+
+        Parameters:
+            states (Tensor): The global states.
+            hidden_states (Dict[str, Tensor]): The hidden states.
+            actions (Dict[str, Tensor]): The executed actions.
+            agent_mask (Dict[str, Tensor]): Agent mask values, default is None.
+            avail_actions (Dict[str, Tensor]): Actions mask values, default is None.
+
+        Returns:
+            q_jt (Tensor): The evaluated joint Q values.
+            v_jt (Tensor): The evaluated joint V values.
+        """
+        seq_len = states.shape[1] if self.use_rnn else 1
+        batch_size = states.shape[0]
+        if self.use_parameter_sharing:
+            key = self.model_keys[0]
+            dim_hidden_state = hidden_states[key].shape[-1]
+            actions_onehot = ops.one_hot(actions[key].long(), depth=self.action_space[key].n).astype(ms.float32)
+            if self.use_rnn:
+                actions_onehot = actions_onehot.reshape(batch_size, self.n_agents, seq_len, -1)
+                hidden_states_input = hidden_states[key].reshape([-1, self.n_agents, seq_len, dim_hidden_state])
+            else:
+                actions_onehot = actions_onehot.reshape(batch_size, self.n_agents, -1)
+                hidden_states_input = hidden_states[key].reshape([-1, self.n_agents, dim_hidden_state])
+
+            if avail_actions is not None:
+                actions_onehot *= avail_actions[key]
+            if agent_mask is not None:
+                if self.use_rnn:
+                    agent_mask = ops.repeat_elements(agent_mask[key].reshape(batch_size, self.n_agents, seq_len, 1),
+                                                     rep=dim_hidden_state, axis=-1)
+                else:
+                    agent_mask = ops.repeat_elements(agent_mask[key].reshape(batch_size, self.n_agents, 1),
+                                                     rep=dim_hidden_state, axis=-1)
+                hidden_states_input = hidden_states_input * agent_mask
+            if self.use_rnn:
+                states = states.reshape(batch_size * seq_len, -1)
+                hidden_states_input = hidden_states_input.transpose(1, 2).reshape(-1, self.n_agents, dim_hidden_state)
+                actions_onehot = actions_onehot.transpose(1, 2).reshape(-1, self.n_agents, self.n_actions_max)
+        else:
+            hidden_states_input = ops.cat([hidden_states[k].unsqueeze(1) for k in self.model_keys], axis=1)
+            actions_onehot = ops.cat([ops.one_hot(actions[k].long(),
+                                                  depth=self.n_actions_max).unsqueeze(1).astype(ms.float32)
+                                      for k in self.model_keys], axis=1)
+        q_jt, v_jt = self.target_qtran_net(states, hidden_states_input, actions_onehot)
+        return q_jt, v_jt
 
     def copy_target(self):
         for ep, tp in zip(self.representation.trainable_params(), self.target_representation.trainable_params()):
@@ -535,6 +760,21 @@ class DCG_policy(Module):
 
 
 class MFQnetwork(Module):
+    """
+    The base class to implement Mean Field Reinforcement Learning - MFQ.
+
+    Args:
+        action_space (Optional[Dict[str, Discrete]]): The action space, which type is gym.spaces.Discrete.
+        n_agents (int): The number of agents.
+        representation (ModuleDict): A dict of the representation module for all agents.
+        hidden_size (Sequence[int]): List of hidden units for fully connect layers.
+        normalize (Optional[ModuleType]): The layer normalization over a minibatch of inputs.
+        initialize (Optional[Callable[..., Tensor]]): The parameters' initializer.
+        activation (Optional[ModuleType]): The activation function for each layer.
+        use_distributed_training (bool): Whether to use multi-GPU for distributed training.
+        **kwargs: Other arguments.
+    """
+
     def __init__(self,
                  action_space: Discrete,
                  n_agents: int,
@@ -542,34 +782,192 @@ class MFQnetwork(Module):
                  hidden_size: Sequence[int] = None,
                  normalize: Optional[ModuleType] = None,
                  initialize: Optional[Callable[..., Tensor]] = None,
-                 activation: Optional[ModuleType] = None):
+                 activation: Optional[ModuleType] = None,
+                 use_distributed_training: bool = False,
+                 **kwargs):
         super(MFQnetwork, self).__init__()
-        self.action_dim = action_space.n
+        self.action_space = action_space
+        self.n_agents = n_agents
+        self.n_actions_list = [a_space.n for a_space in self.action_space.values()]
+        self.n_actions_max = int(max(self.n_actions_list))
+        self.use_parameter_sharing = kwargs['use_parameter_sharing']
+        self.model_keys = kwargs['model_keys']
+        self.representation_info_shape = {key: representation[key].output_shapes for key in self.model_keys}
+        self.lstm = True if kwargs["rnn"] == "LSTM" else False
+        self.use_rnn = True if kwargs["use_rnn"] else False
+        # The choice of policy: Boltzmann policy or greedy policy. (Default is 'greedy')
+        self.policy_type = kwargs['policy_type']
+
         self.representation = representation
-        self.representation_info_shape = self.representation.output_shapes
+        self.target_representation = deepcopy(self.representation)
 
-        self.eval_Qhead = BasicQhead(self.representation.output_shapes['state'][0] + self.action_dim, self.action_dim,
-                                     n_agents, hidden_size, normalize, initialize, activation)
-        self.target_Qhead = deepcopy(self.eval_Qhead)
-        self._concat = ms.ops.Concat(axis=-1)
-        self._dist = Categorical(dtype=ms.float32)
+        self.dim_input_action_embedding, self.dim_input_Q, self.n_actions = {}, {}, {}
+        self.action_mean_embedding = ModuleDict()
+        self.eval_Qhead, self.target_Qhead, self.target_action_mean_embedding = ModuleDict(), ModuleDict(), ModuleDict()
+        for key in self.model_keys:
+            self.dim_input_action_embedding[key] = self.n_actions_max
+            self.dim_input_Q[key] = self.representation_info_shape[key]['state'][0] + \
+                                    kwargs['action_embedding_hidden_size'][-1]
+            self.n_actions[key] = self.action_space[key].n
+            if self.use_parameter_sharing:
+                self.dim_input_action_embedding[key] += self.n_agents
+                self.dim_input_Q[key] += self.n_agents
+            self.action_mean_embedding[key] = Basic_MLP((self.dim_input_action_embedding[key],),
+                                                        kwargs['action_embedding_hidden_size'],
+                                                        normalize, initialize, activation)
+            self.eval_Qhead[key] = BasicQhead(self.dim_input_Q[key], self.n_actions[key], hidden_size,
+                                              normalize, initialize, activation)
+            self.target_action_mean_embedding[key] = deepcopy(self.action_mean_embedding[key])
+            self.target_Qhead[key] = deepcopy(self.eval_Qhead[key])
+            # update parameters name
+            self.representation[key].update_parameters_name(key + '_rep_')
+            self.action_mean_embedding[key].update_parameters_name(key + '_act_embedding_')
+            self.eval_Qhead[key].update_parameters_name(key + '_eval_Qhead_')
+        self.softmax = ops.Softmax(axis=-1)
+        self.temperature = kwargs['temperature']
 
-    def construct(self, observation: Tensor, actions_mean: Tensor, agent_ids: Tensor):
-        outputs = self.representation(observation)
-        q_inputs = self._concat([outputs, actions_mean, agent_ids])
-        evalQ = self.eval_Qhead(q_inputs)
-        argmax_action = evalQ.argmax(axis=-1)
-        return outputs, argmax_action, evalQ
+    @property
+    def parameters_model(self):
+        parameters_model = {}
+        for key in self.model_keys:
+            parameters_model[key] = self.representation[key].trainable_params() + self.action_mean_embedding[
+                key].trainable_params() + self.eval_Qhead[key].trainable_params()
+        return parameters_model
 
-    def sample_actions(self, logits: Tensor):
-        return self._dist.sample(probs=logits).astype(ms.int32)
+    def construct(self, observation: Dict[str, Tensor], agent_ids: Tensor = None,
+                  actions_mean: Dict[str, Tensor] = None,
+                  avail_actions: Dict[str, Tensor] = None, agent_key: str = None,
+                  rnn_hidden: Optional[Dict[str, List[Tensor]]] = None):
+        """
+        Returns actions of the policy.
 
-    def target_Q(self, observation: Tensor, actions_mean: Tensor, agent_ids: Tensor):
-        outputs = self.representation(observation)
-        q_inputs = self._concat([outputs, actions_mean, agent_ids])
-        return self.target_Qhead(q_inputs)
+        Parameters:
+            observation (Dict[Tensor]): The input observations for the policies.
+            agent_ids (Tensor): The agents' ids (for parameter sharing).
+            actions_mean (Dict[str, Tensor]): The mean actions of each agent's neighbors.
+            avail_actions (Dict[str, Tensor]): Actions mask values, default is None.
+            agent_key (str): Calculate actions for specified agent.
+            rnn_hidden (Optional[Dict[str, List[Tensor]]]): The hidden variables of the RNN.
+
+        Returns:
+            rnn_hidden_new (Optional[Dict[str, List[Tensor]]]): The new hidden variables of the RNN.
+            argmax_action (Dict[str, Tensor]): The actions output by the policies.
+            evalQ (Dict[str, Tensor])： The evaluations of observation-action pairs.
+        """
+        rnn_hidden_new, actions, evalQ = {}, {}, {}
+        agent_list = self.model_keys if agent_key is None else [agent_key]
+
+        actions_mean = {key: Tensor(actions_mean[key]) for key in agent_list}
+        if avail_actions is not None:
+            avail_actions = {key: Tensor(avail_actions[key]) for key in agent_list}
+
+        for key in agent_list:
+            if self.use_rnn:
+                outputs = self.representation[key](observation[key], *rnn_hidden[key])
+                rnn_hidden_new[key] = (outputs['rnn_hidden'], outputs['rnn_cell'])
+            else:
+                outputs = self.representation[key](observation[key])
+                rnn_hidden_new[key] = [None, None]
+
+            # mean actions embedding
+            if self.use_parameter_sharing:
+                action_embedding_input = ops.cat([actions_mean[key], agent_ids], axis=-1)
+                act_embedding = self.action_mean_embedding[key](action_embedding_input)
+                q_inputs = ops.cat([outputs, act_embedding, agent_ids], axis=-1)
+            else:
+                act_embedding = self.action_mean_embedding[key](actions_mean[key])
+                q_inputs = ops.cat([outputs, act_embedding], axis=-1)
+
+            evalQ[key] = self.eval_Qhead[key](q_inputs)
+
+            evalQ_detach = ops.stop_gradient(deepcopy(evalQ[key]))
+            if avail_actions is not None:
+                evalQ_detach[avail_actions[key] == 0] = -1e10
+
+            if self.policy_type == "Boltzmann":
+                actions_prob = self.get_boltzmann_policy(evalQ_detach)
+                actions[key] = Categorical(probs=actions_prob).sample()
+            elif self.policy_type == "greedy":
+                actions[key] = evalQ_detach.argmax(axis=-1, keepdim=False)
+            else:
+                raise NotImplementedError
+
+        return rnn_hidden_new, actions, evalQ
+
+    def get_boltzmann_policy(self, q):
+        actions_prob = self.softmax(q / self.temperature)
+        return actions_prob
+
+    def get_mean_actions(self, actions: Dict[str, Tensor],
+                         agent_mask_tensor: Tensor, batch_size: int):
+        if self.use_parameter_sharing:
+            actions_tensor = actions[self.model_keys[0]].reshape([-1, self.n_agents])
+        else:
+            actions_tensor = ops.stack(itemgetter(*self.model_keys)(actions), axis=-1).reshape([-1, self.n_agents])
+        actions_onehot = ops.one_hot(actions_tensor, depth=self.n_actions_max)
+
+        # count alive neighbors
+        _eyes = ops.repeat_elements(ops.eye(self.n_agents).unsqueeze(0), rep=batch_size, axis=0)
+        agent_mask_diagonal = ops.repeat_elements(agent_mask_tensor.unsqueeze(-1), rep=self.n_agents, axis=2) * _eyes
+        agent_mask_neighbors = ops.repeat_elements(agent_mask_tensor.unsqueeze(-1),
+                                                   rep=self.n_agents, axis=2) - agent_mask_diagonal
+        agent_alive_neighbors = agent_mask_neighbors.sum(axis=-1, keepdims=True)
+
+        # calculate mean actions of each agent's neighbors
+        agent_mask_repeat = ops.repeat_elements(agent_mask_tensor.unsqueeze(-1), rep=self.n_actions_max, axis=2)
+        actions_onehot = actions_onehot * agent_mask_repeat
+        actions_sum = ops.repeat_elements(actions_onehot.sum(axis=-2, keepdims=True), rep=self.n_agents, axis=1)
+        actions_neighbors_sum = actions_sum - actions_onehot  # Sum of other agents' actions.
+        actions_mean_masked = actions_neighbors_sum * agent_mask_repeat / agent_alive_neighbors
+        return actions_mean_masked
+
+    def Qtarget(self, observation: Dict[str, Tensor], actions_mean: Dict[str, Tensor],
+                agent_ids: Dict[str, Tensor],
+                agent_key: str = None,
+                rnn_hidden: Optional[Dict[str, List[Tensor]]] = None):
+        """
+        Returns the Q^target of next observations and actions pairs.
+
+        Parameters:
+            observation (Dict[Tensor]): The observations.
+            actions_mean (Dict[str, Tensor]): The mean of each agent's neighbors.
+            agent_ids (Dict[Tensor]): The agents' ids (for parameter sharing).
+            agent_key (str): Calculate actions for specified agent.
+            rnn_hidden (Optional[Dict[str, List[Tensor]]]): The hidden variables of the RNN.
+
+        Returns:
+            rnn_hidden_new (Optional[Dict[str, List[Tensor]]]): The new hidden variables of the RNN.
+            q_target: The evaluations of Q^target.
+        """
+        rnn_hidden_new, q_target = {}, {}
+        agent_list = self.model_keys if agent_key is None else [agent_key]
+        actions_mean = {key: Tensor(actions_mean[key]) for key in agent_list}
+        for key in agent_list:
+            if self.use_rnn:
+                outputs = self.target_representation[key](observation[key], *rnn_hidden[key])
+                rnn_hidden_new[key] = (outputs['rnn_hidden'], outputs['rnn_cell'])
+            else:
+                outputs = self.target_representation[key](observation[key])
+                rnn_hidden_new[key] = None
+
+            # mean actions embedding
+            if self.use_parameter_sharing:
+                input_embedding = ops.cat([actions_mean[key], agent_ids], axis=-1)
+                act_embedding = self.target_action_mean_embedding[key](input_embedding)
+                q_inputs = ops.cat([outputs, act_embedding, agent_ids], axis=-1)
+            else:
+                act_embedding = self.target_action_mean_embedding[key](actions_mean[key])
+                q_inputs = ops.cat([outputs, act_embedding], axis=-1)
+
+            q_target[key] = self.target_Qhead[key](q_inputs)
+        return rnn_hidden_new, q_target
 
     def copy_target(self):
+        for ep, tp in zip(self.representation.trainable_params(), self.target_representation.trainable_params()):
+            tp.assign_value(ep)
+        for ep, tp in zip(self.action_mean_embedding.trainable_params(),
+                          self.target_action_mean_embedding.trainable_params()):
+            tp.assign_value(ep)
         for ep, tp in zip(self.eval_Qhead.trainable_params(), self.target_Qhead.trainable_params()):
             tp.assign_value(ep)
 
@@ -603,8 +1001,8 @@ class Independent_DDPG_Policy(Module):
         self.target_actor_representation = deepcopy(self.actor_representation)
         self.target_critic_representation = deepcopy(self.critic_representation)
 
-        self.actor, self.target_actor = {}, {}
-        self.critic, self.target_critic = {}, {}
+        self.actor, self.target_actor = ModuleDict(), ModuleDict()
+        self.critic, self.target_critic = ModuleDict(), ModuleDict()
         for key in self.model_keys:
             dim_action = self.action_space[key].shape[-1]
             dim_actor_in, dim_actor_out, dim_critic_in = self._get_actor_critic_input(
@@ -616,6 +1014,11 @@ class Independent_DDPG_Policy(Module):
             self.critic[key] = CriticNet(dim_critic_in, critic_hidden_size, normalize, initialize, activation)
             self.target_actor[key] = deepcopy(self.actor[key])
             self.target_critic[key] = deepcopy(self.critic[key])
+            # update parameters name
+            self.actor_representation[key].update_parameters_name(key + '_rep_actor_')
+            self.critic_representation[key].update_parameters_name(key + '_rep_critic_')
+            self.actor[key].update_parameters_name(key + '_actor_')
+            self.critic[key].update_parameters_name(key + '_critic_')
 
     @property
     def parameters_actor(self):
@@ -635,7 +1038,7 @@ class Independent_DDPG_Policy(Module):
 
     def _get_actor_critic_input(self, dim_actor_rep, dim_action, dim_critic_rep, n_agents):
         """
-        Returns the input dimensions of actor netwrok and critic networks.
+        Returns the input dimensions of actor and critic networks.
 
         Parameters:
             dim_actor_rep: The dimension of the output of actor presentation.
@@ -819,7 +1222,7 @@ class MADDPG_Policy(Independent_DDPG_Policy):
 
     def _get_actor_critic_input(self, dim_actor_rep, dim_action, dim_critic_rep, n_agents):
         """
-        Returns the input dimensions of actor netwrok and critic networks.
+        Returns the input dimensions of actor and critic networks.
 
         Parameters:
             dim_action: The dimension of actions.
@@ -968,9 +1371,9 @@ class MATD3_Policy(MADDPG_Policy, Module):
         self.target_critic_A_representation = deepcopy(self.critic_A_representation)
         self.target_critic_B_representation = deepcopy(self.critic_B_representation)
 
-        self.actor, self.target_actor = {}, {}
-        self.critic_A, self.critic_B = {}, {}
-        self.target_critic_A, self.target_critic_B = {}, {}
+        self.actor, self.target_actor = ModuleDict(), ModuleDict()
+        self.critic_A, self.critic_B = ModuleDict(), ModuleDict()
+        self.target_critic_A, self.target_critic_B = ModuleDict(), ModuleDict()
         for key in self.model_keys:
             dim_action = self.action_space[key].shape[-1]
             dim_actor_in, dim_actor_out, dim_critic_in = self._get_actor_critic_input(
@@ -985,6 +1388,9 @@ class MATD3_Policy(MADDPG_Policy, Module):
             self.target_critic_A[key] = deepcopy(self.critic_A[key])
             self.target_critic_B[key] = deepcopy(self.critic_B[key])
             # Update parameters name
+            self.actor_representation[key].update_parameters_name(key + '_rep_actor_')
+            self.critic_A_representation[key].update_parameters_name(key + '_rep_critic_A_')
+            self.critic_B_representation[key].update_parameters_name(key + '_rep_critic_B_')
             self.actor[key].update_parameters_name(key + '_actor_')
             self.critic_A[key].update_parameters_name(key + '_critic_A_')
             self.critic_B[key].update_parameters_name(key + '_critic_B_')

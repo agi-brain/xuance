@@ -11,7 +11,7 @@ from torch.utils.tensorboard import SummaryWriter
 
 
 class MyNewEnv(RawEnvironment):
-    "The customized environment."
+    "The custom environment."
     def __init__(self, env_config):
         super(MyNewEnv, self).__init__()
         self.env_id = env_config.env_id
@@ -44,7 +44,7 @@ class MyNewEnv(RawEnvironment):
 
 
 class MyCallback(BaseCallback):
-    """The customized callback.
+    """The custom callback.
         Note: Defining a custom callback is not required to use the agent.
         This example is provided purely to illustrate how one might extend the training loop with user-defined logic.
     """
@@ -80,8 +80,8 @@ if __name__ == "__main__":
 
     REGISTRY_ENV[configs.env_name] = MyNewEnv  # Register the new environment.
     set_seed(configs.seed)
-    envs = make_envs(configs)  # Create your customized environment in parallels.
-    my_callback = MyCallback(configs)  # Create the customized callback.
+    envs = make_envs(configs)  # Create your custom environment in parallels.
+    my_callback = MyCallback(configs)  # Create the custom callback.
     Agent = DQN_Agent(config=configs, envs=envs, callback=my_callback)  # Create a DQN agent.
 
     train_information = {"Deep learning toolbox": configs.dl_toolbox,

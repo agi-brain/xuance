@@ -1,112 +1,233 @@
 import numpy as np
-from tqdm import tqdm
 from argparse import Namespace
-from xuance.common import Union, DummyOffPolicyBuffer, DummyOffPolicyBuffer_Atari
+from operator import itemgetter
+from xuance.common import List, Optional, Union, MultiAgentBaseCallback
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
-from xuance.mindspore import ms, Module
-from xuance.mindspore.agents import MARLAgents
-from xuance.mindspore.learners import DQN_Learner
+from xuance.mindspore import ops, Module
+from xuance.mindspore.utils import NormalizeFunctions, InitializeFunctions, ActivationFunctions
+from xuance.mindspore.policies import REGISTRY_Policy, VDN_mixer, QMIX_mixer
+from xuance.mindspore.agents import OnPolicyMARLAgents
 
 
-class VDAC_Agents(MARLAgents):
+class VDAC_Agents(OnPolicyMARLAgents):
     def __init__(self,
                  config: Namespace,
                  envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv],
-                 device: str = "cpu:0"):
-        self.gamma = config.gamma
-        self.n_envs = envs.num_envs
-        self.n_size = config.n_size
-        self.n_epochs = config.n_epochs
-        self.n_minibatch = config.n_minibatch
-        if config.state_space is not None:
-            config.dim_state, state_shape = config.state_space.shape, config.state_space.shape
-        else:
-            config.dim_state, state_shape = None, None
+                 callback: Optional[MultiAgentBaseCallback] = None):
+        super(VDAC_Agents, self).__init__(config, envs, callback)
+        self.state_space = envs.state_space
+        self.mixer = config.mixer
 
-        input_representation = get_repre_in(config)
-        self.use_rnn = config.use_rnn
-        # create representation for actor
-        kwargs_rnn = {"N_recurrent_layers": config.N_recurrent_layers,
-                      "dropout": config.dropout,
-                      "rnn": config.rnn} if self.use_rnn else {}
-        representation = REGISTRY_Representation[config.representation](*input_representation, **kwargs_rnn)
-        # create policy
-        if config.mixer == "VDN":
+        self.policy = self._build_policy()  # build policy
+        self.memory = self._build_memory()  # build memory
+        self.learner = self._build_learner(self.config, self.model_keys, self.agent_keys, self.policy, self.callback)
+
+    def _build_policy(self) -> Module:
+        """
+        Build representation(s) and policy(ies) for agent(s)
+
+        Returns:
+            policy (Module): A dict of policies.
+        """
+        normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None
+        initializer = InitializeFunctions[self.config.initialize] if hasattr(self.config, "initialize") else None
+        activation = ActivationFunctions[self.config.activation]
+        agent = self.config.agent
+
+        # build representations
+        A_representation = self._build_representation(self.config.representation, self.observation_space, self.config)
+        C_representation = self._build_representation(self.config.representation, self.observation_space, self.config)
+
+        # create mixer
+        if self.mixer == "VDN":
             mixer = VDN_mixer()
-        elif config.mixer == "QMIX":
-            mixer = QMIX_mixer(config.dim_state[0], config.hidden_dim_mixing_net, config.hidden_dim_hyper_net,
-                               config.n_agents, device)
-        elif config.mixer == "Independent":
+        elif self.mixer == "QMIX":
+            dim_state = self.state_space.shape[-1]
+            mixer = QMIX_mixer(dim_state, self.config.hidden_dim_mixing_net, self.config.hidden_dim_hyper_net,
+                               self.n_agents)
+            self.use_global_state = True
+        elif self.mixer == "Independent":
             mixer = None
         else:
-            raise f"Mixer named {config.mixer} is not defined!"
-        input_policy = get_policy_in_marl(config, representation, mixer=mixer)
-        policy = REGISTRY_Policy[config.policy](*input_policy,
-                                                use_rnn=config.use_rnn,
-                                                rnn=config.rnn,
-                                                gain=config.gain)
-        lr_scheduler = MyLinearLR(config.learning_rate, start_factor=1.0, end_factor=self.end_factor_lr_decay,
-                                  total_iters=get_total_iters(config.agent_name, config))
-        optimizer = tk.optimizers.Adam(lr_scheduler)
-        self.observation_space = envs.observation_space
-        self.action_space = envs.action_space
-        self.auxiliary_info_shape = {}
+            raise AttributeError(f"Mixer named {self.mixer} is not supported in XuanCe!")
 
-        buffer = MARL_OnPolicyBuffer_RNN if self.use_rnn else MARL_OnPolicyBuffer
-        input_buffer = (config.n_agents, config.state_space.shape, config.obs_shape, config.act_shape, config.rew_shape,
-                        config.done_shape, envs.num_envs, config.n_size,
-                        config.use_gae, config.use_advnorm, config.gamma, config.gae_lambda)
-        memory = buffer(*input_buffer, max_episode_steps=envs.max_episode_steps, dim_act=config.dim_act)
-        self.buffer_size = memory.buffer_size
-        self.batch_size = self.buffer_size // self.n_minibatch
+        # build policies
+        if self.config.policy == "Categorical_MAAC_Policy":
+            policy = REGISTRY_Policy["Categorical_MAAC_Policy"](
+                action_space=self.action_space, n_agents=self.n_agents,
+                representation_actor=A_representation, representation_critic=C_representation, mixer=mixer,
+                actor_hidden_size=self.config.actor_hidden_size, critic_hidden_size=self.config.critic_hidden_size,
+                normalize=normalize_fn, initialize=initializer, activation=activation,
+                use_distributed_training=self.distributed_training,
+                use_parameter_sharing=self.use_parameter_sharing, model_keys=self.model_keys,
+                use_rnn=self.use_rnn, rnn=self.config.rnn if self.use_rnn else None)
+            self.continuous_control = False
+        elif self.config.policy == "Gaussian_MAAC_Policy":
+            policy = REGISTRY_Policy["Gaussian_MAAC_Policy"](
+                action_space=self.action_space, n_agents=self.n_agents,
+                representation_actor=A_representation, representation_critic=C_representation, mixer=mixer,
+                actor_hidden_size=self.config.actor_hidden_size, critic_hidden_size=self.config.critic_hidden_size,
+                normalize=normalize_fn, initialize=initializer, activation=activation,
+                activation_action=ActivationFunctions[self.config.activation_action],
+                use_distributed_training=self.distributed_training,
+                use_parameter_sharing=self.use_parameter_sharing, model_keys=self.model_keys,
+                use_rnn=self.use_rnn, rnn=self.config.rnn if self.use_rnn else None)
+            self.continuous_control = True
+        else:
+            raise AttributeError(f"{agent} currently does not support the policy named {self.config.policy}.")
+        return policy
 
-        learner = VDAC_Learner(config, policy, optimizer, config.device, config.model_dir, config.gamma)
-        super(VDAC_Agents, self).__init__(config, envs, policy, memory, learner, device,
-                                          config.log_dir, config.model_dir)
-        self.share_values = True if config.rew_shape[0] == 1 else False
-        self.on_policy = True
+    def store_experience(self, obs_dict, avail_actions, actions_dict, log_pi_a, rewards_dict, values_dict,
+                         terminals_dict, info, **kwargs):
+        """
+        Store experience data into replay buffer.
 
-    def act(self, obs_n, *rnn_hidden, avail_actions=None, state=None, test_mode=False):
-        batch_size = len(obs_n)
-        agents_id = tf.tile(tf.expand_dims(tf.eye(self.n_agents), axis=0), multiples=(batch_size, 1, 1))
-        obs_in = tf.reshape(tf.convert_to_tensor(obs_n), [batch_size, self.n_agents, -1])
-        if state is not None:
-            state = tf.convert_to_tensor(state)
+        Parameters:
+            obs_dict (List[dict]): Observations for each agent in self.agent_keys.
+            avail_actions (List[dict]): Actions mask values for each agent in self.agent_keys.
+            actions_dict (List[dict]): Actions for each agent in self.agent_keys.
+            log_pi_a (dict): The log of pi.
+            rewards_dict (List[dict]): Rewards for each agent in self.agent_keys.
+            values_dict (dict): Critic values for each agent in self.agent_keys.
+            terminals_dict (List[dict]): Terminated values for each agent in self.agent_keys.
+            info (List[dict]): Other information for the environment at current step.
+            **kwargs: Other inputs.
+        """
+        experience_data = {
+            'obs': {k: np.array([data[k] for data in obs_dict]) for k in self.agent_keys},
+            'actions': {k: np.array([data[k] for data in actions_dict]) for k in self.agent_keys},
+            # 'log_pi_old': log_pi_a,
+            'rewards': {k: np.array([np.array(list(data.values())).mean() for data in rewards_dict])
+                        for k in self.agent_keys},
+            'values': values_dict,
+            'terminals': {k: np.array([data[k] for data in terminals_dict]) for k in self.agent_keys},
+            'agent_mask': {k: np.array([data['agent_mask'][k] for data in info]) for k in self.agent_keys},
+        }
         if self.use_rnn:
-            batch_agents = batch_size * self.n_agents
-            hidden_state, dists, values_tot = self.policy(obs_in.view(batch_agents, 1, -1),
-                                                          agents_id.unsqueeze(2),
-                                                          *rnn_hidden,
-                                                          avail_actions=avail_actions[:, :, np.newaxis],
-                                                          state=state.unsqueeze(2))
-            actions = dists.stochastic_sample()
-            actions = actions.reshape(batch_size, self.n_agents)
-            values_tot = values_tot.reshape([batch_size, self.n_agents, 1])
-        else:
-            inputs = {'obs': obs_in, 'ids': agents_id}
-            hidden_state, dists, values_tot = self.policy(inputs,
-                                                          avail_actions=avail_actions,
-                                                          state=state)
-            actions = dists.stochastic_sample()
-            values_tot = tf.reshape(values_tot, [batch_size, self.n_agents, 1])
-        return hidden_state, actions.numpy(), values_tot.numpy()
+            experience_data['episode_steps'] = np.array([data['episode_step'] - 1 for data in info])
+        if self.use_global_state:
+            experience_data['state'] = np.array(kwargs['state'])
+        if self.use_actions_mask:
+            experience_data['avail_actions'] = {k: np.array([data[k] for data in avail_actions])
+                                                for k in self.agent_keys}
+        self.memory.store(**experience_data)
 
-    def train(self, i_step, **kwargs):
-        if self.memory.full:
-            info_train = {}
-            indexes = np.arange(self.buffer_size)
-            for _ in range(self.n_epochs):
-                np.random.shuffle(indexes)
-                for start in range(0, self.buffer_size, self.batch_size):
-                    end = start + self.batch_size
-                    sample_idx = indexes[start:end]
-                    sample = self.memory.sample(sample_idx)
-                    if self.use_rnn:
-                        info_train = self.learner.update_recurrent(sample)
-                    else:
-                        info_train = self.learner.update(sample)
-            self.learner.lr_decay(i_step)
-            self.memory.clear()
-            return info_train
+    def action(self,
+               obs_dict: List[dict],
+               state: Optional[np.ndarray] = None,
+               avail_actions_dict: Optional[List[dict]] = None,
+               rnn_hidden_actor: Optional[dict] = None,
+               rnn_hidden_critic: Optional[dict] = None,
+               test_mode: Optional[bool] = False,
+               **kwargs):
+        """
+        Returns actions for agents.
+
+        Parameters:
+            obs_dict (dict): Observations for each agent in self.agent_keys.
+            state (Optional[np.ndarray]): The global state.
+            avail_actions_dict (Optional[List[dict]]): Actions mask values, default is None.
+            rnn_hidden_actor (Optional[dict]): The RNN hidden states of actor representation.
+            rnn_hidden_critic (Optional[dict]): The RNN hidden states of critic representation.
+            test_mode (Optional[bool]): True for testing without noises.
+
+        Returns:
+            rnn_hidden_actor_new (dict): The new RNN hidden states of actor representation (if self.use_rnn=True).
+            rnn_hidden_critic_new (dict): The new RNN hidden states of critic representation (if self.use_rnn=True).
+            actions_dict (dict): The output actions.
+            log_pi_a (dict): The log of pi.
+            values_dict (dict): The evaluated critic values (when test_mode is False).
+        """
+        n_env = len(obs_dict)
+        rnn_hidden_critic_new, log_pi_a_dict, values_dict = {}, {}, {}
+
+        obs_input, agents_id, avail_actions_input = self._build_inputs(obs_dict, avail_actions_dict)
+        if self.continuous_control:
+            rnn_hidden_actor_new, pi_mu, pi_std = self.policy(observation=obs_input,
+                                                              agent_ids=agents_id,
+                                                              avail_actions=avail_actions_input,
+                                                              rnn_hidden=rnn_hidden_actor)
         else:
-            return {}
+            rnn_hidden_actor_new, pi_logits = self.policy(observation=obs_input,
+                                                          agent_ids=agents_id,
+                                                          avail_actions=avail_actions_input,
+                                                          rnn_hidden=rnn_hidden_actor)
+        if not test_mode:
+            rnn_hidden_critic_new, values_out = self.policy.get_values(observation=obs_input,
+                                                                       agent_ids=agents_id,
+                                                                       rnn_hidden=rnn_hidden_critic)
+            if self.use_parameter_sharing:
+                values_n = values_out[self.model_keys[0]].reshape([n_env, self.n_agents])
+            else:
+                values_n = ops.stack(itemgetter(*self.agent_keys)(values_out), axis=-1).reshape([n_env, self.n_agents])
+            if self.config.mixer == "VDN":
+                values_tot = self.policy.value_tot(values_n).asnumpy().reshape(n_env)
+            elif self.config.mixer == "QMIX":
+                values_tot = self.policy.value_tot(values_n, state).asnumpy().reshape(n_env)
+            else:
+                raise NotImplementedError(f"Mixer {self.config.mixer} for VDAC is not implemented.")
+            values_dict = {k: values_tot for k in self.agent_keys}
+
+        if self.use_parameter_sharing:
+            key = self.agent_keys[0]
+            if self.continuous_control:
+                pi_dists = self.policy.actor[key].distribution(mu=pi_mu[key], std=pi_std[key])
+                actions_sample = pi_dists.stochastic_sample()
+                actions_out = actions_sample.asnumpy().reshape(n_env, self.n_agents, -1)
+            else:
+                pi_dists = self.policy.actor[key].distribution(logits=pi_logits[key])
+                actions_sample = pi_dists.stochastic_sample()
+                actions_out = actions_sample.asnumpy().reshape(n_env, self.n_agents)
+            actions_dict = [{k: actions_out[e, i] for i, k in enumerate(self.agent_keys)} for e in range(n_env)]
+        else:
+            if self.continuous_control:
+                pi_dists = {k: self.policy.actor[k].distribution(pi_mu[k], pi_std[k]) for k in self.agent_keys}
+                actions_sample = {k: pi_dists[k].stochastic_sample() for k in self.agent_keys}
+                actions_dict = [{k: actions_sample[k].asnumpy()[e].reshape([-1]) for k in self.agent_keys}
+                                for e in range(n_env)]
+            else:
+                pi_dists = {k: self.policy.actor[k].distribution(logits=pi_logits[k]) for k in self.agent_keys}
+                actions_sample = {k: pi_dists[k].stochastic_sample() for k in self.agent_keys}
+                actions_dict = [{k: actions_sample[k].asnumpy()[e].reshape([]) for k in self.agent_keys}
+                                for e in range(n_env)]
+
+        return {"rnn_hidden_actor": rnn_hidden_actor_new, "rnn_hidden_critic": rnn_hidden_critic_new,
+                "actions": actions_dict, "log_pi": None, "values": values_dict}
+
+    def values_next(self,
+                    i_env: int,
+                    obs_dict: dict,
+                    state: Optional[np.ndarray] = None,
+                    rnn_hidden_critic: Optional[dict] = None):
+        """
+        Returns critic values of one environment that finished an episode.
+
+        Parameters:
+            i_env (int): The index of environment.
+            obs_dict (dict): Observations for each agent in self.agent_keys.
+            state (Optional[np.ndarray]): The global state.
+            rnn_hidden_critic (Optional[dict]): The RNN hidden states of critic representation.
+
+        Returns:
+            rnn_hidden_critic_new (dict): The new RNN hidden states of critic representation (if self.use_rnn=True).
+            values_dict: The critic values.
+        """
+        n_env = 1
+        obs_input, agents_id, avail_actions_input = self._build_inputs([obs_dict])
+        rnn_hidden_critic_new, values_dict = self.policy.get_values(observation=obs_input,
+                                                                    agent_ids=agents_id,
+                                                                    rnn_hidden=rnn_hidden_critic)
+        if self.use_parameter_sharing:
+            values_n = values_dict[self.model_keys[0]].reshape([n_env, self.n_agents])
+        else:
+            values_n = ops.stack(itemgetter(*self.agent_keys)(values_dict), axis=-1).reshape([n_env, self.n_agents])
+
+        if self.config.mixer == "VDN":
+            values_tot = self.policy.value_tot(values_n).asnumpy().reshape([])
+        elif self.config.mixer == "QMIX":
+            values_tot = self.policy.value_tot(values_n, state).asnumpy().reshape([])
+        else:
+            raise NotImplementedError(f"Mixer {self.config.mixer} for VDAC is not implemented.")
+        values_dict = {k: values_tot for k in self.agent_keys}
+
+        return rnn_hidden_critic_new, values_dict

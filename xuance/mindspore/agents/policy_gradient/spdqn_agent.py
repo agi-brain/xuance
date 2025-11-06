@@ -4,10 +4,10 @@ from tqdm import tqdm
 from copy import deepcopy
 from argparse import Namespace
 from gymnasium import spaces
-from xuance.common import DummyOffPolicyBuffer
+from xuance.common import Optional, DummyOffPolicyBuffer, BaseCallback
 from xuance.environment.single_agent_env import Gym_Env
 from xuance.mindspore import Module
-from xuance.mindspore.utils import NormalizeFunctions, ActivationFunctions
+from xuance.mindspore.utils import NormalizeFunctions, InitializeFunctions, ActivationFunctions
 from xuance.mindspore.policies import REGISTRY_Policy
 from xuance.mindspore.agents import Agent
 from xuance.mindspore.agents.policy_gradient.pdqn_agent import PDQN_Agent
@@ -23,8 +23,9 @@ class SPDQN_Agent(PDQN_Agent, Agent):
     """
     def __init__(self,
                  config: Namespace,
-                 envs: Gym_Env,):
-        Agent.__init__(self, config, envs)
+                 envs: Gym_Env,
+                 callback: Optional[BaseCallback] = None):
+        Agent.__init__(self, config, envs, callback)
         self.start_noise, self.end_noise = config.start_noise, config.end_noise
         self.noise_scale = config.start_noise
         self.delta_noise = (self.start_noise - self.end_noise) / (config.running_steps / self.n_envs)
@@ -58,7 +59,7 @@ class SPDQN_Agent(PDQN_Agent, Agent):
                                            n_envs=self.n_envs,
                                            buffer_size=config.buffer_size,
                                            batch_size=config.batch_size)
-        self.learner = self._build_learner(self.config, self.policy)
+        self.learner = self._build_learner(self.config, self.policy, self.callback)
 
         self.num_disact = self.action_space.spaces[0].n
         self.conact_sizes = np.array([self.action_space.spaces[i].shape[0] for i in range(1, self.num_disact + 1)])
@@ -66,9 +67,8 @@ class SPDQN_Agent(PDQN_Agent, Agent):
 
     def _build_policy(self) -> Module:
         normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None
-        initializer = tk.initializers.orthogonal
+        initializer = InitializeFunctions[self.config.initialize] if hasattr(self.config, "initialize") else None
         activation = ActivationFunctions[self.config.activation]
-        device = self.device
 
         # build representation.
         representation = self._build_representation(self.config.representation, self.observation_space, self.config)
@@ -89,6 +89,7 @@ class SPDQN_Agent(PDQN_Agent, Agent):
         return policy
 
     def train(self, train_steps=10000):
+        train_info = {}
         episodes = np.zeros((self.nenvs,), np.int32)
         scores = np.zeros((self.nenvs,), np.float32)
         obs, _ = self.envs.reset()
@@ -101,23 +102,46 @@ class SPDQN_Agent(PDQN_Agent, Agent):
             (next_obs, steps), rewards, terminal, _ = self.envs.step(action)
             if self.render: self.envs.render("human")
             acts = np.concatenate(([disaction], con_actions), axis=0).ravel()
+
+            self.callback.on_train_step(self.current_step, envs=self.envs, policy=self.policy,
+                                        obs=obs, next_obs=next_obs, rewards=rewards, terminals=terminal,
+                                        action=action, acts=acts, steps=steps,
+                                        disaction=disaction, conaction=conaction, con_actions=con_actions,
+                                        train_steps=train_steps)
+
             self.memory.store(obs, acts, rewards, terminal, next_obs)
             if self.current_step > self.start_training and self.current_step % self.training_frequency == 0:
-                train_info = self.train_epochs(n_epochs=self.n_epochs)
-                self.log_infos(train_info, self.current_step)
+                update_info = self.train_epochs(n_epochs=self.n_epochs)
+                self.log_infos(update_info, self.current_step)
+                train_info.update(update_info)
+                self.callback.on_train_epochs_end(self.current_step, policy=self.policy, memory=self.memory,
+                                                  current_episode=self.current_episode, train_steps=train_steps,
+                                                  update_info=update_info)
 
             scores += rewards
             obs = deepcopy(next_obs)
 
             if terminal:
-                step_info["returns-step"] = scores
+                episode_info = {"returns-step": scores}
                 scores = 0
                 returns = 0
                 episodes += 1
                 self.end_episode(episodes)
                 obs, _ = self.envs.reset()
                 self.log_infos(step_info, self.current_step)
+                train_info.update(episode_info)
+                self.callback.on_train_episode_info(envs=self.envs, policy=self.policy,
+                                                    use_wandb=self.use_wandb,
+                                                    current_step=self.current_step,
+                                                    current_episode=self.current_episode,
+                                                    train_steps=train_steps)
 
             self.current_step += self.n_envs
+
             if self.noise_scale >= self.end_noise:
                 self.noise_scale -= self.delta_noise
+
+            self.callback.on_train_step_end(self.current_step, envs=self.envs, policy=self.policy,
+                                            train_steps=train_steps, train_info=train_info)
+
+        return train_info

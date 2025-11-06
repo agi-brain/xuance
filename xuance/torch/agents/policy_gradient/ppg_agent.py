@@ -3,13 +3,12 @@ import numpy as np
 from tqdm import tqdm
 from copy import deepcopy
 from argparse import Namespace
-from xuance.common import Union, Optional
+from xuance.common import Union, Optional, BaseCallback
 from xuance.environment import DummyVecEnv, SubprocVecEnv
 from xuance.torch import Module
-from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
+from xuance.torch.utils import NormalizeFunctions, ActivationFunctions, split_distributions
 from xuance.torch.policies import REGISTRY_Policy
-from xuance.torch.agents import OnPolicyAgent, BaseCallback
-from xuance.torch.utils import split_distributions
+from xuance.torch.agents import OnPolicyAgent
 
 
 class PPG_Agent(OnPolicyAgent):

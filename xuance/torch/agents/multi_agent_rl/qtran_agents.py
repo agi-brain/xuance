@@ -1,11 +1,11 @@
 import torch
 from argparse import Namespace
-from xuance.common import List, Optional, Union
+from xuance.common import List, Optional, Union, MultiAgentBaseCallback
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
 from xuance.torch import Module
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
 from xuance.torch.policies import REGISTRY_Policy, QTRAN_base, QTRAN_alt, VDN_mixer
-from xuance.torch.agents import OffPolicyMARLAgents, BaseCallback
+from xuance.torch.agents import OffPolicyMARLAgents
 
 
 class QTRAN_Agents(OffPolicyMARLAgents):
@@ -20,7 +20,7 @@ class QTRAN_Agents(OffPolicyMARLAgents):
     def __init__(self,
                  config: Namespace,
                  envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv],
-                 callback: Optional[BaseCallback] = None):
+                 callback: Optional[MultiAgentBaseCallback] = None):
         super(QTRAN_Agents, self).__init__(config, envs, callback)
         self.state_space = envs.state_space
         self.use_global_state = True

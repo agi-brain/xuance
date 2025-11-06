@@ -15,7 +15,7 @@ print("[DOCS] xuance library path: {}".format(sys.path[0]))
 project = 'XuanCe'
 copyright = '2023, XuanCe Contributors.'
 author = 'Wenzhang Liu, etc.'
-release = "1.3.1"
+release = "1.3.2"
 
 # The master toctree document.
 master_doc = 'index'
@@ -42,6 +42,9 @@ extensions = [
     "notfound.extension",
     "sphinx_github_changelog"
 ]
+
+napoleon_google_docstring = True
+napoleon_numpy_docstring = False
 
 source_suffix = {
     '.rst': 'restructuredtext',
@@ -118,8 +121,10 @@ rst_prolog = """
 
 html_theme = "furo"  # sphinx_rtd_theme (before that is renku)
 html_title = f"<div style='text-align: center; font-size: 20px'><strong>{project}</strong></div>"
+html_short_title = "XuanCe"
 html_scaled_image_link = False
 html_static_path = ['_static']
+html_extra_path = ['_extra']
 html_theme_options = {
     # logo
     "light_logo": "figures/logo_2.png",

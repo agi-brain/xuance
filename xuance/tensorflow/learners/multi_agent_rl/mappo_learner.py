@@ -12,14 +12,14 @@ from xuance.tensorflow import tf, tk, Module
 from xuance.tensorflow.learners.multi_agent_rl.ippo_learner import IPPO_Learner
 
 
-class MAPPO_Clip_Learner(IPPO_Learner):
+class MAPPO_Learner(IPPO_Learner):
     def __init__(self,
                  config: Namespace,
                  model_keys: List[str],
                  agent_keys: List[str],
                  policy: Module,
                  callback):
-        super(MAPPO_Clip_Learner, self).__init__(config, model_keys, agent_keys, policy, callback)
+        super(MAPPO_Learner, self).__init__(config, model_keys, agent_keys, policy, callback)
 
     # @tf.function
     def forward_fn(self, *args):
@@ -124,7 +124,6 @@ class MAPPO_Clip_Learner(IPPO_Learner):
 
     def update(self, sample):
         self.iterations += 1
-        info = {}
 
         # prepare training data
         sample_Tensor = self.build_training_data(sample=sample,
@@ -164,6 +163,10 @@ class MAPPO_Clip_Learner(IPPO_Learner):
                     joint_obs = tf.concat(itemgetter(*self.agent_keys)(obs), axis=-1)
                 critic_input = {k: joint_obs for k in self.agent_keys}
 
+        info = self.callback.on_update_start(self.iterations, method="update",
+                                             policy=self.policy, sample_Tensor=sample_Tensor, bs=bs,
+                                             critic_input=critic_input)
+
         loss, a_loss, c_loss, e_loss, v_pred = self.learn(bs, obs, critic_input, actions, log_pi_old,
                                                           agent_mask, avail_actions, values, returns, advantages, IDs)
 
@@ -176,5 +179,7 @@ class MAPPO_Clip_Learner(IPPO_Learner):
             "entropy_loss": sum(e_loss).numpy(),
             "loss": loss.numpy(),
         })
+
+        info.update(self.callback.on_update_end(self.iterations, method="update", policy=self.policy, info=info))
 
         return info

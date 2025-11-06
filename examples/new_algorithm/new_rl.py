@@ -106,7 +106,7 @@ class MyAgent(OffPolicyAgent):
     def _build_policy(self):
         # First create the representation module.
         representation = self._build_representation("Basic_MLP", self.observation_space, self.config)
-        # Build your customized policy module.
+        # Build your custom policy module.
         policy = MyPolicy(representation, 64, self.action_space.n, self.config.device)
         return policy
 

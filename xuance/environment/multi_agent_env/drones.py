@@ -177,7 +177,7 @@ class MultiHoverAviary(MultiHoverAviary_Official):
 
 REGISTRY = {
     "MultiHoverAviary": MultiHoverAviary,
-    # you can add your customized scenarios here.
+    # you can add your custom scenarios here.
 }
 
 

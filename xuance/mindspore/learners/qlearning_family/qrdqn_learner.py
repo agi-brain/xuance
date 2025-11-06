@@ -12,8 +12,9 @@ from xuance.mindspore.learners import Learner
 class QRDQN_Learner(Learner):
     def __init__(self,
                  config: Namespace,
-                 policy: Module):
-        super(QRDQN_Learner, self).__init__(config, policy)
+                 policy: Module,
+                 callback):
+        super(QRDQN_Learner, self).__init__(config, policy, callback)
         self.optimizer = optim.Adam(params=self.policy.trainable_params(), lr=self.config.learning_rate, eps=1e-5)
         self.scheduler = optim.lr_scheduler.LinearLR(self.optimizer, start_factor=1.0, end_factor=self.end_factor_lr_decay,
                                                      total_iters=self.config.running_steps)
@@ -36,7 +37,7 @@ class QRDQN_Learner(Learner):
 
         loss = self.mse_loss(logits=current_quantile, labels=ops.stop_gradient(target_quantile))
 
-        return loss, evalZ
+        return loss, evalZ, targetA, targetZ, current_quantile, target_quantile
 
     def update(self, **samples):
         self.iterations += 1
@@ -46,7 +47,12 @@ class QRDQN_Learner(Learner):
         next_batch = Tensor(samples['obs_next'])
         ter_batch = Tensor(samples['terminals'])
 
-        (loss, evalZ), grads = self.grad_fn(obs_batch, act_batch, next_batch, rew_batch, ter_batch)
+        info = self.callback.on_update_start(self.iterations,
+                                             policy=self.policy, obs=obs_batch, act=act_batch,
+                                             next_obs=next_batch, rew=rew_batch, termination=ter_batch)
+
+        (loss, evalZ, targetA, targetZ, current_quantile, target_quantile), grads = self.grad_fn(
+            obs_batch, act_batch, next_batch, rew_batch, ter_batch)
         self.optimizer(grads)
 
         # hard update for target network
@@ -56,9 +62,15 @@ class QRDQN_Learner(Learner):
         self.scheduler.step()
         lr = self.scheduler.get_last_lr()[0]
 
-        info = {
+        info.update({
             "Qloss": loss.asnumpy(),
             "learning_rate": lr.asnumpy(),
-        }
+        })
+
+        info.update(self.callback.on_update_end(self.iterations,
+                                                policy=self.policy, info=info,
+                                                evalZ=evalZ, targetA=targetA, targetZ=targetZ,
+                                                current_quantile=current_quantile, target_quantile=target_quantile,
+                                                loss=loss))
 
         return info

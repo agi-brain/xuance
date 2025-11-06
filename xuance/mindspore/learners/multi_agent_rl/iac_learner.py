@@ -6,10 +6,9 @@ Implementation: Pytorch
 import numpy as np
 from argparse import Namespace
 from operator import itemgetter
-from mindspore.nn import MSELoss, HuberLoss
 from xuance.common import Optional, List
-from xuance.mindspore import ms, Module, Tensor, optim, ops
-from xuance.mindspore.utils import ValueNorm
+from xuance.mindspore import ms, nn, msd, ops, Module, Tensor, optim
+from xuance.mindspore.utils import ValueNorm, clip_grads
 from xuance.mindspore.learners import LearnerMAS
 
 
@@ -18,22 +17,34 @@ class IAC_Learner(LearnerMAS):
                  config: Namespace,
                  model_keys: List[str],
                  agent_keys: List[str],
-                 policy: Module):
-        super(IAC_Learner, self).__init__(config, model_keys, agent_keys, policy)
+                 policy: Module,
+                 callback):
+        super(IAC_Learner, self).__init__(config, model_keys, agent_keys, policy, callback)
         self.build_optimizer()
         self.use_value_clip, self.value_clip_range = config.use_value_clip, config.value_clip_range
         self.use_huber_loss, self.huber_delta = config.use_huber_loss, config.huber_delta
         self.use_value_norm = config.use_value_norm
         self.vf_coef, self.ent_coef = config.vf_coef, config.ent_coef
-        self.mse_loss = MSELoss()
-        self.huber_loss = HuberLoss(reduction="none", delta=self.huber_delta)
+        self.mse_loss = nn.MSELoss()
+        self.huber_loss = nn.HuberLoss(reduction="none", delta=self.huber_delta)
+        self.softmax = nn.Softmax(axis=-1)
+        self.is_continuous = self.policy.is_continuous
         if self.use_value_norm:
-            self.value_normalizer = {key: ValueNorm(1).to(self.device) for key in self.model_keys}
+            self.value_normalizer = {key: ValueNorm(1) for key in self.model_keys}
         else:
             self.value_normalizer = None
 
+        if self.is_continuous:
+            self.pi_dist = {k: msd.Normal(dtype=ms.float32) for k in self.model_keys}
+        else:
+            self.pi_dist = {k: msd.Categorical() for k in self.model_keys}
+
+        # Get gradient function
+        self.grad_fn = ms.value_and_grad(self.forward_fn, None, self.optimizer.parameters, has_aux=True)
+        self.policy.set_train()
+
     def build_optimizer(self):
-        self.optimizer = optim.Adam(params=self.policy.trainable_params(), lr=self.config.learning_rate, eps=1e-5)
+        self.optimizer = optim.Adam(params=self.policy.parameters_model, lr=self.config.learning_rate, eps=1e-5)
         self.scheduler = optim.lr_scheduler.LinearLR(self.optimizer,
                                                      start_factor=1.0,
                                                      end_factor=self.end_factor_lr_decay,
@@ -61,14 +72,14 @@ class IAC_Learner(LearnerMAS):
         if use_parameter_sharing:
             k = self.model_keys[0]
             bs = batch_size * self.n_agents
-            obs_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['obs']), axis=1)).to(self.device)
-            actions_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['actions']), axis=1)).to(self.device)
-            values_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['values']), axis=1)).to(self.device)
-            returns_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['returns']), axis=1)).to(self.device)
-            advantages_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['advantages']), 1)).to(self.device)
-            log_pi_old_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['log_pi_old']), 1)).to(self.device)
-            ter_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['terminals']), 1)).float().to(self.device)
-            msk_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['agent_mask']), 1)).float().to(self.device)
+            obs_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['obs']), axis=1))
+            actions_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['actions']), axis=1))
+            values_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['values']), axis=1))
+            returns_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['returns']), axis=1))
+            advantages_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['advantages']), 1))
+            log_pi_old_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['log_pi_old']), 1))
+            ter_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['terminals']), 1)).float()
+            msk_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['agent_mask']), 1)).float()
             if self.use_rnn:
                 obs = {k: obs_tensor.reshape(bs, seq_length, -1)}
                 if len(actions_tensor.shape) == 3:
@@ -83,8 +94,8 @@ class IAC_Learner(LearnerMAS):
                 log_pi_old = {k: log_pi_old_tensor.reshape(bs, seq_length)}
                 terminals = {k: ter_tensor.reshape(bs, seq_length)}
                 agent_mask = {k: msk_tensor.reshape(bs, seq_length)}
-                IDs = torch.eye(self.n_agents).unsqueeze(1).unsqueeze(0).expand(
-                    batch_size, -1, seq_length, -1).reshape(bs, seq_length, self.n_agents).to(self.device)
+                IDs = ops.eye(self.n_agents).unsqueeze(1).unsqueeze(0).expand(
+                    batch_size, -1, seq_length, -1).reshape(bs, seq_length, self.n_agents)
             else:
                 obs = {k: obs_tensor.reshape(bs, -1)}
                 if len(actions_tensor.shape) == 2:
@@ -99,33 +110,32 @@ class IAC_Learner(LearnerMAS):
                 log_pi_old = {k: log_pi_old_tensor.reshape(bs)}
                 terminals = {k: ter_tensor.reshape(bs)}
                 agent_mask = {k: msk_tensor.reshape(bs)}
-                IDs = torch.eye(self.n_agents).unsqueeze(0).expand(
-                    batch_size, -1, -1).reshape(bs, self.n_agents).to(self.device)
+                IDs = Tensor(np.eye(self.n_agents, dtype=np.float32)[None].repeat(batch_size, axis=0).reshape(bs, -1))
 
             if use_actions_mask:
                 avail_a = np.stack(itemgetter(*self.agent_keys)(sample['avail_actions']), axis=1)
                 if self.use_rnn:
-                    avail_actions = {k: Tensor(avail_a.reshape([bs, seq_length, -1])).float().to(self.device)}
+                    avail_actions = {k: Tensor(avail_a.reshape([bs, seq_length, -1])).float()}
                 else:
-                    avail_actions = {k: Tensor(avail_a.reshape([bs, -1])).float().to(self.device)}
+                    avail_actions = {k: Tensor(avail_a.reshape([bs, -1])).float()}
 
         else:
-            obs = {k: Tensor(sample['obs'][k]).to(self.device) for k in self.agent_keys}
-            actions = {k: Tensor(sample['actions'][k]).to(self.device) for k in self.agent_keys}
-            values = {k: Tensor(sample['values'][k]).to(self.device) for k in self.agent_keys}
-            returns = {k: Tensor(sample['returns'][k]).to(self.device) for k in self.agent_keys}
-            advantages = {k: Tensor(sample['advantages'][k]).to(self.device) for k in self.agent_keys}
-            log_pi_old = {k: Tensor(sample['log_pi_old'][k]).to(self.device) for k in self.agent_keys}
-            terminals = {k: Tensor(sample['terminals'][k]).float().to(self.device) for k in self.agent_keys}
-            agent_mask = {k: Tensor(sample['agent_mask'][k]).float().to(self.device) for k in self.agent_keys}
+            obs = {k: Tensor(sample['obs'][k]) for k in self.agent_keys}
+            actions = {k: Tensor(sample['actions'][k]) for k in self.agent_keys}
+            values = {k: Tensor(sample['values'][k]) for k in self.agent_keys}
+            returns = {k: Tensor(sample['returns'][k]) for k in self.agent_keys}
+            advantages = {k: Tensor(sample['advantages'][k]) for k in self.agent_keys}
+            log_pi_old = {k: Tensor(sample['log_pi_old'][k]) for k in self.agent_keys}
+            terminals = {k: Tensor(sample['terminals'][k]).float() for k in self.agent_keys}
+            agent_mask = {k: Tensor(sample['agent_mask'][k]).float() for k in self.agent_keys}
             if use_actions_mask:
-                avail_actions = {k: Tensor(sample['avail_actions'][k]).float().to(self.device) for k in self.agent_keys}
+                avail_actions = {k: Tensor(sample['avail_actions'][k]).float() for k in self.agent_keys}
 
         if use_global_state:
-            state = Tensor(sample['state']).to(self.device)
+            state = Tensor(sample['state'])
 
         if self.use_rnn:
-            filled = Tensor(sample['filled']).float().to(self.device)
+            filled = Tensor(sample['filled']).float()
 
         sample_Tensor = {
             'batch_size': batch_size,
@@ -145,40 +155,37 @@ class IAC_Learner(LearnerMAS):
         }
         return sample_Tensor
 
-    def update(self, sample):
-        self.iterations += 1
-        info = {}
-
-        # prepare training data
-        sample_Tensor = self.build_training_data(sample=sample,
-                                                 use_parameter_sharing=self.use_parameter_sharing,
-                                                 use_actions_mask=self.use_actions_mask)
-        batch_size = sample_Tensor['batch_size']
-        obs = sample_Tensor['obs']
-        actions = sample_Tensor['actions']
-        agent_mask = sample_Tensor['agent_mask']
-        avail_actions = sample_Tensor['avail_actions']
-        values = sample_Tensor['values']
-        returns = sample_Tensor['returns']
-        advantages = sample_Tensor['advantages']
-        IDs = sample_Tensor['agent_ids']
-
-        bs = batch_size * self.n_agents if self.use_parameter_sharing else batch_size
+    def forward_fn(self, *args):
+        bs, obs, actions, agent_mask, avail_actions, values, returns, advantages, IDs = args
+        info_forward = {}
+        pi_dist_mu, pi_dist_std, pi_dist_logits = {}, {}, {}
 
         # feedforward
-        _, pi_dist_dict = self.policy(observation=obs, agent_ids=IDs, avail_actions=avail_actions)
+        if self.is_continuous:
+            _, pi_dist_mu, pi_dist_std = self.policy(observation=obs, agent_ids=IDs, avail_actions=avail_actions)
+        else:
+            _, pi_dist_logits = self.policy(observation=obs, agent_ids=IDs, avail_actions=avail_actions)
+
         _, values_pred_dict = self.policy.get_values(observation=obs, agent_ids=IDs)
 
         loss_a, loss_e, loss_c = [], [], []
         for key in self.model_keys:
             mask_values = agent_mask[key]
             # policy gradient loss
-            log_pi = pi_dist_dict[key].log_prob(actions[key])
-            pg_loss = -((advantages[key].detach() * log_pi) * mask_values).sum() / mask_values.sum()
+            if self.is_continuous:
+                log_pi = self.pi_dist[key]._log_prob(value=actions[key], mean=pi_dist_mu[key], sd=pi_dist_std[key])
+                log_pi = ops.reduce_sum(x=log_pi, axis=-1)
+                entropy = self.pi_dist[key]._entropy(mean=pi_dist_mu[key], sd=pi_dist_std[key])
+                entropy = ops.reduce_sum(x=entropy, axis=-1)
+            else:
+                probs = self.softmax(pi_dist_logits[key])
+                log_pi = self.pi_dist[key]._log_prob(value=actions[key], probs=probs)
+                entropy = self.pi_dist[key].entropy(probs=probs)
+
+            pg_loss = -(ops.stop_gradient(advantages[key]) * log_pi * mask_values).sum() / mask_values.sum()
             loss_a.append(pg_loss)
 
             # entropy loss
-            entropy = pi_dist_dict[key].entropy()
             entropy_loss = (entropy * mask_values).sum() / mask_values.sum()
             loss_e.append(entropy_loss)
 
@@ -198,7 +205,7 @@ class IAC_Learner(LearnerMAS):
                 else:
                     loss_v = (value_pred_i - value_target) ** 2
                     loss_v_clipped = (value_clipped - value_target) ** 2
-                loss_c_ = torch.max(loss_v, loss_v_clipped) * mask_values
+                loss_c_ = ops.maximum(loss_v, loss_v_clipped) * mask_values
                 loss_c.append(loss_c_.sum() / mask_values.sum())
             else:
                 if self.use_value_norm:
@@ -210,30 +217,63 @@ class IAC_Learner(LearnerMAS):
                     loss_v = ((value_pred_i - value_target) ** 2) * mask_values
                 loss_c.append(loss_v.sum() / mask_values.sum())
 
-            info.update({
-                f"predict_value/{key}": value_pred_i.mean().item()
+            info_forward.update({
+                f"predict_value/{key}": value_pred_i.mean().asnumpy()
             })
+
+            info_forward.update(self.callback.on_update_agent_wise(self.iterations, key, info=info_forward,
+                                                                   method="update", mask_values=mask_values,
+                                                                   log_pi=log_pi, pg_loss=pg_loss,
+                                                                   entropy=entropy, entropy_loss=entropy_loss,
+                                                                   value_pred_i=value_pred_i, value_target=value_target,
+                                                                   values_i=values_i, loss_v=loss_v))
 
         # Total loss
         loss = sum(loss_a) + self.vf_coef * sum(loss_c) - self.ent_coef * sum(loss_e)
-        self.optimizer.zero_grad()
-        loss.backward()
-        if self.use_grad_clip:
-            grad_norm = torch.nn.utils.clip_grad_norm_(self.policy.parameters_model, self.grad_clip_norm)
-            info["gradient_norm"] = grad_norm.item()
-        self.optimizer.step()
-        if self.scheduler is not None:
-            self.scheduler.step()
 
-        # Logger
-        lr = self.optimizer.state_dict()['param_groups'][0]['lr']
+        return loss, sum(loss_a), sum(loss_e), sum(loss_c), info_forward
+
+    def update(self, sample):
+        self.iterations += 1
+
+        # prepare training data
+        sample_Tensor = self.build_training_data(sample=sample,
+                                                 use_parameter_sharing=self.use_parameter_sharing,
+                                                 use_actions_mask=self.use_actions_mask)
+        batch_size = sample_Tensor['batch_size']
+        obs = sample_Tensor['obs']
+        actions = sample_Tensor['actions']
+        agent_mask = sample_Tensor['agent_mask']
+        avail_actions = sample_Tensor['avail_actions']
+        values = sample_Tensor['values']
+        returns = sample_Tensor['returns']
+        advantages = sample_Tensor['advantages']
+        IDs = sample_Tensor['agent_ids']
+
+        bs = batch_size * self.n_agents if self.use_parameter_sharing else batch_size
+
+        info = self.callback.on_update_start(self.iterations, method="update",
+                                             policy=self.policy, sample_Tensor=sample_Tensor, bs=bs)
+
+        # feedforward
+        (loss, loss_a, loss_e, loss_c, info_forward), grads = self.grad_fn(bs, obs, actions, agent_mask, avail_actions,
+                                                                           values, returns, advantages, IDs)
+        if self.use_grad_clip:
+            grads = clip_grads(grads, Tensor(-self.grad_clip_norm), Tensor(self.grad_clip_norm))
+        self.optimizer(grads)  # backpropagation
+
+        self.scheduler.step()  # update learning rate
+        lr = self.scheduler.get_last_lr()[0]
 
         info.update({
-            "learning_rate": lr,
-            "pg_loss": sum(loss_a).item(),
-            "vf_loss": sum(loss_c).item(),
-            "entropy_loss": sum(loss_e).item(),
-            "loss": loss.item(),
+            "learning_rate": lr.asnumpy(),
+            "pg_loss": loss_a.asnumpy(),
+            "vf_loss": loss_c.asnumpy(),
+            "entropy_loss": loss_e.asnumpy(),
+            "loss": loss.asnumpy(),
         })
+        info.update(info_forward)
+
+        info.update(self.callback.on_update_end(self.iterations, method="update", policy=self.policy, info=info))
 
         return info

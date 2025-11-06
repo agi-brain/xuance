@@ -1,17 +1,17 @@
 import os
-import mindspore as ms
 import numpy as np
-from abc import ABC, abstractmethod
-from xuance.common import Optional, List, Union
 from argparse import Namespace
 from operator import itemgetter
-from xuance.mindspore import Tensor, Module, optim, ops
+from abc import ABC, abstractmethod
+from xuance.common import Optional, List, Union
+from xuance.mindspore import ms, nn, Tensor, Module, optim, ops
 
 
 class Learner(ABC):
     def __init__(self,
                  config: Namespace,
-                 policy: Module):
+                 policy: Module,
+                 callback):
         self.value_normalizer = None
         self.config = config
 
@@ -23,8 +23,9 @@ class Learner(ABC):
         self.use_rnn = config.use_rnn if hasattr(config, 'use_rnn') else False
         self.use_actions_mask = config.use_actions_mask if hasattr(config, 'use_actions_mask') else False
         self.policy = policy
-        self.optimizer: Union[dict, list, Optional[ms.nn.Optimizer]] = None
+        self.optimizer: Union[dict, list, Optional[nn.Optimizer]] = None
         self.scheduler: Union[dict, list, Optional[optim.lr_scheduler.LRScheduler]] = None
+        self.callback = callback
 
         self.use_grad_clip = config.use_grad_clip
         self.grad_clip_norm = config.grad_clip_norm
@@ -70,7 +71,8 @@ class LearnerMAS(ABC):
                  config: Namespace,
                  model_keys: List[str],
                  agent_keys: List[str],
-                 policy: Module):
+                 policy: Module,
+                 callback):
         self.value_normalizer = None
         self.config = config
         self.n_agents = config.n_agents
@@ -87,19 +89,30 @@ class LearnerMAS(ABC):
         self.use_rnn = config.use_rnn if hasattr(config, 'use_rnn') else False
         self.use_actions_mask = config.use_actions_mask if hasattr(config, 'use_actions_mask') else False
         self.policy = policy
-        self.optimizer: Union[dict, list, Optional[ms.nn.Optimizer]] = None
+        self.optimizer: Union[dict, list, Optional[nn.Optimizer]] = None
         self.scheduler: Union[dict, list, Optional[ms.experimental.optim.lr_scheduler.LRScheduler]] = None
+        self.callback = callback
+
         self.use_grad_clip = config.use_grad_clip
         self.grad_clip_norm = config.grad_clip_norm
         self.device = config.device
         self.model_dir = config.model_dir
-        self.running_steps = config.running_steps
+        self.total_iters = self.estimate_total_iterations()
         self.iterations = 0
         self.eye = ops.Eye()
 
-    def onehot_action(self, actions_int, num_actions):
-        return self._one_hot(actions_int.astype(ms.int32), num_actions,
-                             ms.Tensor(1.0, ms.float32), ms.Tensor(0.0, ms.float32))
+    def estimate_total_iterations(self):
+        """Estimated total number of training iterations"""
+        start_training = getattr(self.config, "start_training", 0)
+        training_frequency = getattr(self.config, "training_frequency", 1)
+        n_epochs = getattr(self.config, "n_epochs", 1)
+        episode_length = self.episode_length
+        if self.use_rnn:
+            total_iters = (self.config.running_steps - start_training) // (episode_length * self.config.parallels)
+        else:
+            total_iters = (self.config.running_steps - start_training) // (training_frequency * self.config.parallels)
+        total_iters *= n_epochs
+        return total_iters
 
     def build_training_data(self, sample: Optional[dict],
                             use_parameter_sharing: Optional[bool] = False,
@@ -206,6 +219,15 @@ class LearnerMAS(ABC):
             'seq_length': seq_length,
         }
         return sample_Tensor
+
+    def get_joint_input(self, input_tensor, output_shape=None):
+        if self.n_agents == 1:
+            joint_tensor = itemgetter(*self.agent_keys)(input_tensor)
+        else:
+            joint_tensor = ops.cat(itemgetter(*self.agent_keys)(input_tensor), axis=-1)
+        if output_shape is not None:
+            joint_tensor = joint_tensor.reshape(output_shape)
+        return joint_tensor
 
     @abstractmethod
     def update(self, *args):

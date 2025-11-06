@@ -1,11 +1,11 @@
 import numpy as np
 from argparse import Namespace
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
-from xuance.common import List, Optional, Union
+from xuance.common import List, Optional, Union, MultiAgentBaseCallback
 from xuance.tensorflow import Module
 from xuance.tensorflow.utils import NormalizeFunctions, InitializeFunctions, ActivationFunctions
 from xuance.tensorflow.policies import REGISTRY_Policy
-from xuance.tensorflow.agents import OnPolicyMARLAgents, BaseCallback
+from xuance.tensorflow.agents import OnPolicyMARLAgents
 
 
 class IAC_Agents(OnPolicyMARLAgents):
@@ -20,7 +20,7 @@ class IAC_Agents(OnPolicyMARLAgents):
     def __init__(self,
                  config: Namespace,
                  envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv],
-                 callback: Optional[BaseCallback] = None):
+                 callback: Optional[MultiAgentBaseCallback] = None):
         super(IAC_Agents, self).__init__(config, envs, callback)
         self.policy = self._build_policy()  # build policy
         self.memory = self._build_memory()  # build memory

@@ -89,6 +89,9 @@ class DDPG_Learner(Learner):
         next_batch = samples['obs_next']
         rew_batch = samples['rewards']
         ter_batch = samples['terminals']
+        info = self.callback.on_update_start(self.iterations,
+                                             policy=self.policy, obs=obs_batch, act=act_batch,
+                                             next_obs=next_batch, rew=rew_batch, termination=ter_batch)
 
         # critic update
         q_loss, action_q = self.learn_critic(obs_batch, act_batch, next_batch, rew_batch, ter_batch)
@@ -98,10 +101,13 @@ class DDPG_Learner(Learner):
 
         self.policy.soft_update(self.tau)
 
-        info = {
+        info.update({
             "Qloss": q_loss.numpy(),
             "Ploss": p_loss.numpy(),
             "Qvalue": tf.reduce_mean(action_q).numpy(),
-        }
+        })
+
+        info.update(self.callback.on_update_end(self.iterations, policy=self.policy, info=info,
+                                                action_q=action_q, q_loss=q_loss, p_loss=p_loss))
 
         return info
