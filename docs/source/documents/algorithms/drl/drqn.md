@@ -25,9 +25,9 @@ This table lists some general features about DRQN algorithm:
 
 DRQN replaces the fully connected layers of DQN with an RNN (commonly an LSTM or GRU layer).
 
-| Gated Recurrent Units (GRUs)                                                         | Long Short-Term Memory (LSTM)                                                          |
-|--------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------|
-| <img src="../../../../_static/figures/algo_framework/GRU.png" alt="GRU" width="300"> | <img src="../../../../_static/figures/algo_framework/LSTM.png" alt="LSTM" width="300"> |
+| Gated Recurrent Units (GRUs)                                                        | Long Short-Term Memory (LSTM)                                                         |
+|-------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------|
+| <img src="./../../../_static/figures/algo_framework/GRU.png" alt="GRU" width="300"> | <img src="./../../../_static/figures/algo_framework/LSTM.png" alt="LSTM" width="300"> |
 
 This allows the network to maintain a memory of past observations, enabling it to infer the hidden state of the environment.
 
