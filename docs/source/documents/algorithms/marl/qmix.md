@@ -57,7 +57,7 @@ $$
 $$
 
 Here, $\tau$ denotes the history of observation-action sequences, and $u$ denotes actions. 
-If Equation$(1)$ does not hold, the decentralized policy cannot maximize $Q_{tot}$ and 
+If Equation(1) does not hold, the decentralized policy cannot maximize $Q_{tot}$ and 
 thus will not be optimal—this is **non-monotonicity**.
 
 At this point, you will notice that [**VDN**](./vdn.md)’s decomposition method satisfies the monotonicity in Equation$(1)$,
@@ -77,8 +77,8 @@ $$\frac{\partial Q_{tot}}{\partial Q_i}\geq0,
 (3)
 $$
 
-As long as Equation$\text{(3)}$ holds, the **monotonicity** in Equation$(1)$ is guaranteed. 
-Here, Equation$(3)$ is a **sufficient but not necessary** condition for Equation$(1)$.
+As long as Equation(3) holds, the **monotonicity** in Equation$(1)$ is guaranteed. 
+Here, Equation$`(3)`$ is a **sufficient but not necessary** condition for Equation$(1)$.
 
 Therefore, the research objective of this paper is to design a neural network that takes $\{Q_i\}_{i=1}^N$ as input and 
 outputs $Q_{tot}$, while enforcing the monotonicity constraint in Equation$(3)$. 
