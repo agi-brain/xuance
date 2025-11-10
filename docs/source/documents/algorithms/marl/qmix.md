@@ -47,7 +47,7 @@ which makes it hard for the algorithm to guarantee the optimality of the decentr
 those computed by the total $Q$-function must be consistent in terms of "performance optimality," i.e.,
 
 $$
-\arg\max_{\pmb{u}}Q_{tot}(\pmb{\tau},\pmb{u})=
+\arg\max_{\boldsymbol{u}}Q_{tot}(\boldsymbol{\tau},\boldsymbol{u})=
 \begin{pmatrix}
 \arg\max_{u^1}Q_1(\tau^1,u^1) \\
 \cdots \\
@@ -106,7 +106,7 @@ Their input is the history of observation-action sequences of the respective age
 and their output is the decomposed Q-value function of that agent.
 The agent uses this Q-value to derive an $\epsilon -greedy$ policy for exploration.
 - The **Mixing Network** takes two inputs: the outputs of all agent networks $`\{Q_i(\tau^i,u_t^i)\}_{i=1}^N`$ 
-and the global state $`s_t`$ of the system. Its output is $`Q_{tot}(\pmb{\tau},\pmb{u})`$.
+and the global state $`s_t`$ of the system. Its output is $`Q_{tot}(\boldsymbol{\tau},\boldsymbol{u})`$.
 Notably, QMIX uses $s_t$ as input to the **Hypernetworks**, which then generate parameters for the **Mixing Network**.
 This differs from [**VDN**](./vdn.md), which does not use the global state $s_t$.
 
@@ -128,7 +128,7 @@ allowing the **Mixing Network** to approximate any **monotonic** function (i.e.,
 To help readers better understand this logic, we expand the expression of the **Mixing Network**:
 
 $$
-Q_{tot}(\pmb{\tau},\pmb{u})=W_2^\top\mathrm{Elu}(W_1^\top\pmb{Q}+B_1)+B_2.(4)
+Q_{tot}(\boldsymbol{\tau},\boldsymbol{u})=W_2^\top\mathrm{Elu}(W_1^\top\boldsymbol{Q}+B_1)+B_2.(4)
 $$
 
 Here, $Q=[Q_{1}(\tau^{1},u_{t}^{1}),\cdots,Q_{n}(\tau^{n},u_{t}^{n})]$ is an $n$-dimensional vector,
@@ -136,12 +136,12 @@ and $B_1$, $B_2$ are the bias terms corresponding to $W_1$, $W_2$, respectively.
 Using the chain rule and the differentiation rule for linear transformations:
 
 $$
-\frac{\partial Q_{tot}}{\partial Q}=\left(\frac{\partial\mathrm{Elu}(W_1^\top\pmb{Q}+B_1)}{\partial\pmb{Q}}\right)^\top W_2=\left(\frac{\partial\mathrm{Elu}(W_1^\top\pmb{Q}+B_1)}{\partial(W_1^\top\pmb{Q}+B_1)}\cdot W_1\right)^\top W_2.(5)
+\frac{\partial Q_{tot}}{\partial Q}=\left(\frac{\partial\mathrm{Elu}(W_1^\top\boldsymbol{Q}+B_1)}{\partial\boldsymbol{Q}}\right)^\top W_2=\left(\frac{\partial\mathrm{Elu}(W_1^\top\boldsymbol{Q}+B_1)}{\partial(W_1^\top\boldsymbol{Q}+B_1)}\cdot W_1\right)^\top W_2.(5)
 $$
 
 From the [**ELU**](https://ml-cheatsheet.readthedocs.io/en/latest/activation_functions.html#elu) activation function curve and its first derivative curve, 
 we know that $0<\frac{\partial\mathrm{Elu}(x)}{\partial x}\leq1$, 
-Since every element in $W_1$, $W_2$ is non-negative, every element in $\frac{\partial Q_{\mathrm{tot}}}{\partial \pmb{Q}}$
+Since every element in $W_1$, $W_2$ is non-negative, every element in $\frac{\partial Q_{\mathrm{tot}}}{\partial \boldsymbol{Q}}$
 (i.e., $\frac{\partial Q_{\mathrm{tot}}}{\partial Q_i}$) is also non-negative,
 so Equation $`(3)`$ holds.
 
@@ -168,14 +168,14 @@ the parameters to be trained include **Hypernetwork parameters** and **Agent Net
 The authors use end-to-end training to minimize the following loss function:
 
 $$
-\mathcal{L}(\theta)=\sum_{i=1}^b\left[(y_i^{tot}-Q_{tot}(\pmb{\tau},\pmb{u},s;\theta))^2\right],(7)
+\mathcal{L}(\theta)=\sum_{i=1}^b\left[(y_i^{tot}-Q_{tot}(\boldsymbol{\tau},\boldsymbol{u},s;\theta))^2\right],(7)
 $$
 
 where $b$ is the batch size,
-$y^{tot}=r+\gamma\max_{\pmb{u}^{\prime}}Q_{tot}(\pmb{\tau}^{\prime},\pmb{u}^{\prime},s^{\prime};\theta^{-})$,
+$y^{tot}=r+\gamma\max_{\boldsymbol{u}^{\prime}}Q_{tot}(\boldsymbol{\tau}^{\prime},\boldsymbol{u}^{\prime},s^{\prime};\theta^{-})$,
 and $\theta^{-}$ denotes the target network parameters. The specific training process is similar to that of [**DQN**](./../drl/dqn.md). 
 
-Because the design of the mixing network ensures Equation$`(1)`$ holds, solving $\max_{\pmb{u}^{\prime}}Q_{tot}(\pmb{\tau}^{\prime},\pmb{u}^{\prime},s^{\prime};\theta^{-})$
+Because the design of the mixing network ensures Equation$`(1)`$ holds, solving $\max_{\boldsymbol{u}^{\prime}}Q_{tot}(\boldsymbol{\tau}^{\prime},\boldsymbol{u}^{\prime},s^{\prime};\theta^{-})$
 can be achieved by maximizing the value function of each agent individually. This greatly simplifies the computational complexity of solving the max function.
 
 ### Function Representation Complexity
