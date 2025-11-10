@@ -321,9 +321,8 @@ Thus, the authors use approximation methods to solve this problem.
 #### Centrally-Weighted QMIX (CW-QMIX)
 
 <p align="center">
-  <img src="https://latex.codecogs.com/svg.image?\dpi{200}\large%20w(s,%5Cboldsymbol%7Bu%7D)=%5Cleft%5C%7B%5Cbegin%7Barray%7D%7Bll%7D1%20&%20y_i%3E%5Chat%7BQ%7D%5E*(s,%5Cboldsymbol%7B%5Ctau%7D,%5Cboldsymbol%7B%5Chat%7Bu%7D%7D%5E*)%5Cmathrm%7B~or~%7D%5Cboldsymbol%7Bu%7D%3D%5Cboldsymbol%7B%5Chat%7Bu%7D%7D%5E*%5C%5C%5Calpha%20&%20%5Cmathrm%7Botherwise%7D%5Cend%7Barray%7D%5Cright.%5Ctag%7B12%7D" alt="w(s,u) eq 12">
+  <img src="https://latex.codecogs.com/svg.image?\dpi{200}\large%20w(s,%5Cboldsymbol%7Bu%7D)=%5Cleft%5C%7B%5Cbegin%7Barray%7D%7Bll%7D1%20&%20Q_%7Btot%7D(%5Cboldsymbol%7B%5Ctau%7D,%5Cboldsymbol%7Bu%7D,s)%3C%20y_i%5C%5C%5Calpha%20&%20%5Ctext%7Botherwise.%7D%5Cend%7Barray%7D%5Cright.%5Ctag%7B13%7D" alt="w(s,u) eq 13">
 </p>
-
 
 Here, $`\boldsymbol{\hat{u}}^{*}=\arg\max_{\boldsymbol{u}}Q_{tot}(\boldsymbol{\tau},\boldsymbol{u},s)`$.
 If $`y_{i}>\hat{Q}^{*}(s,\boldsymbol{\tau}`$, $`u`$ can be approximately regarded as the optimal joint action.
