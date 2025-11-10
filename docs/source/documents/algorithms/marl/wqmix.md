@@ -205,7 +205,7 @@ As discussed later, the authors use approximation methods to address this issue 
 
 The paper provides the following conclusion for this weight function:
 
-> Theorem 1. Let $w$ be the Idealised Central Weighting defined in Equation$(6)$.
+> Theorem 1. Let $w$ be the Idealised Central Weighting defined in Equation$`(6)`$.
 > $\exists\alpha>0$ such that $\arg\max\Pi_wQ=\arg\max Q$ for any $Q$.
 
 This theorem guarantees the existence of "Idealised Central Weighting",
@@ -223,7 +223,7 @@ This ensures that action values are estimated as accurately as possible, hence t
 
 Similarly, the authors provide the following conclusion for this weight function:
 
-> Theorem 2. Let $w$ be the Idealised Central Weighting defined in Equation$(7)$.
+> Theorem 2. Let $w$ be the Idealised Central Weighting defined in Equation$`(7)`$.
 > $\exists\alpha>0$ such that $\arg\max\Pi_wQ=\arg\max Q$ for any $Q$.
 
 Theorem 2 also guarantees the existence of "Optimistic Weighting",
@@ -298,10 +298,10 @@ Here, $y_{i}:=r+\gamma\hat{Q}^{*}(s^{\prime},\pmb{\tau}^{\prime},\arg\max_{\pmb{
 
 ### The $\hat{Q}^*$ Function
 
-The authors implement $\hat{Q}^*$ using a structure similar to QMIX (see the left panel of Figure 1). 
+The authors implement $`\hat{Q}^*`$ using a structure similar to QMIX (see the left panel of Figure 1). 
 However, the Mixing Network in [QMIX](./qmix.md) is replaced with a standard Feed-Forward Network. 
-This network takes the Q-functions of all agents $\{Q_i(\tau_i^{\prime},u_i)\}_{i=1}^n$ 
-and the global state $s^{\prime}$ as inputs, and outputs $\hat{Q}^*$.
+This network takes the Q-functions of all agents $`\{Q_i(\tau_i^{\prime},u_i)\}_{i=1}^n`$ 
+and the global state $`s^{\prime}`$ as inputs, and outputs $`\hat{Q}^*`$.
 
 The $\hat{Q}^*$ function is trained by minimizing the following loss function: 
 
@@ -327,11 +327,11 @@ w(s,\pmb{u})=\left\{
 \end{array}\right._{(12)}
 $$
 
-Here, $\pmb{\hat{u}}^{*}=\arg\max_{\pmb{u}}Q_{tot}(\pmb{\tau},\pmb{u},s)$.
-If $y_{i}>\hat{Q}^{*}(s,\pmb{\tau}$, $u$ can be approximately regarded as the optimal joint action.
+Here, $`\pmb{\hat{u}}^{*}=\arg\max_{\pmb{u}}Q_{tot}(\pmb{\tau},\pmb{u},s)`$.
+If $`y_{i}>\hat{Q}^{*}(s,\pmb{\tau}`$, $`u`$ can be approximately regarded as the optimal joint action.
 
-Compared with Equation$(6)$, Equation$(12)$ replaces $\mathcal{T}_w^*\hat{Q}^{*}(s,\pmb{\tau},\pmb{\hat{u}^{*}})$ with $\hat{Q}^{*}(s,\pmb{\tau},\pmb{\hat{u}^{*}})$.
-The Weighted QMIX algorithm based on Equation$(12)$ is called "Centrally-Weighted QMIX (CW-QMIX)".
+Compared with Equation$`(6)`$, Equation$`(12)`$ replaces $`\mathcal{T}_w^*\hat{Q}^{*}(s,\pmb{\tau},\pmb{\hat{u}^{*}})$ with $\hat{Q}^{*}(s,\pmb{\tau},\pmb{\hat{u}^{*}})`$.
+The Weighted QMIX algorithm based on Equation$`(12)`$ is called "Centrally-Weighted QMIX (CW-QMIX)".
 
 ### Optimistically-Weighted QMIX (OW-QMIX)
 
@@ -343,8 +343,8 @@ w(s,\pmb{u})=\left\{
 \end{array}\right.(13)
 $$
 
-The Weighted QMIX algorithm based on Equation$(13)$ is called "Optimistically-Weighted QMIX (OW-QMIX)". 
-Unlike Equation$(7)$, it requires no approximation.
+The Weighted QMIX algorithm based on Equation$`(13)`$ is called "Optimistically-Weighted QMIX (OW-QMIX)". 
+Unlike Equation$`(7)`$, it requires no approximation.
 
 The above covers the theoretical and design aspects of the Weighted QMIX algorithm. 
 Instead of modifying [QMIX](./qmix.md)’s "monotonicity constraint" to enhance its function representation capability, 
@@ -358,9 +358,9 @@ Through an analysis of [QMIX](./qmix.md) under ideal conditions, the authors pro
 heoretically, WQMIX guarantees that monotonic functions (output by [QMIX](./qmix.md)) can be mapped to non-monotonic value functions via action weighting. 
 This enables WQMIX to learn the optimal policy and avoids [QMIX](./qmix.md)’s tendency to converge to suboptimal policies.
 
-To learn the weight function, WQMIX also learns a $\hat{Q}^*$ function that is not constrained by "monotonicity", 
-ensuring its convergence to $Q^*$.
-However, in practical training, approximation methods and the design of the $\hat{Q}^*$ structure may lead to performance degradation.
+To learn the weight function, WQMIX also learns a $`\hat{Q}^*`$ function that is not constrained by "monotonicity", 
+ensuring its convergence to $`Q^*`$.
+However, in practical training, approximation methods and the design of the $`\hat{Q}^*`$ structure may lead to performance degradation.
 
 The authors note that WQMIX has room for further improvement — particularly in the design of weight functions. 
 The weight functions used in this paper are simple, considering only global state and joint action information, 
