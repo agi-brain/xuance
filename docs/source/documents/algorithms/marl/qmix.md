@@ -31,7 +31,7 @@ while during the training phase, they can access the observations, actions of al
 For cooperative tasks, the key issue to address under CTDE is how to find the optimal decentralized policy so that 
 the team’s "state-joint action" value function $Q_{tot}$ is optimized.
 
-To this end, the [**VDN**](./vdn.md) algorithm proposes decomposing $Q_{tot}$ into $Q_i ($where $i = 1, \cdots ,n)$.
+To this end, the [**VDN**](./vdn.md) algorithm proposes decomposing $Q_{tot}$ into $Q_i$ (where $i = 1, \cdots ,n$).
 Here, $Q_i$ serves as the Q-value function for each agent to compute the optimal action, 
 and the network is trained end-to-end using the decomposed form $Q_{tot} = \textstyle\sum_{i=1}^n Q_i$.
 However, this simple summation-based decomposition of the total value function greatly restricts the network's function approximation capability, 
@@ -57,7 +57,7 @@ $$
 $$
 
 Here, $\tau$ denotes the history of observation-action sequences, and $u$ denotes actions. 
-If Equation(1) does not hold, the decentralized policy cannot maximize $Q_{tot}$ and 
+If Equation$`(1)`$ does not hold, the decentralized policy cannot maximize $Q_{tot}$ and 
 thus will not be optimal—this is **non-monotonicity**.
 
 At this point, you will notice that [**VDN**](./vdn.md)’s decomposition method satisfies the monotonicity in Equation$(1)$,
@@ -77,12 +77,12 @@ $$\frac{\partial Q_{tot}}{\partial Q_i}\geq0,
 (3)
 $$
 
-As long as Equation(3) holds, the **monotonicity** in Equation$(1)$ is guaranteed. 
+As long as Equation$`(3)`$ holds, the **monotonicity** in Equation$`(1)`$ is guaranteed. 
 Here, Equation$`(3)`$ is a **sufficient but not necessary** condition for Equation$(1)$.
 
 Therefore, the research objective of this paper is to design a neural network that takes $\{Q_i\}_{i=1}^N$ as input and 
-outputs $Q_{tot}$, while enforcing the monotonicity constraint in Equation$(3)$. 
-By exploring under this constraint, we can not only ensure Equation$(1)$holds 
+outputs $Q_{tot}$ , while enforcing the monotonicity constraint in Equation$`(3)`$. 
+By exploring under this constraint, we can not only ensure Equation$`(1)`$ holds 
 but also enhance the network’s function fitting capability, 
 thereby addressing the limitations of the [**VDN**](./vdn.md) algorithm.
 
@@ -122,7 +122,7 @@ As seen from the red block diagram:
 
 You may wonder why the authors designed such an unusual structure to compute the **Mixing Network**’s parameters. 
 In fact, this design ensures that the weight parameters of the mixing network are **non-negative**, 
-allowing the **Mixing Network** to approximate any **monotonic** function (i.e., satisfying Equation$(3)$) with arbitrary precision.
+allowing the **Mixing Network** to approximate any **monotonic** function (i.e., satisfying Equation$`(3)`$) with arbitrary precision.
 
 To help readers better understand this logic, we expand the expression of the **Mixing Network**:
 
@@ -142,7 +142,7 @@ From the [**ELU**](https://ml-cheatsheet.readthedocs.io/en/latest/activation_fun
 we know that $0<\frac{\partial\mathrm{Elu}(x)}{\partial x}\leq1$, 
 Since every element in $W_1$, $W_2$ is non-negative, every element in $\frac{\partial Q_{\mathrm{tot}}}{\partial \pmb{Q}}$
 (i.e., $\frac{\partial Q_{\mathrm{tot}}}{\partial Q_i}$) is also non-negative,
-so Equation $(3)$ holds.
+so Equation $`(3)`$ holds.
 
 From the above analysis, we only need to ensure that the elements in weight matrices $W_1$ and $W_2$ are non-negative to achieve our goal
 —no restrictions are needed on the bias terms $B_1$ or $B_2$.
@@ -174,13 +174,13 @@ where $b$ is the batch size,
 $y^{tot}=r+\gamma\max_{\pmb{u}^{\prime}}Q_{tot}(\pmb{\tau}^{\prime},\pmb{u}^{\prime},s^{\prime};\theta^{-})$,
 and $\theta^{-}$ denotes the target network parameters. The specific training process is similar to that of [**DQN**](./../drl/dqn.md). 
 
-Because the design of the mixing network ensures Equation$(1)$ holds, solving $\max_{\pmb{u}^{\prime}}Q_{tot}(\pmb{\tau}^{\prime},\pmb{u}^{\prime},s^{\prime};\theta^{-})$
+Because the design of the mixing network ensures Equation$`(1)`$ holds, solving $\max_{\pmb{u}^{\prime}}Q_{tot}(\pmb{\tau}^{\prime},\pmb{u}^{\prime},s^{\prime};\theta^{-})$
 can be achieved by maximizing the value function of each agent individually. This greatly simplifies the computational complexity of solving the max function.
 
 ### Function Representation Complexity
 Although QMIX has stronger function fitting capability than [**VDN**](./vdn.md), 
-the authors also note that the constraint in Equation$(3)$ still limits the range of value functions it can fit. 
-This is because some value function decompositions may not be based on satisfying this monotonicity constraint—Equation$(3)$ is a **sufficient but not necessary condition** for Equation$(1)$.
+the authors also note that the constraint in Equation$`(3)`$ still limits the range of value functions it can fit. 
+This is because some value function decompositions may not be based on satisfying this monotonicity constraint—Equation$`(3)`$ is a **sufficient but not necessary condition** for Equation$(1)$.
 
 For some decentralized policies where the optimal action of a single agent depends on the actions of other agents at the same time, 
 the function representation capability of the QMIX algorithm will also be limited to a certain extent. 
@@ -196,7 +196,7 @@ only by fully considering the potential impact of other agents on one’s own de
 Therefore, considering more complex relationships between agents—such as task/role assignment 
 and agent communication—is also an important direction for the extension of the QMIX algorithm.
 
-Additionally, Equation$(3)$ is a **sufficient but not necessary** condition for Equation$(1)$, 
+Additionally, Equation$`(3)`$ is a **sufficient but not necessary** condition for Equation$`(1)`$, 
 which limits the function approximation capability of the QMIX network to a certain extent. 
 In some scenarios, this leads to a gap between the fitted $Q_{tot}$ and the true value $Q_{{tot}}^*$.
 
