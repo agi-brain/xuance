@@ -25,9 +25,9 @@ This table lists some general features about DRQN algorithm:
 
 DRQN replaces the fully connected layers of DQN with an RNN (commonly an LSTM or GRU layer).
 
-| Gated Recurrent Units (GRUs)                                                         | Long Short-Term Memory (LSTM)                                                          |
-|--------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------|
-| <img src="../../../../_static/figures/algo_framework/GRU.png" alt="GRU" width="300"> | <img src="../../../../_static/figures/algo_framework/LSTM.png" alt="LSTM" width="300"> |
+| Gated Recurrent Units (GRUs)                                                        | Long Short-Term Memory (LSTM)                                                         |
+|-------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------|
+| <img src="./../../../_static/figures/algo_framework/GRU.png" alt="GRU" width="300"> | <img src="./../../../_static/figures/algo_framework/LSTM.png" alt="LSTM" width="300"> |
 
 This allows the network to maintain a memory of past observations, enabling it to infer the hidden state of the environment.
 
@@ -68,8 +68,8 @@ If you want to run DRQN with different configurations, you can build a new ``.ya
 Then, run the DRQN by the following code block:
 
 ```python3
-import xuance as xp
-runner = xp.get_runner(method='drqn',
+import xuance
+runner = xuance.get_runner(method='drqn',
                        env='classic_control',  # Choices: claasi_control, box2d, atari.
                        env_id='CartPole-v1',  # Choices: CartPole-v1, LunarLander-v2, ALE/Breakout-v5, etc.
                        config_path="my_config.yaml",  # The path of my_config.yaml file should be correct.
