@@ -29,7 +29,7 @@ This table lists some general features about WQMIX algorithm:
 In MARL environments for cooperative tasks, multiple agents share a single reward signal.
 This often leads to the problems of "lazy agents" and "credit assignment".
 To address these issues, the [VDN](./vdn.md) algorithm proposes decomposing the system’s total value function using a simple summation:
-$Q_{tot}(\pmb{\tau},\pmb{u})=\sum_{i=1}^nQ_i(\tau_i,u_i)$.
+$Q_{tot}(\boldsymbol{\tau},\boldsymbol{u})=\sum_{i=1}^nQ_i(\tau_i,u_i)$.
 This value function factorization method is straightforward,
 but its over-compliance with the "monotonicity" constraint severely limits its ability to approximate nonlinear functions.
 To overcome this limitation, the QMIX algorithm was proposed.
@@ -52,7 +52,7 @@ To simplify understanding and analysis, the authors assume that all agents obser
 First, they define the function space to which $Q_{tot}$ belongs:
 
 $$
-\mathcal{Q}^{mix}=\{Q_{tot}|Q_{tot}(s,\pmb{u})=f_{s}(Q_{1}(s,u_{1}),\cdots,Q_{n}(s,u_{n})),\frac{\partial f_{s}}{\partial Q_{a}}\geq0,Q_{a}(s,u)\in\mathbb{R}\}
+\mathcal{Q}^{mix}=\{Q_{tot}|Q_{tot}(s,\boldsymbol{u})=f_{s}(Q_{1}(s,u_{1}),\cdots,Q_{n}(s,u_{n})),\frac{\partial f_{s}}{\partial Q_{a}}\geq0,Q_{a}(s,u)\in\mathbb{R}\}
 $$
 
 As analyzed in the [QMIX](./qmix.md)'s document, the design of the QMIX algorithm ensures that
@@ -60,13 +60,13 @@ the network can approximate any function in $\mathcal{Q}^{mix}$ with arbitrary p
 QMIX can be formulated as the following optimization problem:
 
 $$
-\arg\min_{q\in\mathcal{Q}^{mix}}\sum_{\pmb{u}\in\pmb{U}}(\mathcal{T}^*Q_{tot}(s,\pmb{u})-q(s,\pmb{u}))^2,\forall s\in S.(1)
+\arg\min_{q\in\mathcal{Q}^{mix}}\sum_{\boldsymbol{u}\in\boldsymbol{U}}(\mathcal{T}^*Q_{tot}(s,\boldsymbol{u})-q(s,\boldsymbol{u}))^2,\forall s\in S.(1)
 $$
 
 Here, $\mathcal{T}^*$ denotes the Bellman optimal operator:
 
 $$
-\mathcal{T}^*Q(s,\pmb{u}):=\mathbb{E}[r+\gamma\max_{\pmb{u}^{\prime}}Q(s^{\prime},\pmb{u}^{\prime})].(2)
+\mathcal{T}^*Q(s,\boldsymbol{u}):=\mathbb{E}[r+\gamma\max_{\boldsymbol{u}^{\prime}}Q(s^{\prime},\boldsymbol{u}^{\prime})].(2)
 $$
 
 The authors define the optimization problem in Equation$(1)$ as the **QMIX operator**, denoted $\mathcal{T}_{\mathrm{Qmix}}^*$.
@@ -79,7 +79,7 @@ $$
 where $\Pi_{\mathrm{Qmix}}$ is defined as:
 
 $$
-\Pi_{\mathrm{Qmix}}Q:=\arg\min_{q\in\mathcal{Q}^{mix}}\sum_{\pmb{u}\in \pmb{U}}(Q(s,\pmb{u})-q(s,\pmb{u}))^2.(4)
+\Pi_{\mathrm{Qmix}}Q:=\arg\min_{q\in\mathcal{Q}^{mix}}\sum_{\boldsymbol{u}\in \boldsymbol{U}}(Q(s,\boldsymbol{u})-q(s,\boldsymbol{u}))^2.(4)
 $$
 
 Geometrically, $\Pi_{\mathrm{Qmix}}Q$ represents the point in the function space $\mathcal{Q}^{mix}$
@@ -178,22 +178,22 @@ Now that we have identified [QIMX](./qmix.md)’s flaws, we can address them dir
 By adding a weight function $w$ to the $\Pi_{\mathrm{Qmix}}$ operator, a new operator is derived:
 
 $$
-\Pi_wQ:=\arg\min_{q\in\mathcal{Q}^{mix}}\sum_{\pmb{u}\in U}w(s,\pmb{u})(Q(s,\pmb{u})-q(s,\pmb{u}))^2.(5)
+\Pi_wQ:=\arg\min_{q\in\mathcal{Q}^{mix}}\sum_{\boldsymbol{u}\in U}w(s,\boldsymbol{u})(Q(s,\boldsymbol{u})-q(s,\boldsymbol{u}))^2.(5)
 $$
 
 Here, the weight function $w$ : $S\times U\to(0,1]$ weights the importance of each joint action in [QMIX](./qmix.md)’s loss function.
 The input space of $w$ is not limited to state-joint action pairs; other factors can also be incorporated.
-Notably, when $w(s,\pmb{u})\equiv1$, $\Pi_{w}\Leftrightarrow\Pi_{\mathrm{Qmix}}$.
+Notably, when $w(s,\boldsymbol{u})\equiv1$, $\Pi_{w}\Leftrightarrow\Pi_{\mathrm{Qmix}}$.
 
-### Selection of the Weight Function $w(s,\pmb{u})$
+### Selection of the Weight Function $w(s,\boldsymbol{u})$
 
 #### First Weight Function: Idealised Central Weighting
 
 $$
-w(s,\pmb{u}) = 
+w(s,\boldsymbol{u}) = 
 \left\{
 \begin{array}{ll}
-1, & \pmb{u} = \pmb{u}^* = \arg\max_{\pmb{u}} Q(s,\pmb{u}) \\
+1, & \boldsymbol{u} = \boldsymbol{u}^* = \arg\max_{\boldsymbol{u}} Q(s,\boldsymbol{u}) \\
 \alpha, & \text{otherwise.}
 \end{array}
 \right.
@@ -214,7 +214,7 @@ ensuring that $\arg\max\Pi_wQ$ does not produce incorrect actions (unlike [QMIX]
 #### Second Weight Function: Optimistic Weighting
 
 $$
-\left.w(s,\pmb{u})=\left\{ \begin{array} {ll}1 & Q_{tot}(s,\pmb{u})<Q(s,\pmb{u}) \\ \alpha & \text{otherwise.} \end{array}\right..(7)\right.
+\left.w(s,\boldsymbol{u})=\left\{ \begin{array} {ll}1 & Q_{tot}(s,\boldsymbol{u})<Q(s,\boldsymbol{u}) \\ \alpha & \text{otherwise.} \end{array}\right..(7)\right.
 $$
 
 This weight function assigns a higher weight ($1$) to all underestimated action values
@@ -238,22 +238,22 @@ According to the conclusions of Theorem 1 and Theorem 2,
 the two weight functions above ensure the accuracy of joint action output for any Q-function (including $Q^*$).
 
 The design of both weight functions requires $Q^*$ for computation.
-Thus, an additional $\hat{Q}^{*}$ (to approximate $Q^*$) must be learned.
-However, computing $\arg\max\hat{Q}^{*}$ during fitting requires searching the entire joint action space
-— a computationally infeasible task. To address this, the authors leverage the "monotonicity" of $Q_{tot}$
-nd propose using $\arg\max Q_{tot}$ to generate actions, which are then estimated by $\hat{Q}^{*}$.
+Thus, an additional $`\hat{Q}^{*}$ (to approximate $Q^*`$) must be learned.
+However, computing $`\arg\max\hat{Q}^{*}`$ during fitting requires searching the entire joint action space
+— a computationally infeasible task. To address this, the authors leverage the "monotonicity" of $`Q_{tot}`$
+nd propose using $`\arg\max Q_{tot}`$ to generate actions, which are then estimated by $`\hat{Q}^{*}`$.
 
 The $\hat{Q}^{*}$ function is updated using the following operator:
 
 $$
-\mathcal{T}_w^*\hat{Q}^*(s,\pmb{u}):=\mathbb{E}[r+\gamma\hat{Q}^*(s^\prime,\arg\max_{\pmb{u}^\prime}Q_{tot}(s^\prime,\pmb{u}^\prime))].(8)
+\mathcal{T}_w^*\hat{Q}^*(s,\boldsymbol{u}):=\mathbb{E}[r+\gamma\hat{Q}^*(s^\prime,\arg\max_{\boldsymbol{u}^\prime}Q_{tot}(s^\prime,\boldsymbol{u}^\prime))].(8)
 $$
 
-Comparing Equation$(8)$ with Equation$(2)$ (introduced earlier), the key difference between $\mathcal{T}_w^*$ and $\mathcal{T}^*$ is
+Comparing Equation $`(8)`$ with Equation$`(2)`$ (introduced earlier), the key difference between $`\mathcal{T}_w^*`$ and $`\mathcal{T}^*`$ is
 
-that $\mathcal{T}_w^*$ does not select actions by directly maximizing $\hat{Q}^{*}$ ;
+that $`\mathcal{T}_w^*`$ does not select actions by directly maximizing $`\hat{Q}^{*}`$ ;
 
-instead, it maximizes the monotonic function $Q_{tot}\in\mathcal{Q}^{mix}$ . Note that when $w(s,\pmb{u})\equiv1$, 
+instead, it maximizes the monotonic function $Q_{tot}\in\mathcal{Q}^{mix}$ . Note that when $w(s,\boldsymbol{u})\equiv1$, 
 $\Pi_w\nLeftrightarrow\Pi_{\mathrm{Qmix}}$.
 
 Similarly, $Q_{tot}$ is updated using the following operator:
@@ -265,16 +265,16 @@ $$
 This $\mathcal{T}_{\mathrm{WQMIX}}^*$ is the Weighted QMIX operator.
 
 To ensure that $\mathcal{T}_{\mathrm{WQMIX}}^*$ converges to the optimal policy, the authors provide the following conclusion:
-> Corollary 1. Letting $w$ be the Idealised Central or Optimistic Weighting, 
-> then $\exists\alpha>0$ such that the unique fixed point of $\mathcal{T}_w^*$ is $Q_{tot}$. 
-> Furthermore, $\Pi_{w}Q^{*}\subseteq\mathcal{Q}^{mix}$ recovers an optimal policy, and $\max\Pi_wQ^*(s,\cdot)=\max Q^*(s,\cdot)$.
+> Corollary 1. Letting $`w`$ be the Idealised Central or Optimistic Weighting, 
+> then $`\exists\alpha>0`$ such that the unique fixed point of $`\mathcal{T}_w^*$ is $Q_{tot}`$. 
+> Furthermore, $`\Pi_{w}Q^{*}\subseteq\mathcal{Q}^{mix}`$ recovers an optimal policy, and $`\max\Pi_wQ^*(s,\cdot)=\max Q^*(s,\cdot)`$.
 
 ## Algorithm Design
 
 The above analysis of WQMIX assumes ideal conditions. 
 Below, we discuss how to implement WQMIX using deep neural networks under partial observability.
 
-Based on the preceding analysis, the WQMIX algorithm consists of three components: $Q_{tot}$, $\hat{Q}^*$ and $w(s,\pmb{u})$.
+Based on the preceding analysis, the WQMIX algorithm consists of three components: $Q_{tot}$, $\hat{Q}^*$ and $w(s,\boldsymbol{u})$.
 The algorithm framework is shown in Figure 1.
 
 ```{eval-rst}
@@ -291,10 +291,10 @@ The structural design of $Q_{tot}$ is nearly identical to that in the original [
 It is trained by minimizing the following loss:
 
 $$
-\sum_{i=1}^bw(s,\pmb{u})(Q_{tot}(\pmb{\tau},\pmb{u},s)-y_i)^2.(10)
+\sum_{i=1}^bw(s,\boldsymbol{u})(Q_{tot}(\boldsymbol{\tau},\boldsymbol{u},s)-y_i)^2.(10)
 $$
 
-Here, $y_{i}:=r+\gamma\hat{Q}^{*}(s^{\prime},\pmb{\tau}^{\prime},\arg\max_{\pmb{u}^{\prime}}Q_{tot}(\pmb{\tau}^{\prime},\pmb{u}^{\prime},s^{\prime}))$ 
+Here, $y_{i}:=r+\gamma\hat{Q}^{*}(s^{\prime},\boldsymbol{\tau}^{\prime},\arg\max_{\boldsymbol{u}^{\prime}}Q_{tot}(\boldsymbol{\tau}^{\prime},\boldsymbol{u}^{\prime},s^{\prime}))$ 
 
 ### The $\hat{Q}^*$ Function
 
@@ -306,12 +306,12 @@ and the global state $`s^{\prime}`$ as inputs, and outputs $`\hat{Q}^*`$.
 The $\hat{Q}^*$ function is trained by minimizing the following loss function: 
 
 $$
-\sum_{i=1}^b(\hat{Q}^*(\pmb{\tau},\pmb{u},s)-y_i)^2.(11)
+\sum_{i=1}^b(\hat{Q}^*(\boldsymbol{\tau},\boldsymbol{u},s)-y_i)^2.(11)
 $$
 
 The computation of $y_i$ is identical to that in Equation$(10)$.
 
-### The Weight Function $w(s,\pmb{u})$
+### The Weight Function $w(s,\boldsymbol{u})$
 
 Computing both weight functions requires maximizing $\hat{Q}^*$ over the joint action space, 
 which is computationally expensive when the number of agents is large. 
@@ -320,25 +320,25 @@ Thus, the authors use approximation methods to solve this problem.
 #### Centrally-Weighted QMIX (CW-QMIX)
 
 $$
-w(s,\pmb{u})=\left\{
+w(s,\boldsymbol{u})=\left\{
 \begin{array}
-{cc}{1} & {y_{i}>\hat{Q}^{*}(s,\pmb{\tau},\pmb{\hat{u}}^{*})\mathrm{~or~}\pmb{u}=\pmb{\hat{u}}^{*}} \\
+{cc}{1} & {y_{i}>\hat{Q}^{*}(s,\boldsymbol{\tau},\boldsymbol{\hat{u}}^{*})\mathrm{~or~}\boldsymbol{u}=\boldsymbol{\hat{u}}^{*}} \\
 {\alpha} & {\mathrm{otherwise},}
 \end{array}\right._{(12)}
 $$
 
-Here, $`\pmb{\hat{u}}^{*}=\arg\max_{\pmb{u}}Q_{tot}(\pmb{\tau},\pmb{u},s)`$.
-If $`y_{i}>\hat{Q}^{*}(s,\pmb{\tau}`$, $`u`$ can be approximately regarded as the optimal joint action.
+Here, $`\boldsymbol{\hat{u}}^{*}=\arg\max_{\boldsymbol{u}}Q_{tot}(\boldsymbol{\tau},\boldsymbol{u},s)`$.
+If $`y_{i}>\hat{Q}^{*}(s,\boldsymbol{\tau}`$, $`u`$ can be approximately regarded as the optimal joint action.
 
-Compared with Equation$`(6)`$, Equation$`(12)`$ replaces $`\mathcal{T}_w^*\hat{Q}^{*}(s,\pmb{\tau},\pmb{\hat{u}^{*}})$ with $\hat{Q}^{*}(s,\pmb{\tau},\pmb{\hat{u}^{*}})`$.
+Compared with Equation$`(6)`$, Equation$`(12)`$ replaces $`\mathcal{T}_w^*\hat{Q}^{*}(s,\boldsymbol{\tau},\boldsymbol{\hat{u}^{*}})$ with $\hat{Q}^{*}(s,\boldsymbol{\tau},\boldsymbol{\hat{u}^{*}})`$.
 The Weighted QMIX algorithm based on Equation$`(12)`$ is called "Centrally-Weighted QMIX (CW-QMIX)".
 
 ### Optimistically-Weighted QMIX (OW-QMIX)
 
 $$
-w(s,\pmb{u})=\left\{
+w(s,\boldsymbol{u})=\left\{
 \begin{array}
-{ll}1 & Q_{tot}(\pmb{\tau},\pmb{u},s)<y_i \\
+{ll}1 & Q_{tot}(\boldsymbol{\tau},\boldsymbol{u},s)<y_i \\
 \alpha & \text{otherwise.}
 \end{array}\right.(13)
 $$
