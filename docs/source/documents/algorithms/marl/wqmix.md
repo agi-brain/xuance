@@ -87,11 +87,11 @@ that is closest to the function $Q$, measured by the L2 norm.
 
 ### Properties of the $\mathcal{T}_{\mathrm{Qmix}}^*$ Operator
 
-Since the optimization in Equation$(1)$ is performed within the $\mathcal{Q}^{mix}$ space,
-[QMIX](./qmix.md) may fail to find the fixed point of $\mathcal{T}^*$ in some cases.
-Instead, it can only find a suboptimal solution in $\mathcal{Q}^{mix}$ that is closest to the fixed point.
-Consequently, the optimization result of Equation$(1)$ may not be unique,
-and $\mathcal{T}_{\mathrm{Qmix}}^*$ will randomly return a $q$-function as the final solution.
+Since the optimization in Equation$`(1)`$ is performed within the $`\mathcal{Q}^{mix}`$ space,
+[QMIX](./qmix.md) may fail to find the fixed point of $`\mathcal{T}^*`$ in some cases.
+Instead, it can only find a suboptimal solution in $`\mathcal{Q}^{mix}`$ that is closest to the fixed point.
+Consequently, the optimization result of Equation$`(1)`$ may not be unique,
+and $`\mathcal{T}_{\mathrm{Qmix}}^*`$ will randomly return a $`q`$-function as the final solution.
 
 > Property 1: $\mathcal{T}_{\mathrm{Qmix}}^*$ is not a contraction mapping.
 
@@ -104,11 +104,11 @@ Why, then, is $\mathcal{T}_{\mathrm{Qmix}}^*$ not a contraction mapping?
 
 To explain this, the authors present a simple case:
 
-> Suppose the left matrix in Table 1 is the reward matrix $Q^*$ of a Q-function,
-> which cannot be represented by any value function in $\mathcal{Q}^{mix}$.
-> Using $\Pi_{\mathrm{Qmix}}Q$, we may obtain the $Q_{tot}$ matrices shown in the middle or right of Table 1
-> — both of which allow agents to achieve the maximum reward $r = 1$.
-> Thus, the $Q_{tot}$ computed by the $\mathcal{T}_{\mathrm{Qmix}}^*$ operator may not be unique.
+> Suppose the left matrix in Table 1 is the reward matrix $`Q^*`$ of a Q-function,
+> which cannot be represented by any value function in $`\mathcal{Q}^{mix}`$.
+> Using $`\Pi_{\mathrm{Qmix}}Q`$, we may obtain the $`Q_{tot}`$ matrices shown in the middle or right of Table 1
+> — both of which allow agents to achieve the maximum reward $`r = 1`$.
+> Thus, the $`Q_{tot}`$ computed by the $`\mathcal{T}_{\mathrm{Qmix}}^*`$ operator may not be unique.
 > It therefore lacks the "unique fixed point" property of contraction mappings and is not a contraction mapping itself.
 
 ```{eval-rst}
@@ -132,9 +132,9 @@ This provides a deeper explanation of [QMIX](./qmix.md)’s limitations.
 The authors note that there may exist Q-functions for which $\arg\max\Pi_{\mathrm{Qmix}}Q\neq\arg\max Q$.
 If you understand Property 1, this property will be intuitive.
 
-For example, consider a 2-agent, 3-action task.The left matrix in Table 2 is the true reward matrix $Q^*$,
-and the right matrix is a $Q_{tot}$ returned by the $\Pi_{\mathrm{Qmix}}$ operator.
-According to $Q^*$, the agent pair can obtain the maximum reward $r = 8$  by selecting the corresponding action combination.
+For example, consider a 2-agent, 3-action task.The left matrix in Table 2 is the true reward matrix $`Q^*`$,
+and the right matrix is a $`Q_{tot}`$ returned by the $`\Pi_{\mathrm{Qmix}}`$ operator.
+According to $`Q^*`$, the agent pair can obtain the maximum reward $r = 8$  by selecting the corresponding action combination.
 However, to satisfy the "monotonicity constraint", $\Pi_{\mathrm{Qmix}}Q^*$ may fit the reward at the $r = 8$ position to $-12$,
 leaving the agents with a maximum achievable reward of $r = 0$.
 
@@ -164,7 +164,7 @@ In practical training — where more uncontrollable factors exist — the situat
 
 Now that we have identified [QIMX](./qmix.md)’s flaws, we can address them directly. The authors’ reasoning is as follows:
 
-> The optimization problem in Equation$(1)$ iterates over all states in the state space and all actions in the joint action space.
+> The optimization problem in Equation$`(1)`$ iterates over all states in the state space and all actions in the joint action space.
 > The authors argue that if the true reward is "non-monotonic",
 > it is unreasonable to sum all action values with equal weights (i.e., uniform weighting).
 >
@@ -190,7 +190,14 @@ Notably, when $w(s,\pmb{u})\equiv1$, $\Pi_{w}\Leftrightarrow\Pi_{\mathrm{Qmix}}$
 #### First Weight Function: Idealised Central Weighting
 
 $$
-w(s,\pmb{u})=\left\{ \begin{array} {cc}1 & \pmb{u}=\pmb{u}^*=\arg\max_{\pmb{u}}Q(s,\pmb{u}) \\ \alpha & \text{otherwise.} \end{array}\right..(6)
+w(s,\boldsymbol{u}) =
+\left\{
+\begin{array}{ll}
+1, & \boldsymbol{u} = \boldsymbol{u}^* = \arg\max_{\boldsymbol{u}} Q(s,\boldsymbol{u}) \\
+\alpha, & \text{otherwise.}
+\end{array}
+\right.
+\tag{6}
 $$
 
 This weighting method is straightforward but requires iterating over the entire joint action space to compute $\arg\max$, making it impractical for real-world use.
