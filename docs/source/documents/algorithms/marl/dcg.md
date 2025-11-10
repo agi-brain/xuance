@@ -75,17 +75,15 @@ Here each utility $f_i$ depends on agent $i$’s action $a_i$ (and possibly its 
 
 Once the joint Q-function is factorized by a CG, the **optimal joint action** (or greedy action) cannot in general be found by each agent separately. Instead, DCG uses **max-sum message passing** (a form of belief propagation) on the coordination graph to compute (approximately) the joint argmax of $Q_{DCG}$. In a tree-structured graph, max-sum is guaranteed to converge to the true maximum. Concretely, each edge $(i,j)$ carries a message vector $\mu_{ij}(a_j)$ representing the influence of agent $i$ on agent $j$’s action value. Messages are iteratively updated by:
 
-
-
-![mu-update](https://latex.codecogs.com/svg.image?%5Cdpi%7B200%7D%20%5Clarge%20%5Cmu_%7Bt%7D%5E%7Bij%7D(a%5Ej)%20%5Cleftarrow%20%5Cmax_%7Ba%5Ei%7D%20%5Cleft%5C%7B%20%5Cfrac%7B1%7D%7B%7C%5Cmathcal%7BV%7D%7C%7D%20f%5Ei(a%5Ei%20%5Cmid%20s_t)%20%2B%20%5Cfrac%7B1%7D%7B%7C%5Cmathcal%7BE%7D%7C%7D%20f%5E%7Bij%7D(a%5Ei%2C%20a%5Ej%20%5Cmid%20s_t)%20%2B%20%5Csum_%7Bk%3A(k%2Ci)%5Cin%5Cmathcal%7BE%7D%7D%20%5Cmu_t%5E%7Bki%7D(a%5Ei)%20-%20%5Cmu_t%5E%7Bji%7D(a%5Ei)%20%5Cright%5C%7D)
-
-
+<p align="center">
+  <img src="https://latex.codecogs.com/svg.image?\dpi{200}\large\mu_{t}^{ij}(a^{j})%20\leftarrow%20\max_{a^{i}}\left\{\frac{1}{|\mathcal{V}|}f^{i}(a^{i}\mid%20s_{t})%20+%20\frac{1}{|\mathcal{E}|}f^{ij}(a^{i},a^{j}\mid%20s_{t})%20+%20\sum_{k:(k,i)\in\mathcal{E}}\mu_{t}^{ki}(a^{i})%20-%20\mu_{t}^{ji}(a^{i})\right\}">
+</p>
 
 where the sum is over incoming messages to $i$ from its other neighbors, and $-\mu_{ji}$ avoids double-counting. After sufficient iterations (denote $t$ the final step), each agent $i$ chooses the action that maximizes its *local estimate* of the joint Q-value:
 
-$$
-a_{*}^{i} := \arg\max_{a^{i}} \left\{ \frac{1}{|\mathcal{V}|}f^{i}(a^{i}|s_{t}) + \sum_{k,i\in\mathcal{E}}\mu_{t}^{ki}(a^{i}) \right\}.
-$$
+<p align="center">
+  <img src="https://latex.codecogs.com/svg.image?\dpi{200}\large%20a_{*}^{i}%20:=%20\arg\max_{a^{i}}\left\{\frac{1}{|\mathcal{V}|}f^{i}(a^{i}\mid%20s_{t})%20+%20\sum_{k:(k,i)\in\mathcal{E}}\mu_{t}^{ki}(a^{i})\right\}">
+</p>
 
 This scheme finds the joint greedy action $\mathbf{a}^*$ that (approximately) maximizes $Q_{DCG}(s,\mathbf{a})$. In acyclic CGs, the max-sum updates converge to the exact optimum. In cyclic graphs, DCG uses heuristic *message normalization* (subtracting a mean term) to improve convergence. The key advantage of DCG is that **the representation is powerful enough to capture coordination**, yet inference remains local. Compared to a fully centralized Q, DCG’s message passing takes $O(km(n+m)|E|)$ time per decision (for $k$ iterations, $n$ agents, $m$ actions each) which is tractable for sparse graphs. Importantly, DCG employs **parameter sharing**: all payoff networks $f_{ij}$ share the same weights (conditioned on agent IDs), and all utilities $f_i$ share weights. This sharing, along with optional low-rank factorization of payoffs, dramatically improves sample efficiency.
 
