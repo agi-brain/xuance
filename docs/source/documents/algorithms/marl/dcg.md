@@ -75,12 +75,12 @@ Here each utility $f_i$ depends on agent $i$’s action $a_i$ (and possibly its 
 
 Once the joint Q-function is factorized by a CG, the **optimal joint action** (or greedy action) cannot in general be found by each agent separately. Instead, DCG uses **max-sum message passing** (a form of belief propagation) on the coordination graph to compute (approximately) the joint argmax of $Q_{DCG}$. In a tree-structured graph, max-sum is guaranteed to converge to the true maximum. Concretely, each edge $(i,j)$ carries a message vector $\mu_{ij}(a_j)$ representing the influence of agent $i$ on agent $j$’s action value. Messages are iteratively updated by:
 
-\[
+[
 \begin{aligned}
 \mu^{ij}_t(a^j) \leftarrow \max_{a^i} \Bigg\{ & \frac{1}{|\mathcal{V}|} f^i(a^i|s_t) + \frac{1}{|\mathcal{E}|} f^{ij}(a^i,a^j|s_t) \\
 & + \sum_{\{k,i\} \in \mathcal{E}} \mu^{ki}_t(a^i) - \mu^{ji}_t(a^i) \Bigg\}
 \end{aligned}
-\]
+]
 
 where the sum is over incoming messages to $i$ from its other neighbors, and $-\mu_{ji}$ avoids double-counting. After sufficient iterations (denote $t$ the final step), each agent $i$ chooses the action that maximizes its *local estimate* of the joint Q-value:
 
