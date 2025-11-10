@@ -60,7 +60,7 @@ Here, $\tau$ denotes the history of observation-action sequences, and $u$ denote
 If Equation$`(1)`$ does not hold, the decentralized policy cannot maximize $Q_{tot}$ and 
 thus will not be optimal—this is **non-monotonicity**.
 
-At this point, you will notice that [**VDN**](./vdn.md)’s decomposition method satisfies the monotonicity in Equation$(1)$,
+At this point, you will notice that [**VDN**](./vdn.md)’s decomposition method satisfies the monotonicity in Equation$`(1)`$,
 with:
 
 $$
@@ -81,9 +81,8 @@ $$
 As long as Equation$`(3)`$ holds, the **monotonicity** in Equation$`(1)`$ is guaranteed. 
 Here, Equation$`(3)`$ is a **sufficient but not necessary** condition for Equation$`(1)`$.
 
-Therefore, the research objective of this paper is to design a neural network that takes $\{Q_i\}_{i=1}^N$ 
-as input and outputs 
-$Q_{tot}$, while enforcing the monotonicity constraint in Equation$`(3)`$. 
+Therefore, the research objective of this paper is to design a neural network that takes
+$\{Q_i\}_{i=1}^N\ \text{ as input and outputs }\ Q_{tot}$, while enforcing the monotonicity constraint in Equation$`(3)`$. 
 By exploring under this constraint, we can not only ensure Equation$`(1)`$ holds 
 but also enhance the network’s function fitting capability, 
 thereby addressing the limitations of the [**VDN**](./vdn.md) algorithm.
