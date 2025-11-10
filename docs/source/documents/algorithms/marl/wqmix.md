@@ -189,16 +189,17 @@ Notably, when $w(s,\boldsymbol{u})\equiv1$, $\Pi_{w}\Leftrightarrow\Pi_{\mathrm{
 
 #### First Weight Function: Idealised Central Weighting
 
-$$
-w(s,\boldsymbol{u}) = 
-\left\{
-\begin{array}{ll}
-1, & \boldsymbol{u} = \boldsymbol{u}^* = \arg\max_{\boldsymbol{u}} Q(s,\boldsymbol{u}) \\
-\alpha, & \text{otherwise.}
-\end{array}
-\right.
-\tag{6}
-$$
+<p align="center">
+  <img src="https://latex.codecogs.com/svg.image?\dpi{200}\large
+  w(s,\boldsymbol{u})=\left\{
+  \begin{array}{ll}
+  1,&\boldsymbol{u}=\boldsymbol{u}^*=\arg\max_{\boldsymbol{u}}Q(s,\boldsymbol{u})\\
+  \alpha,&\text{otherwise.}
+  \end{array}
+  \right.\tag{6)}">
+</p>
+
+
 
 This weighting method is straightforward but requires iterating over the entire joint action space to compute $\arg\max$, making it impractical for real-world use.
 As discussed later, the authors use approximation methods to address this issue during actual training.
@@ -253,7 +254,7 @@ Comparing Equation $`(8)`$ with Equation$`(2)`$ (introduced earlier), the key di
 
 that $`\mathcal{T}_w^*`$ does not select actions by directly maximizing $`\hat{Q}^{*}`$ ;
 
-instead, it maximizes the monotonic function $Q_{tot}\in\mathcal{Q}^{mix}$ . Note that when $w(s,\boldsymbol{u})\equiv1$, 
+instead, it maximizes the monotonic function $ Q_{tot}\in\mathcal{Q}^{mix}$ . Note that when $w(s,\boldsymbol{u})\equiv1$, 
 $\Pi_w\nLeftrightarrow\Pi_{\mathrm{Qmix}}$.
 
 Similarly, $Q_{tot}$ is updated using the following operator:
