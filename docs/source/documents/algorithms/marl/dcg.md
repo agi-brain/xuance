@@ -82,7 +82,7 @@ $$
 where the sum is over incoming messages to $i$ from its other neighbors, and $-\mu_{ji}$ avoids double-counting. After sufficient iterations (denote $t$ the final step), each agent $i$ chooses the action that maximizes its *local estimate* of the joint Q-value:
 
 $$
-a_{*}^{i} := \arg\max_{a^{i}} \left\{ \frac{1}{|\mathcal{V}|}f^{i}(a^{i}|s_{t}) + \sum_{\{k,i\}\in\mathcal{E}}\mu_{t}^{ki}(a^{i}) \right\}.
+a_{*}^{i} := \arg\max_{a^{i}} \left\{ \frac{1}{|\mathcal{V}|}f^{i}(a^{i}|s_{t}) + \sum_{k,i\in\mathcal{E}}\mu_{t}^{ki}(a^{i}) \right\}.
 $$
 
 This scheme finds the joint greedy action $\mathbf{a}^*$ that (approximately) maximizes $Q_{DCG}(s,\mathbf{a})$. In acyclic CGs, the max-sum updates converge to the exact optimum. In cyclic graphs, DCG uses heuristic *message normalization* (subtracting a mean term) to improve convergence. The key advantage of DCG is that **the representation is powerful enough to capture coordination**, yet inference remains local. Compared to a fully centralized Q, DCG’s message passing takes $O(km(n+m)|E|)$ time per decision (for $k$ iterations, $n$ agents, $m$ actions each) which is tractable for sparse graphs. Importantly, DCG employs **parameter sharing**: all payoff networks $f_{ij}$ share the same weights (conditioned on agent IDs), and all utilities $f_i$ share weights. This sharing, along with optional low-rank factorization of payoffs, dramatically improves sample efficiency.
