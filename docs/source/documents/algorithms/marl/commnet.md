@@ -85,8 +85,8 @@ In Equation$(1)$, If $f^i$ is a single linear layer + nonlinear activation $\sig
 
 where $H^i$ is the "hidden state weight", $C^i$ is the "communication signal weight", 
 
-And the model can be viewed as a feedforward network with layers $\boldsymbol{\mathrm{h}}^{i+1} = \sigma(T^i\\boldsymbol{\mathrm{h}}^i)$
-where $\boldsymbol{\mathrm{h}}^i$ is the concatenation of all $h_j^i$ and $T^i$ takes the block form, where $\bar{C}^i = \frac{C^i}{J-1}$:
+And the model can be viewed as a feedforward network with layers $\mathbf{h}^{i+1}=\sigma\!\left(T^i\mathbf{h}^i\right)$
+where $\mathbf{h}^i$ is the concatenation of all $h_j^i$ and $T^i$ takes the block form, where $\bar{C}^i = \frac{C^i}{J-1}$:
 
 
 $$
