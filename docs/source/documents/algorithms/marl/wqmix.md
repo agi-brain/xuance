@@ -190,10 +190,10 @@ Notably, when $w(s,\pmb{u})\equiv1$, $\Pi_{w}\Leftrightarrow\Pi_{\mathrm{Qmix}}$
 #### First Weight Function: Idealised Central Weighting
 
 $$
-w(s,\boldsymbol{u}) =
+w(s,\pmb{u}) = 
 \left\{
 \begin{array}{ll}
-1, & \boldsymbol{u} = \boldsymbol{u}^* = \arg\max_{\boldsymbol{u}} Q(s,\boldsymbol{u}) \\
+1, & \pmb{u} = \pmb{u}^* = \arg\max_{\pmb{u}} Q(s,\pmb{u}) \\
 \alpha, & \text{otherwise.}
 \end{array}
 \right.
