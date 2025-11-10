@@ -190,14 +190,10 @@ Notably, when $w(s,\boldsymbol{u})\equiv1$, $\Pi_{w}\Leftrightarrow\Pi_{\mathrm{
 #### First Weight Function: Idealised Central Weighting
 
 <p align="center">
-  <img src="https://latex.codecogs.com/svg.image?\dpi{200}\large
-  w(s,\boldsymbol{u})=\left\{
-  \begin{array}{ll}
-  1,&\boldsymbol{u}=\boldsymbol{u}^*=\arg\max_{\boldsymbol{u}}Q(s,\boldsymbol{u})\\
-  \alpha,&\text{otherwise.}
-  \end{array}
-  \right.\tag{6)}">
+  <img src="https://latex.codecogs.com/svg.image?\dpi{200}\large%20w(s,%5Cboldsymbol%7Bu%7D)=%5Cleft%5C%7B%5Cbegin%7Barray%7D%7Bll%7D1,%26%20%5Cboldsymbol%7Bu%7D=%5Cboldsymbol%7Bu%7D%5E*=%5Carg%5Cmax_%7B%5Cboldsymbol%7Bu%7D%7DQ(s,%5Cboldsymbol%7Bu%7D)%5C%5C%5Calpha,%26%20%5Ctext%7Botherwise.%7D%5Cend%7Barray%7D%5Cright.%5Ctag%7B6%7D" alt="w(s,u) definition">
 </p>
+
+
 
 
 
@@ -214,9 +210,9 @@ ensuring that $\arg\max\Pi_wQ$ does not produce incorrect actions (unlike [QMIX]
 
 #### Second Weight Function: Optimistic Weighting
 
-$$
-\left.w(s,\boldsymbol{u})=\left\{ \begin{array} {ll}1 & Q_{tot}(s,\boldsymbol{u})<Q(s,\boldsymbol{u}) \\ \alpha & \text{otherwise.} \end{array}\right..(7)\right.
-$$
+<p align="center">
+  <img src="https://latex.codecogs.com/svg.image?\dpi{200}\large%20w(s,%5Cboldsymbol%7Bu%7D)=%5Cleft%5C%7B%5Cbegin%7Barray%7D%7Bll%7D1,%26%20Q_%7Btot%7D(s,%5Cboldsymbol%7Bu%7D)%3CQ(s,%5Cboldsymbol%7Bu%7D)%5C%5C%5Calpha,%26%20%5Ctext%7Botherwise.%7D%5Cend%7Barray%7D%5Cright.%5Ctag%7B7%7D" alt="w(s,u) piecewise">
+</p>
 
 This weight function assigns a higher weight ($1$) to all underestimated action values
 and a lower weight ($\alpha$) to all overestimated action values.
