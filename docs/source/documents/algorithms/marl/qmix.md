@@ -80,7 +80,7 @@ $$
 As long as Equation$`(3)`$ holds, the **monotonicity** in Equation$`(1)`$ is guaranteed. 
 Here, Equation$`(3)`$ is a **sufficient but not necessary** condition for Equation$(1)$.
 
-Therefore, the research objective of this paper is to design a neural network that takes $\{Q_i\}_{i=1}^N$ as input and 
+Therefore, the research objective of this paper is to design a neural network that takes $\{ Q_i\} _{i=1} ^N$ as input and 
 outputs $Q_{tot}$ , while enforcing the monotonicity constraint in Equation$`(3)`$. 
 By exploring under this constraint, we can not only ensure Equation$`(1)`$ holds 
 but also enhance the network’s function fitting capability, 
@@ -180,7 +180,7 @@ can be achieved by maximizing the value function of each agent individually. Thi
 ### Function Representation Complexity
 Although QMIX has stronger function fitting capability than [**VDN**](./vdn.md), 
 the authors also note that the constraint in Equation$`(3)`$ still limits the range of value functions it can fit. 
-This is because some value function decompositions may not be based on satisfying this monotonicity constraint—Equation$`(3)`$ is a **sufficient but not necessary condition** for Equation$(1)$.
+This is because some value function decompositions may not be based on satisfying this monotonicity constraint—Equation$`(3)`$ is a **sufficient but not necessary condition** for Equation$`(1)`$.
 
 For some decentralized policies where the optimal action of a single agent depends on the actions of other agents at the same time, 
 the function representation capability of the QMIX algorithm will also be limited to a certain extent. 
