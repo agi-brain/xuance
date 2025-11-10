@@ -85,8 +85,9 @@ In Equation$(1)$, If $f^i$ is a single linear layer + nonlinear activation $\sig
 
 where $H^i$ is the "hidden state weight", $C^i$ is the "communication signal weight", 
 
-And the model can be viewed as a feedforward network with layers $\pmb{\mathrm{h}}^{i+1} = \sigma(T^i\pmb{\mathrm{h}}^i)$
-where $\pmb{\mathrm{h}}^i$ is the concatenation of all $h_j^i$ and $T^i$ takes the block form, where $\bar{C}^i = \frac{C^i}{J-1}$:
+And the model can be viewed as a feedforward network with layers $\boldsymbol{\mathrm{h}}^{i+1} = \sigma(T^i\\boldsymbol{\mathrm{h}}^i)$
+where $\boldsymbol{\mathrm{h}}^i$ is the concatenation of all $h_j^i$ and $T^i$ takes the block form, where $\bar{C}^i = \frac{C^i}{J-1}$:
+
 
 $$
 T^i= \begin{pmatrix} H^i & \bar{C}^i & \bar{C}^i & ... & \bar{C}^i \\ \bar{C}^i & H^i & \bar{C}^i & ... & \bar{C}^i \\ \bar{C}^i & \bar{C}^i & H^i & ... & \bar{C}^i \\ \vdots & \vdots & \vdots & \ddots & \vdots \\ \bar{C}^i & \bar{C}^i & \bar{C}^i & ... & H^i \end{pmatrix}
@@ -111,6 +112,7 @@ $$
 
 After $K$ rounds of communication, a decoder $q(\cdot)$ (usually a linear layer + Softmax) converts the final hidden state $h_j^K$ into an action distribution, 
 and then samples to obtain the action $a_j$ of agent $j$: 
+
 $$
 a_j \sim q(h_j^K)
 $$
