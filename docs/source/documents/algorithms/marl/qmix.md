@@ -82,7 +82,7 @@ As long as Equation$`(3)`$ holds, the **monotonicity** in Equation$`(1)`$ is gua
 Here, Equation$`(3)`$ is a **sufficient but not necessary** condition for Equation$`(1)`$.
 
 Therefore, the research objective of this paper is to design a neural network that takes
-$\{Q_i\}_{i=1}^N\ \text{ as input and outputs }\ Q_{tot}$, while enforcing the monotonicity constraint in Equation$`(3)`$. 
+$`\{Q_i\}_{i=1}^N`$ as input and outputs $`Q_{tot}`$, while enforcing the monotonicity constraint in Equation$`(3)`$. 
 By exploring under this constraint, we can not only ensure Equation$`(1)`$ holds 
 but also enhance the network’s function fitting capability, 
 thereby addressing the limitations of the [**VDN**](./vdn.md) algorithm.
