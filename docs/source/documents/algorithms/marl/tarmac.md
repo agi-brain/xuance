@@ -172,7 +172,7 @@ import argparse
 from xuance.common import get_configs
 from xuance.environment import REGISTRY_MULTI_AGENT_ENV 
 from xuance.environment import make_envs
-from xuance.torch.agents.multi_agent_rl.tarmac_agents import tarmac_Agents 
+from xuance.torch.agents.multi_agent_rl.tarmac_agents import TarMAC_Agents 
 
 configs_dict = get_configs(file_dir="TarMAC_myenv.yaml")
 configs = argparse.Namespace(**configs_dict)
