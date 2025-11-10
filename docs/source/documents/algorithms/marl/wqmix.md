@@ -242,9 +242,10 @@ nd propose using $`\arg\max Q_{tot}`$ to generate actions, which are then estima
 
 The $\hat{Q}^{*}$ function is updated using the following operator:
 
-$$
-\mathcal{T}_w^*\hat{Q}^*(s,\boldsymbol{u}):=\mathbb{E}[r+\gamma\hat{Q}^*(s^\prime,\arg\max_{\boldsymbol{u}^\prime}Q_{tot}(s^\prime,\boldsymbol{u}^\prime))].(8)
-$$
+<p align="center">
+  <img src="https://latex.codecogs.com/svg.image?\dpi{200}\large%20%5Cmathcal%7BT%7D_w%5E*%5Chat%7BQ%7D%5E*(s,%5Cboldsymbol%7Bu%7D):=%5Cmathbb%7BE%7D%5Br%2B%5Cgamma%5Chat%7BQ%7D%5E*(s%5E%5Cprime,%5Carg%5Cmax_%7B%5Cboldsymbol%7Bu%7D%5E%5Cprime%7DQ_%7Btot%7D(s%5E%5Cprime,%5Cboldsymbol%7Bu%7D%5E%5Cprime))%5D.%5Ctag%7B8%7D" alt="Tw Q definition">
+</p>
+
 
 Comparing Equation $`(8)`$ with Equation$`(2)`$ (introduced earlier), the key difference between $`\mathcal{T}_w^*`$ and $`\mathcal{T}^*`$ is
 
@@ -255,9 +256,10 @@ $\Pi_w\nLeftrightarrow\Pi_{\mathrm{Qmix}}$.
 
 Similarly, $Q_{tot}$ is updated using the following operator:
 
-$$
-\mathcal{T}_{\mathrm{WQMIX}}^*Q_{tot}:=\Pi_w\mathcal{T}_w^*\hat{Q}^*.(9)
-$$
+<p align="center">
+  <img src="https://latex.codecogs.com/svg.image?\dpi{200}\large%20%5Cmathcal%7BT%7D_%7B%5Cmathrm%7BWQMIX%7D%7D%5E*Q_%7Btot%7D:=%5CPi_w%5Cmathcal%7BT%7D_w%5E*%5Chat%7BQ%7D%5E*.%5Ctag%7B9%7D" alt="T_WQMIX definition">
+</p>
+
 
 This $\mathcal{T}_{\mathrm{WQMIX}}^*$ is the Weighted QMIX operator.
 
@@ -287,9 +289,10 @@ The algorithm framework is shown in Figure 1.
 The structural design of $Q_{tot}$ is nearly identical to that in the original [QMIX](./qmix.md) algorithm.
 It is trained by minimizing the following loss:
 
-$$
-\sum_{i=1}^bw(s,\boldsymbol{u})(Q_{tot}(\boldsymbol{\tau},\boldsymbol{u},s)-y_i)^2.(10)
-$$
+<p align="center">
+  <img src="https://latex.codecogs.com/svg.image?\dpi{200}\large%20%5Csum_%7Bi%3D1%7D%5Eb%20w(s,%5Cboldsymbol%7Bu%7D)(Q_%7Btot%7D(%5Cboldsymbol%7B%5Ctau%7D,%5Cboldsymbol%7Bu%7D,s)-y_i)%5E2.%5Ctag%7B10%7D" alt="loss function eq 10">
+</p>
+
 
 Here, $y_{i}:=r+\gamma\hat{Q}^{*}(s^{\prime},\boldsymbol{\tau}^{\prime},\arg\max_{\boldsymbol{u}^{\prime}}Q_{tot}(\boldsymbol{\tau}^{\prime},\boldsymbol{u}^{\prime},s^{\prime}))$ 
 
@@ -302,9 +305,10 @@ and the global state $`s^{\prime}`$ as inputs, and outputs $`\hat{Q}^*`$.
 
 The $\hat{Q}^*$ function is trained by minimizing the following loss function: 
 
-$$
-\sum_{i=1}^b(\hat{Q}^*(\boldsymbol{\tau},\boldsymbol{u},s)-y_i)^2.(11)
-$$
+<p align="center">
+  <img src="https://latex.codecogs.com/svg.image?\dpi{200}\large%20%5Csum_%7Bi%3D1%7D%5Eb(%5Chat%7BQ%7D%5E*(%5Cboldsymbol%7B%5Ctau%7D,%5Cboldsymbol%7Bu%7D,s)-y_i)%5E2.%5Ctag%7B11%7D" alt="Q loss eq 11">
+</p>
+
 
 The computation of $y_i$ is identical to that in Equation$(10)$.
 
@@ -316,13 +320,9 @@ Thus, the authors use approximation methods to solve this problem.
 
 #### Centrally-Weighted QMIX (CW-QMIX)
 
-$$
-w(s,\boldsymbol{u})=\left\{
-\begin{array}
-{cc}{1} & {y_{i}>\hat{Q}^{*}(s,\boldsymbol{\tau},\boldsymbol{\hat{u}}^{*})\mathrm{~or~}\boldsymbol{u}=\boldsymbol{\hat{u}}^{*}} \\
-{\alpha} & {\mathrm{otherwise},}
-\end{array}\right._{(12)}
-$$
+<p align="center">
+  <img src="https://latex.codecogs.com/svg.image?\dpi{200}\large%20w(s,%5Cboldsymbol%7Bu%7D)=%5Cleft%5C%7B%5Cbegin%7Barray%7D%7Bcc%7D1%20&%20y_i%3E%5Chat%7BQ%7D%5E*(s,%5Cboldsymbol%7B%5Ctau%7D,%5Cboldsymbol%7B%5Chat%7Bu%7D%7D%5E*)%5Cmathrm%7B~or~%7D%5Cboldsymbol%7Bu%7D%3D%5Cboldsymbol%7B%5Chat%7Bu%7D%7D%5E*%5C%5C%5Calpha%20&%20%5Cmathrm%7Botherwise%7D%2C%5Cend%7Barray%7D%5Cright.%5Ctag%7B12%7D" alt="w(s,u) eq 12">
+</p>
 
 Here, $`\boldsymbol{\hat{u}}^{*}=\arg\max_{\boldsymbol{u}}Q_{tot}(\boldsymbol{\tau},\boldsymbol{u},s)`$.
 If $`y_{i}>\hat{Q}^{*}(s,\boldsymbol{\tau}`$, $`u`$ can be approximately regarded as the optimal joint action.
@@ -332,13 +332,10 @@ The Weighted QMIX algorithm based on Equation$`(12)`$ is called "Centrally-Weigh
 
 ### Optimistically-Weighted QMIX (OW-QMIX)
 
-$$
-w(s,\boldsymbol{u})=\left\{
-\begin{array}
-{ll}1 & Q_{tot}(\boldsymbol{\tau},\boldsymbol{u},s)<y_i \\
-\alpha & \text{otherwise.}
-\end{array}\right.(13)
-$$
+<p align="center">
+  <img src="https://latex.codecogs.com/svg.image?\dpi{200}\large%20w(s,%5Cboldsymbol%7Bu%7D)=%5Cleft%5C%7B%5Cbegin%7Barray%7D%7Bll%7D1%20&%20Q_%7Btot%7D(%5Cboldsymbol%7B%5Ctau%7D,%5Cboldsymbol%7Bu%7D,s)%3C%20y_i%5C%5C%5Calpha%20&%20%5Ctext%7Botherwise.%7D%5Cend%7Barray%7D%5Cright.%5Ctag%7B13%7D" alt="w(s,u) eq 13">
+</p>
+
 
 The Weighted QMIX algorithm based on Equation$`(13)`$ is called "Optimistically-Weighted QMIX (OW-QMIX)". 
 Unlike Equation$`(7)`$, it requires no approximation.
