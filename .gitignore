@@ -29,3 +29,7 @@ mnist.npz
 
 *-checkpoint.ipynb
 /.ipynb_checkpoints
+
+Gemfile
+_config.yml
+_site/
