@@ -105,8 +105,8 @@ It is easier to understand by examining the diagram directly:
 Their input is the history of observation-action sequences of the respective agent, 
 and their output is the decomposed Q-value function of that agent.
 The agent uses this Q-value to derive an $\epsilon -greedy$ policy for exploration.
-- The **Mixing Network** takes two inputs: the outputs of all agent networks $\{Q_i(\tau^i,u_t^i)\}_{i=1}^N$ 
-and the global state $s_t$ of the system. Its output is $Q_{tot}(\pmb{\tau},\pmb{u})$.
+- The **Mixing Network** takes two inputs: the outputs of all agent networks $`\{Q_i(\tau^i,u_t^i)\}_{i=1}^N`$ 
+and the global state $`s_t`$ of the system. Its output is $`Q_{tot}(\pmb{\tau},\pmb{u})`$.
 Notably, QMIX uses $s_t$ as input to the **Hypernetworks**, which then generate parameters for the **Mixing Network**.
 This differs from [**VDN**](./vdn.md), which does not use the global state $s_t$.
 
