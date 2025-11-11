@@ -269,7 +269,7 @@ Agent.finish()  # Finish the training.
 
 ```{code-block} bash
 @InProceedings{pmlr-v80-rashid18a,
-  title={{QMIX}: Monotonic Value Function Factorisation for Deep Multi-Agent Reinforcement Learning},
+  title={QMIX: Monotonic Value Function Factorisation for Deep Multi-Agent Reinforcement Learning},
   author={Rashid, Tabish and Samvelyan, Mikayel and Schroeder, Christian and Farquhar, Gregory and Foerster, Jakob and Whiteson, Shimon},
   booktitle={Proceedings of the 35th International Conference on Machine Learning},
   pages={4295--4304},

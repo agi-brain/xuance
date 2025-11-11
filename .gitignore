@@ -31,5 +31,6 @@ mnist.npz
 /.ipynb_checkpoints
 
 Gemfile
+Gemfile.lock
 _config.yml
 _site/
