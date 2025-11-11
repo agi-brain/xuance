@@ -123,7 +123,7 @@ This phenomenon arises because the operator solves the problem within the $\math
 whose key characteristic is "monotonicity". When the fixed point exhibits "non-monotonicity",
 it lies outside $\mathcal{Q}^{mix}$, forcing the algorithm to find approximate solutions (such as the two solutions in Table 1).
 
-Since contraction mappings are defined on complete metric spaces, the QMIX operator $`\mathcal{T}_{\mathrm{Qmix}}^*`$
+Since contraction mappings are defined on complete metric spaces, the QMIX operator $\mathcal{T}_{\mathrm{Qmix}}^*$
 — defined on the $\mathcal{Q}^{mix}$space — is not a contraction mapping.
 This provides a deeper explanation of [QMIX](./qmix.md)’s limitations.
 
@@ -251,7 +251,7 @@ Comparing Equation $`(8)`$ with Equation$`(2)`$ (introduced earlier), the key di
 
 that $`\mathcal{T}_w^*`$ does not select actions by directly maximizing $`\hat{Q}^{*}`$ ;
 
-instead, it maximizes the monotonic function $`Q_{tot}\in\mathcal{Q}^{mix}`$. Note that when $w(s,\boldsymbol{u})\equiv1$, 
+instead, it maximizes the monotonic function $ Q_{tot}\in\mathcal{Q}^{mix}$ . Note that when $w(s,\boldsymbol{u})\equiv1$, 
 $\Pi_w\nLeftrightarrow\Pi_{\mathrm{Qmix}}$.
 
 Similarly, $Q_{tot}$ is updated using the following operator:
