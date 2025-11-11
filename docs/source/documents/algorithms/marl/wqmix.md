@@ -253,8 +253,8 @@ Comparing Equation $`(8)`$ with Equation $`(2)`$ (introduced earlier), the key d
 
 that $`\mathcal{T}_w^*`$ does not select actions by directly maximizing $`\hat{Q}^{*}`$ ;
 
-instead, it maximizes the monotonic function $`Q_{tot}\in\mathcal{Q}^{mix}`$. Note that when $`w(s,\boldsymbol{u})\equiv1$,
-$\Pi_w\nLeftrightarrow\Pi_{\mathrm{Qmix}}`$.
+instead, it maximizes the monotonic function $`Q_{tot}\in\mathcal{Q}^{mix}`$. Note that when $`w(s,\boldsymbol{u})\equiv1`$,
+$`\Pi_w\nLeftrightarrow\Pi_{\mathrm{Qmix}}`$.
 
 Similarly, $Q_{tot}$ is updated using the following operator:
 
