@@ -70,6 +70,7 @@ $$
 $$
 
 The authors define the optimization problem in Equation$`(1)`$ as the **QMIX operator**, denoted $\mathcal{T}_{\mathrm{Qmix}}^*$.
+
 It can be viewed as the composition of two operators:
 
 $$
@@ -125,6 +126,7 @@ it lies outside $\mathcal{Q}^{mix}$, forcing the algorithm to find approximate s
 
 Since contraction mappings are defined on complete metric spaces, the QMIX operator $`\mathcal{T}_{\mathrm{Qmix}}^*`$
 — defined on the $`\mathcal{Q}^{mix}`$ space — is not a contraction mapping.
+
 This provides a deeper explanation of [QMIX](./qmix.md)’s limitations.
 
 > Property 2: The joint action maximized by $Q_{tot}$ in QMIX is not always correct.
@@ -251,8 +253,8 @@ Comparing Equation $`(8)`$ with Equation $`(2)`$ (introduced earlier), the key d
 
 that $`\mathcal{T}_w^*`$ does not select actions by directly maximizing $`\hat{Q}^{*}`$ ;
 
-instead, it maximizes the monotonic function $`Q_{tot}\in\mathcal{Q}^{mix}`$. Note that when $w(s,\boldsymbol{u})\equiv1$, 
-$\Pi_w\nLeftrightarrow\Pi_{\mathrm{Qmix}}$.
+instead, it maximizes the monotonic function $`Q_{tot}\in\mathcal{Q}^{mix}`$. Note that when $`w(s,\boldsymbol{u})\equiv1$,
+$\Pi_w\nLeftrightarrow\Pi_{\mathrm{Qmix}}`$.
 
 Similarly, $Q_{tot}$ is updated using the following operator:
 
@@ -264,8 +266,8 @@ Similarly, $Q_{tot}$ is updated using the following operator:
 This $\mathcal{T}_{\mathrm{WQMIX}}^*$ is the Weighted QMIX operator.
 
 To ensure that $\mathcal{T}_{\mathrm{WQMIX}}^*$ converges to the optimal policy, the authors provide the following conclusion:
-> Corollary 1. Letting $`w`$ be the Idealised Central or Optimistic Weighting, 
-> then $`\exists\alpha>0`$ such that the unique fixed point of $`\mathcal{T}_w^*`$ is $`Q_{tot}`$. 
+> Corollary 1. Letting $`w`$ be the Idealised Central or Optimistic Weighting,
+> then $`\exists\alpha>0`$ such that the unique fixed point of $`\mathcal{T}_w^*`$ is $`Q_{tot}`$.
 > Furthermore, $`\Pi_{w}Q^{*}\subseteq\mathcal{Q}^{mix}`$ recovers an optimal policy, and $`\max\Pi_wQ^*(s,\cdot)=\max Q^*(s,\cdot)`$.
 
 ## Algorithm Design
@@ -347,9 +349,9 @@ This allows monotonic functions (satisfying [QMIX](./qmix.md)’s constraints) t
 
 ## Conclusion
 
-This paper addresses the limitations of [QMIX](./qmix.md)’s function representation capability. 
+This paper addresses the limitations of [QMIX](./qmix.md)’s function representation capability.
 Through an analysis of [QMIX](./qmix.md) under ideal conditions, the authors propose the Weighted QMIX algorithm.
-Theoretically, WQMIX guarantees that monotonic functions (output by [QMIX](./qmix.md)) can be mapped to non-monotonic value functions via action weighting. 
+Theoretically, WQMIX guarantees that monotonic functions (output by [QMIX](./qmix.md)) can be mapped to non-monotonic value functions via action weighting.
 This enables WQMIX to learn the optimal policy and avoids [QMIX](./qmix.md)’s tendency to converge to suboptimal policies.
 
 To learn the weight function, WQMIX also learns a $`\hat{Q}^*`$ function that is not constrained by "monotonicity", 
