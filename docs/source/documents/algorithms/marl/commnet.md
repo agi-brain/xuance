@@ -93,7 +93,9 @@ $$
 T^i= \begin{pmatrix} H^i & \bar{C}^i & \bar{C}^i & ... & \bar{C}^i \\ \bar{C}^i & H^i & \bar{C}^i & ... & \bar{C}^i \\ \bar{C}^i & \bar{C}^i & H^i & ... & \bar{C}^i \\ \vdots & \vdots & \vdots & \ddots & \vdots \\ \bar{C}^i & \bar{C}^i & \bar{C}^i & ... & H^i \end{pmatrix}
 $$
 
-A key point is that $T$ is dynamically sized since the number of agents may vary. This motivates the normalizing factor $J − 1$ in Equation$(2)$, 
+
+A key point is that $T$ is dynamically sized since the number of agents may vary. This motivates the normalizing factor $J − 1$ in Equation$`(2)`$, 
+
 which rescales the communication vector by the number of communicating agents. 
 Note also that $T^i$ is permutation invariant because all agent modules share parameters ($C^i$, $H^i$), thus the order of the agents does not matter.
 
