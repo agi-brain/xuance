@@ -1,5 +1,6 @@
 <div align="center">
-<img src="docs/source/_static/figures/logo_1.png" width="40
+<img src="docs/source/_static/figures/logo_1.png" width="400" height="auto" align=center />
+</div>
 
 # XuanCe: A Comprehensive and Unified Deep Reinforcement Learning Library
 
