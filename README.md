@@ -432,7 +432,7 @@ How to use wandb offline? :arrow_right: [https://github.com/wandb/server.git/](h
 <img src="docs/source/_static/figures/QQ_group_2.JPG" width="150" height="auto" /><br/><font color="AAAAAA">QQ group 2</font>
 </center></td>
 <td> <center>
-<img src="docs/source/_static/figures/Official_Account.JPG" width="150" height="auto" /> <br/> <font color="AAAAAA">Official account (WeChat)</font>
+<img src="docs/source/_static/figures/Official_Account_Wechat.JPG" width="150" height="auto" /> <br/> <font color="AAAAAA">Official account (WeChat)</font>
 </center> </td>
 </tr>
 </table>
