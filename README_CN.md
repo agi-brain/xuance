@@ -409,10 +409,13 @@ XuanCe 同样支持 Weights & Biases (wandb) 工具来可视化结果。
 
 <table rules="none" align="center"><tr>
 <td> <center>
-<img src="docs/source/_static/figures/QQ_group.jpeg" width="150" height="auto" /><br/><font color="AAAAAA">QQ 群</font>
+<img src="docs/source/_static/figures/QQ_group_1.JPG" width="150" height="auto" /><br/><font color="AAAAAA">QQ 1群</font>
 </center></td>
 <td> <center>
-<img src="docs/source/_static/figures/Official_Account.jpg" width="150" height="auto" /> <br/> <font color="AAAAAA">微信公众号</font>
+<img src="docs/source/_static/figures/QQ_group_2.JPG" width="150" height="auto" /><br/><font color="AAAAAA">QQ 2群</font>
+</center></td>
+<td> <center>
+<img src="docs/source/_static/figures/Official_Account.JPG" width="150" height="auto" /> <br/> <font color="AAAAAA">微信公众号</font>
 </center> </td>
 </tr>
 </table>
