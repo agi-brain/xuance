@@ -397,7 +397,7 @@ XuanCe 同样支持 Weights & Biases (wandb) 工具来可视化结果。
 - GitHub discussions: https://github.com/orgs/agi-brain/discussions
 - Discord 邀请链接: https://discord.gg/HJn2TBQS7y
 - Slack 邀请链接: https://join.slack.com/t/xuancerllib/
-- QQ 1群：552432695（已满）
+- QQ 1群：552432695
 - QQ 2群：153966755
 - 微信公众号：“玄策 RLlib”
 
