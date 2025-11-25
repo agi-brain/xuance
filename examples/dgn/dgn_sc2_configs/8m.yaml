@@ -68,6 +68,8 @@ use_grad_clip: True  # gradient normalization
 grad_clip_norm: 10.0
 
 # communication settings
+convolution_layers: 2  # The number of convolution layers.
+n_head: 2  # The number of heads in multi-head attention.
 comm_passes: 1
 
 running_steps: 1000000

@@ -72,8 +72,7 @@ grad_clip_norm: 10.0  # The max norm of the gradient.
 
 # communication settings
 convolution_layers: 2  # The number of convolution layers.
-n_heads: 2  # The number of heads in multi-head attention.
-gcn_activation: "relu"  # The activation function for GCN.
+n_head: 2  # The number of heads in multi-head attention.
 comm_passes: 1
 
 running_steps: 10000000  # The total running steps.

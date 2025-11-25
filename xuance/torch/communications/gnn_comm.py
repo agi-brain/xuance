@@ -27,7 +27,7 @@ class DGNComm(CommNet):
     def build_gcn(self, num_layers, num_heads, activation = nn.ReLU()):
         gcn_layers = []
         for _ in range(num_layers):
-            gcn_layers.append(GraphMultiHeadAttentionLayer(self.recurrent_hidden_size, self.recurrent_hidden_size, num_heads))
+            gcn_layers.append(GraphMultiHeadAttentionLayer(self.recurrent_hidden_size, self.recurrent_hidden_size, num_heads, device=self.device))
             gcn_layers.append(activation)
         return nn.Sequential(*gcn_layers)
 
@@ -36,7 +36,12 @@ class DGNComm(CommNet):
         return adj_matrix
 
     def gcn_block(self, x, adj_matrix):
-        return self.gcn(x, adj_matrix)
+        for layer in self.gcn:
+            if isinstance(layer, GraphMultiHeadAttentionLayer):
+                x = layer(x, adj_matrix)
+            else:
+                x = layer(x)
+        return x
 
     def forward(self, obs: torch.Tensor, msg_send: dict, alive_ally: dict) -> torch.Tensor:
         alive_ally = {k: torch.as_tensor(alive_ally[k], dtype=torch.float32, device=self.device) for k in
