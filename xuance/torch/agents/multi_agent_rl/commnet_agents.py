@@ -6,18 +6,18 @@ import numpy as np
 import torch
 from gymnasium import Space
 from argparse import Namespace
+from xuance.torch.agents.multi_agent_rl.mappo_agents import MAPPO_Agents
 
-from xuance.torch.agents.multi_agent_rl.ippo_agents import IPPO_Agents
-
-from xuance.common import Optional, Union, space2shape, MultiAgentBaseCallback
+from xuance.common import Optional, Union, space2shape
 import gymnasium as gym
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
 from xuance.torch import Module, REGISTRY_Policy, ModuleDict
 from xuance.torch.communications.comm_net import CommNet
 from xuance.torch.utils import ActivationFunctions, NormalizeFunctions
+from xuance.common import MultiAgentBaseCallback
 
 
-class CommNet_Agents(IPPO_Agents):
+class CommNet_Agents(MAPPO_Agents):
     def __init__(self,
                  config: Namespace,
                  envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv],
@@ -50,13 +50,20 @@ class CommNet_Agents(IPPO_Agents):
         activation = ActivationFunctions[self.config.activation]
         device = self.device
         agent = self.config.agent
-
+        max_length = max(space.shape[0] for space in self.observation_space.values())
+        self.observation_space = {agent: gym.spaces.Box(-np.inf, np.inf, (max_length,), dtype=np.float32)
+                          for agent in self.observation_space}
         # build representations
         communicator = self._build_communicator(self.observation_space)
         space_actor_in = {agent: gym.spaces.Box(-np.inf, np.inf, (self.config.recurrent_hidden_size,), dtype=np.float32)
                           for agent in self.observation_space}
+        if self.use_global_state:
+            dim_obs_all = sum(self.state_space.shape)
+        else:
+            dim_obs_all = sum([sum(self.observation_space[k].shape) for k in self.agent_keys])
+        space_critic_in = {k: (dim_obs_all,) for k in self.agent_keys}
         A_representation = self._build_representation(self.config.representation, space_actor_in, self.config)
-        C_representation = self._build_representation(self.config.representation, space_actor_in, self.config)
+        C_representation = self._build_representation(self.config.representation, space_critic_in, self.config)
 
         # build policies
         if self.config.policy == "CommNet_Policy":
@@ -94,11 +101,10 @@ class CommNet_Agents(IPPO_Agents):
                                                      rnn_hidden=rnn_hidden_actor,
                                                      alive_ally=alive_ally)
         if not test_mode:
-            critic_input, _, _ = self._build_inputs(obs_dict, avail_actions_dict)
+            critic_input = self._build_critic_inputs(batch_size=n_env, obs_batch=obs_input, state=state)
             rnn_hidden_critic_new, values_out = self.policy.get_values(observation=critic_input,
                                                                        agent_ids=agents_id,
-                                                                       rnn_hidden=rnn_hidden_critic,
-                                                                       alive_ally=alive_ally)
+                                                                       rnn_hidden=rnn_hidden_critic)
 
         if self.use_parameter_sharing:
             key = self.agent_keys[0]
@@ -131,50 +137,13 @@ class CommNet_Agents(IPPO_Agents):
         return {"rnn_hidden_actor": rnn_hidden_actor_new, "rnn_hidden_critic": rnn_hidden_critic_new,
                 "actions": actions_dict, "log_pi": log_pi_a_dict, "values": values_dict}
 
-    def values_next(self,
-                    i_env: int,
-                    obs_dict: dict,
-                    state: Optional[np.ndarray] = None,
-                    rnn_hidden_critic: Optional[dict] = None,
-                    info: Optional[dict] = None):
-        n_env = 1
-        rnn_hidden_critic_i = None
-        alive_ally = {k: np.array([int(info['agent_mask'][k])]).reshape(n_env, 1, -1) for k in self.agent_keys}
-        if self.use_parameter_sharing:
-            key = self.agent_keys[0]
-            hidden_item_index = np.arange(i_env * self.n_agents, (i_env + 1) * self.n_agents)
-            rnn_hidden_critic_i = {key: self.policy.critic_representation[key].get_hidden_item(
-                hidden_item_index, *rnn_hidden_critic[key])}
-            batch_size = n_env * self.n_agents
-            obs_array = np.array(itemgetter(*self.agent_keys)(obs_dict))
-            critic_input = obs_array.reshape([batch_size, 1, -1])
-            agents_id = torch.eye(self.n_agents).unsqueeze(0).expand(n_env, -1, -1).reshape(batch_size, 1, -1).to(
-                self.device)
-
-            rnn_hidden_critic_new, values_out = self.policy.get_values(observation={key: critic_input},
-                                                                       agent_ids=agents_id,
-                                                                       rnn_hidden=rnn_hidden_critic_i,
-                                                                       alive_ally=alive_ally)
-            values_out = values_out[key].reshape(self.n_agents)
-            values_dict = {k: values_out[i].cpu().detach().numpy() for i, k in enumerate(self.agent_keys)}
-
-        else:
-            if self.use_rnn:
-                rnn_hidden_critic_i = {k: self.policy.critic_representation[k].get_hidden_item(
-                    [i_env, ], *rnn_hidden_critic[k]) for k in self.agent_keys}
-                obs_array = np.array([itemgetter(*self.agent_keys)(obs_dict)])
-                critic_input = {k: obs_array[:, i:i+1].reshape(n_env, 1, -1) for i, k in enumerate(self.agent_keys)}
-            else:
-                critic_input_array = np.concatenate([obs_dict[k].reshape(n_env, 1, -1) for k in self.agent_keys],
-                                                    axis=1).reshape(n_env, -1)
-                critic_input = {k: critic_input_array for k in self.agent_keys}
-
-            rnn_hidden_critic_new, values_out = self.policy.get_values(observation=critic_input,
-                                                                       rnn_hidden=rnn_hidden_critic_i,
-                                                                       alive_ally=alive_ally)
-            values_dict = {k: values_out[k].cpu().detach().numpy().reshape([]) for k in self.agent_keys}
-
-        return rnn_hidden_critic_new, values_dict
+    @staticmethod
+    def pad_observation(obs_dict):
+        max_length = max(obs.shape[0] for obs in obs_dict.values())
+        for k in obs_dict.keys():
+            if obs_dict[k].shape[0] < max_length:
+                obs_dict[k] = np.pad(obs_dict[k], (0, max_length - obs_dict[k].shape[0]), mode='constant')
+        return obs_dict
 
     def run_episodes(self, env_fn=None, n_episodes: int = 1, test_mode: bool = False):
         envs = self.envs if env_fn is None else env_fn()
@@ -196,6 +165,7 @@ class CommNet_Agents(IPPO_Agents):
         info = [{'agent_mask': {k: True for k in self.agent_keys}} for _ in range(num_envs)]
         while episode_count < n_episodes:
             step_info = {}
+            obs_dict = [self.pad_observation(obs) for obs in obs_dict]
             policy_out = self.action(obs_dict=obs_dict, state=state, avail_actions_dict=avail_actions,
                                      rnn_hidden_actor=rnn_hidden_actor, rnn_hidden_critic=rnn_hidden_critic,
                                      test_mode=test_mode, info=info)
@@ -233,9 +203,10 @@ class CommNet_Agents(IPPO_Agents):
                         if all(terminated_dict[i].values()):
                             value_next = {key: 0.0 for key in self.agent_keys}
                         else:
+                            obs_dict = [self.pad_observation(obs) for obs in obs_dict]
                             _, value_next = self.values_next(i_env=i, obs_dict=obs_dict[i],
                                                              state=None if state is None else state[i],
-                                                             rnn_hidden_critic=rnn_hidden_critic, info=info[i])
+                                                             rnn_hidden_critic=rnn_hidden_critic)
                         self.memory.finish_path(i_env=i, i_step=info[i]['episode_step'], value_next=value_next,
                                                 value_normalizer=self.learner.value_normalizer)
                         if self.use_rnn:

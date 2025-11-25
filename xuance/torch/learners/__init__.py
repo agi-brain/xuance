@@ -65,7 +65,7 @@ REGISTRY_Learners = {
 
     "CommNet_Learner": CommNet_Learner,
     "IC3Net_Learner": IC3Net_Learner,
-    "TarMac_Learner": TarMAC_Learner,
+    "TarMAC_Learner": TarMAC_Learner,
 
     "TD3BC_Learner": TD3_BC_Learner,
 

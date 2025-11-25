@@ -9,7 +9,7 @@ from xuance.torch.utils.operations import set_seed
 
 
 def parse_args():
-    parser = argparse.ArgumentParser("Example of XuanCe: IC3Net for MPE.")
+    parser = argparse.ArgumentParser("Example of XuanCe: CommNet for MPE.")
     parser.add_argument("--env-id", type=str, default="simple_spread_v3")
     parser.add_argument("--test", type=int, default=0)
     parser.add_argument("--benchmark", type=int, default=1)
