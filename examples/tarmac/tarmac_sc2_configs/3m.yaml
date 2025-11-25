@@ -14,7 +14,7 @@ agent: "TarMAC"
 env_name: "StarCraft2"
 env_id: "3m"
 env_seed: 1
-learner: "TarMac_Learner"
+learner: "TarMAC_Learner"
 policy: "TarMAC_Policy"
 representation: "Basic_RNN"
 vectorize: "Subproc_StarCraft2"
@@ -52,7 +52,7 @@ clip_range: 0.2
 clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
 gamma: 0.99  # discount factor
 comm_passes: 1
-use_gate: True
+use_gate: False
 
 # tricks
 use_linear_lr_decay: True  # if use linear learning rate decay

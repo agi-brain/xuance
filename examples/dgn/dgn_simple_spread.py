@@ -2,8 +2,6 @@ import argparse
 import numpy as np
 from copy import deepcopy
 
-from xuance.torch.agents import IQL_Agents
-
 from examples.dgn.dgn_agents import DGN_Agents
 from xuance.common import get_configs, recursive_dict_update
 from xuance.environment import make_envs

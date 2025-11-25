@@ -13,7 +13,6 @@ def parse_args():
     parser.add_argument("--env-id", type=str, default="simple_spread_v3")
     parser.add_argument("--test", type=int, default=0)
     parser.add_argument("--benchmark", type=int, default=1)
-    parser.add_argument("--device", type=str, default="cuda:0")
 
     return parser.parse_args()
 
@@ -26,7 +25,7 @@ if __name__ == "__main__":
 
     set_seed(configs.seed)  # Set the random seed.
     envs = make_envs(configs)  # Make the environment.
-    Agents = TarMAC_Agents(config=configs, envs=envs)  # Create the Independent PPO agents.
+    Agents = TarMAC_Agents(config=configs, envs=envs)  # Create the Independent TarMAC agents.
 
     train_information = {"Deep learning toolbox": configs.dl_toolbox,
                          "Calculating device": configs.device,

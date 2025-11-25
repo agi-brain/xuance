@@ -1,3 +1,4 @@
+from copy import deepcopy
 from operator import itemgetter
 from types import ModuleType
 from typing import Optional, Dict, Sequence, Callable, Union, List
@@ -5,125 +6,65 @@ from typing import Optional, Dict, Sequence, Callable, Union, List
 import torch
 from gymnasium.spaces import Discrete
 from torch import Tensor, nn
-from torch.nn import ModuleDict
+from torch.nn import ModuleDict, Module
+from xuance.torch.policies import CommNet_Policy
 
-from xuance.torch.policies.deterministic_marl import BasicQnetwork
 
 
-class DGN_Policy(BasicQnetwork):
+class DGN_Policy(CommNet_Policy):
     def __init__(self,
                  action_space: Optional[Dict[str, Discrete]],
                  n_agents: int,
-                 representation: ModuleDict,
-                 hidden_size: Sequence[int] = None,
+                 representation_actor: ModuleDict,
+                 representation_critic: ModuleDict,
+                 mixer: Optional[Module] = None,
+                 actor_hidden_size: Sequence[int] = None,
+                 critic_hidden_size: Sequence[int] = None,
                  normalize: Optional[ModuleType] = None,
                  initialize: Optional[Callable[..., Tensor]] = None,
                  activation: Optional[ModuleType] = None,
                  device: Optional[Union[str, int, torch.device]] = None,
                  use_distributed_training: bool = False,
-                 communicator: ModuleDict = None,
                  **kwargs):
-        super(DGN_Policy, self).__init__(action_space=action_space,
-                                         n_agents=n_agents,
-                                         representation=representation,
-                                         hidden_size=hidden_size,
-                                         normalize=normalize,
-                                         initialize=initialize,
-                                         activation=activation,
-                                         device=device,
-                                         use_distributed_training=use_distributed_training,
-                                         **kwargs)
-        self.communicator = communicator
-        self.config = kwargs['config']
-        self.agent_keys = kwargs['agent_keys']
+        super(DGN_Policy, self).__init__(action_space, n_agents, representation_actor, representation_critic, mixer,
+                                         actor_hidden_size, critic_hidden_size, normalize, initialize, activation,
+                                         device, use_distributed_training, **kwargs)
 
-    @property
-    def parameters_model(self):
-        parameters_model = {}
-        for key in self.model_keys:
-            parameters_model[key] = list(self.representation[key].parameters()) + list(
-                self.eval_Qhead[key].parameters()) + list(self.communicator[key].parameters())
-        return parameters_model
-
-    def forward(self, observation: Dict[str, Tensor], agent_ids: Tensor = None,
+    def forward(self, observation: Dict[str, Tensor], agent_ids: Optional[Tensor] = None,
                 avail_actions: Dict[str, Tensor] = None, agent_key: str = None,
-                rnn_hidden: Optional[Dict[str, List[Tensor]]] = None, alive_ally: dict = None):
-        rnn_hidden_new, argmax_action, evalQ = {}, {}, {}
+                rnn_hidden: Optional[Dict[str, List[Tensor]]] = None, alive_ally: Optional[dict] = None):
+        rnn_hidden_new, pi_dists = {}, {}
         agent_list = self.model_keys if agent_key is None else [agent_key]
-
-        if self.config.use_parameter_sharing:
-            key = self.model_keys[0]
-            # [batch_size, n_agents, seq_length, 64]
-            observation = self.communicator[key].obs_encode(observation[key])
-            batch_size, seq_length = observation.shape[0], observation.shape[2]
-            # [batch_size, seq_length, 64]
-            gnn_input = {k: observation[:, i: i+1].squeeze(dim=1) for i, k in enumerate(self.agent_keys)}
-            for i in range(self.config.convolution_layer):
-                gnn_input = {k: self.communicator[key](k, gnn_input, alive_ally) for k in self.agent_keys}
-            gnn_input = torch.stack([gnn_input[k] for k in self.agent_keys], dim=1)
-            observation = {key: gnn_input.reshape(batch_size*self.n_agents, seq_length, -1)}
-        else:
-            observation = {k: self.communicator[k].obs_encode(observation[k]) for k in self.model_keys}
-            for i in range(self.config.convolution_layer):
-                observation = {k: self.communicator[k](k, observation, alive_ally) for k in self.model_keys}
+        seq_length = observation[self.model_keys[0]].shape[1]
         if avail_actions is not None:
             avail_actions = {key: Tensor(avail_actions[key]) for key in agent_list}
+        observation = {k: self.communicator[k].obs_encode(observation[k]) for k in agent_list}
+        actor_inputs = {k: [] for k in agent_list}
+        for i in range(seq_length):
+            alive_ally_i = {k: alive_ally[k][:, i:i + 1, :] for k in self.agent_keys}
+            observation_i = {k: observation[k][:, i:i + 1, :] for k in agent_list}
+            msg_send = {k: rnn_hidden[k][0].transpose(0, 1) for k in self.model_keys}
+            for _ in range(self.comm_passes):
+                msg_receive = {k: self.communicator[k](observation_i[k], msg_send, alive_ally_i) for k in self.model_keys}
+                msg_send = {k: observation_i[k] + msg_receive[k] for k in self.model_keys}
+            observation_i = msg_send
+            for key in agent_list:
+                if self.use_rnn:
+                    outputs = self.actor_representation[key](observation_i[key], *rnn_hidden[key])
+                    rnn_hidden_new[key] = (outputs['rnn_hidden'], outputs['rnn_cell'])
+                else:
+                    outputs = self.actor_representation[key](observation[key])
+                    rnn_hidden_new[key] = [None, None]
 
+                if self.use_parameter_sharing:
+                    agent_ids_i = agent_ids[:, i:i + 1, :]
+                    actor_input = torch.concat([outputs['state'], agent_ids_i], dim=-1)
+                else:
+                    actor_input = outputs['state']
+                actor_inputs[key].append(actor_input)
+            rnn_hidden = deepcopy(rnn_hidden_new)
         for key in agent_list:
-            if self.use_rnn:
-                outputs = self.representation[key](observation[key], *rnn_hidden[key])
-                rnn_hidden_new[key] = (outputs['rnn_hidden'], outputs['rnn_cell'])
-            else:
-                outputs = self.representation[key](observation[key])
-                rnn_hidden_new[key] = [None, None]
-
-            if self.use_parameter_sharing:
-                q_inputs = torch.concat([outputs['state'], agent_ids], dim=-1)
-            else:
-                q_inputs = outputs['state']
-
-            evalQ[key] = self.eval_Qhead[key](q_inputs)
-
-            if avail_actions is not None:
-                evalQ_detach = evalQ[key].clone().detach()
-                evalQ_detach[avail_actions[key] == 0] = -1e10
-                argmax_action[key] = evalQ_detach.argmax(dim=-1, keepdim=False)
-            else:
-                argmax_action[key] = evalQ[key].argmax(dim=-1, keepdim=False)
-
-        return rnn_hidden_new, argmax_action, evalQ
-
-    def Qtarget(self, observation: Dict[str, Tensor], agent_ids: Dict[str, Tensor],
-                agent_key: str = None,
-                rnn_hidden: Optional[Dict[str, List[Tensor]]] = None, alive_ally: dict = None):
-        rnn_hidden_new, q_target = {}, {}
-        agent_list = self.model_keys if agent_key is None else [agent_key]
-
-        if self.config.use_parameter_sharing:
-            key = self.model_keys[0]
-            # [batch_size, n_agents, seq_length, 64]
-            observation = self.communicator[key].obs_encode(observation[key])
-            batch_size, seq_length = observation.shape[0], observation.shape[2]
-            # [batch_size, seq_length, 64]
-            gnn_input = {k: observation[:, i: i+1].squeeze(dim=1) for i, k in enumerate(self.agent_keys)}
-            for i in range(self.config.convolution_layer):
-                gnn_input = {k: self.communicator[key](k, gnn_input, alive_ally) for k in self.agent_keys}
-            observation = torch.stack([gnn_input[k] for k in self.agent_keys], dim=1)
-            observation = {key: observation.reshape(batch_size*self.n_agents, seq_length, -1)}
-        else:
-            observation = {k: self.communicator[k].obs_encode(observation[k]) for k in self.model_keys}
-            for i in range(self.config.convolution_layer):
-                observation = {k: self.communicator[k](k, observation, alive_ally) for k in self.model_keys}
-        for key in agent_list:
-            if self.use_rnn:
-                outputs = self.target_representation[key](observation[key], *rnn_hidden[key])
-                rnn_hidden_new[key] = (outputs['rnn_hidden'], outputs['rnn_cell'])
-            else:
-                outputs = self.target_representation[key](observation[key])
-                rnn_hidden_new[key] = None
-            if self.use_parameter_sharing:
-                q_inputs = torch.concat([outputs['state'], agent_ids], dim=-1)
-            else:
-                q_inputs = outputs['state']
-            q_target[key] = self.target_Qhead[key](q_inputs)
-        return rnn_hidden_new, q_target
+            actor_input = torch.cat(actor_inputs[key], dim=1)
+            avail_actions_input = None if avail_actions is None else avail_actions[key]
+            pi_dists[key] = self.actor[key](actor_input, avail_actions_input)
+        return rnn_hidden_new, pi_dists
