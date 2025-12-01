@@ -56,6 +56,11 @@ and extract it to the ``$SC2PATH/Maps$`` directory.
 If you installed ``smac`` via git, simply copy the ``SMAC_Maps`` directory
 from ``smac/env/starcraft2/maps/`` into ``$SC2PATH/Maps`` directory.
 
+.. note::
+
+    When using custom maps created with SC2 Editor, you need to modify the ``version`` in ``t3Terrain.xml`` to 114 using mpqeditor.
+    For more details, please refer to `this issue <https://github.com/google-deepmind/pysc2/issues/326>`_.
+
 Citation
 ''''''''''''''''
 
