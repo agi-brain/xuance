@@ -30,6 +30,12 @@ try:
 except Exception as error:
     REGISTRY_MULTI_AGENT_ENV["StarCraft2"] = str(error)
 
+try:
+    from xuance.environment.multi_agent_env.atari import AtariMultiAgentEnv
+    REGISTRY_MULTI_AGENT_ENV['AtariMultiAgent'] = AtariMultiAgentEnv
+except Exception as error:
+    REGISTRY_MULTI_AGENT_ENV["AtariMultiAgent"] = str(error)
+
 __all__ = [
     "REGISTRY_MULTI_AGENT_ENV",
 ]
