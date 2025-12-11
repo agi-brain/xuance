@@ -32,9 +32,9 @@ except Exception as error:
 
 try:
     from xuance.environment.multi_agent_env.atari import AtariMultiAgentEnv
-    REGISTRY_MULTI_AGENT_ENV['AtariMultiAgent'] = AtariMultiAgentEnv
+    REGISTRY_MULTI_AGENT_ENV['atari'] = AtariMultiAgentEnv
 except Exception as error:
-    REGISTRY_MULTI_AGENT_ENV["AtariMultiAgent"] = str(error)
+    REGISTRY_MULTI_AGENT_ENV["atari"] = str(error)
 
 __all__ = [
     "REGISTRY_MULTI_AGENT_ENV",

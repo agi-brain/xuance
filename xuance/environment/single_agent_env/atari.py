@@ -42,7 +42,7 @@ class Atari_Env(gym.Wrapper):
                 full_action_space: Whether to use full action space
             **kwargs: Additional arguments passed to gym.make()
         """
-        full_action_space = config.full_action_space if hasattr(config, 'full_action_space') else False
+        full_action_space = getattr(config, 'full_action_space', False)
         self.env = gym.make(config.env_id,
                             render_mode=config.render_mode,
                             obs_type=config.obs_type,
@@ -51,13 +51,14 @@ class Atari_Env(gym.Wrapper):
         self.env.metadata['render_fps'] = config.fps
         self.env.action_space.seed(seed=config.env_seed)
         self.env.reset(seed=config.env_seed)
-        self.max_episode_steps = self.env._max_episode_steps if hasattr(self.env, '_max_episode_steps') else 1e5
+        self.max_episode_steps = getattr(self.env, '_max_episode_steps', 1e5)
         super(Atari_Env, self).__init__(self.env)
         # self.env.seed(seed)
         self.num_stack = config.num_stack
         self.obs_type = config.obs_type
         self.frames = deque([], maxlen=self.num_stack)
-        self.image_size = [210, 160] if config.img_size is None else config.img_size
+        self.image_size = getattr(config, 'img_size', [210, 160])
+        assert config.img_size is not None
         self.noop_max = config.noop_max
         self.lifes = self.env.unwrapped.ale.lives()
         self.was_real_done = True

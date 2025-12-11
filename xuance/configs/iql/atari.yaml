@@ -1,8 +1,12 @@
 agent: "IQL"  # the learning algorithms_marl
-env_name: "AtariMultiAgent"  # Name of the environment.
+env_name: "atari"  # Name of the environment.
 env_id: "basketball_pong_v3"
 env_seed: 1  # The random seed of the environment.
-continuous_action: False  # Continuous action space or not.
+obs_type: "grayscale_image"  # choice for Atari env: ram, rgb_image, grayscale_image
+img_size: [84, 84]  # default is 210 x 160 in gym[Atari]
+num_stack: 4  # frame stack trick
+frame_skip: 4  # frame skip trick
+noop_max: 30  # Do no-op action for a number of steps in [1, noop_max].
 learner: "IQL_Learner"
 policy: "Basic_Q_network_marl"
 representation: "Basic_MLP"
