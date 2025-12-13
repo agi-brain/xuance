@@ -1,3 +1,4 @@
+import numpy as np
 import importlib
 import supersuit
 from xuance.environment import RawMultiAgentEnv
@@ -83,11 +84,11 @@ class AtariMultiAgentEnv(RawMultiAgentEnv):
         """
         Create a boolean mask indicating which agents are currently alive.
         """
-        return
+        return {agent: True for agent in self.agents}
 
     def available_actions(self):
         """Returns a boolean mask indicating which actions are available for each agent."""
-        return
+        return {agent: np.ones(self.action_space[agent].n, np.bool_) for agent in self.agents}
 
 
 

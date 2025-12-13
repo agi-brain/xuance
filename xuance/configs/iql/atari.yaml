@@ -9,9 +9,17 @@ frame_skip: 4  # frame skip trick
 noop_max: 30  # Do no-op action for a number of steps in [1, noop_max].
 learner: "IQL_Learner"
 policy: "Basic_Q_network_marl"
-representation: "Basic_MLP"
+representation: "Basic_CNN"
 vectorize: "DummyVecMultiAgentEnv"
 runner: "MARL"  # Runner
+
+# the following three arguments are for "Basic_CNN" representation.
+use_cnn: True  # Whether to use convolutional neural networks as representation.
+filters: [32, 32, 64, 64]
+kernels: [8, 4, 4, 4]
+strides: [4, 2, 2, 2]
+actor_hidden_size: [128, 128]  # A list of hidden units for each layer of actor network.
+critic_hidden_size: [128, 128]  # A list of hidden units for each layer of critic network.
 
 use_rnn: False  # Whether to use recurrent neural networks.
 rnn: "GRU"  # Choice of recurrent networks: GRU or LSTM.

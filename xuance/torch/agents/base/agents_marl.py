@@ -35,6 +35,7 @@ class MARLAgents(ABC):
                  callback: Optional[MultiAgentBaseCallback] = None):
         # Training settings.
         self.config = config
+        self.use_cnn = getattr(config, "use_cnn", False)
         self.use_rnn = getattr(config, "use_rnn", False)
         self.use_parameter_sharing = config.use_parameter_sharing
         self.use_actions_mask = getattr(config, "use_actions_mask", False)
@@ -250,6 +251,10 @@ class MARLAgents(ABC):
         if self.use_parameter_sharing:
             key = self.agent_keys[0]
             obs_array = np.array([itemgetter(*self.agent_keys)(data) for data in obs_dict])
+            if self.use_cnn and len(obs_array.shape) > 3:  # obs_array consists of images
+                obs_shape_item = obs_array.shape[2:]
+            else:
+                obs_shape_item = (-1,)
             agents_id = torch.eye(self.n_agents).unsqueeze(0).expand(batch_size, -1, -1).to(self.device)
             avail_actions_array = np.array([itemgetter(*self.agent_keys)(data)
                                             for data in avail_actions_dict]) if self.use_actions_mask else None
@@ -259,7 +264,7 @@ class MARLAgents(ABC):
                 if self.use_actions_mask:
                     avail_actions_input = {key: avail_actions_array.reshape([bs, 1, -1])}
             else:
-                obs_input = {key: obs_array.reshape([bs, -1])}
+                obs_input = {key: obs_array.reshape([bs, *obs_shape_item])}
                 agents_id = agents_id.reshape(bs, -1)
                 if self.use_actions_mask:
                     avail_actions_input = {key: avail_actions_array.reshape([bs, -1])}
