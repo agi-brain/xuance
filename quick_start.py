@@ -1,5 +1,6 @@
 import xuance, argparse
 
+
 def parse_args():
     parser = argparse.ArgumentParser("Run a demo.")
     parser.add_argument("--method", type=str, default="dqn")
@@ -9,6 +10,7 @@ def parse_args():
     parser.add_argument("--device", type=str, default="cuda:0")
 
     return parser.parse_args()
+
 
 if __name__ == '__main__':
     parser = parse_args()
