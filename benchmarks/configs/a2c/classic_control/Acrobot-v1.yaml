@@ -1,0 +1,45 @@
+agent: "A2C"  # The learning algorithms.
+env_name: "Classic Control"  # Environment name.
+env_id: "Acrobot-v1"  # Environment id
+env_seed: 1  # The random seed of the environment.
+vectorize: "DummyVecEnv"  # Method to vectorize the environment.
+learner: "A2C_Learner"  # Name of learner.
+policy: "Categorical_AC"  # Name of policy.
+representation: "Basic_MLP"  # Name of representation.
+runner: "DRL"  # Runner.
+
+representation_hidden_size: [128,]  # A list of hidden units for each layer of Basic_MLP representation networks.
+actor_hidden_size: [128,]  # A list of hidden units for each layer of actor network.
+critic_hidden_size: [128,]  # A list of hidden units for each layer of critic network.
+activation: 'leaky_relu'  # The activation function of each hidden layer.
+
+seed: 1  # Random seeds.
+parallels: 10  # Number of environments that to be implemented in parallel.
+running_steps: 300000  # The total running steps.
+horizon_size: 256  # the horizon size for an environment, buffer_size = horizon_size * parallels.
+n_epochs: 8  # Number of epochs to update the model.
+n_minibatch: 8  # Number of minibatch.
+learning_rate: 0.0004  # The learning rate.
+
+vf_coef: 0.25  # Coefficient factor for critic loss.
+ent_coef: 0.01  # Coefficient factor for entropy loss.
+gamma: 0.98  # Discount factor.
+use_gae: True  # Use GAE trick.
+gae_lambda: 0.95  # The GAE lambda.
+use_advnorm: True  # Whether to use advantage normalization.
+
+use_grad_clip: True  # gradient normalization
+clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
+grad_clip_norm: 0.5  # The max norm of the gradient.
+use_actions_mask: False  # Whether to use actions mask for unavailable actions.
+use_obsnorm: True  # Whether to use observation normalization trick.
+use_rewnorm: True  # Whether to use reward normalization trick.
+obsnorm_range: 5  # The observation normalization range.
+rewnorm_range: 5  # The reward normalization range.
+
+test_steps: 10000  # The test steps.
+eval_interval: 50000  # The interval between every two trainings.
+test_episode: 3  # The episodes to test in each test period.
+
+log_dir: "./logs/a2c/"  # The directory to store logger file.
+model_dir: "./models/a2c/"  # The directory to store model file.

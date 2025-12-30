@@ -1,0 +1,72 @@
+agent: "IPPO"  # the learning algorithms_marl
+# environment settings
+env_name: "Football"
+scenario: "academy_3_vs_1_with_keeper"
+env_seed: 1  # The random seed of the environment.
+use_stacked_frames: False  # Whether to use stacked_frames
+num_agent: 3
+num_adversary: 0
+obs_type: "simple115v2"  # representation used to build the observation, choices: ["simple115v2", "extracted", "pixels_gray", "pixels"]
+rewards_type: "scoring,checkpoints"  # comma separated list of rewards to be added
+smm_width: 96  # width of super minimap
+smm_height: 72  # height of super minimap
+fps: 15  # Frames per second.
+learner: "IPPO_Learner"
+policy: "Categorical_MAAC_Policy"
+representation: "Basic_RNN"
+vectorize: "Subproc_Football"
+runner: "RunnerFootball"
+
+# recurrent settings for Basic_RNN representation
+use_rnn: True  # Whether to use recurrent neural networks.
+rnn: "GRU"  # Choice of recurrent networks: GRU or LSTM.
+N_recurrent_layers: 1  # Number of recurrent layers.
+fc_hidden_sizes: [64]
+recurrent_hidden_size: 64
+dropout: 0  # dropout should be a number in range [0, 1], the probability of an element being zeroed.
+normalize: "LayerNorm"
+initialize: "orthogonal"
+gain: 0.01
+
+actor_hidden_size: [64, 64]
+critic_hidden_size: [64, 64]
+activation: "relu"  # The activation function of each hidden layer.
+use_parameter_sharing: True  # If to use parameter sharing for all agents' policies.
+use_actions_mask: False  # If to use actions mask for unavailable actions.
+
+seed: 1
+parallels: 50
+buffer_size: 400
+n_epochs: 15
+n_minibatch: 2
+learning_rate: 5.0e-4
+weight_decay: 0
+
+vf_coef: 1.0
+ent_coef: 0.01
+clip_range: 0.2
+clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
+gamma: 0.99  # discount factor
+
+# tricks
+use_linear_lr_decay: False  # if use linear learning rate decay
+end_factor_lr_decay: 0.5
+use_global_state: False  # if use global state to calculate values
+use_value_clip: True  # limit the value range
+value_clip_range: 0.2
+use_value_norm: True  # use running mean and std to normalize rewards.
+use_huber_loss: True  # True: use huber loss; False: use MSE loss.
+huber_delta: 10.0
+use_advnorm: True  # use advantage normalization.
+use_gae: True  # use GAE trick to calculate returns.
+gae_lambda: 0.95
+use_grad_clip: True  # gradient normalization
+grad_clip_norm: 10.0
+
+running_steps: 25000000
+eval_interval: 200000
+test_episode: 50
+
+log_dir: "./logs/ippo/"
+model_dir: "./models/ippo/"
+videos_dir: "./videos/ippo/"

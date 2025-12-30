@@ -1,0 +1,47 @@
+agent: "IQL"  # the learning algorithms_marl
+env_name: "MAgent2"
+env_id: "adversarial_pursuit_v4"
+env_seed: 1  # The random seed of the environment.
+minimap_mode: False
+max_cycles: 500
+extra_features: False
+map_size: 45
+render_mode: "rgb_array"
+learner: "IQL_Learner"
+policy: "Basic_Q_network_marl"
+representation: "Basic_MLP"
+vectorize: "Dummy_MAgent"
+runner: "RunnerMAgent"
+
+# recurrent settings for Basic_RNN representation
+use_rnn: False  # Whether to use recurrent neural networks.
+rnn:
+representation_hidden_size: [64, ]
+q_hidden_size: [64, ]  # the units for each hidden layer
+activation: "relu"  # The activation function of each hidden layer.
+
+seed: 1
+parallels: 10
+buffer_size: 20000
+batch_size: 256
+learning_rate: 0.001
+gamma: 0.95  # discount factor
+double_q: True  # use double q learning
+
+start_greedy: 1.0
+end_greedy: 0.05
+decay_step_greedy: 2500000
+start_training: 1000  # start training after n steps
+running_steps: 10000000  # 10M
+training_frequency: 1
+sync_frequency: 100
+
+use_grad_clip: False
+grad_clip_norm: 0.5
+use_parameter_sharing: True
+use_actions_mask: True
+
+eval_interval: 100000
+test_episode: 5
+log_dir: "./logs/iql/"
+model_dir: "./models/iql/"
