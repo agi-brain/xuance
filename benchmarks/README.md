@@ -8,6 +8,16 @@ multi-agent reinforcement learning (MARL) algorithms. Benchmarks are designed wi
 - Comparability: consistent directory layout and result format
 - Extensibility: easy to add new algorithms, environments, or suites
 
+## Table of Contents
+
+- [Directory Structure](#directory-structure)
+- [Running a Single Benchmark](#running-a-single-benchmark)
+- [Running a Benchmark Suite](#running-a-benchmark-suite)
+- [Evaluation Protocol](#evaluation-protocol)
+- [Benchmark Results](#benchmark-results)
+- [Reproducibility](#reproducibility)
+- [How to Add a New Benchmark](#how-to-add-a-new-benchmark)
+
 # Directory Structure
 
 Benchmarks are organized by environment->scenario->algorithm:
