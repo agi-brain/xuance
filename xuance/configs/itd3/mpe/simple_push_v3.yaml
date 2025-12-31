@@ -4,7 +4,7 @@ env_id: "simple_push_v3"
 env_seed: 1  # The random seed of the environment.
 continuous_action: True  # Continuous action space or not.
 learner: "ITD3_Learner"
-policy: "ITD3_Policy"
+policy: "Independent_TD3_Policy"
 representation: "Basic_Identical"
 vectorize: "DummyVecMultiAgentEnv"
 runner: "RunnerCompetition"

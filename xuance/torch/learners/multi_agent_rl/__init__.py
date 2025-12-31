@@ -16,6 +16,7 @@ from .masac_learner import MASAC_Learner
 from .masacdis_learner import MASACDIS_Learner
 from .ippo_learner import IPPO_Learner
 from .mappo_learner import MAPPO_Learner
+from .itd3_learner import ITD3_Learner
 from .matd3_learner import MATD3_Learner
 from .mfac_learner import MFAC_Learner
 from .commnet_learner import CommNet_Learner
