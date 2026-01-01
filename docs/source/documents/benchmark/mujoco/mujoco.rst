@@ -4,13 +4,13 @@ MuJoCo benchmarks
 Scenarios
 --------------------------
 
-.. image:: ../../_static/figures/mujoco/ant.gif
+.. image:: ../../../_static/figures/mujoco/ant.gif
     :height: 150px
-.. image:: ../../_static/figures/mujoco/half_cheetah.gif
+.. image:: ../../../_static/figures/mujoco/half_cheetah.gif
     :height: 150px
-.. image:: ../../_static/figures/mujoco/hopper.gif
+.. image:: ../../../_static/figures/mujoco/hopper.gif
     :height: 150px
-.. image:: ../../_static/figures/mujoco/humanoid.gif
+.. image:: ../../../_static/figures/mujoco/humanoid.gif
     :height: 150px
 
 ==========================
@@ -20,25 +20,25 @@ Scenarios
 Results
 --------------------------
 
-.. image:: mujoco/fig_0_Ant.png
+.. image:: figures/fig_0_Ant.png
     :height: 130px
-.. image:: mujoco/fig_1_HalfCheetah.png
+.. image:: figures/fig_1_HalfCheetah.png
     :height: 130px
-.. image:: mujoco/fig_2_Hopper.png
+.. image:: figures/fig_2_Hopper.png
     :height: 130px
-.. image:: mujoco/fig_3_HumanoidStandup.png
+.. image:: figures/fig_3_HumanoidStandup.png
     :height: 130px
-.. image:: mujoco/fig_4_Humanoid.png
+.. image:: figures/fig_4_Humanoid.png
     :height: 130px
-.. image:: mujoco/fig_5_InvertedDoublePendulum.png
+.. image:: figures/fig_5_InvertedDoublePendulum.png
     :height: 130px
-.. image:: mujoco/fig_6_InvertedPendulum.png
+.. image:: figures/fig_6_InvertedPendulum.png
     :height: 130px
-.. image:: mujoco/fig_7_Reacher.png
+.. image:: figures/fig_7_Reacher.png
     :height: 130px
-.. image:: mujoco/fig_8_Swimmer.png
+.. image:: figures/fig_8_Swimmer.png
     :height: 130px
-.. image:: mujoco/fig_9_Walker2d.png
+.. image:: figures/fig_9_Walker2d.png
     :height: 130px
 
 

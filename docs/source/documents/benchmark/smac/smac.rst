@@ -4,7 +4,7 @@ SMAC benchmarks
 Scenarios
 --------------------------
 
-.. image:: ../../_static/figures/smac/smac.png
+.. image:: ../../../_static/figures/smac/smac.png
     :height: 150px
 
 The evaulated maps are listed as follows:
@@ -54,21 +54,21 @@ The unit types and quantities for each map are listed as follows:
 Results
 --------------------------
 
-.. image:: smac/fig_0_2m_vs_1z.png
+.. image:: figures/fig_0_2m_vs_1z.png
     :height: 130px
-.. image:: smac/fig_1_3m.png
+.. image:: figures/fig_1_3m.png
     :height: 130px
-.. image:: smac/fig_2_8m.png
+.. image:: figures/fig_2_8m.png
     :height: 130px
-.. image:: smac/fig_3_1c3s5z.png
+.. image:: figures/fig_3_1c3s5z.png
     :height: 130px
-.. image:: smac/fig_4_2s3z.png
+.. image:: figures/fig_4_2s3z.png
     :height: 130px
-.. image:: smac/fig_5_25m.png
+.. image:: figures/fig_5_25m.png
     :height: 130px
-.. image:: smac/fig_6_5m_vs_6m.png
+.. image:: figures/fig_6_5m_vs_6m.png
     :height: 130px
-.. image:: smac/fig_7_8m_vs_9m.png
+.. image:: figures/fig_7_8m_vs_9m.png
     :height: 130px
-.. image:: smac/fig_8_MMM2.png
+.. image:: figures/fig_8_MMM2.png
     :height: 130px

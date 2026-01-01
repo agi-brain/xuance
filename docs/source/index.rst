@@ -223,6 +223,14 @@ Contents
    Offline RL <documents/algorithms/offline_rl>
 
 .. toctree::
+   :maxdepth: 2
+   :caption: Benchmarks:
+
+   Start Benchmark <documents/benchmark/start_benchmark>
+   Benchmark Results <documents/benchmark/benchmark_results>
+   Add New Benchmark <documents/benchmark/add_new_benchmark>
+
+.. toctree::
    :maxdepth: 5
    :caption: APIs:
 
@@ -234,20 +242,10 @@ Contents
    documents/api/mindspore
 
 .. toctree::
-   :hidden:
-   :maxdepth: 1
-   :caption: Benchmarks
-
-   documents/benchmark/mujoco
-   documents/benchmark/atari
-   documents/benchmark/smac
-
-.. toctree::
-   :hidden:
-   :caption: Development
+   :caption: Development:
 
    Github <https://github.com/agi-brain/xuance.git>
-   documents/release_log
-   documents/CONTRIBUTING
-   Contribute to the Docs (EN) <https://github.com/agi-brain/xuance/tree/master/docs>
-   Contribute to the Docs (CN) <https://github.com/agi-brain/xuance-docs-zh_CN/tree/master/docs>
+   Release Log <documents/release_log>
+   Contribute to XuanCe <documents/CONTRIBUTING>
+   Contribute to Docs (EN) <https://github.com/agi-brain/xuance/tree/master/docs>
+   Contribute to Docs (CN) <https://github.com/agi-brain/xuance-docs-zh_CN/tree/master/docs>

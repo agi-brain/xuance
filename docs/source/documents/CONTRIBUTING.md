@@ -1,4 +1,4 @@
-# Contributing to XuanCe
+# Contribute to XuanCe
 
 Thank you for your interest in contributing to **XuanCe**! We welcome and appreciate contributions from the community to help improve and expand this deep reinforcement learning library. By participating in this project, you help make XuanCe more robust, versatile, and user-friendly for researchers, developers, and enthusiasts alike.
 
