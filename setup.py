@@ -79,7 +79,7 @@ setup(
         "moviepy==1.0.3",  # suggest version: >=1.0.3
         "imageio",  # suggest version: 2.9.0
         "opencv-python",  # suggest version: 4.5.4.58
-        "mpi4py",  # suggest version: 3.1.3
+        # "mpi4py",  # suggest version: 3.1.3
         "torch",
     ],
     setup_requires=['pytest-runner'],

@@ -68,7 +68,6 @@ autodoc_mock_imports = [
     "wandb",
     "moviepy",
     "imageio",  # default version is 2.9.0
-    "mpi4py",  # default version is 3.1.3
     "torch",
     "tensorflow",
     "tensorflow_probability",

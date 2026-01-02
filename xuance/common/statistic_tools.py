@@ -1,4 +1,3 @@
-from mpi4py import MPI
 from xuance.common import Union, Sequence
 import numpy as np
 
@@ -20,7 +19,9 @@ def mpi_mean(x, axis=0, comm=None, keepdims=False):
     """
     x = np.asarray(x)
     assert x.ndim > 0
-    if comm is None: comm = MPI.COMM_WORLD
+    if comm is None:
+        from mpi4py import MPI
+        comm = MPI.COMM_WORLD
     xsum = x.sum(axis=axis, keepdims=keepdims)
     n = xsum.size
     localsum = np.zeros(n + 1, x.dtype)
@@ -95,9 +96,9 @@ class RunningMeanStd(object):
             self.var = np.ones(shape, np.float32)
             self.count = epsilon
         self.use_mpi = use_mpi
-        if comm is None:
-            from mpi4py import MPI
-            comm = MPI.COMM_WORLD
+        # if comm is None:
+        #     from mpi4py import MPI
+        #     comm = MPI.COMM_WORLD
         self.comm = comm
 
     @property

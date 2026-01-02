@@ -141,6 +141,13 @@ class TestValueBaseAlgo(unittest.TestCase):
         else:
             runner.run()
 
+    def test_itd3(self):
+        runner = get_runner(method="itd3", env=env_name, env_id=env_id, parser_args=args)
+        if is_benchmark:
+            runner.benchmark()
+        else:
+            runner.run()
+
     def test_matd3(self):
         runner = get_runner(method="matd3", env=env_name, env_id=env_id, parser_args=args)
         if is_benchmark:

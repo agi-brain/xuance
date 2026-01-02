@@ -7,7 +7,6 @@ import torch.distributed as dist
 from abc import ABC
 from pathlib import Path
 from argparse import Namespace
-from mpi4py import MPI
 from gymnasium.spaces import Dict, Space
 from torch.utils.tensorboard import SummaryWriter
 from torch.distributed import destroy_process_group
@@ -64,9 +63,8 @@ class Agent(ABC):
         self.current_episode = np.zeros((self.n_envs,), np.int32)
 
         # Set normalizations for observations and rewards.
-        self.comm = MPI.COMM_WORLD
-        self.obs_rms = RunningMeanStd(shape=space2shape(self.observation_space), comm=self.comm, use_mpi=False)
-        self.ret_rms = RunningMeanStd(shape=(), comm=self.comm, use_mpi=False)
+        self.obs_rms = RunningMeanStd(shape=space2shape(self.observation_space))
+        self.ret_rms = RunningMeanStd(shape=())
         self.use_obsnorm = config.use_obsnorm
         self.use_rewnorm = config.use_rewnorm
         self.obsnorm_range = config.obsnorm_range
