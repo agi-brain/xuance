@@ -317,27 +317,20 @@ and hope it can really become a zoo full of DRL algorithms.
 
 ## :point_right: Installation
 
-:computer: The library can be run at Linux, Windows, MacOS, and EulerOS, etc.
+:computer: XuanCe can run at Linux, Windows, MacOS, and EulerOS, etc.
 
-Before installing **XuanCe**, you should install [Anaconda](https://www.anaconda.com/download) to prepare a python
-environment.
-(Note: select a proper version of Anaconda from [**here**](https://repo.anaconda.com/archive/).)
+**Step 1**: Set up a Python environment
 
-After that, open a terminal and install **XuanCe** by the following steps.
+We recommend installing [Anaconda](https://www.anaconda.com/download) to manage your Python environment.
+(You can also download a specific Anaconda installer from [**here**](https://repo.anaconda.com/archive/).)
 
-**Step 1**: Create and activate a new conda environment (python>=3.8 is suggested):
+Then open a terminal and create/activate a new conda environment (Python >= 3.8 is recommended):
 
 ```bash
 conda create -n xuance_env python=3.8 && conda activate xuance_env
 ```
 
-**Step 2**: Install the mpi4py dependency:
-
-```bash
-conda install mpi4py
-```
-
-**Step 3**: Install the library:
+**Step 2**: Install XuanCe
 
 ```bash
 pip install xuance
