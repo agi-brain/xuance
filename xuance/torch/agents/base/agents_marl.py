@@ -33,7 +33,7 @@ class MARLAgents(ABC):
                  config: Namespace,
                  envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv],
                  callback: Optional[MultiAgentBaseCallback] = None):
-        self.meta_data = dict(algo=config.agent, env=config.env, env_id=config.env_id,
+        self.meta_data = dict(algo=config.agent, env=config.env_name, env_id=config.env_id,
                               dl_toolbox=config.dl_toolbox, device=config.device,
                               seed=config.seed, running_steps=config.running_steps)
         # Training settings.
