@@ -67,5 +67,5 @@ running_steps: 1000000  # 1M
 eval_interval: 10000
 test_episode: 16
 
-log_dir: "./logs/iac/"
-model_dir: "./models/iac/"
+log_dir: "logs/iac/"
+model_dir: "models/iac/"

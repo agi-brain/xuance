@@ -73,5 +73,5 @@ running_steps: 1000000  # 1M
 eval_interval: 10000
 test_episode: 16
 
-log_dir: "./logs/coma/"
-model_dir: "./models/coma/"
+log_dir: "logs/coma/"
+model_dir: "models/coma/"

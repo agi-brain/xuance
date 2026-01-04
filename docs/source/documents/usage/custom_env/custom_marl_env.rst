@@ -165,8 +165,8 @@ Here is an example of configurations for DDPG algorithm, named "ippo_new_configs
     eval_interval: 10000  # The interval between every two trainings.
     test_episode: 5  # The episodes to test in each test period.
 
-    log_dir: "./logs/ippo/"
-    model_dir: "./models/ippo/"
+    log_dir: "logs/ippo/"
+    model_dir: "models/ippo/"
 
 
 Then, read the configurations:

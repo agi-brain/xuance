@@ -42,5 +42,5 @@ test_steps: 10000  # The test steps.
 eval_interval: 50000  # The interval between every two trainings.
 test_episode: 3  # The episodes to test in each test period.
 
-log_dir: "./logs/a2c/"  # The directory to store logger file.
-model_dir: "./models/a2c/"  # The directory to store model file.
+log_dir: "logs/a2c/"  # The directory to store logger file.
+model_dir: "models/a2c/"  # The directory to store model file.

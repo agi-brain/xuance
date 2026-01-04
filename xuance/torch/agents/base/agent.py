@@ -1,4 +1,5 @@
 import os
+import csv
 import torch
 import wandb
 import socket
@@ -30,6 +31,9 @@ class Agent(ABC):
                  config: Namespace,
                  envs: Union[DummyVecEnv, SubprocVecEnv],
                  callback: Optional[BaseCallback] = None):
+        self.meta_data = dict(algo=config.agent, env=config.env, env_id=config.env_id,
+                              dl_toolbox=config.dl_toolbox, device=config.device,
+                              seed=config.seed, running_steps=config.running_steps)
         # Training settings.
         self.config = config
         self.use_rnn = getattr(config, "use_rnn", False)
@@ -86,6 +90,7 @@ class Agent(ABC):
         seed = f"seed_{self.config.seed}_"
         self.model_dir_load = config.model_dir
         self.model_dir_save = os.path.join(os.getcwd(), config.model_dir, seed + time_string)
+        self.result_dir = os.path.join(os.getcwd(), config.result_dir, seed + time_string)
 
         # Create logger.
         if config.logger == "tensorboard":

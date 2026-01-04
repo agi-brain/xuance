@@ -45,5 +45,5 @@ grad_clip_norm: 0.5
 eval_interval: 10000
 test_episode: 16
 
-log_dir: "./logs/vdn/"
-model_dir: "./models/vdn/"
+log_dir: "logs/vdn/"
+model_dir: "models/vdn/"

@@ -43,5 +43,5 @@ use_actions_mask: True
 
 eval_interval: 100000
 test_episode: 5
-log_dir: "./logs/iql/"
-model_dir: "./models/iql/"
+log_dir: "logs/iql/"
+model_dir: "models/iql/"

@@ -82,8 +82,8 @@ Here we show a config file named "ppo_configs/ppo_mujoco_config.yaml" for MuJoCo
     test_steps: 10000  # The total steps for testing.
     eval_interval: 5000  # The evaluate interval when use benchmark method.
     test_episode: 5  # The test episodes.
-    log_dir: "./logs/ppo/"  # The main directory of log files.
-    model_dir: "./models/ppo/"  # The main directory of model files.
+    log_dir: "logs/ppo/"  # The main directory of log files.
+    model_dir: "models/ppo/"  # The main directory of model files.
 
 
 Step 2: Get the attributes of the example

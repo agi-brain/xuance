@@ -209,24 +209,11 @@ def get_runner(method,
             else:
                 agents_name_string.append(args[i_alg].agent)
             args[i_alg].agent_name = method[i_alg]
-            notation = args[i_alg].dl_toolbox + '/'
-
-            if ('model_dir' in args[i_alg].__dict__) and ('log_dir' in args[i_alg].__dict__):
-                args[i_alg].model_dir = os.path.join(os.getcwd(),
-                                                     args[i_alg].model_dir + notation + args[i_alg].env_id + '/',
-                                                     f"side_{i_alg}/")
-                args[i_alg].log_dir = args[i_alg].log_dir + notation + args[i_alg].env_id + f"/side_{i_alg}/"
-            else:
-                if config_path is not None:
-                    raise AttributeError(f"'model_dir' or 'log_dir' is not defined in {config_path} files.")
-                elif method[i_alg] not in method_list.keys():
-                    raise AttributeError(f"The method named '{method[i_alg]}' is currently not supported in XuanCe.")
-                elif args[i_alg].env not in method_list[method[i_alg]]:
-                    raise AttributeError(
-                        f"The environment named '{args[i_alg].env}' is currently not supported for {method_list[method[i_alg]]}.")
-                else:
-                    if rank == 0:
-                        print("Failed to load arguments for the implementation!")
+            relative_log_dir = getattr(args[i_alg], "log_dir", f"logs/{method}")
+            relative_model_dir = getattr(args[i_alg], "model_dir", f"logs/{method}")
+            args[i_alg].log_dir = os.path.join(relative_log_dir, args[i_alg].env_id, f"side_{i_alg}")
+            args[i_alg].model_dir = os.path.join(relative_model_dir, args[i_alg].env_id, f"side_{i_alg}")
+            args[i_alg].result_dir = os.path.join(f"results/{method}", args[i_alg].env_id, f"side_{i_alg}")
 
         if rank == 0:
             print("Algorithm:", *agents_name_string)
@@ -244,21 +231,11 @@ def get_runner(method,
         raise AttributeError("Both sides of policies are random!")
     else:
         args.agent_name = method
-        notation = args.dl_toolbox + '/'
-        if ('model_dir' in args.__dict__) and ('log_dir' in args.__dict__):
-            args.model_dir = os.path.join(os.getcwd(), args.model_dir, args.dl_toolbox, args.env_id)
-            args.log_dir = os.path.join(args.log_dir, notation, args.env_id)
-        else:
-            if config_path is not None:
-                raise AttributeError(f"'model_dir' or 'log_dir' is not defined in {config_path} file.")
-            elif args.method not in method_list.keys():
-                raise AttributeError(f"The method named '{args.method}' is currently not supported in XuanCe.")
-            elif args.env not in method_list[args.method]:
-                raise AttributeError(f"The environment named '{args.env}' is currently not supported for {args.method}.")
-            else:
-                if rank == 0:
-                    print("Failed to load arguments for the implementation!")
-
+        relative_log_dir = getattr(args, "log_dir", f"logs/{method}")
+        relative_model_dir = getattr(args, "model_dir", f"logs/{method}")
+        args.log_dir = os.path.join(relative_log_dir, args.env_id)
+        args.model_dir = os.path.join(relative_model_dir, args.env_id)
+        args.result_dir = os.path.join(f"results/{method}", args.env_id)
         if rank == 0:
             print("Algorithm:", args.agent)
             print("Environment:", args.env_name)

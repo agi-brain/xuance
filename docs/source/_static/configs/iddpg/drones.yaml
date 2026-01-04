@@ -44,5 +44,5 @@ grad_clip_norm: 0.5
 
 eval_interval: 100000
 test_episode: 5
-log_dir: "./logs/iddpg/"
-model_dir: "./models/iddpg/"
+log_dir: "logs/iddpg/"
+model_dir: "models/iddpg/"

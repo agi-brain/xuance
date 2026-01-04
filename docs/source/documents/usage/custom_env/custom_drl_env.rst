@@ -119,8 +119,8 @@ Here is an example of configurations for DDPG algorithm, named "ddpg_new_env.yam
     eval_interval: 5000
     test_episode: 5
 
-    log_dir: "./logs/ddpg/"
-    model_dir: "./models/ddpg/"
+    log_dir: "logs/ddpg/"
+    model_dir: "models/ddpg/"
 
 Then, read the configurations:
 

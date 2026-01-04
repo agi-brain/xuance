@@ -43,5 +43,5 @@ use_actions_mask: False
 
 eval_interval: 100000
 test_episode: 5
-log_dir: "./logs/vdn/"
-model_dir: "./models/vdn/"
+log_dir: "logs/vdn/"
+model_dir: "models/vdn/"

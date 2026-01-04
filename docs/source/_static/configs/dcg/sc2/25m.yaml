@@ -55,5 +55,5 @@ grad_clip_norm: 0.5
 eval_interval: 50000
 test_episode: 16
 
-log_dir: "./logs/dcg/"
-model_dir: "./models/dcg/"
+log_dir: "logs/dcg/"
+model_dir: "models/dcg/"

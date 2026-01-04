@@ -73,5 +73,5 @@ running_steps: 10000000  # The total running steps.
 eval_interval: 100000  # The interval between every two trainings.
 test_episode: 5  # The episodes to test in each test period.
 
-log_dir: "./logs/mappo/"
-model_dir: "./models/mappo/"
+log_dir: "logs/mappo/"
+model_dir: "models/mappo/"

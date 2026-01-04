@@ -60,5 +60,5 @@ grad_clip_norm: 5.0
 # 评估和日志
 eval_interval: 50000
 test_episode: 20
-log_dir: "./logs/maddpg_adversary_sharing/"
-model_dir: "./models/maddpg_adversary_sharing/"
+log_dir: "logs/maddpg_adversary_sharing/"
+model_dir: "models/maddpg_adversary_sharing/"

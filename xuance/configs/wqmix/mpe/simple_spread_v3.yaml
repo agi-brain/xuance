@@ -49,5 +49,5 @@ use_actions_mask: False
 
 eval_interval: 100000
 test_episode: 5
-log_dir: "./logs/wqmix/"
-model_dir: "./models/wqmix/"
+log_dir: "logs/wqmix/"
+model_dir: "models/wqmix/"

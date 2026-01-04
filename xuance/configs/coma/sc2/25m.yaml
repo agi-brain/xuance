@@ -57,5 +57,5 @@ running_steps: 5000000  # The total running steps.
 eval_interval: 50000  # The interval between every two trainings.
 test_episode: 16  # The episodes to test in each test period.
 
-log_dir: "./logs/coma/"  # The directory to store logger file.
-model_dir: "./models/coma/"  # The directory to store model file.
+log_dir: "logs/coma/"  # The directory to store logger file.
+model_dir: "models/coma/"  # The directory to store model file.

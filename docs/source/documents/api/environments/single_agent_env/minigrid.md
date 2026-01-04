@@ -152,8 +152,8 @@ rewnorm_range: 5
 test_steps: 10000
 eval_interval: 20000
 test_episode: 1
-log_dir: "./logs/dqn/"
-model_dir: "./models/dqn/"
+log_dir: "logs/dqn/"
+model_dir: "models/dqn/"
 ```
 
 In this file, apart from the parameters related to the environment mentioned above, 

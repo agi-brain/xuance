@@ -63,5 +63,5 @@ running_steps: 5000000  # 5M
 eval_interval: 25000
 test_episode: 16
 
-log_dir: "./logs/vdac/"
-model_dir: "./models/vdac/"
+log_dir: "logs/vdac/"
+model_dir: "models/vdac/"

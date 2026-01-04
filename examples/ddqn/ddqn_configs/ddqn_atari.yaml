@@ -67,5 +67,5 @@ rewnorm_range: 5
 test_steps: 10000
 eval_interval: 500000
 test_episode: 3
-log_dir: "./logs/ddqn/"
-model_dir: "./models/ddqn/"
+log_dir: "logs/ddqn/"
+model_dir: "models/ddqn/"

@@ -33,6 +33,9 @@ class MARLAgents(ABC):
                  config: Namespace,
                  envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv],
                  callback: Optional[MultiAgentBaseCallback] = None):
+        self.meta_data = dict(algo=config.agent, env=config.env, env_id=config.env_id,
+                              dl_toolbox=config.dl_toolbox, device=config.device,
+                              seed=config.seed, running_steps=config.running_steps)
         # Training settings.
         self.config = config
         self.use_cnn = getattr(config, "use_cnn", False)
@@ -90,6 +93,7 @@ class MARLAgents(ABC):
         seed = f"seed_{config.seed}_"
         self.model_dir_load = config.model_dir
         self.model_dir_save = os.path.join(os.getcwd(), config.model_dir, seed + time_string)
+        self.result_dir = os.path.join(os.getcwd(), config.result_dir, seed + time_string)
 
         # Create logger.
         if config.logger == "tensorboard":
