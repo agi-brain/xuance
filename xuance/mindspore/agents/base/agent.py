@@ -5,14 +5,14 @@ import numpy as np
 from abc import ABC
 from pathlib import Path
 from argparse import Namespace
-# from mpi4py import MPI
 from gymnasium.spaces import Dict, Space
 from torch.utils.tensorboard import SummaryWriter
-from xuance.common import get_time_string, create_directory, RunningMeanStd, space2shape, EPS, Optional, Union, \
-    BaseCallback
+from xuance.common import (
+    get_time_string, create_directory, RunningMeanStd, space2shape, EPS, Optional, Union, BaseCallback
+)
 from xuance.environment import DummyVecEnv, SubprocVecEnv
 from xuance.mindspore import REGISTRY_Representation, REGISTRY_Learners, Module, ms
-from xuance.mindspore.utils import InitializeFunctions, NormalizeFunctions, ActivationFunctions
+from xuance.mindspore.utils import InitializeFunctions, NormalizeFunctions, ActivationFunctions, set_seed
 
 
 class Agent(ABC):
@@ -28,6 +28,10 @@ class Agent(ABC):
                  config: Namespace,
                  envs: Union[DummyVecEnv, SubprocVecEnv],
                  callback: Optional[BaseCallback] = None):
+        set_seed(config.seed)
+        self.meta_data = dict(algo=config.agent, env=config.env_name, env_id=config.env_id,
+                              dl_toolbox=config.dl_toolbox, device=config.device,
+                              seed=config.seed, running_steps=config.running_steps)
         # Training settings.
         self.config = config
         self.use_rnn = config.use_rnn if hasattr(config, "use_rnn") else False

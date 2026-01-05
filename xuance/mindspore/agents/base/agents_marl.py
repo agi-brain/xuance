@@ -8,12 +8,13 @@ from argparse import Namespace
 from operator import itemgetter
 from gymnasium.spaces import Space
 from torch.utils.tensorboard import SummaryWriter
-from xuance.common import get_time_string, create_directory, space2shape, Optional, List, Dict, Union, \
-    MultiAgentBaseCallback
+from xuance.common import (
+    get_time_string, create_directory, space2shape, Optional, List, Dict, Union, MultiAgentBaseCallback
+)
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
 from xuance.mindspore import Tensor, Module, ModuleDict, REGISTRY_Representation, REGISTRY_Learners, ops
 from xuance.mindspore.learners import learner
-from xuance.mindspore.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions
+from xuance.mindspore.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions, set_seed
 
 
 class MARLAgents(ABC):
@@ -21,6 +22,10 @@ class MARLAgents(ABC):
                  config: Namespace,
                  envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv],
                  callback: Optional[MultiAgentBaseCallback] = None):
+        set_seed(config.seed)
+        self.meta_data = dict(algo=config.agent, env=config.env_name, env_id=config.env_id,
+                              dl_toolbox=config.dl_toolbox, device=config.device,
+                              seed=config.seed, running_steps=config.running_steps)
         # Training settings.
         self.config = config
         self.use_rnn = config.use_rnn if hasattr(config, "use_rnn") else False

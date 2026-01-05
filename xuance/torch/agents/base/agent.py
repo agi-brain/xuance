@@ -11,11 +11,13 @@ from argparse import Namespace
 from gymnasium.spaces import Dict, Space
 from torch.utils.tensorboard import SummaryWriter
 from torch.distributed import destroy_process_group
-from xuance.common import get_time_string, create_directory, RunningMeanStd, space2shape, EPS, Optional, Union, \
-    BaseCallback
+from xuance.common import (
+    get_time_string, create_directory, RunningMeanStd, space2shape, EPS,
+    Optional, Union, BaseCallback
+)
 from xuance.environment import DummyVecEnv, SubprocVecEnv
 from xuance.torch import REGISTRY_Representation, REGISTRY_Learners, Module
-from xuance.torch.utils import nn, NormalizeFunctions, ActivationFunctions, init_distributed_mode
+from xuance.torch.utils import nn, NormalizeFunctions, ActivationFunctions, init_distributed_mode, set_seed
 
 
 class Agent(ABC):
@@ -31,6 +33,7 @@ class Agent(ABC):
                  config: Namespace,
                  envs: Union[DummyVecEnv, SubprocVecEnv],
                  callback: Optional[BaseCallback] = None):
+        set_seed(config.seed)
         self.meta_data = dict(algo=config.agent, env=config.env_name, env_id=config.env_id,
                               dl_toolbox=config.dl_toolbox, device=config.device,
                               seed=config.seed, running_steps=config.running_steps)

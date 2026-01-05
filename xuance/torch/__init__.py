@@ -13,5 +13,5 @@ __all__ = [
     "Module",
     "ModuleDict",
     "DistributedDataParallel",
-    "REGISTRY_Representation", "REGISTRY_Policy", "REGISTRY_Learners", "REGISTRY_Agents"
+    "REGISTRY_Representation", "REGISTRY_Policy", "REGISTRY_Learners", "REGISTRY_Agents",
 ]
