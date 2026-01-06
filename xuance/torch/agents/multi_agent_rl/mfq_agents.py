@@ -4,7 +4,8 @@ from operator import itemgetter
 from argparse import Namespace
 from tqdm import tqdm
 from copy import deepcopy
-from xuance.common import List, Union, Optional, MeanField_OffPolicyBuffer, MeanField_OffPolicyBuffer_RNN, MultiAgentBaseCallback
+from gymnasium.spaces import Space
+from xuance.common import List, Optional, MeanField_OffPolicyBuffer, MeanField_OffPolicyBuffer_RNN, MultiAgentBaseCallback
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
 from xuance.torch import Module
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
@@ -21,11 +22,20 @@ class MFQ_Agents(OffPolicyMARLAgents):
         callback: A user-defined callback function object to inject custom logic during training.
     """
 
-    def __init__(self,
-                 config: Namespace,
-                 envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv],
-                 callback: Optional[MultiAgentBaseCallback] = None):
-        super(MFQ_Agents, self).__init__(config, envs, callback)
+    def __init__(
+            self,
+            config: Namespace,
+            envs: Optional[DummyVecMultiAgentEnv | SubprocVecMultiAgentEnv] = None,
+            num_agents: Optional[int] = None,
+            agent_keys: Optional[List[str]] = None,
+            state_space: Optional[Space] = None,
+            observation_space: Optional[Space] = None,
+            action_space: Optional[Space] = None,
+            callback: Optional[MultiAgentBaseCallback] = None
+    ):
+        super(MFQ_Agents, self).__init__(
+            config, envs, num_agents, agent_keys, state_space, observation_space, action_space, callback
+        )
 
         self.n_actions_list = [a_space.n for a_space in self.action_space.values()]
         self.n_actions_max = max(self.n_actions_list)
@@ -190,56 +200,50 @@ class MFQ_Agents(OffPolicyMARLAgents):
 
         return {"hidden_state": hidden_state, "actions": actions_dict, "actions_mean": actions_mean_dict}
 
-    def train(self, n_steps):
-        """
-        Train the model for numerous steps.
-
-        Parameters:
-            n_steps (int): The number of steps to train the model.
-        """
+    def train(self, train_steps: int) -> dict:
         train_info = {}
         if self.use_rnn:
-            with tqdm(total=n_steps) as process_bar:
+            with tqdm(total=train_steps) as process_bar:
                 step_start, step_last = deepcopy(self.current_step), deepcopy(self.current_step)
-                n_steps_all = n_steps * self.n_envs
+                n_steps_all = train_steps * self.n_envs
                 while step_last - step_start < n_steps_all:
-                    self.run_episodes(None, n_episodes=self.n_envs, test_mode=False)
+                    self.run_episodes(n_episodes=self.n_envs, test_mode=False, close_envs=False)
                     if self.current_step >= self.start_training:
                         update_info = self.train_epochs(n_epochs=self.n_epochs)
                         self.log_infos(update_info, self.current_step)
                         train_info.update(update_info)
                         self.callback.on_train_epochs_end(self.current_step, policy=self.policy, memory=self.memory,
-                                                          current_episode=self.current_episode, n_steps=n_steps,
+                                                          current_episode=self.current_episode, train_steps=train_steps,
                                                           update_info=update_info)
 
                     process_bar.update((self.current_step - step_last) // self.n_envs)
                     step_last = deepcopy(self.current_step)
-                process_bar.update(n_steps - process_bar.last_print_n)
-                self.callback.on_train_step_end(self.current_step, envs=self.envs, policy=self.policy,
-                                                n_steps=n_steps, train_info=train_info)
+                process_bar.update(train_steps - process_bar.last_print_n)
+                self.callback.on_train_step_end(self.current_step, envs=self.train_envs, policy=self.policy,
+                                                n_steps=train_steps, train_info=train_info)
             return train_info
 
-        obs_dict = self.envs.buf_obs
-        agent_mask_dict = [data['agent_mask'] for data in self.envs.buf_info]
+        obs_dict = self.train_envs.buf_obs
+        agent_mask_dict = [data['agent_mask'] for data in self.train_envs.buf_info]
         actions_mean_dict = self.actions_mean
-        avail_actions = self.envs.buf_avail_actions if self.use_actions_mask else None
-        state = self.envs.buf_state.copy() if self.use_global_state else None
-        for _ in tqdm(range(n_steps)):
+        avail_actions = self.train_envs.buf_avail_actions if self.use_actions_mask else None
+        state = self.train_envs.buf_state.copy() if self.use_global_state else None
+        for _ in tqdm(range(train_steps)):
             policy_out = self.action(obs_dict=obs_dict, agent_mask=agent_mask_dict, act_mean_dict=actions_mean_dict,
                                      avail_actions_dict=avail_actions, test_mode=False)
             actions_dict = policy_out['actions']
             actions_mean_next_dict = policy_out['actions_mean']
-            next_obs_dict, rewards_dict, terminated_dict, truncated, info = self.envs.step(actions_dict)
-            next_state = self.envs.buf_state.copy() if self.use_global_state else None
-            next_avail_actions = self.envs.buf_avail_actions if self.use_actions_mask else None
+            next_obs_dict, rewards_dict, terminated_dict, truncated, info = self.train_envs.step(actions_dict)
+            next_state = self.train_envs.buf_state.copy() if self.use_global_state else None
+            next_avail_actions = self.train_envs.buf_avail_actions if self.use_actions_mask else None
 
-            self.callback.on_train_step(self.current_step, envs=self.envs, policy=self.policy,
+            self.callback.on_train_step(self.current_step, envs=self.train_envs, policy=self.policy,
                                         obs=obs_dict, next_obs=next_obs_dict,
                                         policy_out=policy_out, acts=actions_dict, actions_mean_dict=actions_mean_dict,
                                         rewards=rewards_dict, state=state, next_state=next_state,
                                         avail_actions=avail_actions, next_avail_actions=next_avail_actions,
                                         terminals=terminated_dict, truncations=truncated, infos=info,
-                                        n_steps=n_steps)
+                                        train_steps=train_steps)
 
             self.store_experience(obs_dict, avail_actions, actions_dict, next_obs_dict, next_avail_actions,
                                   rewards_dict, terminated_dict, info,
@@ -250,7 +254,7 @@ class MFQ_Agents(OffPolicyMARLAgents):
                 self.log_infos(update_info, self.current_step)
                 train_info.update(update_info)
                 self.callback.on_train_epochs_end(self.current_step, policy=self.policy, memory=self.memory,
-                                                  current_episode=self.current_episode, n_steps=n_steps,
+                                                  current_episode=self.current_episode, train_steps=train_steps,
                                                   update_info=update_info)
 
             obs_dict = deepcopy(next_obs_dict)
@@ -264,14 +268,14 @@ class MFQ_Agents(OffPolicyMARLAgents):
             for i in range(self.n_envs):
                 if all(terminated_dict[i].values()) or truncated[i]:
                     obs_dict[i] = info[i]["reset_obs"]
-                    self.envs.buf_obs[i] = info[i]["reset_obs"]
+                    self.train_envs.buf_obs[i] = info[i]["reset_obs"]
                     if self.use_global_state:
                         state = info[i]["reset_state"]
-                        self.envs.buf_state[i] = info[i]["reset_state"]
+                        self.train_envs.buf_state[i] = info[i]["reset_state"]
                     if self.use_actions_mask:
                         avail_actions[i] = info[i]["reset_avail_actions"]
-                        self.envs.buf_avail_actions[i] = info[i]["reset_avail_actions"]
-                    self.envs.buf_info[i]["agent_mask"] = {k: True for k in self.agent_keys}
+                        self.train_envs.buf_avail_actions[i] = info[i]["reset_avail_actions"]
+                    self.train_envs.buf_info[i]["agent_mask"] = {k: True for k in self.agent_keys}
                     agent_mask_dict[i] = {k: True for k in self.agent_keys}
                     actions_mean_dict[i] = {k: np.zeros(self.n_actions_max) for k in self.agent_keys}
                     self.current_episode[i] += 1
@@ -288,32 +292,25 @@ class MFQ_Agents(OffPolicyMARLAgents):
                         }
                     self.log_infos(episode_info, self.current_step)
                     train_info.update(episode_info)
-                    self.callback.on_train_episode_info(envs=self.envs, policy=self.policy, env_id=i,
+                    self.callback.on_train_episode_info(envs=self.train_envs, policy=self.policy, env_id=i,
                                                         infos=info, rank=self.rank, use_wandb=self.use_wandb,
                                                         current_step=self.current_step,
                                                         current_episode=self.current_episode,
-                                                        n_steps=n_steps)
+                                                        train_steps=train_steps)
 
             self.current_step += self.n_envs
             self._update_explore_factor()
             self.actions_mean = deepcopy(actions_mean_dict)
-            self.callback.on_train_step_end(self.current_step, envs=self.envs, policy=self.policy,
-                                            n_steps=n_steps, train_info=train_info)
+            self.callback.on_train_step_end(self.current_step, envs=self.train_envs, policy=self.policy,
+                                            train_steps=train_steps, train_info=train_info)
         return train_info
 
-    def run_episodes(self, env_fn=None, n_episodes: int = 1, test_mode: bool = False):
-        """
-        Run some episodes when use RNN.
-
-        Parameters:
-            env_fn: The function that can make some testing environments.
-            n_episodes (int): Number of episodes.
-            test_mode (bool): Whether to test the model.
-
-        Returns:
-            Scores: The episode scores.
-        """
-        envs = self.envs if env_fn is None else env_fn()
+    def run_episodes(self,
+                     n_episodes: int = 1,
+                     run_envs: Optional[DummyVecMultiAgentEnv | SubprocVecMultiAgentEnv] = None,
+                     test_mode: bool = False,
+                     close_envs: bool = True) -> list:
+        envs = self.train_envs if run_envs is None else run_envs
         num_envs = envs.num_envs
         videos, episode_videos, images = [[] for _ in range(num_envs)], [], None
         current_episode, current_step, scores, best_score = 0, 0, [], -np.inf
@@ -380,7 +377,7 @@ class MFQ_Agents(OffPolicyMARLAgents):
                     envs.buf_obs[i] = info[i]["reset_obs"]
                     if self.use_global_state:
                         state = info[i]["reset_state"]
-                        self.envs.buf_state[i] = info[i]["reset_state"]
+                        self.train_envs.buf_state[i] = info[i]["reset_state"]
                     if self.use_actions_mask:
                         avail_actions[i] = info[i]["reset_avail_actions"]
                         envs.buf_avail_actions[i] = info[i]["reset_avail_actions"]
@@ -421,7 +418,7 @@ class MFQ_Agents(OffPolicyMARLAgents):
                         self.current_step += info[i]["episode_step"]
                         self.log_infos(episode_info, self.current_step)
                         self._update_explore_factor()
-                        self.callback.on_train_episode_info(envs=self.envs, policy=self.policy, env_id=i,
+                        self.callback.on_train_episode_info(envs=self.train_envs, policy=self.policy, env_id=i,
                                                             infos=info, rank=self.rank, use_wandb=self.use_wandb,
                                                             current_step=self.current_step,
                                                             current_episode=self.current_episode,
@@ -449,6 +446,6 @@ class MFQ_Agents(OffPolicyMARLAgents):
                                       current_step=current_step, current_episode=current_episode,
                                       scores=scores, best_score=best_score)
 
-            if env_fn is not None:
+            if close_envs:
                 envs.close()
         return scores

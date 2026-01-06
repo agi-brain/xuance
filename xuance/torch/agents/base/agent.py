@@ -1,11 +1,10 @@
 import os
-import csv
 import torch
 import wandb
 import socket
 import numpy as np
 import torch.distributed as dist
-from abc import ABC
+from abc import ABC, abstractmethod
 from pathlib import Path
 from argparse import Namespace
 from gymnasium.spaces import Dict, Space
@@ -13,7 +12,7 @@ from torch.utils.tensorboard import SummaryWriter
 from torch.distributed import destroy_process_group
 from xuance.common import (
     get_time_string, create_directory, RunningMeanStd, space2shape, EPS,
-    Optional, Union, BaseCallback
+    Optional, BaseCallback
 )
 from xuance.environment import DummyVecEnv, SubprocVecEnv
 from xuance.torch import REGISTRY_Representation, REGISTRY_Learners, Module
@@ -21,18 +20,51 @@ from xuance.torch.utils import nn, NormalizeFunctions, ActivationFunctions, init
 
 
 class Agent(ABC):
-    """Base class of agent for single-agent DRL.
+    """Base class for single-agent Deep Reinforcement Learning (DRL).
+
+    This class defines the common interface and shared infrastructure for
+    single-agent DRL algorithms in XuanCe. An Agent encapsulates the policy,
+    learner, and training/testing logic, while environments are managed
+    externally by the runner or provided explicitly by the user.
+
+    The agent can be initialized either with training environments (`envs`)
+    or, for inference/testing-only scenarios, without environments but with
+    explicit observation and action spaces.
 
     Args:
-        config: the Namespace variable that provides hyperparameters and other settings.
-        envs: the vectorized environments.
-        callback: A user-defined callback function object to inject custom logic during training.
+        config (Namespace): Configuration object containing hyperparameters,
+            runtime settings, and environment specifications.
+        envs (Optional[DummyVecEnv | SubprocVecEnv]): Vectorized environments
+            used for training. If None, the agent will not initialize training
+            environments and must be provided with `observation_space` and
+            `action_space` to build networks.
+        observation_space (Optional[gymnasium.spaces.Space]): Observation space
+            specification used to construct policy networks when `envs` is None.
+            Typically obtained from `test_envs.observation_space`.
+        action_space (Optional[gymnasium.spaces.Space]): Action space
+            specification used to construct policy networks when `envs` is None.
+            Typically obtained from `test_envs.action_space`.
+        callback (Optional[BaseCallback]): Optional callback object for injecting
+            custom logic during training or evaluation (e.g., logging, early
+            stopping, or custom hooks).
+
+    Notes:
+        - When `envs` is provided, the agent assumes a training context and
+          derives observation/action spaces from the environments.
+        - When `envs` is None, the agent can still be used for evaluation or
+          inference as long as the corresponding spaces are explicitly given.
+        - Environment creation and lifecycle management are intentionally
+          decoupled from the agent and handled by the runner or user code.
     """
 
-    def __init__(self,
-                 config: Namespace,
-                 envs: Union[DummyVecEnv, SubprocVecEnv],
-                 callback: Optional[BaseCallback] = None):
+    def __init__(
+            self,
+            config: Namespace,
+            envs: Optional[DummyVecEnv | SubprocVecEnv] = None,
+            observation_space: Optional[Space] = None,
+            action_space: Optional[Space] = None,
+            callback: Optional[BaseCallback] = None
+    ):
         set_seed(config.seed)
         self.meta_data = dict(algo=config.agent, env=config.env_name, env_id=config.env_id,
                               dl_toolbox=config.dl_toolbox, device=config.device,
@@ -58,14 +90,24 @@ class Agent(ABC):
         self.device = config.device
 
         # Environment attributes.
-        self.envs = envs
-        self.envs.reset()
-        self.episode_length = self.config.episode_length = envs.max_episode_steps
+        self.train_envs = envs
         self.render = config.render
         self.fps = config.fps
-        self.n_envs = envs.num_envs
-        self.observation_space = envs.observation_space
-        self.action_space = envs.action_space
+        if self.train_envs is None:
+            if observation_space is None or action_space is None:
+                raise ValueError("Please provide the observation_space and action_space when the envs is not provided."
+                                 "Or the networks cannot be built."
+                                 "You can get them from test_envs.observation_space and test_envs.action_space.")
+            self.n_envs = self.config.parallels
+            self.observation_space = observation_space
+            self.action_space = action_space
+            self.episode_length = self.config.episode_length = None
+        else:
+            self.train_envs.reset()
+            self.n_envs = self.train_envs.num_envs
+            self.episode_length = self.config.episode_length = self.train_envs.max_episode_steps
+            self.observation_space = self.train_envs.observation_space
+            self.action_space = self.train_envs.action_space
         self.current_step = 0
         self.current_episode = np.zeros((self.n_envs,), np.int32)
 
@@ -76,7 +118,7 @@ class Agent(ABC):
         self.use_rewnorm = config.use_rewnorm
         self.obsnorm_range = config.obsnorm_range
         self.rewnorm_range = config.rewnorm_range
-        self.returns = np.zeros((self.envs.num_envs,), np.float32)
+        self.returns = np.zeros((self.n_envs,), np.float32)
 
         # Prepare directories.
         if self.distributed_training and self.world_size > 1:
@@ -93,7 +135,6 @@ class Agent(ABC):
         seed = f"seed_{self.config.seed}_"
         self.model_dir_load = config.model_dir
         self.model_dir_save = os.path.join(os.getcwd(), config.model_dir, seed + time_string)
-        self.result_dir = os.path.join(os.getcwd(), config.result_dir, seed + time_string)
 
         # Create logger.
         if config.logger == "tensorboard":
@@ -114,17 +155,18 @@ class Agent(ABC):
             else:
                 while not os.path.exists(str(wandb_dir)):
                     pass  # Wait until the master process finishes creating directory.
-            wandb.init(config=config_dict,
-                       project=config.project_name,
-                       entity=config.wandb_user_name,
-                       notes=socket.gethostname(),
-                       dir=wandb_dir,
-                       group=config.env_id,
-                       job_type=config.agent,
-                       name=time_string,
-                       reinit=True,
-                       settings=wandb.Settings(start_method="fork")
-                       )
+            wandb.init(
+                config=config_dict,
+                project=config.project_name,
+                entity=config.wandb_user_name,
+                notes=socket.gethostname(),
+                dir=wandb_dir,
+                group=config.env_id,
+                job_type=config.agent,
+                name=time_string,
+                reinit=True,
+                settings=wandb.Settings(start_method="fork")
+            )
             # os.environ["WANDB_SILENT"] = "True"
             self.use_wandb = True
         else:
@@ -258,18 +300,22 @@ class Agent(ABC):
             raise AttributeError(f"{representation_key} is not registered in REGISTRY_Representation.")
         return representation
 
+    @abstractmethod
     def _build_policy(self) -> Module:
         raise NotImplementedError
 
     def _build_learner(self, *args):
         return REGISTRY_Learners[self.config.learner](*args)
 
+    @abstractmethod
     def action(self, observations):
         raise NotImplementedError
 
+    @abstractmethod
     def train(self, steps):
         raise NotImplementedError
 
+    @abstractmethod
     def test(self, env_fn, steps):
         raise NotImplementedError
 

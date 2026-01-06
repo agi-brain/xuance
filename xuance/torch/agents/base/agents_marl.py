@@ -4,7 +4,7 @@ import socket
 import torch
 import numpy as np
 import torch.distributed as dist
-from abc import ABC
+from abc import ABC, abstractmethod
 from pathlib import Path
 from argparse import Namespace
 from operator import itemgetter
@@ -31,10 +31,17 @@ class MARLAgents(ABC):
         callback: A user-defined callback function object to inject custom logic during training.
     """
 
-    def __init__(self,
-                 config: Namespace,
-                 envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv],
-                 callback: Optional[MultiAgentBaseCallback] = None):
+    def __init__(
+            self,
+            config: Namespace,
+            envs: Optional[DummyVecMultiAgentEnv | SubprocVecMultiAgentEnv] = None,
+            num_agents: Optional[int] = None,
+            agent_keys: Optional[List[str]] = None,
+            state_space: Optional[Space] = None,
+            observation_space: Optional[Space] = None,
+            action_space: Optional[Space] = None,
+            callback: Optional[MultiAgentBaseCallback] = None
+    ):
         set_seed(config.seed)
         self.meta_data = dict(algo=config.agent, env=config.env_name, env_id=config.env_id,
                               dl_toolbox=config.dl_toolbox, device=config.device,
@@ -63,20 +70,35 @@ class MARLAgents(ABC):
         self.device = config.device
 
         # Environment attributes.
-        self.envs = envs
-        try:
-            self.envs.reset()
-        except:
-            pass
-        self.n_agents = self.config.n_agents = envs.num_agents
+        self.train_envs = envs
         self.render = config.render
         self.fps = config.fps
-        self.n_envs = envs.num_envs
-        self.agent_keys = envs.agents
-        self.state_space = envs.state_space if self.use_global_state else None
-        self.observation_space = envs.observation_space
-        self.action_space = envs.action_space
-        self.episode_length = getattr(config, "episode_length", envs.max_episode_steps)
+        if self.train_envs is None:
+            if observation_space is None or action_space is None or agent_keys is None or num_agents is None:
+                raise ValueError(
+                    "Please provide the num_agents, agent_keys, observation_space, and action_space when the envs is not provided. Or the networks cannot be built."
+                    "You can get them from test_envs.num_agents, test_envs.agents, test_envs.observation_space, and test_envs.action_space.")
+            if self.use_global_state and state_space is None:
+                raise ValueError("Please provide the state_space when the envs is not provided.")
+            self.n_envs = self.config.parallels
+            self.n_agents = self.config.n_agents = num_agents
+            self.agent_keys = agent_keys
+            self.state_space = state_space if self.use_global_state else None
+            self.observation_space = observation_space
+            self.action_space = action_space
+            self.episode_length = None
+        else:
+            try:
+                self.train_envs.reset()
+            except:
+                pass
+            self.n_agents = self.config.n_agents = self.train_envs.num_agents
+            self.n_envs = self.train_envs.num_envs
+            self.agent_keys = self.train_envs.agents
+            self.state_space = self.train_envs.state_space if self.use_global_state else None
+            self.observation_space = self.train_envs.observation_space
+            self.action_space = self.train_envs.action_space
+            self.episode_length = getattr(config, "episode_length", self.train_envs.max_episode_steps)
         self.config.episode_length = self.episode_length
         self.current_step = 0
         self.current_episode = np.zeros((self.n_envs,), np.int32)
@@ -96,7 +118,6 @@ class MARLAgents(ABC):
         seed = f"seed_{config.seed}_"
         self.model_dir_load = config.model_dir
         self.model_dir_save = os.path.join(os.getcwd(), config.model_dir, seed + time_string)
-        self.result_dir = os.path.join(os.getcwd(), config.result_dir, seed + time_string)
 
         # Create logger.
         if config.logger == "tensorboard":
@@ -141,6 +162,7 @@ class MARLAgents(ABC):
         self.memory: Optional[object] = None
         self.callback = callback or MultiAgentBaseCallback()
 
+    @abstractmethod
     def store_experience(self, *args, **kwargs):
         raise NotImplementedError
 
@@ -231,6 +253,7 @@ class MARLAgents(ABC):
                 raise AttributeError(f"{representation_key} is not registered in REGISTRY_Representation.")
         return representation
 
+    @abstractmethod
     def _build_policy(self) -> Module:
         raise NotImplementedError
 
@@ -289,15 +312,19 @@ class MARLAgents(ABC):
                                            for k in self.agent_keys}
         return obs_input, agents_id, avail_actions_input
 
+    @abstractmethod
     def action(self, **kwargs):
         raise NotImplementedError
 
+    @abstractmethod
     def train_epochs(self, *args, **kwargs):
         raise NotImplementedError
 
+    @abstractmethod
     def train(self, **kwargs):
         raise NotImplementedError
 
+    @abstractmethod
     def test(self, **kwargs):
         raise NotImplementedError
 

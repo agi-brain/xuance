@@ -3,7 +3,8 @@ import numpy as np
 from tqdm import tqdm
 from copy import deepcopy
 from argparse import Namespace
-from xuance.common import Union, Optional, DummyOffPolicyBuffer, DummyOffPolicyBuffer_Atari, BaseCallback
+from gymnasium.spaces import Space
+from xuance.common import Optional, DummyOffPolicyBuffer, DummyOffPolicyBuffer_Atari, BaseCallback
 from xuance.environment import DummyVecEnv, SubprocVecEnv
 from xuance.torch import Module
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
@@ -19,11 +20,15 @@ class NoisyDQN_Agent(Agent):
         envs: the vectorized environments.
         callback: A user-defined callback function object to inject custom logic during training.
     """
-    def __init__(self,
-                 config: Namespace,
-                 envs: Union[DummyVecEnv, SubprocVecEnv],
-                 callback: Optional[BaseCallback] = None):
-        super(NoisyDQN_Agent, self).__init__(config, envs, callback)
+    def __init__(
+            self,
+            config: Namespace,
+            envs: Optional[DummyVecEnv | SubprocVecEnv] = None,
+            observation_space: Optional[Space] = None,
+            action_space: Optional[Space] = None,
+            callback: Optional[BaseCallback] = None
+    ):
+        super(NoisyDQN_Agent, self).__init__(config, envs, observation_space, action_space, callback)
 
         self.start_noise, self.end_noise = config.start_noise, config.end_noise
         self.noise_scale = config.start_noise
@@ -81,14 +86,14 @@ class NoisyDQN_Agent(Agent):
 
     def train(self, train_steps):
         train_info = {}
-        obs = self.envs.buf_obs
+        obs = self.train_envs.buf_obs
         for _ in tqdm(range(train_steps)):
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
             acts = self.action(obs)
-            next_obs, rewards, terminals, truncations, infos = self.envs.step(acts)
+            next_obs, rewards, terminals, truncations, infos = self.train_envs.step(acts)
 
-            self.callback.on_train_step(self.current_step, envs=self.envs, policy=self.policy,
+            self.callback.on_train_step(self.current_step, envs=self.train_envs, policy=self.policy,
                                         obs=obs, acts=acts, next_obs=next_obs, rewards=rewards,
                                         terminals=terminals, truncations=truncations, infos=infos,
                                         train_steps=train_steps)
@@ -109,7 +114,7 @@ class NoisyDQN_Agent(Agent):
                         pass
                     else:
                         obs[i] = infos[i]["reset_obs"]
-                        self.envs.buf_obs[i] = obs[i]
+                        self.train_envs.buf_obs[i] = obs[i]
                         self.current_episode[i] += 1
                         if self.use_wandb:
                             episode_info = {
@@ -123,7 +128,7 @@ class NoisyDQN_Agent(Agent):
                             }
                         self.log_infos(episode_info, self.current_step)
                         train_info.update(episode_info)
-                        self.callback.on_train_episode_info(envs=self.envs, policy=self.policy, env_id=i,
+                        self.callback.on_train_episode_info(envs=self.train_envs, policy=self.policy, env_id=i,
                                                             infos=infos, rank=self.rank, use_wandb=self.use_wandb,
                                                             current_step=self.current_step,
                                                             current_episode=self.current_episode,
@@ -134,7 +139,7 @@ class NoisyDQN_Agent(Agent):
                 self.noise_scale = self.noise_scale - self.delta_noise
             if terminals[0]:
                 self.policy.update_noise(self.noise_scale)
-            self.callback.on_train_step_end(self.current_step, envs=self.envs, policy=self.policy,
+            self.callback.on_train_step_end(self.current_step, envs=self.train_envs, policy=self.policy,
                                             train_steps=train_steps, train_info=train_info)
         return train_info
 

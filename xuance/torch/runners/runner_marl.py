@@ -1,42 +1,52 @@
 import os
 import copy
 import numpy as np
+from copy import deepcopy
+from argparse import Namespace
+from xuance.common import Optional
 from xuance.torch.runners import RunnerBase
-from xuance.torch.agents import REGISTRY_Agents
-from xuance.environment import make_envs
+from xuance.torch.agents import REGISTRY_Agents, Agent
+from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv, make_envs
 
 
 class RunnerMARL(RunnerBase):
-    def __init__(self, config):
-        super(RunnerMARL, self).__init__(config)
-        self.agents = REGISTRY_Agents[config.agent](config, self.envs)
+    def __init__(self, config: Namespace,
+                 envs: Optional[DummyVecMultiAgentEnv | SubprocVecMultiAgentEnv] = None,
+                 agent: Agent = None,
+                 manage_resources: bool = None):
+        # Store configuration
         self.config = config
+        self.env_id = self.config.env_id
+        
+        super(RunnerMARL, self).__init__(self.config, envs, agent, manage_resources)
+        # Build agent if not injected externally
+        self.agents = REGISTRY_Agents[self.config.agent](self.config, self.envs) if agent is None else agent
 
+        # Distributed training setup (rank-aware behavior)
         if self.agents.distributed_training:
             self.rank = int(os.environ['RANK'])
 
-    def run(self):
-        if self.config.test_mode:
-            def env_fn():
-                config_test = copy.deepcopy(self.config)
-                config_test.parallels = 1
-                config_test.render = True
-                return make_envs(config_test)
+    def _run_train(self, **kwargs):
+        n_train_steps = max(1, self.config.running_steps // self.n_envs)
+        self.agents.train(n_train_steps)
+        self.rprint("Finish training.")
+        self.agents.save_model(model_name="final_train_model.pth")
+
+    def _run_test(self, **kwargs):
+        def env_fn():
+            config_test = deepcopy(self.config)
+            config_test.parallels = 1
+            config_test.render = True
+            return make_envs(config_test)
+
+        if self.rank == 0:
             self.agents.render = True
             self.agents.load_model(self.agents.model_dir_load)
             scores = self.agents.test(env_fn, self.config.test_episode)
             print(f"Mean Score: {np.mean(scores)}, Std: {np.std(scores)}")
             print("Finish testing.")
-        else:
-            n_train_steps = self.config.running_steps // self.n_envs
-            self.agents.train(n_train_steps)
-            print("Finish training.")
-            self.agents.save_model("final_train_model.pth")
 
-        self.agents.finish()
-        self.envs.close()
-
-    def benchmark(self):
+    def _run_benchmark(self):
         def env_fn():
             config_test = copy.deepcopy(self.config)
             config_test.parallels = 1  # config_test.test_episode

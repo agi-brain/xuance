@@ -6,7 +6,6 @@ import scipy.signal
 from copy import deepcopy
 from types import SimpleNamespace as SN
 from xuance.common import Dict
-from xuance.configs import method_list
 
 EPS = 1e-8
 

@@ -86,7 +86,7 @@ class Learner(ABC):
         model_names.sort()
         model_path = os.path.join(path, model_names[-1])
         self.policy.load_state_dict(torch.load(str(model_path), map_location={
-            f"cuda:{i}": self.device for i in range(MAX_GPUs)}))
+            f"cuda:{i}": self.device for i in range(MAX_GPUs)}, weights_only=True))
         print(f"Successfully load model from '{path}'.")
         return path
 

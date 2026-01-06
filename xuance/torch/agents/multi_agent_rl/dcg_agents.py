@@ -3,7 +3,8 @@ import numpy as np
 from torch.nn import Module
 from argparse import Namespace
 from operator import itemgetter
-from xuance.common import List, Optional, Union, MultiAgentBaseCallback
+from gymnasium.spaces import Space
+from xuance.common import List, Optional, MultiAgentBaseCallback
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
 from xuance.torch.policies import REGISTRY_Policy
@@ -19,11 +20,20 @@ class DCG_Agents(OffPolicyMARLAgents):
         callback: A user-defined callback function object to inject custom logic during training.
     """
 
-    def __init__(self,
-                 config: Namespace,
-                 envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv],
-                 callback: Optional[MultiAgentBaseCallback] = None):
-        super(DCG_Agents, self).__init__(config, envs, callback)
+    def __init__(
+            self,
+            config: Namespace,
+            envs: Optional[DummyVecMultiAgentEnv | SubprocVecMultiAgentEnv] = None,
+            num_agents: Optional[int] = None,
+            agent_keys: Optional[List[str]] = None,
+            state_space: Optional[Space] = None,
+            observation_space: Optional[Space] = None,
+            action_space: Optional[Space] = None,
+            callback: Optional[MultiAgentBaseCallback] = None
+    ):
+        super(DCG_Agents, self).__init__(
+            config, envs, num_agents, agent_keys, state_space, observation_space, action_space, callback
+        )
         self.state_space = envs.state_space
         self.use_global_state = True if config.agent == "DCG_S" else False
         self.delta_egreedy = (self.start_greedy - self.end_greedy) / config.decay_step_greedy
