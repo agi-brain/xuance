@@ -1,5 +1,11 @@
+import os
+import platform
+import torch
+import xuance
 from abc import ABC, abstractmethod
+from xuance.common import Optional
 from xuance.environment import make_envs
+from xuance.torch.agents import Agent
 
 
 class RunnerBase(ABC):
@@ -70,6 +76,8 @@ class RunnerBase(ABC):
         # Default rank (may be overridden by distributed runners)
         self.rank = 0
 
+        self.agent: Optional[Agent] = agent
+
     @abstractmethod
     def _run_train(self, **kwargs):
         """Execute the training workflow.
@@ -118,6 +126,66 @@ class RunnerBase(ABC):
         finally:
             self._finalize()
 
+    def collect_device_info(self) -> dict:
+        """Collect runtime device / system info for reproducibility.
+
+        Returns a JSON-serializable dict.
+        """
+        info = {
+            "Platform": platform.platform(),
+            "CUDA_Available": bool(torch.cuda.is_available()),
+            "Python": platform.python_version(),
+            "XuanCe": xuance.__version__,
+            "PyTorch": getattr(torch, "__version__", "unknown"),
+            "PID": os.getpid(),
+            "Rank": int(getattr(self, "rank", 0)),
+        }
+
+        # Try to use agent's real device (most reliable).
+        device = None
+        try:
+            # Find a parameter device if possible.
+            agent = getattr(self, "agent", None)
+            if agent is not None:
+                # Try common attribute names in your codebase
+                obj = getattr(agent, "policy", None)
+                if obj is not None and hasattr(obj, "parameters"):
+                    device = next(obj.parameters()).device
+
+            # Fallback: config.device if no parameter found
+            if device is None:
+                device = torch.device(str(self.agent.config.device))
+
+            if device is None:
+                device = torch.device("cpu")
+
+            info["device"] = str(device)
+
+            if device.type == "cuda":
+                idx = device.index if device.index is not None else 0
+                info.update({
+                    "gpu_index": int(idx),
+                    "gpu_name": torch.cuda.get_device_name(idx),
+                    "cuda_version": getattr(torch.version, "cuda", None),
+                })
+                # Optional: driver / capability
+                try:
+                    cap = torch.cuda.get_device_capability(idx)
+                    info["gpu_capability"] = f"{cap[0]}.{cap[1]}"
+                except Exception:
+                    pass
+            else:
+                info.update({
+                    "cpu_arch": platform.processor(),
+                })
+
+        except Exception as e:
+            # If torch isn't available or something fails, keep it minimal but valid.
+            info["device"] = str(getattr(getattr(self, "config", None), "device", "unknown"))
+            info["device_info_error"] = repr(e)
+
+        return info
+
     def _finalize(self):
         """Finalize resources held by the runner.
 
@@ -125,7 +193,7 @@ class RunnerBase(ABC):
         as environments and the agent. It is typically invoked in a `finally`
         block to ensure cleanup even when exceptions occur.
 
-        Cleanup rules (方案 A):
+        Cleanup rules:
             - If `manage_resources` is False, this method performs no action.
             - If `manage_resources` is True, the runner takes ownership of the
               lifecycle of any `agent` and `envs` attached to this instance and

@@ -2,6 +2,7 @@ import os
 import torch
 import wandb
 import socket
+import xuance
 import numpy as np
 import torch.distributed as dist
 from abc import ABC, abstractmethod
@@ -10,10 +11,7 @@ from argparse import Namespace
 from gymnasium.spaces import Dict, Space
 from torch.utils.tensorboard import SummaryWriter
 from torch.distributed import destroy_process_group
-from xuance.common import (
-    get_time_string, create_directory, RunningMeanStd, space2shape, EPS,
-    Optional, BaseCallback
-)
+from xuance.common import get_time_string, create_directory, RunningMeanStd, space2shape, EPS, Optional, BaseCallback
 from xuance.environment import DummyVecEnv, SubprocVecEnv
 from xuance.torch import REGISTRY_Representation, REGISTRY_Learners, Module
 from xuance.torch.utils import nn, NormalizeFunctions, ActivationFunctions, init_distributed_mode, set_seed
@@ -67,8 +65,8 @@ class Agent(ABC):
     ):
         set_seed(config.seed)
         self.meta_data = dict(algo=config.agent, env=config.env_name, env_id=config.env_id,
-                              dl_toolbox=config.dl_toolbox, device=config.device,
-                              seed=config.seed, running_steps=config.running_steps)
+                              dl_toolbox=config.dl_toolbox, device=config.device, seed=config.seed,
+                              xuance_version=xuance.__version__)
         # Training settings.
         self.config = config
         self.use_rnn = getattr(config, "use_rnn", False)
@@ -179,19 +177,19 @@ class Agent(ABC):
         self.memory: Optional[object] = None
         self.callback = callback or BaseCallback()
 
-    def save_model(self, model_name):
+    def save_model(self, model_name, model_path=None):
         if self.distributed_training:
             if self.rank > 0:
                 return
 
         # save the neural networks
-        if not os.path.exists(self.model_dir_save):
-            os.makedirs(self.model_dir_save)
-        model_path = os.path.join(self.model_dir_save, model_name)
-        self.learner.save_model(model_path)
+        model_path = self.model_dir_save if model_path is None else model_path
+        if not os.path.exists(model_path):
+            os.makedirs(model_path)
+        self.learner.save_model(os.path.join(model_path, model_name))
         # save the observation status
         if self.use_obsnorm:
-            obs_norm_path = os.path.join(self.model_dir_save, "obs_rms.npy")
+            obs_norm_path = os.path.join(model_path, "obs_rms.npy")
             observation_stat = {'count': self.obs_rms.count,
                                 'mean': self.obs_rms.mean,
                                 'var': self.obs_rms.var}
@@ -312,11 +310,14 @@ class Agent(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def train(self, steps):
+    def train(self, train_steps: int) -> dict:
         raise NotImplementedError
 
     @abstractmethod
-    def test(self, env_fn, steps):
+    def test(self,
+             test_episodes: int,
+             test_envs: Optional[DummyVecEnv | SubprocVecEnv] = None,
+             close_envs: bool = True):
         raise NotImplementedError
 
     def finish(self):

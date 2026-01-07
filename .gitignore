@@ -5,10 +5,11 @@ docs/.DS_Store
 **/.DS_Store
 logs/
 videos/
+models/
+results/
 dist/
 .eggs/
 xuance.egg-info/
-models/
 .VSCodeCounter/
 **/__pycache__
 rank_0/

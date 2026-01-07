@@ -248,12 +248,10 @@ def create_directory(path):
     Args:
         path: the path of the directory
     """
-    dir_split = path.split("/")
-    current_dir = dir_split[0] + "/"
-    for i in range(1, len(dir_split)):
-        if not os.path.exists(current_dir):
-            os.mkdir(current_dir)
-        current_dir = current_dir + dir_split[i] + "/"
+    """Create a directory (recursively) if it does not exist."""
+    if not path:
+        return
+    os.makedirs(path, exist_ok=True)
 
 
 def combined_shape(length: int, shape=None):

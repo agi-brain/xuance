@@ -2,6 +2,7 @@ import os.path
 import wandb
 import socket
 import torch
+import xuance
 import numpy as np
 import torch.distributed as dist
 from abc import ABC, abstractmethod
@@ -44,8 +45,8 @@ class MARLAgents(ABC):
     ):
         set_seed(config.seed)
         self.meta_data = dict(algo=config.agent, env=config.env_name, env_id=config.env_id,
-                              dl_toolbox=config.dl_toolbox, device=config.device,
-                              seed=config.seed, running_steps=config.running_steps)
+                              dl_toolbox=config.dl_toolbox, device=config.device, seed=config.seed,
+                              xuance_version=xuance.__version__)
         # Training settings.
         self.config = config
         self.use_cnn = getattr(config, "use_cnn", False)
@@ -166,16 +167,16 @@ class MARLAgents(ABC):
     def store_experience(self, *args, **kwargs):
         raise NotImplementedError
 
-    def save_model(self, model_name):
+    def save_model(self, model_name, model_path=None):
         if self.distributed_training:
             if self.rank > 0:
                 return
 
         # save the neural networks
-        if not os.path.exists(self.model_dir_save):
-            os.makedirs(self.model_dir_save)
-        model_path = os.path.join(self.model_dir_save, model_name)
-        self.learner.save_model(model_path)
+        model_path = self.model_dir_save if model_path is None else model_path
+        if not os.path.exists(model_path):
+            os.makedirs(model_path)
+        self.learner.save_model(os.path.join(model_path, model_name))
 
     def load_model(self, path, model=None):
         # load neural networks
