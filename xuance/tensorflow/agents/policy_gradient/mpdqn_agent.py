@@ -19,7 +19,7 @@ class MPDQN_Agent(PDQN_Agent):
                  config: Namespace,
                  envs: Gym_Env,
                  callback: Optional[BaseCallback] = None):
-        super(MPDQN_Agent, self).__init__(config, envs, callback)
+        super(MPDQN_Agent, self).__init__(config, envs, observation_space, action_space, callback)
 
     def _build_policy(self) -> Module:
         normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None

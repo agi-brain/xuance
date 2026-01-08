@@ -2,7 +2,8 @@ import torch
 import numpy as np
 from copy import deepcopy
 from argparse import Namespace
-from xuance.common import Union, Optional, BaseCallback
+from gymnasium.spaces import Space
+from xuance.common import Optional, BaseCallback
 from xuance.environment import DummyVecEnv, SubprocVecEnv
 from xuance.torch import Module, REGISTRY_Learners
 from xuance.torch.agents import OfflineAgent
@@ -23,11 +24,15 @@ class TD3_BC_Agent(OfflineAgent):
         envs: the vectorized environments.
         callback: A user-defined callback function object to inject custom logic during training.
     """
-    def __init__(self,
-                 config: Namespace,
-                 envs: Union[DummyVecEnv, SubprocVecEnv],
-                 callback: Optional[BaseCallback] = None):
-        super(TD3_BC_Agent, self).__init__(config, envs, callback)
+    def __init__(
+            self,
+            config: Namespace,
+            envs: Optional[DummyVecEnv | SubprocVecEnv] = None,
+            observation_space: Optional[Space] = None,
+            action_space: Optional[Space] = None,
+            callback: Optional[BaseCallback] = None
+    ):
+        super(TD3_BC_Agent, self).__init__(config, envs, observation_space, action_space, callback)
         self.policy = self._build_policy()
         REGISTRY_Learners["TD3_BC_Learner"] = TD3_BC_Learner
         self.learner = self._build_learner(self.config, self.policy, self.callback)  # build learner

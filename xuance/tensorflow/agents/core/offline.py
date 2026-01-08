@@ -1,6 +1,7 @@
 import numpy as np
 from tqdm import tqdm
 from argparse import Namespace
+from gymnasium.spaces import Space
 from xuance.common import Optional, DummyOffPolicyBuffer, OfflineBuffer_D4RL, BaseCallback
 from xuance.torch import Module
 from xuance.torch.agents.base import Agent
@@ -20,8 +21,10 @@ class OfflineAgent(Agent):
     def __init__(self,
                  config: Namespace,
                  envs,
+                 observation_space: Optional[Space] = None,
+                 action_space: Optional[Space] = None,
                  callback: Optional[BaseCallback] = None):
-        super(OfflineAgent, self).__init__(config, envs, callback)
+        super(OfflineAgent, self).__init__(config, envs, observation_space, action_space, callback)
         self.auxiliary_info_shape = None
         self.buffer_size = self.config.buffer_size
         self.batch_size = self.config.batch_size

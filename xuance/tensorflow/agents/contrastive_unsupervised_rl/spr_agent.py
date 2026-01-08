@@ -1,7 +1,8 @@
 import torch
 import torch.nn as nn
 from argparse import Namespace
-from xuance.common import Union, Optional, BaseCallback
+from gymnasium.spaces import Space
+from xuance.common import Optional, BaseCallback
 from xuance.torch import REGISTRY_Policy
 from xuance.torch.agents import OffPolicyAgent
 from xuance.torch.learners.contrastive_unsupervised_rl.spr_learner import SPR_Learner
@@ -11,11 +12,15 @@ from xuance.environment import DummyVecEnv, SubprocVecEnv
 
 class SPR_Agent(OffPolicyAgent):
 
-    def __init__(self,
-                 config: Namespace,
-                 envs: Union[DummyVecEnv, SubprocVecEnv],
-                 callback: Optional[BaseCallback] = None):
-        super().__init__(config, envs, callback)
+    def __init__(
+            self,
+            config: Namespace,
+            envs: Optional[DummyVecEnv | SubprocVecEnv] = None,
+            observation_space: Optional[Space] = None,
+            action_space: Optional[Space] = None,
+            callback: Optional[BaseCallback] = None
+    ):
+        super().__init__(config, envs, observation_space, action_space, callback)
         self._init_exploration_params(config)
         self.policy = self._build_policy()
         self.memory = self._build_memory()

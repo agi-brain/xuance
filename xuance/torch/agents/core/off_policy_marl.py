@@ -155,7 +155,7 @@ class OffPolicyMARLAgents(MARLAgents):
                                                      for k in self.agent_keys}
         self.memory.store(**experience_data)
 
-    def init_rnn_hidden(self, n_envs):
+    def init_rnn_hidden(self, n_envs) -> Optional[dict]:
         """Initialize RNN hidden states for vectorized multi-agent execution.
 
         This method creates initial hidden states for the RNN-based policy representations
@@ -510,7 +510,7 @@ class OffPolicyMARLAgents(MARLAgents):
                     envs.buf_obs[i] = info[i]["reset_obs"]
                     if self.use_global_state:
                         state = info[i]["reset_state"]
-                        self.train_envs.buf_state[i] = info[i]["reset_state"]
+                        envs.buf_state[i] = info[i]["reset_state"]
                     if self.use_actions_mask:
                         avail_actions[i] = info[i]["reset_avail_actions"]
                         envs.buf_avail_actions[i] = info[i]["reset_avail_actions"]
@@ -548,7 +548,7 @@ class OffPolicyMARLAgents(MARLAgents):
                         self.current_step += info[i]["episode_step"]
                         self.log_infos(episode_info, self.current_step)
                         self._update_explore_factor()
-                        self.callback.on_train_episode_info(envs=self.train_envs, policy=self.policy, env_id=i,
+                        self.callback.on_train_episode_info(envs=envs, policy=self.policy, env_id=i,
                                                             infos=info, rank=self.rank, use_wandb=self.use_wandb,
                                                             current_step=self.current_step,
                                                             current_episode=self.current_episode,

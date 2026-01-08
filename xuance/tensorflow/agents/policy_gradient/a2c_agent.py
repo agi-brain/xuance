@@ -1,5 +1,6 @@
 from argparse import Namespace
-from xuance.common import Union, Optional, BaseCallback
+from gymnasium.spaces import Space
+from xuance.common import Optional, BaseCallback
 from xuance.environment import DummyVecEnv, SubprocVecEnv
 from xuance.tensorflow import Module
 from xuance.tensorflow.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions
@@ -15,11 +16,15 @@ class A2C_Agent(OnPolicyAgent):
         envs: the vectorized environments.
         callback: A user-defined callback function object to inject custom logic during training.
     """
-    def __init__(self,
-                 config: Namespace,
-                 envs: Union[DummyVecEnv, SubprocVecEnv],
-                 callback: Optional[BaseCallback] = None):
-        super(A2C_Agent, self).__init__(config, envs, callback)
+    def __init__(
+            self,
+            config: Namespace,
+            envs: Optional[DummyVecEnv | SubprocVecEnv] = None,
+            observation_space: Optional[Space] = None,
+            action_space: Optional[Space] = None,
+            callback: Optional[BaseCallback] = None
+    ):
+        super(A2C_Agent, self).__init__(config, envs, observation_space, action_space, callback)
         self.memory = self._build_memory()  # build memory
         self.policy = self._build_policy()  # build policy
         self.learner = self._build_learner(self.config, self.policy, self.callback)  # build learner

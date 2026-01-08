@@ -24,14 +24,43 @@ from xuance.torch.utils import NormalizeFunctions, ActivationFunctions, init_dis
 
 
 class MARLAgents(ABC):
-    """Base class of agents for MARL.
+    """Base class for Multi-Agent Reinforcement Learning (MARL) agents.
+
+    This class defines the common interface and shared functionalities for all
+    MARL agent implementations in XuanCe. It handles environment interaction,
+    logging, model saving/loading, distributed training setup, and representation
+    construction, while leaving algorithm-specific logic to subclasses.
+
+    Subclasses should implement the abstract methods to define:
+        - how experiences are stored,
+        - how actions are selected,
+        - how training and evaluation are performed.
 
     Args:
-        config: the Namespace variable that provides hyperparameters and other settings.
-        envs: the vectorized environments.
-        callback: A user-defined callback function object to inject custom logic during training.
+        config (Namespace):
+            A configuration object that contains hyperparameters and runtime
+            settings, such as algorithm name, environment name, learning rates,
+            device, seed, and logging options.
+        envs (Optional[DummyVecMultiAgentEnv | SubprocVecMultiAgentEnv]):
+            Vectorized multi-agent environments for training. If not provided,
+            environment-related attributes (e.g., observation/action spaces)
+            must be specified explicitly.
+        num_agents (Optional[int]):
+            Number of agents in the environment. Required if `envs` is None.
+        agent_keys (Optional[List[str]]):
+            Unique identifiers for each agent. Required if `envs` is None.
+        state_space (Optional[Space]):
+            Global state space used by centralized critics or state-based
+            representations. Required when `use_global_state` is enabled and
+            `envs` is None.
+        observation_space (Optional[Space]):
+            Observation space for each agent. Required if `envs` is None.
+        action_space (Optional[Space]):
+            Action space for each agent. Required if `envs` is None.
+        callback (Optional[MultiAgentBaseCallback]):
+            A user-defined callback object for injecting custom logic during
+            training and evaluation (e.g., logging, early stopping, debugging).
     """
-
     def __init__(
             self,
             config: Namespace,

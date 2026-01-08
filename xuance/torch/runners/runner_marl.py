@@ -38,16 +38,16 @@ class RunnerMARL(RunnerBase):
         self.agent.save_model(model_name="final_train_model.pth")
 
     def _run_test(self, **kwargs):
-        def env_fn():
-            config_test = deepcopy(self.config)
-            config_test.parallels = 1
-            config_test.render = True
-            return make_envs(config_test)
+        config_test = deepcopy(self.config)
+        config_test.parallels = kwargs.get("n_envs", 1)
+        config_test.render = self.agent.render = kwargs.get('render', True)
+        model_path = kwargs.get('model_path', self.agent.model_dir_load)
+        test_episodes = kwargs.get('test_episodes', self.config.test_episode)
+        test_envs = make_envs(config_test)
 
         if self.rank == 0:
-            self.agent.render = True
-            self.agent.load_model(self.agent.model_dir_load)
-            scores = self.agent.test(env_fn, self.config.test_episode)
+            self.agent.load_model(model_path)
+            scores = self.agent.test(test_episodes=test_episodes, test_envs=test_envs, close_envs=True)
             print(f"Mean Score: {np.mean(scores)}, Std: {np.std(scores)}")
             print("Finish testing.")
 

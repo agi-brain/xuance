@@ -2,7 +2,8 @@ import numpy as np
 from tqdm import tqdm
 from copy import deepcopy
 from argparse import Namespace
-from xuance.common import Union, Optional, RecurrentOffPolicyBuffer, EpisodeBuffer, BaseCallback
+from gymnasium.spaces import Space
+from xuance.common import Optional, RecurrentOffPolicyBuffer, EpisodeBuffer, BaseCallback
 from xuance.environment import DummyVecEnv, SubprocVecEnv
 from xuance.mindspore import Module, Tensor
 from xuance.mindspore.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions
@@ -19,11 +20,15 @@ class DRQN_Agent(OffPolicyAgent):
         callback: A user-defined callback function object to inject custom logic during training.
     """
 
-    def __init__(self,
-                 config: Namespace,
-                 envs: Union[DummyVecEnv, SubprocVecEnv],
-                 callback: Optional[BaseCallback] = None):
-        super(DRQN_Agent, self).__init__(config, envs, callback)
+    def __init__(
+            self,
+            config: Namespace,
+            envs: Optional[DummyVecEnv | SubprocVecEnv] = None,
+            observation_space: Optional[Space] = None,
+            action_space: Optional[Space] = None,
+            callback: Optional[BaseCallback] = None
+    ):
+        super(DRQN_Agent, self).__init__(config, envs, observation_space, action_space, callback)
 
         self.start_greedy, self.end_greedy = config.start_greedy, config.end_greedy
         self.egreedy = config.start_greedy
@@ -88,7 +93,7 @@ class DRQN_Agent(OffPolicyAgent):
 
     def train(self, train_steps):
         train_info = {}
-        obs = self.envs.buf_obs
+        obs = self.train_envs.buf_obs
         episode_data = [EpisodeBuffer() for _ in range(self.n_envs)]
         for i_env in range(self.n_envs):
             episode_data[i_env].obs.append(self._process_observation(obs[i_env]))
@@ -99,9 +104,9 @@ class DRQN_Agent(OffPolicyAgent):
             obs = self._process_observation(obs)
             policy_out = self.action(obs, self.egreedy, self.rnn_hidden)
             acts, self.rnn_hidden = policy_out['actions'], policy_out['rnn_hidden_next']
-            next_obs, rewards, terminals, truncations, infos = self.envs.step(acts)
+            next_obs, rewards, terminals, truncations, infos = self.train_envs.step(acts)
 
-            self.callback.on_train_step(self.current_step, envs=self.envs, policy=self.policy,
+            self.callback.on_train_step(self.current_step, envs=self.train_envs, policy=self.policy,
                                         obs=obs, policy_out=policy_out, acts=acts, next_obs=next_obs, rewards=rewards,
                                         terminals=terminals, truncations=truncations, infos=infos,
                                         train_steps=train_steps, rnn_hidden=self.rnn_hidden)
@@ -138,10 +143,10 @@ class DRQN_Agent(OffPolicyAgent):
                         self.memory.store(episode_data[i])
                         episode_data[i] = EpisodeBuffer()
                         obs[i] = infos[i]["reset_obs"]
-                        self.envs.buf_obs[i] = obs[i]
+                        self.train_envs.buf_obs[i] = obs[i]
                         episode_data[i].obs.append(self._process_observation(obs[i]))
 
-                        self.callback.on_train_episode_info(envs=self.envs, policy=self.policy, env_id=i,
+                        self.callback.on_train_episode_info(envs=self.train_envs, policy=self.policy, env_id=i,
                                                             memory=self.memory,
                                                             infos=infos, use_wandb=self.use_wandb,
                                                             current_step=self.current_step,
@@ -151,7 +156,7 @@ class DRQN_Agent(OffPolicyAgent):
             self.current_step += self.n_envs
             if self.egreedy > self.end_greedy:
                 self.egreedy = self.egreedy - self.delta_egreedy
-            self.callback.on_train_step_end(self.current_step, envs=self.envs, policy=self.policy,
+            self.callback.on_train_step_end(self.current_step, envs=self.train_envs, policy=self.policy,
                                             train_steps=train_steps, train_info=train_info)
         return train_info
 

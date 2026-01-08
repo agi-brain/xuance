@@ -4,14 +4,13 @@ from argparse import Namespace
 from xuance import get_runner
 import unittest
 
-is_benchmark = False
+run_mode = "benchmark"  # Choices: "train", "test", "benchmark"
 
-n_steps = 10000
+running_steps = 10000
 eval_interval = 5000
 device = 'cuda:0'
-test_mode = False
 args = Namespace(dl_toolbox='torch', device=device, 
-                 running_steps=n_steps, eval_interval=eval_interval, test_mode=test_mode)
+                 running_steps=running_steps, eval_interval=eval_interval)
 env_name = "classic_control"
 env_id = "CartPole-v1"
 
@@ -19,59 +18,35 @@ env_id = "CartPole-v1"
 class TestValueBaseAlgo(unittest.TestCase):
     def test_c51dqn(self):
         runner = get_runner(algo="c51", env=env_name, env_id=env_id, parser_args=args)
-        if is_benchmark:
-            runner.benchmark()
-        else:
-            runner.run()
+        runner.run(mode=run_mode, running_steps=running_steps, eval_interval=eval_interval)
 
     def test_ddqn(self):
         runner = get_runner(algo="ddqn", env=env_name, env_id=env_id, parser_args=args)
-        if is_benchmark:
-            runner.benchmark()
-        else:
-            runner.run()
+        runner.run(mode=run_mode, running_steps=running_steps, eval_interval=eval_interval)
 
     def test_dqn(self):
         runner = get_runner(algo="dqn", env=env_name, env_id=env_id, parser_args=args)
-        if is_benchmark:
-            runner.benchmark()
-        else:
-            runner.run()
+        runner.run(mode=run_mode, running_steps=running_steps, eval_interval=eval_interval)
 
     def test_drqn(self):
         runner = get_runner(algo="drqn", env=env_name, env_id=env_id, parser_args=args)
-        if is_benchmark:
-            runner.benchmark()
-        else:
-            runner.run()
+        runner.run(mode=run_mode, running_steps=running_steps, eval_interval=eval_interval)
 
     def test_dueldqn(self):
         runner = get_runner(algo="dueldqn", env=env_name, env_id=env_id, parser_args=args)
-        if is_benchmark:
-            runner.benchmark()
-        else:
-            runner.run()
+        runner.run(mode=run_mode, running_steps=running_steps, eval_interval=eval_interval)
 
     def test_noisydqn(self):
         runner = get_runner(algo="noisydqn", env=env_name, env_id=env_id, parser_args=args)
-        if is_benchmark:
-            runner.benchmark()
-        else:
-            runner.run()
+        runner.run(mode=run_mode, running_steps=running_steps, eval_interval=eval_interval)
 
     def test_perdqn(self):
         runner = get_runner(algo="perdqn", env=env_name, env_id=env_id, parser_args=args)
-        if is_benchmark:
-            runner.benchmark()
-        else:
-            runner.run()
+        runner.run(mode=run_mode, running_steps=running_steps, eval_interval=eval_interval)
 
     def test_qrdqn(self):
         runner = get_runner(algo="qrdqn", env=env_name, env_id=env_id, parser_args=args)
-        if is_benchmark:
-            runner.benchmark()
-        else:
-            runner.run()
+        runner.run(mode=run_mode, running_steps=running_steps, eval_interval=eval_interval)
 
 
 if __name__ == "__main__":

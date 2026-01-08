@@ -2,25 +2,52 @@ import numpy as np
 from tqdm import tqdm
 from copy import deepcopy
 from argparse import Namespace
-from xuance.common import Optional, Union, DummyOffPolicyBuffer, DummyOffPolicyBuffer_Atari, BaseCallback
+from gymnasium.spaces import Space
+from xuance.common import Optional, DummyOffPolicyBuffer, DummyOffPolicyBuffer_Atari, BaseCallback
 from xuance.environment import DummyVecEnv, SubprocVecEnv
 from xuance.mindspore import Module, Tensor
 from xuance.mindspore.agents.base import Agent
 
 
 class OffPolicyAgent(Agent):
-    """The core class for off-policy algorithm with single agent.
+    """Base class for single-agent off-policy reinforcement learning algorithms.
+
+    This class implements the common logic shared by off-policy algorithms (e.g., DQN, DDPG, TD3, SAC) in XuanCe.
+    It extends the generic `Agent` abstraction with off-policy–specific components such as replay buffers,
+    exploration strategies, and update schedules.
+
+    The agent can be used in both training and evaluation-only scenarios. When initialized without training environments
+    (`envs=None`), the agent relies on explicitly provided observation and action spaces to construct policy networks,
+    which is useful for inference or standalone evaluation.
 
     Args:
-        config: the Namespace variable that provides hyperparameters and other settings.
-        envs: the vectorized environments.
-        callback: A user-defined callback function object to inject custom logic during training.
+        config (Namespace): Configuration object containing hyperparameters, algorithm settings, and runtime options.
+        envs (Optional[DummyVecEnv | SubprocVecEnv]): Vectorized environments used for training.
+            If None, the agent will not initialize training environments and must be provided with `observation_space`
+            and `action_space`.
+        observation_space (Optional[gymnasium.spaces.Space]): Observation space specification used to build policy
+            and value networks when `envs` is None. Typically obtained from `test_envs.observation_space`.
+        action_space (Optional[gymnasium.spaces.Space]): Action space specification used to build policy and
+            value networks when `envs` is None. Typically obtained from `test_envs.action_space`.
+        callback (Optional[BaseCallback]): Optional callback object for injecting custom logic during training
+            or evaluation, such as logging, early stopping, model checkpointing, or visualization.
+
+    Notes:
+        - Off-policy agents maintain a replay buffer to reuse past experience.
+        - Training and evaluation environments are conceptually separated;
+          evaluation environments may be created and managed externally.
+        - In evaluation mode, exploration noise is disabled and policy actions
+          are executed deterministically by default.
     """
-    def __init__(self,
-                 config: Namespace,
-                 envs: Union[DummyVecEnv, SubprocVecEnv],
-                 callback: Optional[BaseCallback] = None):
-        super(OffPolicyAgent, self).__init__(config, envs, callback)
+    def __init__(
+            self,
+            config: Namespace,
+            envs: Optional[DummyVecEnv | SubprocVecEnv] = None,
+            observation_space: Optional[Space] = None,
+            action_space: Optional[Space] = None,
+            callback: Optional[BaseCallback] = None
+    ):
+        super(OffPolicyAgent, self).__init__(config, envs, observation_space, action_space, callback)
         self.start_greedy = config.start_greedy if hasattr(config, "start_greedy") else None
         self.end_greedy = config.end_greedy if hasattr(config, "start_greedy") else None
         self.delta_egreedy: Optional[float] = None
@@ -36,7 +63,27 @@ class OffPolicyAgent(Agent):
         self.auxiliary_info_shape = None
         self.memory: Optional[DummyOffPolicyBuffer] = None
 
-    def _build_memory(self, auxiliary_info_shape=None):
+    def _build_memory(self, auxiliary_info_shape=None) -> DummyOffPolicyBuffer:
+        """Build and initialize the replay buffer for off-policy training.
+
+        This method creates a replay buffer instance based on the environment type and agent configuration.
+        For Atari environments, a specialized replay buffer implementation is used to handle image-based observations;
+        otherwise, a standard off-policy replay buffer is constructed.
+
+        Args:
+            auxiliary_info_shape (Optional[tuple]): Shape of auxiliary information to be stored alongside transitions
+                in the replay buffer (e.g., additional state features or metadata).
+                If None, no auxiliary information is stored.
+
+        Returns:
+            DummyOffPolicyBuffer: An initialized replay buffer instance configured with the current observation space,
+                action space, number of parallel environments, buffer size, and batch size.
+
+        Notes:
+            - The buffer type is selected automatically based on whether the environment is an Atari environment.
+            - The replay buffer is shared across all parallel environments and
+              supports batched sampling for off-policy updates.
+        """
         self.atari = True if self.config.env_name == "Atari" else False
         Buffer = DummyOffPolicyBuffer_Atari if self.atari else DummyOffPolicyBuffer
         input_buffer = dict(observation_space=self.observation_space,
@@ -83,7 +130,7 @@ class OffPolicyAgent(Agent):
         return explore_actions
 
     def action(self, observations: np.ndarray,
-               test_mode: Optional[bool] = False):
+               test_mode: Optional[bool] = False) -> dict:
         """Returns actions and values.
 
         Parameters:
@@ -103,7 +150,7 @@ class OffPolicyAgent(Agent):
             actions = self.exploration(actions_output)
         return {"actions": actions}
 
-    def train_epochs(self, n_epochs=1):
+    def train_epochs(self, n_epochs=1) -> dict:
         train_info = {}
         for _ in range(n_epochs):
             samples = self.memory.sample()
@@ -112,17 +159,45 @@ class OffPolicyAgent(Agent):
         train_info["noise_scale"] = self.noise_scale
         return train_info
 
-    def train(self, train_steps):
+    def train(self, train_steps: int) -> dict:
+        """Run the main off-policy training loop.
+
+        This method interacts with the training environments for a fixed number
+        of environment steps, collects transitions, stores them in the replay
+        buffer, and periodically updates the policy using sampled mini-batches.
+
+        Training proceeds in a step-based manner (not episode-based): at each iteration, the agent selects actions,
+        steps the environments, logs intermediate information via callbacks, and performs policy updates
+        when the configured conditions are met.
+
+        Args:
+            train_steps (int): Total number of environment steps to execute for training. The actual loop advances in
+                increments of `self.n_envs` steps per iteration due to vectorized environments.
+
+        Returns:
+            dict: A dictionary containing aggregated training information and
+                logged metrics collected during the training process.
+
+        Notes:
+            - This method assumes that training environments (`self.train_envs`)
+              and the replay buffer (`self.memory`) have already been initialized.
+            - Exploration behavior (e.g., epsilon-greedy or action noise) is applied during training and updated
+                dynamically based on the current training step.
+            - Policy updates are triggered periodically according to
+                `self.training_frequency` after `self.start_training` steps.
+            - Episode termination and reset logic are handled per environment
+                instance, and episode-level statistics are logged via callbacks.
+        """
         train_info = {}
-        obs = self.envs.buf_obs
+        obs = self.train_envs.buf_obs
         for _ in tqdm(range(train_steps)):
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
             policy_out = self.action(obs, test_mode=False)
             acts = policy_out['actions']
-            next_obs, rewards, terminals, truncations, infos = self.envs.step(acts)
+            next_obs, rewards, terminals, truncations, infos = self.train_envs.step(acts)
 
-            self.callback.on_train_step(self.current_step, envs=self.envs, policy=self.policy,
+            self.callback.on_train_step(self.current_step, envs=self.train_envs, policy=self.policy,
                                         obs=obs, policy_out=policy_out, acts=acts, next_obs=next_obs, rewards=rewards,
                                         terminals=terminals, truncations=truncations, infos=infos,
                                         train_steps=train_steps)
@@ -144,7 +219,7 @@ class OffPolicyAgent(Agent):
                         pass
                     else:
                         obs[i] = infos[i]["reset_obs"]
-                        self.envs.buf_obs[i] = obs[i]
+                        self.train_envs.buf_obs[i] = obs[i]
                         self.ret_rms.update(self.returns[i:i + 1])
                         self.returns[i] = 0.0
                         self.current_episode[i] += 1
@@ -160,7 +235,7 @@ class OffPolicyAgent(Agent):
                             }
                         self.log_infos(episode_info, self.current_step)
                         train_info.update(episode_info)
-                        self.callback.on_train_episode_info(envs=self.envs, policy=self.policy, env_id=i,
+                        self.callback.on_train_episode_info(envs=self.train_envs, policy=self.policy, env_id=i,
                                                             infos=infos, use_wandb=self.use_wandb,
                                                             current_step=self.current_step,
                                                             current_episode=self.current_episode,
@@ -168,12 +243,40 @@ class OffPolicyAgent(Agent):
 
             self.current_step += self.n_envs
             self._update_explore_factor()
-            self.callback.on_train_step_end(self.current_step, envs=self.envs, policy=self.policy,
+            self.callback.on_train_step_end(self.current_step, envs=self.train_envs, policy=self.policy,
                                             train_steps=train_steps, train_info=train_info)
         return train_info
 
-    def test(self, env_fn, test_episodes: int) -> list:
-        test_envs = env_fn()
+    def test(self,
+             test_episodes: int,
+             test_envs: Optional[DummyVecEnv | SubprocVecEnv] = None,
+             close_envs: bool = True) -> list:
+        """Evaluate the current policy in a vectorized environment.
+
+        This method runs evaluation episodes using `test_envs` and returns the per-episode scores. During evaluation,
+        actions are selected in deterministic (test) mode and optional RGB-array frames can be recorded
+        for video logging when rendering is enabled.
+
+        Args:
+            test_episodes (int): Total number of evaluation episodes to run across all vectorized environments.
+            test_envs (Optional[DummyVecEnv | SubprocVecEnv]): Vectorized environments used for evaluation.
+                Must not be None.
+            close_envs (bool): Whether to close `test_envs` before returning.
+                Set this to False if `test_envs` is managed externally and will be reused after evaluation.
+
+        Returns:
+            list: A list of episode scores collected during evaluation.
+
+        Notes:
+            - This method resets the evaluation environments at the beginning of testing and steps them
+                until `test_episodes` episodes are completed.
+            - When `render_mode == "rgb_array"` and `self.render` is True, the method records frames and logs the
+                best-scoring episode as a video.
+            - By default, this implementation updates `obs_rms` during testing. If you want to avoid contaminating
+                training statistics, consider guarding this update with a dedicated flag (e.g., `update_rms=False`).
+        """
+        if test_envs is None:
+            raise ValueError("`test_envs` must be provided for evaluation.")
         num_envs = test_envs.num_envs
         videos, episode_videos, images = [[] for _ in range(num_envs)], [], None
         current_episode, current_step, scores, best_score = 0, 0, [], -np.inf
@@ -234,7 +337,8 @@ class OffPolicyAgent(Agent):
                                   current_step=current_step, current_episode=current_episode,
                                   scores=scores, best_score=best_score)
 
-        test_envs.close()
+        if close_envs:
+            test_envs.close()
 
         return scores
 

@@ -1,6 +1,7 @@
 import torch
 from argparse import Namespace
-from xuance.common import Union
+from gymnasium.spaces import Space
+from xuance.common import Optional, BaseCallback
 from xuance.environment import DummyVecEnv, SubprocVecEnv
 from xuance.torch import Module
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
@@ -16,10 +17,15 @@ class DrQ_Agent(OffPolicyAgent):
         envs: the vectorized environments.
     """
 
-    def __init__(self,
-                 config: Namespace,
-                 envs: Union[DummyVecEnv, SubprocVecEnv]):
-        super(DrQ_Agent, self).__init__(config, envs)
+    def __init__(
+            self,
+            config: Namespace,
+            envs: Optional[DummyVecEnv | SubprocVecEnv] = None,
+            observation_space: Optional[Space] = None,
+            action_space: Optional[Space] = None,
+            callback: Optional[BaseCallback] = None
+    ):
+        super(DrQ_Agent, self).__init__(config, envs, observation_space, action_space, callback)
         self.start_greedy, self.end_greedy = config.start_greedy, config.end_greedy
         self.e_greedy = config.start_greedy
         self.delta_egreedy = (self.start_greedy - self.end_greedy) / (config.decay_step_greedy / self.n_envs)

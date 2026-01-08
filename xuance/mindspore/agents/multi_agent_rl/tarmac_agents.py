@@ -1,12 +1,11 @@
 from argparse import Namespace
-from typing import Union, Optional, Dict
 import gymnasium as gym
 import numpy as np
 import torch
 from gymnasium import Space
 from torch.nn import Module, ModuleDict
 
-from xuance.common import space2shape, MultiAgentBaseCallback
+from xuance.common import Union, Optional, Dict, List, space2shape, MultiAgentBaseCallback
 
 from xuance.torch import REGISTRY_Policy
 from xuance.torch.communications.attention_comm import TarMAC
@@ -17,11 +16,20 @@ from xuance.torch.agents.multi_agent_rl.ic3net_agents import IC3Net_Agents
 
 
 class TarMAC_Agents(IC3Net_Agents):
-    def __init__(self,
-                 config: Namespace,
-                 envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv],
-                 callback: Optional[MultiAgentBaseCallback] = None):
-        super(TarMAC_Agents, self).__init__(config, envs, callback)
+    def __init__(
+            self,
+            config: Namespace,
+            envs: Optional[DummyVecMultiAgentEnv | SubprocVecMultiAgentEnv] = None,
+            num_agents: Optional[int] = None,
+            agent_keys: Optional[List[str]] = None,
+            state_space: Optional[Space] = None,
+            observation_space: Optional[Space] = None,
+            action_space: Optional[Space] = None,
+            callback: Optional[MultiAgentBaseCallback] = None
+    ):
+        super(TarMAC_Agents, self).__init__(
+            config, envs, num_agents, agent_keys, state_space, observation_space, action_space, callback
+        )
         self.policy = self._build_policy()
         self.memory = self._build_memory()  # build memory
         self.learner = self._build_learner(self.config, self.model_keys, self.agent_keys, self.policy, callback)

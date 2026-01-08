@@ -18,17 +18,21 @@ from xuance.common import Optional
 
 
 class DreamerV3Agent(OffPolicyAgent):
-    def __init__(self,
-                 config: Namespace,
-                 envs: Union[DummyVecEnv, SubprocVecEnv],
-                 callback: Optional[BaseCallback] = None):
-        super(DreamerV3Agent, self).__init__(config, envs, callback)
+    def __init__(
+            self,
+            config: Namespace,
+            envs: Optional[DummyVecEnv | SubprocVecEnv] = None,
+            observation_space: Optional[Space] = None,
+            action_space: Optional[Space] = None,
+            callback: Optional[BaseCallback] = None
+    ):
+        super(DreamerV3Agent, self).__init__(config, envs, observation_space, action_space, callback)
         # special judge for atari env
         self.atari = True if self.config.env_name == "Atari" else False
 
         # continuous or not
-        self.is_continuous = (isinstance(self.envs.action_space, gym.spaces.Box))
-        self.is_multidiscrete = isinstance(self.envs.action_space, gym.spaces.MultiDiscrete)
+        self.is_continuous = (isinstance(self.train_envs.action_space, gym.spaces.Box))
+        self.is_multidiscrete = isinstance(self.train_envs.action_space, gym.spaces.MultiDiscrete)
         self.config.is_continuous = self.is_continuous  # add to config
 
         # obs_shape & act_shape
@@ -62,11 +66,11 @@ class DreamerV3Agent(OffPolicyAgent):
         self.train_player: PlayerDV3 = self.model.player
         self.train_player.init_states()
         self.train_states: List[np.ndarray] = [
-            self.envs.buf_obs,  # obs: (envs, *obs_shape),
-            np.zeros((self.envs.num_envs, )),  # rews
-            np.zeros((self.envs.num_envs, )),  # terms
-            np.zeros((self.envs.num_envs, )),  # truncs
-            np.ones((self.envs.num_envs, ))  # is_first
+            self.train_envs.buf_obs,  # obs: (envs, *obs_shape),
+            np.zeros((self.train_envs.num_envs, )),  # rews
+            np.zeros((self.train_envs.num_envs, )),  # terms
+            np.zeros((self.train_envs.num_envs, )),  # truncs
+            np.ones((self.train_envs.num_envs, ))  # is_first
         ]
 
     def _build_representation(self, representation_key: str,
@@ -74,16 +78,16 @@ class DreamerV3Agent(OffPolicyAgent):
                               config: Optional[Namespace]) -> DreamerV3WorldModel:
         # specify the type in order to use code completion
         actions_dim = tuple(
-            self.envs.action_space.shape
+            self.train_envs.action_space.shape
             if self.is_continuous else (
-                self.envs.action_space.nvec.tolist() if self.is_multidiscrete else [self.envs.action_space.n]
+                self.train_envs.action_space.nvec.tolist() if self.is_multidiscrete else [self.train_envs.action_space.n]
             )
         )
         input_representations = dict(
             actions_dim=actions_dim,
             is_continuous=self.is_continuous,
             config=self.config,
-            obs_space=self.envs.observation_space
+            obs_space=self.train_envs.observation_space
         )
         representation = REGISTRY_Representation[representation_key](**input_representations)
         if representation_key not in REGISTRY_Representation:
@@ -142,10 +146,10 @@ class DreamerV3Agent(OffPolicyAgent):
         if self.config.pixel:
             samples['obs'] = samples['obs'].transpose(0, 1, 2, 5, 3, 4) / 255.0 - 0.5
         # n_epoch(n_gradient step) scattered to each environment
-        # st = np.random.choice(np.arange(self.envs.num_envs), 1).item()  # not necessary
+        # st = np.random.choice(np.arange(self.train_envs.num_envs), 1).item()  # not necessary
         st = 0
         for _ in range(n_epochs):  # assert n_epochs == parallels
-            cur_samples = {k: v[(st + _) % self.envs.num_envs] for k, v in samples.items()}
+            cur_samples = {k: v[(st + _) % self.train_envs.num_envs] for k, v in samples.items()}
             train_info = self.learner.update(**cur_samples)
         return train_info
 
@@ -157,16 +161,16 @@ class DreamerV3Agent(OffPolicyAgent):
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
             if self.current_step < self.start_training:  # ramdom_sample before training
-                acts = np.array([self.envs.action_space.sample() for _ in range(self.envs.num_envs)])
+                acts = np.array([self.train_envs.action_space.sample() for _ in range(self.train_envs.num_envs)])
             else:
                 acts = self.action(obs)
             if self.atari:  # use truncs to train in xc_atari
                 terms = deepcopy(truncs)
             """(o1, a1, r1, term1, trunc1, is_first1), acts: real_acts"""
             self.memory.store(obs, acts, self._process_reward(rews), terms, truncs, is_first)
-            next_obs, rews, terms, truncs, infos = self.envs.step(acts)
+            next_obs, rews, terms, truncs, infos = self.train_envs.step(acts)
 
-            self.callback.on_train_step(self.current_step, envs=self.envs, policy=self.policy,
+            self.callback.on_train_step(self.current_step, envs=self.train_envs, policy=self.policy,
                                         obs=obs, acts=acts, next_obs=next_obs, rewards=rews,
                                         terminals=terms, truncations=truncs, infos=infos,
                                         train_steps=train_steps)
@@ -201,7 +205,7 @@ class DreamerV3Agent(OffPolicyAgent):
                             }
                         self.log_infos(episode_info, self.current_step)
                         train_info.update(episode_info)
-                        self.callback.on_train_episode_info(envs=self.envs, policy=self.policy, env_id=i,
+                        self.callback.on_train_episode_info(envs=self.train_envs, policy=self.policy, env_id=i,
                                                             infos=infos, rank=self.rank, use_wandb=self.use_wandb,
                                                             current_step=self.current_step,
                                                             current_episode=self.current_episode,
@@ -220,7 +224,7 @@ class DreamerV3Agent(OffPolicyAgent):
 
                 """reset DreamerV3 Player's states"""
                 obs[done_idxes] = np.stack([infos[idx]["reset_obs"] for idx in done_idxes])  # reset obs
-                self.envs.buf_obs[done_idxes] = obs[done_idxes]
+                self.train_envs.buf_obs[done_idxes] = obs[done_idxes]
                 rews[done_idxes] = np.zeros((len(done_idxes), ))
                 terms[done_idxes] = np.zeros((len(done_idxes), ))
                 truncs[done_idxes] = np.zeros((len(done_idxes), ))
@@ -242,7 +246,7 @@ class DreamerV3Agent(OffPolicyAgent):
                                                       current_episode=self.current_episode, train_steps=train_steps,
                                                       update_info=update_info)
 
-            self.callback.on_train_step_end(self.current_step, envs=self.envs, policy=self.policy,
+            self.callback.on_train_step_end(self.current_step, envs=self.train_envs, policy=self.policy,
                                             train_steps=train_steps, train_info=train_info)
         # save the train_states for next train
         self.train_states = [obs, rews, terms, truncs, is_first]

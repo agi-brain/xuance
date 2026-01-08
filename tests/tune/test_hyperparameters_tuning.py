@@ -3,7 +3,7 @@
 from xuance.common import HyperParameterTuner
 import unittest
 
-n_steps = 10000
+running_steps = 10000
 test_episodes = 2
 n_trials = 2
 
@@ -26,7 +26,7 @@ class TestValueBaseAlgo(unittest.TestCase):
         for method in test_methods_drl_discrete:
             tuner = HyperParameterTuner(algo=method,
                                         config_path=f'../../examples/{method}/{method}_configs/{method}_cartpole.yaml',
-                                        running_steps=n_steps,
+                                        running_steps=running_steps,
                                         test_episodes=test_episodes)
             selected_hyperparameters = tuner.select_hyperparameter(hyperpamameters)
             tuner.tune(selected_hyperparameters, n_trials=n_trials, pruner=None)
@@ -35,7 +35,7 @@ class TestValueBaseAlgo(unittest.TestCase):
         for method in test_methods_drl_continuous:
             tuner = HyperParameterTuner(algo=method,
                                         config_path=f'../../examples/{method}/{method}_configs/{method}_pendulum.yaml',
-                                        running_steps=n_steps,
+                                        running_steps=running_steps,
                                         test_episodes=test_episodes)
             selected_hyperparameters = tuner.select_hyperparameter(hyperpamameters)
             tuner.tune(selected_hyperparameters, n_trials=n_trials, pruner=None)
@@ -44,7 +44,7 @@ class TestValueBaseAlgo(unittest.TestCase):
     #     for method in test_methods_marl_value_decomposition:
     #         tuner = HyperParameterTuner(algo=method,
     #                                     config_path=f'../method/{method}_configs/{method}_cartpole.yaml',
-    #                                     running_steps=n_steps,
+    #                                     running_steps=running_steps,
     #                                     test_episodes=test_episodes)
     #         selected_hyperparameters = tuner.select_hyperparameter(hyperpamameters)
     #         tuner.tune(selected_hyperparameters, n_trials=n_trials, pruner=None)
@@ -53,7 +53,7 @@ class TestValueBaseAlgo(unittest.TestCase):
     #     for method in test_methods_marl_policy_gradient:
     #         tuner = HyperParameterTuner(algo=method,
     #                                     config_path=f'../method/{method}_configs/{method}_cartpole.yaml',
-    #                                     running_steps=n_steps,
+    #                                     running_steps=running_steps,
     #                                     test_episodes=test_episodes)
     #         selected_hyperparameters = tuner.select_hyperparameter(hyperpamameters)
     #         tuner.tune(selected_hyperparameters, n_trials=n_trials, pruner=None)
@@ -62,7 +62,7 @@ class TestValueBaseAlgo(unittest.TestCase):
     #     for method in test_methods_marl_on_policy:
     #         tuner = HyperParameterTuner(algo=method,
     #                                     config_path=f'../method/{method}_configs/{method}_cartpole.yaml',
-    #                                     running_steps=n_steps,
+    #                                     running_steps=running_steps,
     #                                     test_episodes=test_episodes)
     #         selected_hyperparameters = tuner.select_hyperparameter(hyperpamameters)
     #         tuner.tune(selected_hyperparameters, n_trials=n_trials, pruner=None)

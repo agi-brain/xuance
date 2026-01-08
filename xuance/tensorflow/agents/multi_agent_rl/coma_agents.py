@@ -4,7 +4,8 @@ from copy import deepcopy
 from argparse import Namespace
 from operator import itemgetter
 from tensorflow import one_hot
-from xuance.common import List, Optional, Union, MultiAgentBaseCallback
+from gymnasium.spaces import Space
+from xuance.common import List, Optional, MultiAgentBaseCallback
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
 from xuance.tensorflow import tf, Module, Tensor
 from xuance.tensorflow.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions
@@ -21,11 +22,20 @@ class COMA_Agents(OnPolicyMARLAgents):
         callback: A user-defined callback function object to inject custom logic during training.
     """
 
-    def __init__(self,
-                 config: Namespace,
-                 envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv],
-                 callback: Optional[MultiAgentBaseCallback] = None):
-        super(COMA_Agents, self).__init__(config, envs, callback)
+    def __init__(
+            self,
+            config: Namespace,
+            envs: Optional[DummyVecMultiAgentEnv | SubprocVecMultiAgentEnv] = None,
+            num_agents: Optional[int] = None,
+            agent_keys: Optional[List[str]] = None,
+            state_space: Optional[Space] = None,
+            observation_space: Optional[Space] = None,
+            action_space: Optional[Space] = None,
+            callback: Optional[MultiAgentBaseCallback] = None
+    ):
+        super(COMA_Agents, self).__init__(
+            config, envs, num_agents, agent_keys, state_space, observation_space, action_space, callback
+        )
         self.start_greedy, self.end_greedy = config.start_greedy, config.end_greedy
         self.egreedy = self.start_greedy
         self.delta_egreedy = (self.start_greedy - self.end_greedy) / config.decay_step_greedy
@@ -292,22 +302,22 @@ class COMA_Agents(OnPolicyMARLAgents):
                     process_bar.update((self.current_step - step_last) // self.n_envs)
                     step_last = deepcopy(self.current_step)
                 process_bar.update(n_steps - process_bar.last_print_n)
-                self.callback.on_train_step_end(self.current_step, envs=self.envs, policy=self.policy,
+                self.callback.on_train_step_end(self.current_step, envs=self.train_envs, policy=self.policy,
                                                 n_steps=n_steps, train_info=train_info)
             return train_info
 
-        obs_dict = self.envs.buf_obs
-        avail_actions = self.envs.buf_avail_actions if self.use_actions_mask else None
-        state = self.envs.buf_state if self.use_global_state else None
+        obs_dict = self.train_envs.buf_obs
+        avail_actions = self.train_envs.buf_avail_actions if self.use_actions_mask else None
+        state = self.train_envs.buf_state if self.use_global_state else None
         for _ in tqdm(range(n_steps)):
             policy_out = self.action(obs_dict=obs_dict, state=state, avail_actions_dict=avail_actions, test_mode=False)
             actions_dict, log_pi_a_dict = policy_out['actions'], policy_out['log_pi']
             values_dict = policy_out['values']
-            next_obs_dict, rewards_dict, terminated_dict, truncated, info = self.envs.step(actions_dict)
-            next_state = self.envs.buf_state.copy() if self.use_global_state else None
-            next_avail_actions = self.envs.buf_avail_actions if self.use_actions_mask else None
+            next_obs_dict, rewards_dict, terminated_dict, truncated, info = self.train_envs.step(actions_dict)
+            next_state = self.train_envs.buf_state.copy() if self.use_global_state else None
+            next_avail_actions = self.train_envs.buf_avail_actions if self.use_actions_mask else None
 
-            self.callback.on_train_step(self.current_step, envs=self.envs, policy=self.policy,
+            self.callback.on_train_step(self.current_step, envs=self.train_envs, policy=self.policy,
                                         obs=obs_dict, policy_out=policy_out, acts=actions_dict, next_obs=next_obs_dict,
                                         rewards=rewards_dict, state=state, next_state=next_state,
                                         avail_actions=avail_actions, next_avail_actions=next_avail_actions,
@@ -330,7 +340,7 @@ class COMA_Agents(OnPolicyMARLAgents):
             self.log_infos(update_info, self.current_step)
             train_info.update(update_info)
             obs_dict, avail_actions = deepcopy(next_obs_dict), deepcopy(next_avail_actions)
-            state = self.envs.buf_state if self.use_global_state else None
+            state = self.train_envs.buf_state if self.use_global_state else None
 
             for i in range(self.n_envs):
                 if all(terminated_dict[i].values()) or truncated[i]:
@@ -343,13 +353,13 @@ class COMA_Agents(OnPolicyMARLAgents):
                     self.memory.finish_path(i_env=i, value_next=value_next,
                                             value_normalizer=self.learner.value_normalizer)
                     obs_dict[i] = info[i]["reset_obs"]
-                    self.envs.buf_obs[i] = info[i]["reset_obs"]
+                    self.train_envs.buf_obs[i] = info[i]["reset_obs"]
                     if self.use_actions_mask:
                         avail_actions[i] = info[i]["reset_avail_actions"]
-                        self.envs.buf_avail_actions[i] = info[i]["reset_avail_actions"]
+                        self.train_envs.buf_avail_actions[i] = info[i]["reset_avail_actions"]
                     if self.use_global_state:
                         state[i] = info[i]["reset_state"]
-                        self.envs.buf_state[i] = info[i]["reset_state"]
+                        self.train_envs.buf_state[i] = info[i]["reset_state"]
                     self.current_episode[i] += 1
                     if self.use_wandb:
                         episode_info = {
@@ -364,13 +374,13 @@ class COMA_Agents(OnPolicyMARLAgents):
                         }
                     self.log_infos(episode_info, self.current_step)
                     train_info.update(episode_info)
-                    self.callback.on_train_episode_info(envs=self.envs, policy=self.policy, env_id=i,
+                    self.callback.on_train_episode_info(envs=self.train_envs, policy=self.policy, env_id=i,
                                                         infos=info, use_wandb=self.use_wandb,
                                                         current_step=self.current_step,
                                                         current_episode=self.current_episode,
                                                         n_steps=n_steps)
             self.current_step += self.n_envs
-            self.callback.on_train_step_end(self.current_step, envs=self.envs, policy=self.policy,
+            self.callback.on_train_step_end(self.current_step, envs=self.train_envs, policy=self.policy,
                                             n_steps=n_steps, train_info=train_info)
         return train_info
 
@@ -386,7 +396,7 @@ class COMA_Agents(OnPolicyMARLAgents):
         Returns:
             Scores: The episode scores.
         """
-        envs = self.envs if env_fn is None else env_fn()
+        envs = self.train_envs if env_fn is None else env_fn()
         num_envs = envs.num_envs
         videos, episode_videos, images = [[] for _ in range(num_envs)], [], None
         current_episode, current_step, scores, best_score = 0, 0, [0.0 for _ in range(num_envs)], -np.inf
@@ -471,7 +481,7 @@ class COMA_Agents(OnPolicyMARLAgents):
                             }
                         self.current_step += info[i]["episode_step"]
                         self.log_infos(episode_info, self.current_step)
-                        self.callback.on_train_episode_info(envs=self.envs, policy=self.policy, env_id=i,
+                        self.callback.on_train_episode_info(envs=self.train_envs, policy=self.policy, env_id=i,
                                                             infos=info, use_wandb=self.use_wandb,
                                                             current_step=self.current_step,
                                                             current_episode=self.current_episode,

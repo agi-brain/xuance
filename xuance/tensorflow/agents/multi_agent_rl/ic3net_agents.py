@@ -20,11 +20,20 @@ from xuance.torch.agents.multi_agent_rl.commnet_agents import CommNet_Agents
 
 
 class IC3Net_Agents(CommNet_Agents):
-    def __init__(self,
-                 config: Namespace,
-                 envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv],
-                 callback: Optional[MultiAgentBaseCallback] = None):
-        super(IC3Net_Agents, self).__init__(config, envs, callback)
+    def __init__(
+            self,
+            config: Namespace,
+            envs: Optional[DummyVecMultiAgentEnv | SubprocVecMultiAgentEnv] = None,
+            num_agents: Optional[int] = None,
+            agent_keys: Optional[List[str]] = None,
+            state_space: Optional[Space] = None,
+            observation_space: Optional[Space] = None,
+            action_space: Optional[Space] = None,
+            callback: Optional[MultiAgentBaseCallback] = None
+    ):
+        super(IC3Net_Agents, self).__init__(
+            config, envs, num_agents, agent_keys, state_space, observation_space, action_space, callback
+        )
         self.policy = self._build_policy()
         self.memory = self._build_memory()  # build memory
         self.learner = self._build_learner(self.config, self.model_keys, self.agent_keys, self.policy, callback)
@@ -182,7 +191,7 @@ class IC3Net_Agents(CommNet_Agents):
         self.memory.store(**experience_data)
 
     def run_episodes(self, env_fn=None, n_episodes: int = 1, test_mode: bool = False):
-        envs = self.envs if env_fn is None else env_fn()
+        envs = self.train_envs if env_fn is None else env_fn()
         num_envs = envs.num_envs
         videos, episode_videos = [[] for _ in range(num_envs)], []
         episode_count, scores, best_score = 0, [], -np.inf
