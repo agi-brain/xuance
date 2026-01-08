@@ -70,7 +70,7 @@ Create a python file named, e.g., "demo_drones.py".
 
     def parse_args():
         parser = argparse.ArgumentParser("Run a demo.")
-        parser.add_argument("--method", type=str, default="iddpg")
+        parser.add_argument("--algo", type=str, default="iddpg")
         parser.add_argument("--env", type=str, default="drones")
         parser.add_argument("--env-id", type=str, default="MultiHoverAviary")
         parser.add_argument("--test", type=int, default=0)
@@ -83,7 +83,7 @@ Create a python file named, e.g., "demo_drones.py".
 
     if __name__ == '__main__':
         parser = parse_args()
-        runner = get_runner(method=parser.method,
+        runner = get_runner(algo=parser.method,
                             env=parser.env,
                             env_id=parser.env_id,
                             parser_args=parser,

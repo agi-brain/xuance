@@ -6,7 +6,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="${SCRIPT_DIR}/../../../"
 PYTHON=python
 
-METHOD="vdac"
+ALGO="vdac"
 ENV="mpe"
 ENV_ID="simple_spread_v3"
 CONFIG_PATH="${SCRIPT_DIR}/vdac_simple_spread_v3.yaml"
@@ -22,7 +22,7 @@ for SEED in 1 2 3 4 5; do
 
   START_TIME=$(date +%s)
   if ${PYTHON} "${PROJECT_ROOT}/train.py" \
-    --method "${METHOD}" \
+    --algo "${ALGO}" \
     --env "${ENV}" \
     --env-id "${ENV_ID}" \
     --seed "${SEED}" \

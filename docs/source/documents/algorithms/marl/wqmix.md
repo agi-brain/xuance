@@ -374,7 +374,7 @@ After completing the installation, you can open a Python console and run WQMIX d
 
 ```python3
 import xuance
-runner = xuance.get_runner(method='wqmix',
+runner = xuance.get_runner(algo='wqmix',
                            env='mpe',  # Choices: football, mpe, sc2
                            env_id='simple_spread_v3',  # Choices: simple_spread_v3, etc
                            is_test=False)
@@ -387,7 +387,7 @@ Then, run the WQMIX by the following code block:
 
 ```python3
 import xuance as xp
-runner = xp.get_runner(method='wqmix',
+runner = xp.get_runner(algo='wqmix',
                        env='mpe',  # Choices: football, mpe, sc2
                        env_id='simple_spread_v3',  # Choices: simple_spread_v3, etc
                        config_path="my_config.yaml",  # The path of my_config.yaml file should be correct.

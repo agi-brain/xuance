@@ -55,7 +55,7 @@ After completing the installation, you can open a Python console and run DRQN di
 
 ```python3
 import xuance
-runner = xuance.get_runner(method='drqn',
+runner = xuance.get_runner(algo='drqn',
                            env='classic_control',  # Choices: claasi_control, box2d, atari.
                            env_id='CartPole-v1',  # Choices: CartPole-v1, LunarLander-v2, ALE/Breakout-v5, etc.
                            is_test=False)
@@ -69,7 +69,7 @@ Then, run the DRQN by the following code block:
 
 ```python3
 import xuance
-runner = xuance.get_runner(method='drqn',
+runner = xuance.get_runner(algo='drqn',
                        env='classic_control',  # Choices: claasi_control, box2d, atari.
                        env_id='CartPole-v1',  # Choices: CartPole-v1, LunarLander-v2, ALE/Breakout-v5, etc.
                        config_path="my_config.yaml",  # The path of my_config.yaml file should be correct.

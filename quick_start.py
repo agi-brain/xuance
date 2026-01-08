@@ -3,7 +3,7 @@ import xuance, argparse
 
 def parse_args():
     parser = argparse.ArgumentParser("Run a demo.")
-    parser.add_argument("--method", type=str, default="ppo")
+    parser.add_argument("--algo", type=str, default="ppo")
     parser.add_argument("--env", type=str, default="classic_control")
     parser.add_argument("--env-id", type=str, default="CartPole-v1")
     parser.add_argument("--test", type=int, default=0)
@@ -14,9 +14,9 @@ def parse_args():
 
 if __name__ == '__main__':
     parser = parse_args()
-    runner = xuance.get_runner(method=parser.method,
+    runner = xuance.get_runner(algo=parser.method,
                                env=parser.env,
                                env_id=parser.env_id,
                                parser_args=parser,
                                is_test=parser.test)
-    runner.run(mode="test")
+    runner.run(mode="benchmark")

@@ -171,7 +171,7 @@ After completing the installation, you can open a Python console and run IQL dir
 ```python3
 import xuance
 # Create runner for IQL algorithm
-runner = xuance.get_runner(method='iql',
+runner = xuance.get_runner(algo='iql',
                            env='sc2',  # Choices: sc2, mpe, robotic_warehouse, football, magent2.
                            env_id='3m',  # Choices: 3m, 2m_vs_1z, 8m, 1c3s5z, 2s3z, 25m, 5m_vs_6m, 8m_vs_9m, MMM2, etc.
                            is_test=False)  # False for training, True for testing
@@ -186,7 +186,7 @@ Then, run the IQL by the following code block:
 ```python3
 import xuance as xp
 # Create runner for IQL algorithm
-runner = xp.get_runner(method='iql',
+runner = xp.get_runner(algo='iql',
                        env='sc2',  # Choices: sc2, mpe, robotic_warehouse, football, magent2.
                        env_id='3m',  # Choices: 3m, 2m_vs_1z, 8m, 1c3s5z, 2s3z, 25m, 5m_vs_6m, 8m_vs_9m, MMM2, etc.
                        config_path="my_config.yaml",  # The path of my_config.yaml file should be correct.

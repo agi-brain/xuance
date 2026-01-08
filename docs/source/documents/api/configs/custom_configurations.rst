@@ -8,7 +8,7 @@ However, during the process of obtaining the runner, it is necessary to specify 
 .. code-block:: python
 
     import xuance
-    runner = xuance.get_runner(method='dqn',
+    runner = xuance.get_runner(algo='dqn',
                                env='classic_control',
                                env_id='CartPole-v1',
                                config_path="xxx/xxx.yaml",

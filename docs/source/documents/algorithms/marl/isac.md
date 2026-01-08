@@ -90,7 +90,7 @@ After completing the installation, you can open a Python console and run ISAC di
 
 ```python3
 import xuance
-runner = xuance.get_runner(method='isac',
+runner = xuance.get_runner(algo='isac',
                            env='mpe',
                            env_id='simple_spread_v3',
                            is_test=False)
@@ -104,7 +104,7 @@ Then, run the ISAC by the following code block:
 
 ```python3
 import xuance
-runner = xuance.get_runner(method='isac',
+runner = xuance.get_runner(algo='isac',
                        env='mpe',
                        env_id='simple_spread_v3',
                        config_path="my_config.yaml",

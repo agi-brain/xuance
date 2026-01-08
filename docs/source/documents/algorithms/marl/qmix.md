@@ -213,7 +213,7 @@ After completing the installation, you can open a Python console and run QMIX di
 
 ```python3
 import xuance
-runner = xuance.get_runner(method='qmix',
+runner = xuance.get_runner(algo='qmix',
                            env='mpe',  # Choices: football, mpe, sc2
                            env_id='simple_spread_v3',  # Choices: simple_spread_v3, etc
                            is_test=False)
@@ -226,7 +226,7 @@ Then, run the QMIX by the following code block:
 
 ```python3
 import xuance as xp
-runner = xp.get_runner(method='qmix',
+runner = xp.get_runner(algo='qmix',
                        env='mpe',  # Choices: football, mpe, sc2
                        env_id='simple_spread_v3',  # Choices: simple_spread_v3, etc
                        config_path="my_config.yaml",  # The path of my_config.yaml file should be correct.

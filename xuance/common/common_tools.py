@@ -52,10 +52,10 @@ def get_configs(file_dir):
     return config_dict
 
 
-def get_arguments(method, env, env_id, config_path=None, parser_args=None, is_test=False):
+def get_arguments(algo, env, env_id, config_path=None, parser_args=None, is_test=False):
     """Get arguments from ``.yaml`` files
     Args:
-        method: the algorithm name that will be implemented,
+        algo: the algorithm name that will be implemented,
         env: The name of the environment,
         env_id: The name of the scenario in the environment.
         config_path: default is None, if None, the default configs (``xuance/configs/.../*.yaml``) will be loaded.
@@ -72,14 +72,14 @@ def get_arguments(method, env, env_id, config_path=None, parser_args=None, is_te
     config_basic = get_configs(os.path.join(config_path_default, "basic.yaml"))
 
     ''' get the arguments from, e.g., xuance/config/dqn/box2d/CarRacing-v2.yaml '''
-    if type(method) == list:  # for different groups of MARL algorithms.
+    if type(algo) == list:  # for different groups of MARL algorithms.
         if config_path is None:
             config_path = []
             file_name_env_id = env + "/" + env_id + ".yaml"
             file_name_env = env + "/" + env_id + ".yaml"
-            config_path_env_id = [os.path.join(config_path_default, agent, file_name_env_id) for agent in method]
-            config_path_env = [os.path.join(config_path_default, agent, file_name_env) for agent in method]
-            for i_agent, agent in enumerate(method):
+            config_path_env_id = [os.path.join(config_path_default, agent, file_name_env_id) for agent in algo]
+            config_path_env = [os.path.join(config_path_default, agent, file_name_env) for agent in algo]
+            for i_agent, agent in enumerate(algo):
                 if os.path.exists(config_path_env_id[i_agent]):
                     config_path.append(config_path_env_id[i_agent])
                 elif os.path.exists(config_path_env[i_agent]):
@@ -103,19 +103,19 @@ def get_arguments(method, env, env_id, config_path=None, parser_args=None, is_te
             for i_args in range(len(args)):
                 args[i_args].test_mode = int(is_test)
                 args[i_args].parallels = 1
-    elif type(method) == str:
+    elif type(algo) == str:
         if config_path is None:
             file_name_env_id = env + "/" + env_id + ".yaml"
             file_name_env = env + ".yaml"
-            config_path_env_id = os.path.join(config_path_default, method, file_name_env_id)
-            config_path_env = os.path.join(config_path_default, method, file_name_env)
+            config_path_env_id = os.path.join(config_path_default, algo, file_name_env_id)
+            config_path_env = os.path.join(config_path_default, algo, file_name_env)
             if os.path.exists(config_path_env_id):
                 config_path = config_path_env_id
             elif os.path.exists(config_path_env):
                 config_path = config_path_env
             else:
-                error_path_env_id = os.path.join('./xuance/configs', method, file_name_env_id)
-                error_path_env = os.path.join('./xuance/configs', method, file_name_env)
+                error_path_env_id = os.path.join('./xuance/configs', algo, file_name_env_id)
+                error_path_env = os.path.join('./xuance/configs', algo, file_name_env)
                 raise AttributeError(
                     f"The file '{error_path_env_id}' or '{error_path_env}' does not exist in this library. "
                     f"You can also customize the configuration file by specifying the `config_path` parameter "
@@ -139,7 +139,7 @@ def get_arguments(method, env, env_id, config_path=None, parser_args=None, is_te
     return args
 
 
-def get_runner(method,
+def get_runner(algo,
                env,
                env_id,
                config_path=None,
@@ -148,7 +148,7 @@ def get_runner(method,
     """
     This method returns a runner that specified by the users according to the inputs.
     Args:
-        method: the algorithm name that will be implemented,
+        algo: the algorithm name that will be implemented,
         env: The name of the environment,
         env_id: The name of the scenario in the environment.
         config_path: default is None, if None, the default configs (``xuance/configs/.../*.yaml``) will be loaded.
@@ -158,7 +158,7 @@ def get_runner(method,
     Returns:
         An implementation of a runner that enables to run the DRL algorithms.
     """
-    args = get_arguments(method, env, env_id, config_path, parser_args, is_test)
+    args = get_arguments(algo, env, env_id, config_path, parser_args, is_test)
 
     if type(args) == list:
         device = args[0].device
@@ -202,17 +202,17 @@ def get_runner(method,
 
     if type(args) == list:
         agents_name_string = []
-        for i_alg in range(len(method)):
-            if i_alg < len(method) - 1:
+        for i_alg in range(len(algo)):
+            if i_alg < len(algo) - 1:
                 agents_name_string.append(args[i_alg].agent + " vs")
             else:
                 agents_name_string.append(args[i_alg].agent)
-            args[i_alg].agent_name = method[i_alg]
-            relative_log_dir = getattr(args[i_alg], "log_dir", f"logs/{method}")
-            relative_model_dir = getattr(args[i_alg], "model_dir", f"logs/{method}")
+            args[i_alg].agent_name = algo[i_alg]
+            relative_log_dir = getattr(args[i_alg], "log_dir", f"logs/{algo}")
+            relative_model_dir = getattr(args[i_alg], "model_dir", f"logs/{algo}")
             args[i_alg].log_dir = os.path.join(relative_log_dir, args[i_alg].env_id, f"side_{i_alg}")
             args[i_alg].model_dir = os.path.join(relative_model_dir, args[i_alg].env_id, f"side_{i_alg}")
-            args[i_alg].result_dir = os.path.join(f"results/{method}", args[i_alg].env_id, f"side_{i_alg}")
+            args[i_alg].result_dir = os.path.join(f"results/{algo}", args[i_alg].env_id, f"side_{i_alg}")
 
         if rank == 0:
             print("Algorithm:", *agents_name_string)
@@ -229,12 +229,12 @@ def get_runner(method,
             return runner
         raise AttributeError("Both sides of policies are random!")
     else:
-        args.agent_name = method
-        relative_log_dir = getattr(args, "log_dir", f"logs/{method}")
-        relative_model_dir = getattr(args, "model_dir", f"logs/{method}")
+        args.agent_name = algo
+        relative_log_dir = getattr(args, "log_dir", f"logs/{algo}")
+        relative_model_dir = getattr(args, "model_dir", f"logs/{algo}")
         args.log_dir = os.path.join(relative_log_dir, args.env_id)
         args.model_dir = os.path.join(relative_model_dir, args.env_id)
-        args.result_dir = os.path.join(f"results/{method}", args.env_id)
+        args.result_dir = os.path.join(f"results/{algo}", args.env_id)
         if rank == 0:
             print("Algorithm:", args.agent)
             print("Environment:", args.env_name)

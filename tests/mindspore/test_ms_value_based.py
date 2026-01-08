@@ -19,21 +19,21 @@ env_id = "CartPole-v1"
 
 class TestValueBaseAlgo(unittest.TestCase):
     def test_c51dqn(self):
-        runner = get_runner(method="c51", env=env_name, env_id=env_id, parser_args=args)
+        runner = get_runner(algo="c51", env=env_name, env_id=env_id, parser_args=args)
         if is_benchmark:
             runner.benchmark()
         else:
             runner.run()
 
     def test_ddqn(self):
-        runner = get_runner(method="ddqn", env=env_name, env_id=env_id, parser_args=args)
+        runner = get_runner(algo="ddqn", env=env_name, env_id=env_id, parser_args=args)
         if is_benchmark:
             runner.benchmark()
         else:
             runner.run()
 
     def test_dqn(self):
-        runner = get_runner(method="dqn", env=env_name, env_id=env_id, parser_args=args)
+        runner = get_runner(algo="dqn", env=env_name, env_id=env_id, parser_args=args)
         if is_benchmark:
             runner.benchmark()
         else:
@@ -42,14 +42,14 @@ class TestValueBaseAlgo(unittest.TestCase):
     def test_drqn(self):
         args_drqn = deepcopy(args)
         args_drqn.static_graph = False
-        runner = get_runner(method="drqn", env=env_name, env_id=env_id, parser_args=args_drqn)
+        runner = get_runner(algo="drqn", env=env_name, env_id=env_id, parser_args=args_drqn)
         if is_benchmark:
             runner.benchmark()
         else:
             runner.run()
 
     def test_dueldqn(self):
-        runner = get_runner(method="dueldqn", env=env_name, env_id=env_id, parser_args=args)
+        runner = get_runner(algo="dueldqn", env=env_name, env_id=env_id, parser_args=args)
         if is_benchmark:
             runner.benchmark()
         else:
@@ -58,21 +58,21 @@ class TestValueBaseAlgo(unittest.TestCase):
     def test_noisydqn(self):
         args_noisydqn = deepcopy(args)
         args_noisydqn.static_graph = False
-        runner = get_runner(method="noisydqn", env=env_name, env_id=env_id, parser_args=args_noisydqn)
+        runner = get_runner(algo="noisydqn", env=env_name, env_id=env_id, parser_args=args_noisydqn)
         if is_benchmark:
             runner.benchmark()
         else:
             runner.run()
 
     def test_perdqn(self):
-        runner = get_runner(method="perdqn", env=env_name, env_id=env_id, parser_args=args)
+        runner = get_runner(algo="perdqn", env=env_name, env_id=env_id, parser_args=args)
         if is_benchmark:
             runner.benchmark()
         else:
             runner.run()
 
     def test_qrdqn(self):
-        runner = get_runner(method="qrdqn", env=env_name, env_id=env_id, parser_args=args)
+        runner = get_runner(algo="qrdqn", env=env_name, env_id=env_id, parser_args=args)
         if is_benchmark:
             runner.benchmark()
         else:

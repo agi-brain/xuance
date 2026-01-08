@@ -131,7 +131,7 @@ the [**installation steps**](./../../usage/installation.rst#install-xuance).
 ```python3
 import xuance
 # Create runner for TarMAC algorithm
-runner = xuance.get_runner(method='tarmac',
+runner = xuance.get_runner(algo='tarmac',
                            env='sc2',  # Choices: sc2, mpe
                            env_id='3m',  # Choices: 3m, 2m_vs_1z, 8m, 1c3s5z, 2s3z, 25m, 5m_vs_6m, 8m_vs_9m, MMM2, etc.
                            is_test=False)  # False for training, True for testing
@@ -146,7 +146,7 @@ Then, run the TarMAC by the following code block:
 ```python3
 import xuance as xp
 # Create runner for TarMAC algorithm
-runner = xp.get_runner(method='TarMAC',
+runner = xp.get_runner(algo='TarMAC',
                        env='sc2',  # Choices: sc2, mpe
                        env_id='3m',  # Choices: 3m, 2m_vs_1z, 8m, 1c3s5z, 2s3z, 25m, 5m_vs_6m, 8m_vs_9m, MMM2, etc.
                        config_path="my_config.yaml",  # The path of my_config.yaml file should be correct.

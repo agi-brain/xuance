@@ -24,7 +24,7 @@ hyperpamameters = ['gamma']
 class TestValueBaseAlgo(unittest.TestCase):
     def test_drl_discrete_action_space(self):
         for method in test_methods_drl_discrete:
-            tuner = HyperParameterTuner(method=method,
+            tuner = HyperParameterTuner(algo=method,
                                         config_path=f'../../examples/{method}/{method}_configs/{method}_cartpole.yaml',
                                         running_steps=n_steps,
                                         test_episodes=test_episodes)
@@ -33,7 +33,7 @@ class TestValueBaseAlgo(unittest.TestCase):
 
     def test_drl_continuous_action_space(self):
         for method in test_methods_drl_continuous:
-            tuner = HyperParameterTuner(method=method,
+            tuner = HyperParameterTuner(algo=method,
                                         config_path=f'../../examples/{method}/{method}_configs/{method}_pendulum.yaml',
                                         running_steps=n_steps,
                                         test_episodes=test_episodes)
@@ -42,7 +42,7 @@ class TestValueBaseAlgo(unittest.TestCase):
 
     # def test_marl_value_decomposition(self):
     #     for method in test_methods_marl_value_decomposition:
-    #         tuner = HyperParameterTuner(method=method,
+    #         tuner = HyperParameterTuner(algo=method,
     #                                     config_path=f'../method/{method}_configs/{method}_cartpole.yaml',
     #                                     running_steps=n_steps,
     #                                     test_episodes=test_episodes)
@@ -51,7 +51,7 @@ class TestValueBaseAlgo(unittest.TestCase):
     #
     # def test_marl_policy_gradient(self):
     #     for method in test_methods_marl_policy_gradient:
-    #         tuner = HyperParameterTuner(method=method,
+    #         tuner = HyperParameterTuner(algo=method,
     #                                     config_path=f'../method/{method}_configs/{method}_cartpole.yaml',
     #                                     running_steps=n_steps,
     #                                     test_episodes=test_episodes)
@@ -60,7 +60,7 @@ class TestValueBaseAlgo(unittest.TestCase):
     #
     # def test_marl_on_policy(self):
     #     for method in test_methods_marl_on_policy:
-    #         tuner = HyperParameterTuner(method=method,
+    #         tuner = HyperParameterTuner(algo=method,
     #                                     config_path=f'../method/{method}_configs/{method}_cartpole.yaml',
     #                                     running_steps=n_steps,
     #                                     test_episodes=test_episodes)

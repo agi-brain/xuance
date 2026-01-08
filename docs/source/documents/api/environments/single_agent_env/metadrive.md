@@ -44,7 +44,7 @@ from xuance import get_runner
 
 def parse_args():
     parser = argparse.ArgumentParser("Run a demo.")
-    parser.add_argument("--method", type=str, default="ppo")
+    parser.add_argument("--algo", type=str, default="ppo")
     parser.add_argument("--env", type=str, default="metadrive")
     parser.add_argument("--env-id", type=str, default="your_map")
     parser.add_argument("--test", type=int, default=0)
@@ -58,7 +58,7 @@ def parse_args():
 
 if __name__ == '__main__':
     parser = parse_args()
-    runner = get_runner(method=parser.method,
+    runner = get_runner(algo=parser.method,
                         env=parser.env,
                         env_id=parser.env_id,
                         parser_args=parser,

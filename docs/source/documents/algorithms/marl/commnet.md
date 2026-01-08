@@ -286,7 +286,7 @@ After completing the installation, you can open a Python console and run CommNet
 
 ```python3
 import xuance
-runner = xuance.get_runner(method='commnet',
+runner = xuance.get_runner(algo='commnet',
                            env='mpe',  # Choices: mpe, sc2
                            env_id='simple_spread_v3',  # Choices: simple_spread_v3, etc
                            is_test=False)
@@ -300,7 +300,7 @@ Then, run the CommNet by the following code block:
 
 ```python3
 import xuance as xp
-runner = xp.get_runner(method='commnet',
+runner = xp.get_runner(algo='commnet',
                        env='mpe',  # Choices: mpe, sc2
                        env_id='simple_spread_v3',  # Choices: simple_spread_v3, etc
                        config_path="my_config.yaml",  # The path of my_config.yaml file should be correct.

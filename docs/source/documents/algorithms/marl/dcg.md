@@ -160,7 +160,7 @@ the [**installation steps**](./../../usage/installation.rst#install-xuance).
 ```python3
 import xuance
 # Create runner for DCG algorithm
-runner = xuance.get_runner(method='dcg',
+runner = xuance.get_runner(algo='dcg',
                            env='sc2',  # Choices: sc2, mpe
                            env_id='3m',  # Choices: 3m, 2m_vs_1z, 8m, 1c3s5z, 2s3z, 25m, 5m_vs_6m, 8m_vs_9m, MMM2, etc.
                            is_test=False)  # False for training, True for testing
@@ -175,7 +175,7 @@ Then, run the DCG by the following code block:
 ```python3
 import xuance as xp
 # Create runner for DCG algorithm
-runner = xp.get_runner(method='DCG',
+runner = xp.get_runner(algo='DCG',
                        env='sc2',  # Choices: sc2, mpe
                        env_id='3m',  # Choices: 3m, 2m_vs_1z, 8m, 1c3s5z, 2s3z, 25m, 5m_vs_6m, 8m_vs_9m, MMM2, etc.
                        config_path="my_config.yaml",  # The path of my_config.yaml file should be correct.

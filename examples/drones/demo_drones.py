@@ -4,7 +4,7 @@ from xuance import get_runner
 
 def parse_args():
     parser = argparse.ArgumentParser("Run a demo.")
-    parser.add_argument("--method", type=str, default="iddpg")
+    parser.add_argument("--algo", type=str, default="iddpg")
     parser.add_argument("--env", type=str, default="drones")
     parser.add_argument("--env-id", type=str, default="MultiHoverAviary")
     parser.add_argument("--test", type=int, default=0)
@@ -24,7 +24,7 @@ if __name__ == '__main__':
     # parser.running_steps = 1000000
     # ...
     ########################################################################
-    runner = get_runner(method=parser.method,
+    runner = get_runner(algo=parser.algo,
                         env=parser.env,
                         env_id=parser.env_id,
                         parser_args=parser,

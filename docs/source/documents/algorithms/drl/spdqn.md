@@ -80,7 +80,7 @@ After completing the installation, you can open a Python console and run SP-DQN 
 
 ```python3
 import xuance
-runner = xuance.get_runner(method='spdqn',
+runner = xuance.get_runner(algo='spdqn',
                            env='classic_control',  # Choices: classic_control, box2d, atari.
                            env_id='CartPole-v1',  # Choices: CartPole-v1, LunarLander-v2, ALE/Breakout-v5, etc.
                            is_test=False)
@@ -94,7 +94,7 @@ Then, run SP-DQN by the following code block:
 
 ```python3
 import xuance as xp
-runner = xp.get_runner(method='spdqn',
+runner = xp.get_runner(algo='spdqn',
                        env='classic_control',  # Choices: classic_control, box2d, atari.
                        env_id='CartPole-v1',  # Choices: CartPole-v1, LunarLander-v2, ALE/Breakout-v5, etc.
                        config_path="my_config.yaml",  # The path of my_config.yaml file should be correct.

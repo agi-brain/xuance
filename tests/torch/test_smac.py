@@ -12,12 +12,12 @@ test_mode = False
 class TestValueBaseAlgo(unittest.TestCase):
     def test_dqn(self):
         args = Namespace(dl_toolbox='torch', device=device, running_steps=n_steps, test_mode=test_mode)
-        runner = get_runner(method="qmix", env='sc2', env_id='3m', parser_args=args)
+        runner = get_runner(algo="qmix", env='sc2', env_id='3m', parser_args=args)
         runner.benchmark()
 
     def test_ppo(self):
         args = Namespace(dl_toolbox='torch', device=device, running_steps=n_steps, test_mode=test_mode)
-        runner = get_runner(method="mappo", env='sc2', env_id='3m', parser_args=args)
+        runner = get_runner(algo="mappo", env='sc2', env_id='3m', parser_args=args)
         runner.benchmark()
 
 

@@ -12,7 +12,7 @@ We can use the ``optuna.visualization.plot_optimization_history`` API to plot th
     from xuance.common import HyperParameterTuner, set_hyperparameters
     from optuna.visualization import plot_optimization_history
 
-    tuner = HyperParameterTuner(method='dqn',
+    tuner = HyperParameterTuner(algo='dqn',
                                 config_path='./examples/dqn/dqn_configs/dqn_cartpole.yaml',
                                 running_steps=1000,
                                 test_episodes=2)
@@ -128,7 +128,7 @@ We can use the ``optuna.visualization.plot_pareto_front`` API to plot the visual
     from xuance.common import MultiObjectiveTuner, set_hyperparameters
     from optuna.visualization import plot_pareto_front
 
-    tuner = MultiObjectiveTuner(method='dqn',
+    tuner = MultiObjectiveTuner(algo='dqn',
                                 config_path='./examples/dqn/dqn_configs/dqn_cartpole.yaml',
                                 running_steps=10000,
                                 test_episodes=2)

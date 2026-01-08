@@ -87,7 +87,7 @@ After completing the installation, you can open a Python console and run MP-DQN 
 ```python3
 import xuance
 import xuance
-runner = xuance.get_runner(method='mpdqn',
+runner = xuance.get_runner(algo='mpdqn',
                            env='parameterised_action_space',  # Choices: parameterised_action_space
                            env_id='Platform-v0',  # Choices: Platform-v0, Goal-v0, etc.
                            is_test=False)
@@ -99,7 +99,7 @@ Then, run the MP-DQN by the following code block:
 
 ```python3
 import xuance as xp
-runner = xp.get_runner(method='mpdqn',
+runner = xp.get_runner(algo='mpdqn',
                        env='parameterised_action_space',  # Choices: parameterised_action_space
                        env_id='Platform-v0',  # Choices: Platform-v0, Goal-v0, etc.
                        config_path="my_mpdqn_config.yaml",  # The path of my_mpdqn_config.yaml file should be correct.

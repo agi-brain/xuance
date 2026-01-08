@@ -59,7 +59,7 @@ After completing the installation, you can open a Python console and run **Dream
 
 ```python3
 import xuance
-runner = xuance.get_runner(method='DreamerV3',
+runner = xuance.get_runner(algo='DreamerV3',
                            env='classic_control',  # Choices: classic_control, atari.
                            env_id='CartPole-v1',  # Choices: CartPole-v1, Pendulum-v1, ALE/Pong-v5.
                            is_test=False)
@@ -73,7 +73,7 @@ Then, run the **DreamerV3** by the following code block:
 
 ```python3
 import xuance
-runner = xuance.get_runner(method='DreamerV3',
+runner = xuance.get_runner(algo='DreamerV3',
                            env='classic_control',  # Choices: classic_control, atari.
                            env_id='CartPole-v1',  # Choices: CartPole-v1, Pendulum-v1, ALE/Pong-v5.
                            config_path="my_config.yaml",  # The path of my_config.yaml file should be correct.

@@ -57,7 +57,7 @@ After completing the installation, you can open a Python console and run IDDPG d
 
 ```python3
 import xuance
-runner = xuance.get_runner(method='iddpg',
+runner = xuance.get_runner(algo='iddpg',
                            env='mpe',
                            env_id='simple_spread_v3',
                            is_test=False)
@@ -71,7 +71,7 @@ Then, run the IDDPG by the following code block:
 
 ```python3
 import xuance
-runner = xuance.get_runner(method='iddpg',
+runner = xuance.get_runner(algo='iddpg',
                        env='mpe',
                        env_id='simple_spread_v3',
                        config_path="my_config.yaml",

@@ -22,7 +22,7 @@ Run a DRL example
 .. code-block:: python3
 
     import xuance
-    runner = xuance.get_runner(method='dqn',
+    runner = xuance.get_runner(algo='dqn',
                                env='classic_control',
                                env_id='CartPole-v1',
                                is_test=False)
@@ -40,7 +40,7 @@ Run a DRL example
 
         def parse_args():
             parser = argparse.ArgumentParser("Run a demo.")
-            parser.add_argument("--method", type=str, default="dqn")
+            parser.add_argument("--algo", type=str, default="dqn")
             parser.add_argument("--env", type=str, default="classic_control")
             parser.add_argument("--env-id", type=str, default="CartPole-v1")
             parser.add_argument("--test", type=int, default=0)
@@ -50,7 +50,7 @@ Run a DRL example
 
         if __name__ == '__main__':
             parser = parse_args()
-            runner = xuance.get_runner(method=parser.method,
+            runner = xuance.get_runner(algo=parser.method,
                                        env=parser.env,
                                        env_id=parser.env_id,
                                        parser_args=parser,
@@ -72,7 +72,7 @@ Similaly, you can start by:
 .. code-block:: python
 
     import xuance
-    runner = xuance.get_runner(method='maddpg',
+    runner = xuance.get_runner(algo='maddpg',
                                env='mpe',
                                env_id='simple_spread_v3',
                                is_test=False)
@@ -83,7 +83,7 @@ For competitve tasks in which agents can be divided to two or more sides, you ca
 .. code-block:: python
 
     import xuance
-    runner = xuance.get_runner(method=["maddpg", "iddpg"],
+    runner = xuance.get_runner(algo=["maddpg", "iddpg"],
                                env='mpe',
                                env_id='simple_push_v3',
                                is_test=False)
@@ -101,7 +101,7 @@ Users can specify "is_test=True" to perform testing.
 .. code-block:: python
 
     import xuance
-    runner = xuance.get_runner(method='dqn',
+    runner = xuance.get_runner(algo='dqn',
                                env='classic_control',
                                env_id='CartPole-v1',
                                is_test=True)

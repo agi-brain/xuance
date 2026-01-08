@@ -352,7 +352,7 @@ Click [**here**](https://xuance.readthedocs.io/en/latest/documents/usage/install
 ```python
 import xuance
 
-runner = xuance.get_runner(method='dqn',
+runner = xuance.get_runner(algo='dqn',
                            env='classic_control',
                            env_id='CartPole-v1',
                            is_test=False)
@@ -364,7 +364,7 @@ runner.run()
 ```python
 import xuance
 
-runner_test = xuance.get_runner(method='dqn',
+runner_test = xuance.get_runner(algo='dqn',
                                 env='classic_control',
                                 env_id='CartPole-v1',
                                 is_test=True)

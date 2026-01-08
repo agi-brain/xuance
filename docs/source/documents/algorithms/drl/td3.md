@@ -58,7 +58,7 @@ Before running TD3 in XuanCe, you need to prepare a conda environment and instal
 After completing the installation, you can open a Python console and run TD3 directly using the following commands:
 ```
 import xuance
-runner = xuance.get_runner(method='td3',
+runner = xuance.get_runner(algo='td3',
                            env='classic_control',  # Choices: claasi_control, box2d, atari.
                            env_id='Pendulum-v1',  # Choices: CartPole-v1, LunarLander-v2, ALE/Breakout-v5, etc.
                            is_test=False)
@@ -69,7 +69,7 @@ If you want to run TD3 with different configurations, you can build a new ```.ya
 ```my_config.yaml```. Then, run the TD3 by the following code block:
 ```
 import xuance
-runner = xuance.get_runner(method='td3',
+runner = xuance.get_runner(algo='td3',
                        env='classic_control',  # Choices: claasi_control, box2d, .
                        env_id='Pendulum-v1',  
                        config_path="my_config.yaml",  # The path of my_config.yaml file should be correct.

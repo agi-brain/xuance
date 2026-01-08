@@ -79,11 +79,11 @@ Example structure:
     PROJECT_ROOT="$(cd "${SCRIPT_DIR}/../../.." && pwd)"
     PYTHON=python
 
-    METHOD="ppo"
+    ALGO="ppo"
     ENV="Atari"
     ENV_ID="Breakout-v5"
 
-    OUT_ROOT="${PROJECT_ROOT}/benchmarks/results/raw/${ENV}/${ENV_ID}/${METHOD}"
+    OUT_ROOT="${PROJECT_ROOT}/benchmarks/results/raw/${ENV}/${ENV_ID}/${ALGO}"
 
     for SEED in 1 2 3 4 5; do
       WORKDIR="${OUT_ROOT}/seed_${SEED}"
@@ -93,7 +93,7 @@ Example structure:
       START_TIME=$(date +%s)
 
       if ${PYTHON} "${PROJECT_ROOT}/train.py" \
-          --method "${METHOD}" \
+          --algo "${ALGO}" \
           --env "${ENV}" \
           --env-id "${ENV_ID}" \
           --seed "${SEED}" \

@@ -182,7 +182,7 @@ After completing the installation, you can open a Python console and run SPR dir
 
 ```python3
 import xuance
-runner = xuance.get_runner(method='spr',
+runner = xuance.get_runner(algo='spr',
                            env='atari',  # Currently only atari environments are supported.
                            env_id='ALE/Breakout-v5',  # Choices: ALE/Breakout-v5, ALE/Pong-v5, etc.
                            is_test=False)
@@ -196,7 +196,7 @@ Then, run the SPR by the following code block:
 
 ```python3
 import xuance as xp
-runner = xp.get_runner(method='spr',
+runner = xp.get_runner(algo='spr',
                        env='atari',  # Currently only atari environments are supported.
                        env_id='ALE/Breakout-v5',  # Choices: ALE/Breakout-v5, ALE/Pong-v5, etc.
                        config_path="my_config.yaml",  # The path of my_config.yaml file should be correct.

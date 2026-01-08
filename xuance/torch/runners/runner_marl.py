@@ -14,7 +14,8 @@ from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv, m
 
 
 class RunnerMARL(RunnerBase):
-    def __init__(self, config: Namespace,
+    def __init__(self,
+                 config: Namespace,
                  envs: Optional[DummyVecMultiAgentEnv | SubprocVecMultiAgentEnv] = None,
                  agent: Agent = None,
                  manage_resources: bool = None):
