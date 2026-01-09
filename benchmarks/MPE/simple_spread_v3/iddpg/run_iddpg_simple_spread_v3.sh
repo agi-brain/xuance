@@ -9,7 +9,7 @@ PYTHON=python
 ALGO="iddpg"
 ENV="mpe"
 ENV_ID="simple_spread_v3"
-CONFIG_PATH="${SCRIPT_DIR}/iddpg_simple_spread_v3.yaml"
+CONFIG_PATH="${SCRIPT_DIR}/${ALGO}_${ENV_ID}.yaml"
 
 OUT_ROOT="${SCRIPT_DIR}/results"
 
@@ -26,7 +26,8 @@ for SEED in 1 2 3 4 5; do
     --env "${ENV}" \
     --env-id "${ENV_ID}" \
     --seed "${SEED}" \
-    --config-path "${CONFIG_PATH}"; then
+    --config-path "${CONFIG_PATH}"\
+    --result-path "${OUT_ROOT}/seed_${SEED}"; then
   END_TIME=$(date +%s)
   ELAPSED=$((END_TIME - START_TIME))
   STATUS="SUCCESS"

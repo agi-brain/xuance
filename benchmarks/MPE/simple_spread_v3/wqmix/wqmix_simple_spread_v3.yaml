@@ -1,15 +1,3 @@
-dl_toolbox: "torch"  # The deep learning toolbox. Choices: "torch", "mindspore", "tensorflow"
-project_name: "XuanCe_Benchmark"
-logger: "tensorboard"  # Choices: "tensorboard", "wandb".
-wandb_user_name: "your_user_name"
-render: True
-render_mode: 'rgb_array' # Choices: 'human', 'rgb_array'.
-fps: 50  # The frames per second for the rendering videos in log file.
-test_mode: False  # Whether to run in test mode.
-device: "cpu"  # Choose an calculating device. PyTorch: "cpu", "cuda:0"; TensorFlow: "cpu"/"CPU", "gpu"/"GPU"; MindSpore: "CPU", "GPU", "Ascend", "Davinci".
-distributed_training: False  # Whether to use multi-GPU for distributed training.
-master_port: '12355'  # The master port for current experiment when use distributed training.
-
 agent: "OWQMIX"  # choice: CWQMIX, OWQMIX
 env_name: "mpe"  # Name of the environment.
 env_id: "simple_spread_v3"

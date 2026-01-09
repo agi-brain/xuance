@@ -10,12 +10,15 @@ ROOT_DIR="${SCRIPT_DIR}"
 
 # List the per-algorithm scripts you want to run (in order).
 SCRIPTS=(
+  "${ROOT_DIR}/iddpg/run_iddpg_simple_spread_v3.sh"
   "${ROOT_DIR}/iql/run_iql_simple_spread_v3.sh"
-  "${ROOT_DIR}/vdn/run_qmix_simple_spread_v3.sh"
-  "${ROOT_DIR}/qmix/run_vdn_simple_spread_v3.sh"
+  "${ROOT_DIR}/maddpg/run_maddpg_simple_spread_v3.sh"
+  "${ROOT_DIR}/masac/run_masac_simple_spread_v3.sh"
+  "${ROOT_DIR}/matd3/run_matd3_simple_spread_v3.sh"
+  "${ROOT_DIR}/qmix/run_qmix_simple_spread_v3.sh"
+  "${ROOT_DIR}/vdac/run_vdac_simple_spread_v3.sh"
   "${ROOT_DIR}/vdn/run_vdn_simple_spread_v3.sh"
-  "${ROOT_DIR}/vdn/run_vdn_simple_spread_v3.sh"
-  "${ROOT_DIR}/vdn/run_vdn_simple_spread_v3.sh"
+  "${ROOT_DIR}/wqmix/run_wqmix_simple_spread_v3.sh"
 )
 
 

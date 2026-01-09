@@ -8,6 +8,7 @@ def parse_args():
     parser.add_argument("--env", type=str, default="classic_control")
     parser.add_argument("--env-id", type=str, default="CartPole-v1")
     parser.add_argument("--seed", type=int, default=1)
+    parser.add_argument("--device", type=str, default="cuda:0")
     parser.add_argument("--config-path", type=str, default="./config")
     parser.add_argument("--result-path", type=str, default="./result")
 
