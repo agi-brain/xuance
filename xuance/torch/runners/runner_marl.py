@@ -66,11 +66,11 @@ class RunnerMARL(RunnerBase):
         if self.rank == 0:
             with open(test_scores_csv, "w", newline="", encoding="utf-8") as f:
                 writer = csv.writer(f)
-                header = ["step"] + [f"score_episode_{i}" for i in range(test_episodes)]
+                header = ["step"] + [f"return_episode_{i}" for i in range(test_episodes)]
                 writer.writerow(header)
             with open(learning_curve_csv, "w", newline="", encoding="utf-8") as f:
                 writer = csv.writer(f)
-                writer.writerow(["step", "mean_score"])
+                writer.writerow(["step", "avg_return"])
 
         meta_data = self.agent.meta_data
         meta_data['benchmark'] = {

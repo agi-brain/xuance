@@ -103,18 +103,25 @@ class RunnerBase(ABC):
         """
         pass
 
-    def run(self, mode: str = "train", **kwargs):
+    def run(self, mode: Optional[str] = None, **kwargs):
         """Run the experiment.
 
-        This method serves as the main entry point of the runner.
-        Concrete runners must implement this method or rely on a
-        template-method implementation provided by the base class.
+        Args:
+            mode (str): Execution mode. Must be one of {'train', 'test', 'benchmark'}.
         """
         handlers = {
             "train": self._run_train,
             "test": self._run_test,
             "benchmark": self._run_benchmark
         }
+
+        if mode is None:
+            raise ValueError(
+                "Missing required argument: 'mode'. "
+                "Please specify one of: 'train', 'test', and 'benchmark'.\n"
+                "Example: runner.run(mode='benchmark')"
+            )
+
         if mode not in handlers:
             raise ValueError(
                 f"Invalid run mode: '{mode}'. "

@@ -9,6 +9,7 @@ def parse_args():
     parser.add_argument("--env-id", type=str, default="CartPole-v1")
     parser.add_argument("--seed", type=int, default=1)
     parser.add_argument("--config-path", type=str, default="./config")
+    parser.add_argument("--result-path", type=str, default="./result")
 
     return parser.parse_args()
 
@@ -21,4 +22,6 @@ if __name__ == '__main__':
                         env_id=parser.env_id,
                         config_path=parser.config_path,
                         parser_args=parser)
-    runner.run()
+    runner.run(mode='benchmark',
+               benchmark_result_path=f"{parser.result_path}")
+
