@@ -8,9 +8,16 @@ from typing import Optional
 sns.set(style="darkgrid")
 
 algorithm_legend = {
-    'a2c': 'A2C',
-    'dqn': 'DQN',
-    'ppo': 'PPO',
+    'iddpg': 'IDDPG',
+    'iql': 'IQL',
+    'maddpg': 'MADDPG',
+    'mappo': 'MAPPO',
+    'masac': 'MASAC',
+    'matd3': 'MATD3',
+    'qmix': 'QMIX',
+    'vdac': 'VDAC',
+    'vdn': 'VDN',
+    'wqmix': 'WQMIX'
 }
 
 
@@ -55,11 +62,11 @@ def main():
         linewidth=2,
     )
 
-    plt.title("LunarLander-v3")
+    plt.title("simple_spread_v3")
     plt.xlabel("Step")
     plt.ylabel("Average Return")
     plt.tight_layout()
-    plt.savefig("learning_curves.pdf", dpi=200)
+    plt.savefig("learning_curves_simple_spread_v3.pdf", dpi=200)
     # plt.show()
 
 
