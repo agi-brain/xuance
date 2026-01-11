@@ -30,6 +30,6 @@ if __name__ == '__main__':
                         parser_args=parser,
                         is_test=parser.test)
     if parser.benchmark:
-        runner.benchmark()
+        runner.run(mode='benchmark')
     else:
-        runner.run()
+        runner.run(mode='train')
