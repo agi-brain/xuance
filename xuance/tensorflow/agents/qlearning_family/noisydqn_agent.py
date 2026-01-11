@@ -2,7 +2,8 @@ import numpy as np
 from tqdm import tqdm
 from copy import deepcopy
 from argparse import Namespace
-from xuance.common import Union, Optional, DummyOffPolicyBuffer, DummyOffPolicyBuffer_Atari, BaseCallback
+from gymnasium.spaces import Space
+from xuance.common import Optional, DummyOffPolicyBuffer, DummyOffPolicyBuffer_Atari, BaseCallback
 from xuance.environment import DummyVecEnv, SubprocVecEnv
 from xuance.tensorflow import Module
 from xuance.tensorflow.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions
@@ -11,13 +12,6 @@ from xuance.tensorflow.agents import Agent
 
 
 class NoisyDQN_Agent(Agent):
-    """The implementation of Noisy DQN agent.
-
-    Args:
-        config: the Namespace variable that provides hyperparameters and other settings.
-        envs: the vectorized environments.
-        callback: A user-defined callback function object to inject custom logic during training.
-    """
     def __init__(
             self,
             config: Namespace,
@@ -81,7 +75,7 @@ class NoisyDQN_Agent(Agent):
             train_info = self.learner.update(**samples)
         return train_info
 
-    def train(self, train_steps):
+    def train(self, train_steps: int) -> dict:
         train_info = {}
         obs = self.train_envs.buf_obs
         for _ in tqdm(range(train_steps)):
@@ -140,8 +134,12 @@ class NoisyDQN_Agent(Agent):
                                             train_steps=train_steps, train_info=train_info)
         return train_info
 
-    def test(self, env_fn, test_episodes):
-        test_envs = env_fn()
+    def test(self,
+             test_episodes: int,
+             test_envs: Optional[DummyVecEnv | SubprocVecEnv] = None,
+             close_envs: bool = True) -> list:
+        if test_envs is None:
+            raise ValueError("`test_envs` must be provided for evaluation.")
         num_envs = test_envs.num_envs
         videos, episode_videos, images = [[] for _ in range(num_envs)], [], None
         current_episode, current_step, scores, best_score = 0, 0, [], -np.inf
@@ -203,6 +201,7 @@ class NoisyDQN_Agent(Agent):
                                   current_step=current_step, current_episode=current_episode,
                                   scores=scores, best_score=best_score)
 
-        test_envs.close()
+        if close_envs:
+            test_envs.close()
 
         return scores

@@ -12,14 +12,6 @@ from xuance.mindspore.agents import OffPolicyAgent
 
 
 class DRQN_Agent(OffPolicyAgent):
-    """The implementation of Deep Recurrent Q-Netowrk (DRQN) agent.
-
-    Args:
-        config: the Namespace variable that provides hyperparameters and other settings.
-        envs: the vectorized environments.
-        callback: A user-defined callback function object to inject custom logic during training.
-    """
-
     def __init__(
             self,
             config: Namespace,
@@ -91,7 +83,7 @@ class DRQN_Agent(OffPolicyAgent):
             rnn_hidden_next_np = rnn_hidden_next.numpy()
         return {"actions": actions, "rnn_hidden_next": rnn_hidden_next_np}
 
-    def train(self, train_steps):
+    def train(self, train_steps: int) -> dict:
         train_info = {}
         obs = self.train_envs.buf_obs
         episode_data = [EpisodeBuffer() for _ in range(self.n_envs)]
@@ -160,8 +152,12 @@ class DRQN_Agent(OffPolicyAgent):
                                             train_steps=train_steps, train_info=train_info)
         return train_info
 
-    def test(self, env_fn, test_episodes):
-        test_envs = env_fn()
+    def test(self,
+             test_episodes: int,
+             test_envs: Optional[DummyVecEnv | SubprocVecEnv] = None,
+             close_envs: bool = True) -> list:
+        if test_envs is None:
+            raise ValueError("`test_envs` must be provided for evaluation.")
         num_envs = test_envs.num_envs
         videos, episode_videos, images = [[] for _ in range(num_envs)], [], None
         current_episode, current_step, scores, best_score = 0, 0, [], -np.inf
@@ -225,6 +221,7 @@ class DRQN_Agent(OffPolicyAgent):
                                   current_step=current_step, current_episode=current_episode,
                                   scores=scores, best_score=best_score)
 
-        test_envs.close()
+        if close_envs:
+            test_envs.close()
 
         return scores

@@ -159,7 +159,7 @@ class RunnerDRL(RunnerBase):
                             "std": np.std(test_scores),
                             "step": self.agent.current_step}
         for i_epoch in range(num_epoch):
-            self.rprint("Epoch: %d/%d:" % (i_epoch, num_epoch))
+            print("Epoch: %d/%d:" % (i_epoch, num_epoch))
             self.agent.train(train_steps=eval_interval)
             test_scores = self.agent.test(test_episodes=test_episodes,
                                           test_envs=test_envs,

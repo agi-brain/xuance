@@ -165,11 +165,12 @@ class MARLAgents(ABC):
     def store_experience(self, *args, **kwargs):
         raise NotImplementedError
 
-    def save_model(self, model_name):
-        if not os.path.exists(self.model_dir_save):
-            os.makedirs(self.model_dir_save)
-        model_path = os.path.join(self.model_dir_save, model_name)
-        self.learner.save_model(model_path)
+    def save_model(self, model_name, model_path=None):
+        # save the neural networks
+        model_path = self.model_dir_save if model_path is None else model_path
+        if not os.path.exists(model_path):
+            os.makedirs(model_path)
+        self.learner.save_model(os.path.join(model_path, model_name))
 
     def load_model(self, path, model=None):
         self.learner.load_model(path, model)

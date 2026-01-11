@@ -13,14 +13,6 @@ from xuance.mindspore.agents import OnPolicyMARLAgents
 
 
 class MFAC_Agents(OnPolicyMARLAgents):
-    """The implementation of Mean Field Actor-Critic (MFAC) agents.
-
-    Args:
-        config: the Namespace variable that provides hyperparameters and other settings.
-        envs: the vectorized environments.
-        callback: A user-defined callback function object to inject custom logic during training.
-    """
-
     def __init__(
             self,
             config: Namespace,
@@ -312,18 +304,12 @@ class MFAC_Agents(OnPolicyMARLAgents):
 
         return rnn_hidden_critic_new, values_dict
 
-    def train(self, n_steps):
-        """
-        Train the model for numerous steps.
-
-        Parameters:
-            n_steps (int): The number of steps to train the model.
-        """
+    def train(self, train_steps: int) -> dict:
         train_info = {}
         if self.use_rnn:
-            with tqdm(total=n_steps) as process_bar:
+            with tqdm(total=train_steps) as process_bar:
                 step_start, step_last = deepcopy(self.current_step), deepcopy(self.current_step)
-                n_steps_all = n_steps * self.n_envs
+                n_steps_all = train_steps * self.n_envs
                 while step_last - step_start < n_steps_all:
                     self.run_episodes(None, n_episodes=self.n_envs, test_mode=False)
                     update_info = self.train_epochs(n_epochs=self.n_epochs)
@@ -331,14 +317,14 @@ class MFAC_Agents(OnPolicyMARLAgents):
                     train_info.update(update_info)
 
                     self.callback.on_train_epochs_end(self.current_step, policy=self.policy, memory=self.memory,
-                                                      current_episode=self.current_episode, n_steps=n_steps,
+                                                      current_episode=self.current_episode, train_steps=train_steps,
                                                       update_info=update_info)
 
                     process_bar.update((self.current_step - step_last) // self.n_envs)
                     step_last = deepcopy(self.current_step)
-                process_bar.update(n_steps - process_bar.last_print_n)
+                process_bar.update(train_steps - process_bar.last_print_n)
                 self.callback.on_train_step_end(self.current_step, envs=self.train_envs, policy=self.policy,
-                                                n_steps=n_steps, train_info=train_info)
+                                                train_steps=train_steps, train_info=train_info)
             return train_info
 
         obs_dict = self.train_envs.buf_obs
@@ -346,7 +332,7 @@ class MFAC_Agents(OnPolicyMARLAgents):
         actions_mean_dict = self.actions_mean
         avail_actions = self.train_envs.buf_avail_actions if self.use_actions_mask else None
         state = self.train_envs.buf_state if self.use_global_state else None
-        for _ in tqdm(range(n_steps)):
+        for _ in tqdm(range(train_steps)):
             policy_out = self.action(obs_dict=obs_dict, state=state,
                                      agent_mask=agent_mask_dict, act_mean_dict=actions_mean_dict,
                                      avail_actions_dict=avail_actions, test_mode=False)
@@ -363,7 +349,7 @@ class MFAC_Agents(OnPolicyMARLAgents):
                                         avail_actions=avail_actions, next_avail_actions=next_avail_actions,
                                         actions_mean_dict=actions_mean_dict,
                                         terminals=terminated_dict, truncations=truncated, infos=info,
-                                        n_steps=n_steps, values_dict=values_dict)
+                                        train_steps=train_steps, values_dict=values_dict)
 
             self.store_experience(obs_dict, avail_actions, actions_dict, log_pi_a_dict, rewards_dict, values_dict,
                                   terminated_dict, info,
@@ -427,27 +413,20 @@ class MFAC_Agents(OnPolicyMARLAgents):
                                                         infos=info, use_wandb=self.use_wandb,
                                                         current_step=self.current_step,
                                                         current_episode=self.current_episode,
-                                                        n_steps=n_steps)
+                                                        train_steps=train_steps)
 
             self.current_step += self.n_envs
             self.actions_mean = deepcopy(actions_mean_dict)
             self.callback.on_train_step_end(self.current_step, envs=self.train_envs, policy=self.policy,
-                                            n_steps=n_steps, train_info=train_info)
+                                            train_steps=train_steps, train_info=train_info)
         return train_info
 
-    def run_episodes(self, env_fn=None, n_episodes: int = 1, test_mode: bool = False):
-        """
-        Run some episodes when use RNN.
-
-        Parameters:
-            env_fn: The function that can make some testing environments.
-            n_episodes (int): Number of episodes.
-            test_mode (bool): Whether to test the model.
-
-        Returns:
-            Scores: The episode scores.
-        """
-        envs = self.train_envs if env_fn is None else env_fn()
+    def run_episodes(self,
+                     n_episodes: int = 1,
+                     run_envs: Optional[DummyVecMultiAgentEnv | SubprocVecMultiAgentEnv] = None,
+                     test_mode: bool = False,
+                     close_envs: bool = True) -> list:
+        envs = self.train_envs if run_envs is None else run_envs
         num_envs = envs.num_envs
         videos, episode_videos, images = [[] for _ in range(num_envs)], [], None
         current_episode, current_step, scores, best_score = 0, 0, [], -np.inf
@@ -576,6 +555,6 @@ class MFAC_Agents(OnPolicyMARLAgents):
                                       current_step=current_step, current_episode=current_episode,
                                       scores=scores, best_score=best_score)
 
-            if env_fn is not None:
+            if close_envs:
                 envs.close()
         return scores

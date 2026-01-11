@@ -13,13 +13,6 @@ from xuance.torch.agents import Agent
 
 
 class NoisyDQN_Agent(Agent):
-    """The implementation of Noisy DQN agent.
-
-    Args:
-        config: the Namespace variable that provides hyperparameters and other settings.
-        envs: the vectorized environments.
-        callback: A user-defined callback function object to inject custom logic during training.
-    """
     def __init__(
             self,
             config: Namespace,

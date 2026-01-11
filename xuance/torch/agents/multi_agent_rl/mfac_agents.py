@@ -14,14 +14,6 @@ from xuance.torch.agents import OnPolicyMARLAgents
 
 
 class MFAC_Agents(OnPolicyMARLAgents):
-    """The implementation of Mean Field Actor-Critic (MFAC) agents.
-
-    Args:
-        config: the Namespace variable that provides hyperparameters and other settings.
-        envs: the vectorized environments.
-        callback: A user-defined callback function object to inject custom logic during training.
-    """
-
     def __init__(
             self,
             config: Namespace,

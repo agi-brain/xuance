@@ -1,7 +1,8 @@
 from tqdm import tqdm
 from copy import deepcopy
 from argparse import Namespace
-from xuance.common import Union, Optional, PerOffPolicyBuffer, BaseCallback
+from gymnasium.spaces import Space
+from xuance.common import Optional, PerOffPolicyBuffer, BaseCallback
 from xuance.environment import DummyVecEnv, SubprocVecEnv
 from xuance.tensorflow.agents.qlearning_family import DQN_Agent
 

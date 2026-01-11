@@ -5,7 +5,9 @@ from argparse import Namespace
 from tqdm import tqdm
 from copy import deepcopy
 from gymnasium.spaces import Space
-from xuance.common import List, Optional, MeanField_OffPolicyBuffer, MeanField_OffPolicyBuffer_RNN, MultiAgentBaseCallback
+from xuance.common import (
+    List, Optional, MeanField_OffPolicyBuffer, MeanField_OffPolicyBuffer_RNN, MultiAgentBaseCallback
+)
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
 from xuance.torch import Module
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
@@ -14,14 +16,6 @@ from xuance.torch.agents import OffPolicyMARLAgents
 
 
 class MFQ_Agents(OffPolicyMARLAgents):
-    """The implementation of Mean-Field Q agents.
-
-    Args:
-        config: the Namespace variable that provides hyperparameters and other settings.
-        envs: the vectorized environments.
-        callback: A user-defined callback function object to inject custom logic during training.
-    """
-
     def __init__(
             self,
             config: Namespace,

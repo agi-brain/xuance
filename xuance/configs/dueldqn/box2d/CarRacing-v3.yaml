@@ -1,11 +1,11 @@
-agent: "PerDQN"
+agent: "Duel_DQN"
 env_name: "Box2D"
-env_id: "CarRacing-v2"
+env_id: "CarRacing-v3"
 env_seed: 1  # The random seed of the environment.
 vectorize: "DummyVecEnv"
-learner: "PerDQN_Learner"
-policy: "Basic_Q_network"
+policy: "Duel_Q_network"
 representation: "Basic_CNN"
+learner: "DuelDQN_Learner"
 runner: "DRL"
 
 # the following three arguments are for "Basic_CNN" representation.
@@ -39,11 +39,8 @@ use_rewnorm: False  # Whether to use reward normalization trick.
 obsnorm_range: 5
 rewnorm_range: 5
 
-PER_alpha: 0.5
-PER_beta0: 0.4
-
 test_steps: 10000
 eval_interval: 100000
 test_episode: 1
-log_dir: "logs/perdqn/"
-model_dir: "models/perdqn/"
+log_dir: "logs/dueldqn/"
+model_dir: "models/dueldqn/"

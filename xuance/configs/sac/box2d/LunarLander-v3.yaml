@@ -1,6 +1,6 @@
 agent: "SAC"
 env_name: "Box2D"
-env_id: "LunarLander-v2"
+env_id: "LunarLander-v3"
 env_seed: 1  # The random seed of the environment.
 vectorize: "DummyVecEnv"
 learner: "SACDIS_Learner"

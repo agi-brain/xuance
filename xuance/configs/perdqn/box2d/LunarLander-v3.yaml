@@ -1,10 +1,10 @@
-agent: "NoisyDQN"
-env_name: "Box2D"
-env_id: "LunarLander-v2"
+agent: "PerDQN"
+env_name: "Classic Control"
+env_id: "LunarLander-v3"
 env_seed: 1  # The random seed of the environment.
 vectorize: "DummyVecEnv"
-learner: "DQN_Learner"
-policy: "Noisy_Q_network"
+learner: "PerDQN_Learner"
+policy: "Basic_Q_network"
 representation: "Basic_MLP"
 runner: "DRL"
 
@@ -19,11 +19,11 @@ batch_size: 128
 learning_rate: 0.001
 gamma: 0.99
 
-start_noise: 0.05
-end_noise: 0.0
-decay_step_noise: 500000
+start_greedy: 0.5
+end_greedy: 0.1
+decay_step_greedy: 200000
 sync_frequency: 100
-training_frequency: 2
+training_frequency: 4
 running_steps: 500000
 start_training: 1000
 
@@ -35,8 +35,11 @@ use_rewnorm: False  # Whether to use reward normalization trick.
 obsnorm_range: 5
 rewnorm_range: 5
 
+PER_alpha: 0.5
+PER_beta0: 0.4
+
 test_steps: 10000
 eval_interval: 50000
 test_episode: 1
-log_dir: "logs/noisy_dqn/"
-model_dir: "models/noisy_dqn/"
+log_dir: "logs/perdqn/"
+model_dir: "models/perdqn/"

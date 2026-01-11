@@ -1,6 +1,6 @@
 agent: "PG"
-env_name: "Box2D"
-env_id: "LunarLander-v2"
+env_name: "Classic Control"
+env_id: "MountainCar-v0"
 env_seed: 1  # The random seed of the environment.
 representation: "Basic_MLP"
 vectorize: "DummyVecEnv"
@@ -17,7 +17,7 @@ seed: 1
 parallels: 10
 running_steps: 300000
 horizon_size: 128  # the horizon size for an environment, buffer_size = horizon_size * parallels.
-n_epochs: 3
+n_epochs: 1
 n_minibatch: 1
 learning_rate: 0.0004
 

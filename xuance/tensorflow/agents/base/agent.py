@@ -159,7 +159,7 @@ class Agent(ABC):
         self.learner.save_model(os.path.join(model_path, model_name))
         # save the observation status
         if self.use_obsnorm:
-            obs_norm_path = os.path.join(self.model_dir_save, "obs_rms.npy")
+            obs_norm_path = os.path.join(model_path, "obs_rms.npy")
             observation_stat = {'count': self.obs_rms.count,
                                 'mean': self.obs_rms.mean,
                                 'var': self.obs_rms.var}
