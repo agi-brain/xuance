@@ -3,7 +3,7 @@ set -euo pipefail
 
 # Run all benchmark scripts under Box2D/LunarLander-v3.
 # This script assumes the directory layout:
-# benchmarks/Box2D/LunarLander-v3/{iql,qmix,vdn}/run_*_LunarLander-v3.sh
+# benchmarks/Box2D/LunarLander-v3/{a2c, c51, etc.}/run_*_LunarLander-v3.sh
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="${SCRIPT_DIR}"

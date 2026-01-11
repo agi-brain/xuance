@@ -1,6 +1,6 @@
 agent: "PPO_Clip"  # choice: PPO_Clip, PPO_KL
 env_name: "MuJoCo"
-env_id: "Ant-v4"
+env_id: "Ant-v5"
 env_seed: 1  # The random seed of the environment.
 vectorize: "DummyVecEnv"
 learner: "PPOCLIP_Learner"

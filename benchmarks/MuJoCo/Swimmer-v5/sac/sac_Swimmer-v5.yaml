@@ -1,6 +1,6 @@
 agent: "SAC"
 env_name: "MuJoCo"
-env_id: "Ant-v4"
+env_id: "Swimmer-v5"
 env_seed: 1  # The random seed of the environment.
 vectorize: "DummyVecEnv"
 learner: "SAC_Learner"
@@ -39,7 +39,7 @@ obsnorm_range: 5
 rewnorm_range: 5
 
 test_steps: 10000
-eval_interval: 10000
+eval_interval: 5000
 test_episode: 5
 log_dir: "logs/sac/"
 model_dir: "models/sac/"

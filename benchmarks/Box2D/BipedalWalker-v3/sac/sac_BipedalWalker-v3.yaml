@@ -26,7 +26,7 @@ use_automatic_entropy_tuning: True
 tau: 0.005
 
 training_frequency: 1
-running_steps: 5000000
+running_steps: 2000000
 start_training: 2000
 
 use_grad_clip: False  # gradient normalization
@@ -39,7 +39,7 @@ obsnorm_range: 5
 rewnorm_range: 5
 
 test_steps: 10000
-eval_interval: 500000
-test_episode: 5
+eval_interval: 10000
+test_episode: 3
 log_dir: "logs/sac/"
 model_dir: "models/sac/"

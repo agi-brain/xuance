@@ -1,6 +1,6 @@
 agent: "TD3"
 env_name: "MuJoCo"
-env_id: "Ant-v4"
+env_id: "InvertedPendulum-v5"
 env_seed: 1  # The random seed of the environment.
 vectorize: "DummyVecEnv"
 representation: "Basic_Identical"

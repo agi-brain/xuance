@@ -19,6 +19,7 @@ algorithm_legend = {
     'vdn': 'VDN',
     'wqmix': 'WQMIX'
 }
+fig_title = "simple_spread_v3"
 
 
 def load_algo_curves(
@@ -45,7 +46,7 @@ def main():
     root = os.getcwd()
 
     dfs = []
-    for algo in ["a2c", "dqn", "ppo"]:
+    for algo in algorithm_legend.keys():
         dfs.append(load_algo_curves(os.path.join(root, algo), algorithm_legend[algo]))
 
     data = pd.concat(dfs, ignore_index=True)
@@ -62,11 +63,11 @@ def main():
         linewidth=2,
     )
 
-    plt.title("simple_spread_v3")
+    plt.title(f"{fig_title}")
     plt.xlabel("Step")
     plt.ylabel("Average Return")
     plt.tight_layout()
-    plt.savefig("learning_curves_simple_spread_v3.pdf", dpi=200)
+    plt.savefig(f"learning_curves_{fig_title}.pdf", dpi=200)
     # plt.show()
 
 

@@ -39,7 +39,7 @@ obsnorm_range: 5
 rewnorm_range: 5
 
 test_steps: 10000
-eval_interval: 50000
-test_episode: 5
+eval_interval: 10000
+test_episode: 3
 log_dir: "logs/td3/"
 model_dir: "models/td3/"

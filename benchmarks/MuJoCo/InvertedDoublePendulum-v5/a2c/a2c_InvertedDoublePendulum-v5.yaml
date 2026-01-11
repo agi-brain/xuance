@@ -1,6 +1,6 @@
 agent: "A2C"  # The learning algorithms.
 env_name: "MuJoCo"  # Environment name.
-env_id: "Ant-v4"  # Environment id
+env_id: "InvertedDoublePendulum-v5"  # Environment id
 env_seed: 1  # The random seed of the environment.
 vectorize: "DummyVecEnv"  # Method to vectorize the environment.
 learner: "A2C_Learner"  # Name of learner.

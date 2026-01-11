@@ -16,7 +16,7 @@ activation_action: 'tanh'
 
 seed: 1
 parallels: 10
-running_steps: 300000
+running_steps: 2000000
 horizon_size: 256  # the horizon size for an environment, buffer_size = horizon_size * parallels.
 n_epochs: 1
 policy_nepoch: 4
@@ -43,7 +43,7 @@ obsnorm_range: 5
 rewnorm_range: 5
 
 test_steps: 10000
-eval_interval: 50000
-test_episode: 1
+eval_interval: 10000
+test_episode: 3
 log_dir: "logs/ppg/"
 model_dir: "models/ppg/"
