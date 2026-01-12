@@ -15,7 +15,7 @@ print("[DOCS] xuance library path: {}".format(sys.path[0]))
 project = 'XuanCe'
 copyright = '2023, XuanCe Contributors.'
 author = 'Wenzhang Liu, etc.'
-release = "1.3.3"
+release = "1.4.0"
 
 # The master toctree document.
 master_doc = 'index'

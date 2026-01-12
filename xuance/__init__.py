@@ -8,4 +8,4 @@ __all__ = [
     "get_configs"
 ]
 
-__version__ = 'v1.3.3'
+__version__ = 'v1.4.0'
