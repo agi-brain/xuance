@@ -2,7 +2,6 @@ import os
 import json
 import time
 import csv
-import copy
 import numpy as np
 from copy import deepcopy
 from argparse import Namespace
@@ -40,7 +39,8 @@ class RunnerMARL(RunnerBase):
     def _run_test(self, **kwargs):
         config_test = deepcopy(self.config)
         config_test.parallels = kwargs.get("n_envs", 1)
-        config_test.render = self.agent.render = kwargs.get('render', True)
+        config_test.render = kwargs.get('render', True)
+        config_test.render_mode = kwargs.get('render_mode', getattr(self.config, 'render_mode', 'human'))
         model_path = kwargs.get('model_path', self.agent.model_dir_load)
         test_episodes = kwargs.get('test_episodes', self.config.test_episode)
         test_envs = make_envs(config_test)
@@ -84,7 +84,7 @@ class RunnerMARL(RunnerBase):
         config_dict.pop("action_space", None)
 
         # Prepare testing environments.
-        config_test = copy.deepcopy(self.config)
+        config_test = deepcopy(self.config)
         config_test.parallels = 1  # config_test.test_episode
         test_envs = make_envs(config_test)
 

@@ -10,7 +10,7 @@ from operator import itemgetter
 from gymnasium.spaces import Space
 from torch.utils.tensorboard import SummaryWriter
 from xuance.common import (
-    get_time_string, create_directory, space2shape, Optional, List, Dict, Union, MultiAgentBaseCallback
+    get_time_string, create_directory, space2shape, set_device, Optional, List, Dict, Union, MultiAgentBaseCallback
 )
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
 from xuance.tensorflow import Module, REGISTRY_Representation, REGISTRY_Learners
@@ -69,9 +69,6 @@ class MARLAgents(ABC):
             callback: Optional[MultiAgentBaseCallback] = None
     ):
         set_seed(config.seed)
-        self.meta_data = dict(algo=config.agent, env=config.env_name, env_id=config.env_id,
-                              dl_toolbox=config.dl_toolbox, device=config.device, seed=config.seed,
-                              xuance_version=xuance.__version__)
         # Training settings.
         self.config = config
         self.use_rnn = getattr(config, "use_rnn", False)
@@ -84,7 +81,7 @@ class MARLAgents(ABC):
         self.start_training = getattr(config, "start_training", 1)
         self.training_frequency = getattr(config, "training_frequency", 1)
         self.n_epochs = getattr(config, "n_epochs", 1)
-        self.device = config.device
+        self.device = self.config.device = set_device(self.config.dl_toolbox, self.config.device)
 
         # Environment attributes.
         self.train_envs = envs
@@ -160,6 +157,10 @@ class MARLAgents(ABC):
         self.learner: Optional[learner] = None
         self.memory: Optional[object] = None
         self.callback = callback or MultiAgentBaseCallback()
+
+        self.meta_data = dict(algo=self.config.agent, env=self.config.env_name, env_id=self.config.env_id,
+                              dl_toolbox=self.config.dl_toolbox, device=self.device, seed=self.config.seed,
+                              xuance_version=xuance.__version__)
 
     def store_experience(self, *args, **kwargs):
         raise NotImplementedError

@@ -11,7 +11,9 @@ from argparse import Namespace
 from gymnasium.spaces import Dict, Space
 from torch.utils.tensorboard import SummaryWriter
 from torch.distributed import destroy_process_group
-from xuance.common import get_time_string, create_directory, RunningMeanStd, space2shape, EPS, Optional, BaseCallback
+from xuance.common import (
+    get_time_string, create_directory, set_device, RunningMeanStd, space2shape, EPS, Optional, BaseCallback
+)
 from xuance.environment import DummyVecEnv, SubprocVecEnv
 from xuance.torch import REGISTRY_Representation, REGISTRY_Learners, Module
 from xuance.torch.utils import nn, NormalizeFunctions, ActivationFunctions, init_distributed_mode, set_seed
@@ -64,9 +66,6 @@ class Agent(ABC):
             callback: Optional[BaseCallback] = None
     ):
         set_seed(config.seed)
-        self.meta_data = dict(algo=config.agent, env=config.env_name, env_id=config.env_id,
-                              dl_toolbox=config.dl_toolbox, device=config.device, seed=config.seed,
-                              xuance_version=xuance.__version__)
         # Training settings.
         self.config = config
         self.use_rnn = getattr(config, "use_rnn", False)
@@ -85,7 +84,7 @@ class Agent(ABC):
         self.start_training = getattr(config, "start_training", 1)
         self.training_frequency = getattr(config, "training_frequency", 1)
         self.n_epochs = getattr(config, "n_epochs", 1)
-        self.device = config.device
+        self.device = self.config.device = set_device(self.config.dl_toolbox, self.config.device)
 
         # Environment attributes.
         self.train_envs = envs
@@ -176,6 +175,10 @@ class Agent(ABC):
         self.learner: Optional[Module] = None
         self.memory: Optional[object] = None
         self.callback = callback or BaseCallback()
+
+        self.meta_data = dict(algo=self.config.agent, env=self.config.env_name, env_id=self.config.env_id,
+                              dl_toolbox=self.config.dl_toolbox, device=self.device, seed=self.config.seed,
+                              xuance_version=xuance.__version__)
 
     def save_model(self, model_name, model_path=None):
         if self.distributed_training:

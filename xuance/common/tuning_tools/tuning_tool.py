@@ -103,15 +103,13 @@ class HyperParameterTuner:
     optimization.
 
     Attributes:
-        method (str): The name of the method or agent (e.g., 'dqn').
+        algo (str): The name of the algorithm (e.g., 'dqn').
         config_path (str): The path to the configuration YAML file.
         running_steps (Optional[int]): Number of steps to run a trial. Defaults to the value in the configuration.
         test_episodes (Optional[int]): Number of episodes to evaluate the agent's policy. Defaults to the value in the configuration.
-        agent_name (str): The name of the agent as specified in the configuration.
-        agent: The agent instance retrieved from the agent registry.
     """
     def __init__(self,
-                 method: str,
+                 algo: str,
                  config_path: str,
                  running_steps: Optional[int] = None,
                  test_episodes: Optional[int] = None):
@@ -122,7 +120,7 @@ class HyperParameterTuner:
         deep learning toolbox, and registering the algorithm's hyperparameters.
 
         Args:
-            method (str): The name of the method or agent (e.g., 'dqn').
+            algo (str): The name of the algorithm (e.g., 'dqn').
             config_path (str): The path to the configuration YAML file.
             running_steps (Optional[int], optional): Number of steps to run a trial. Defaults to None,
                 which means it will use the value from the configuration.
@@ -132,7 +130,7 @@ class HyperParameterTuner:
         Raises:
             AttributeError: If the specified deep learning toolbox is not supported.
         """
-        self.method = method
+        self.algo = algo
         self.configs_dict = get_configs(config_path)
         self.running_steps = self.configs_dict['running_steps'] if running_steps is None else running_steps
         self.test_episodes = self.configs_dict['test_episodes'] if test_episodes is None else test_episodes
@@ -146,8 +144,8 @@ class HyperParameterTuner:
             raise AttributeError(f"XuanCe currently does not support {self.configs_dict['dl_toolbox']}!")
         self.agent_name = self.configs_dict['agent']
         self.agent = REGISTRY_Agents[self.agent_name]
-        module = importlib.import_module(f"xuance.common.tuning_tools.hyperparameters.{self.method}")
-        params = getattr(module, f"{self.method}_hyperparams")
+        module = importlib.import_module(f"xuance.common.tuning_tools.hyperparameters.{self.algo}")
+        params = getattr(module, f"{self.algo}_hyperparams")
         AlgorithmHyperparametersRegistry.register_algorithm(self.configs_dict['agent'], params)
 
     def list_hyperparameters(self) -> List[Hyperparameter]:
@@ -161,7 +159,7 @@ class HyperParameterTuner:
             List[Hyperparameter]: A list of Hyperparameter instances associated with the selected algorithm.
 
         Example:
-            >>> tuner = HyperParameterTuner(method='dqn', config_path='config.yaml')
+            >>> tuner = HyperParameterTuner(algo='dqn', config_path='config.yaml')
             >>> hyperparams = tuner.list_hyperparameters()
             >>> for hp in hyperparams:
             ...     print(hp.name, hp.type)
@@ -187,7 +185,7 @@ class HyperParameterTuner:
             ValueError: If no hyperparameters are selected for tuning.
 
         Example:
-            >>> tuner = HyperParameterTuner(method='dqn', config_path='config.yaml')
+            >>> tuner = HyperParameterTuner(algo='dqn', config_path='config.yaml')
             >>> selected = tuner.select_hyperparameter(['learning_rate', 'gamma'])
             >>> for hp in selected:
             ...     print(hp.name, hp.type)
@@ -230,7 +228,7 @@ class HyperParameterTuner:
             float: The mean score obtained from evaluating the agent's policy.
 
         Example:
-            >>> tuner = HyperParameterTuner(method='dqn', config_path='config.yaml')
+            >>> tuner = HyperParameterTuner(algo='dqn', config_path='config.yaml')
             >>> hyperparams = tuner.select_hyperparameter(['learning_rate', 'gamma'])
             >>> study = optuna.create_study(direction="maximize")
             >>> study.optimize(lambda trial: tuner.objective(trial, hyperparams), n_trials=10)
@@ -242,7 +240,7 @@ class HyperParameterTuner:
         envs_trail = make_envs(configs_trail)
         agent_trail = self.agent(configs_trail, envs_trail)
         agent_trail.train(train_steps=self.running_steps)
-        scores = agent_trail.test(env_fn=self.eval_env_fn, test_episodes=self.test_episodes)
+        scores = agent_trail.test(test_episodes=self.test_episodes, test_envs=self.eval_env_fn())
         agent_trail.finish()
         envs_trail.close()
         scores_mean = sum(scores) / len(scores)
@@ -270,7 +268,7 @@ class HyperParameterTuner:
             optuna.study.Study: The Optuna study object containing the results of the optimization.
 
         Example:
-            >>> tuner = HyperParameterTuner(method='dqn', config_path='config.yaml')
+            >>> tuner = HyperParameterTuner(algo='dqn', config_path='config.yaml')
             >>> hyperparams = tuner.select_hyperparameter(['learning_rate', 'gamma'])
             >>> study = tuner.tune(selected_hyperparameters=hyperparams, n_trials=30)
             >>> print(study.best_params)
@@ -313,7 +311,7 @@ class MultiObjectiveTuner(HyperParameterTuner):
             float: The mean score obtained from evaluating the agent's policy.
 
         Example:
-            >>> tuner = HyperParameterTuner(method='dqn', config_path='config.yaml')
+            >>> tuner = HyperParameterTuner(algo='dqn', config_path='config.yaml')
             >>> hyperparams = tuner.select_hyperparameter(['learning_rate', 'gamma'])
             >>> study = optuna.create_study(direction="maximize")
             >>> study.optimize(lambda trial: tuner.objective(trial, hyperparams), n_trials=10)
@@ -325,7 +323,7 @@ class MultiObjectiveTuner(HyperParameterTuner):
         envs_trail = make_envs(configs_trail)
         agent_trail = self.agent(configs_trail, envs_trail)
         train_info = agent_trail.train(train_steps=self.running_steps)
-        scores = agent_trail.test(env_fn=self.eval_env_fn, test_episodes=self.test_episodes)
+        scores = agent_trail.test(test_episodes=self.test_episodes, test_envs=self.eval_env_fn())
         agent_trail.finish()
         envs_trail.close()
         scores_mean = sum(scores) / len(scores)
@@ -357,7 +355,7 @@ class MultiObjectiveTuner(HyperParameterTuner):
             optuna.study.Study: The Optuna study object containing the results of the optimization.
 
         Example:
-            >>> tuner = HyperParameterTuner(method='dqn', config_path='config.yaml')
+            >>> tuner = HyperParameterTuner(algo='dqn', config_path='config.yaml')
             >>> hyperparams = tuner.select_hyperparameter(['learning_rate', 'gamma'])
             >>> study = tuner.tune(selected_hyperparameters=hyperparams, n_trials=30, selected_objectives=['test_score', 'loss'])
             >>> print(study.best_params)
