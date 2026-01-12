@@ -6,7 +6,6 @@ import scipy.signal
 from copy import deepcopy
 from types import SimpleNamespace as SN
 from xuance.common import Dict
-from xuance.configs import method_list
 
 EPS = 1e-8
 
@@ -22,11 +21,11 @@ def recursive_dict_update(basic_dict, target_dict):
         A dict mapping keys of basic_dict to the values of the same keys in target_dict.
         For example:
 
-        basic_dict = {'a': 1, 'b': 2}
-        target_dict = {'a': 3, 'c': 4}
-        out_dict = recursive_dict_update(basic_dict, target_dict)
+            basic_dict = {'a': 1, 'b': 2}
+            target_dict = {'a': 3, 'c': 4}
+            out_dict = recursive_dict_update(basic_dict, target_dict)
 
-        output_dict = {'a': 3, 'b': 2, 'c': 4}
+            output_dict = {'a': 3, 'b': 2, 'c': 4}
     """
     out_dict = deepcopy(basic_dict)
     for key, value in target_dict.items():
@@ -53,13 +52,13 @@ def get_configs(file_dir):
     return config_dict
 
 
-def get_arguments(method, env, env_id, config_path=None, parser_args=None, is_test=False):
-    """Get arguments from .yaml files
+def get_arguments(algo, env, env_id, config_path=None, parser_args=None, is_test=False):
+    """Get arguments from ``.yaml`` files
     Args:
-        method: the algorithm name that will be implemented,
+        algo: the algorithm name that will be implemented,
         env: The name of the environment,
         env_id: The name of the scenario in the environment.
-        config_path: default is None, if None, the default configs (xuance/configs/.../*.yaml) will be loaded.
+        config_path: default is None, if None, the default configs (``xuance/configs/.../*.yaml``) will be loaded.
         parser_args: arguments that specified by parser tools.
 
     Returns:
@@ -73,14 +72,14 @@ def get_arguments(method, env, env_id, config_path=None, parser_args=None, is_te
     config_basic = get_configs(os.path.join(config_path_default, "basic.yaml"))
 
     ''' get the arguments from, e.g., xuance/config/dqn/box2d/CarRacing-v2.yaml '''
-    if type(method) == list:  # for different groups of MARL algorithms.
+    if type(algo) == list:  # for different groups of MARL algorithms.
         if config_path is None:
             config_path = []
             file_name_env_id = env + "/" + env_id + ".yaml"
             file_name_env = env + "/" + env_id + ".yaml"
-            config_path_env_id = [os.path.join(config_path_default, agent, file_name_env_id) for agent in method]
-            config_path_env = [os.path.join(config_path_default, agent, file_name_env) for agent in method]
-            for i_agent, agent in enumerate(method):
+            config_path_env_id = [os.path.join(config_path_default, agent, file_name_env_id) for agent in algo]
+            config_path_env = [os.path.join(config_path_default, agent, file_name_env) for agent in algo]
+            for i_agent, agent in enumerate(algo):
                 if os.path.exists(config_path_env_id[i_agent]):
                     config_path.append(config_path_env_id[i_agent])
                 elif os.path.exists(config_path_env[i_agent]):
@@ -104,19 +103,19 @@ def get_arguments(method, env, env_id, config_path=None, parser_args=None, is_te
             for i_args in range(len(args)):
                 args[i_args].test_mode = int(is_test)
                 args[i_args].parallels = 1
-    elif type(method) == str:
+    elif type(algo) == str:
         if config_path is None:
             file_name_env_id = env + "/" + env_id + ".yaml"
             file_name_env = env + ".yaml"
-            config_path_env_id = os.path.join(config_path_default, method, file_name_env_id)
-            config_path_env = os.path.join(config_path_default, method, file_name_env)
+            config_path_env_id = os.path.join(config_path_default, algo, file_name_env_id)
+            config_path_env = os.path.join(config_path_default, algo, file_name_env)
             if os.path.exists(config_path_env_id):
                 config_path = config_path_env_id
             elif os.path.exists(config_path_env):
                 config_path = config_path_env
             else:
-                error_path_env_id = os.path.join('./xuance/configs', method, file_name_env_id)
-                error_path_env = os.path.join('./xuance/configs', method, file_name_env)
+                error_path_env_id = os.path.join('./xuance/configs', algo, file_name_env_id)
+                error_path_env = os.path.join('./xuance/configs', algo, file_name_env)
                 raise AttributeError(
                     f"The file '{error_path_env_id}' or '{error_path_env}' does not exist in this library. "
                     f"You can also customize the configuration file by specifying the `config_path` parameter "
@@ -140,7 +139,7 @@ def get_arguments(method, env, env_id, config_path=None, parser_args=None, is_te
     return args
 
 
-def get_runner(method,
+def get_runner(algo,
                env,
                env_id,
                config_path=None,
@@ -149,17 +148,17 @@ def get_runner(method,
     """
     This method returns a runner that specified by the users according to the inputs.
     Args:
-        method: the algorithm name that will be implemented,
+        algo: the algorithm name that will be implemented,
         env: The name of the environment,
         env_id: The name of the scenario in the environment.
-        config_path: default is None, if None, the default configs (xuance/configs/.../*.yaml) will be loaded.
+        config_path: default is None, if None, the default configs (``xuance/configs/.../*.yaml``) will be loaded.
         parser_args: arguments that specified by parser tools.
         is_test: default is False, if True, it will load the models and run the environment with rendering.
 
     Returns:
         An implementation of a runner that enables to run the DRL algorithms.
     """
-    args = get_arguments(method, env, env_id, config_path, parser_args, is_test)
+    args = get_arguments(algo, env, env_id, config_path, parser_args, is_test)
 
     if type(args) == list:
         device = args[0].device
@@ -203,30 +202,17 @@ def get_runner(method,
 
     if type(args) == list:
         agents_name_string = []
-        for i_alg in range(len(method)):
-            if i_alg < len(method) - 1:
+        for i_alg in range(len(algo)):
+            if i_alg < len(algo) - 1:
                 agents_name_string.append(args[i_alg].agent + " vs")
             else:
                 agents_name_string.append(args[i_alg].agent)
-            args[i_alg].agent_name = method[i_alg]
-            notation = args[i_alg].dl_toolbox + '/'
-
-            if ('model_dir' in args[i_alg].__dict__) and ('log_dir' in args[i_alg].__dict__):
-                args[i_alg].model_dir = os.path.join(os.getcwd(),
-                                                     args[i_alg].model_dir + notation + args[i_alg].env_id + '/',
-                                                     f"side_{i_alg}/")
-                args[i_alg].log_dir = args[i_alg].log_dir + notation + args[i_alg].env_id + f"/side_{i_alg}/"
-            else:
-                if config_path is not None:
-                    raise AttributeError(f"'model_dir' or 'log_dir' is not defined in {config_path} files.")
-                elif method[i_alg] not in method_list.keys():
-                    raise AttributeError(f"The method named '{method[i_alg]}' is currently not supported in XuanCe.")
-                elif args[i_alg].env not in method_list[method[i_alg]]:
-                    raise AttributeError(
-                        f"The environment named '{args[i_alg].env}' is currently not supported for {method_list[method[i_alg]]}.")
-                else:
-                    if rank == 0:
-                        print("Failed to load arguments for the implementation!")
+            args[i_alg].agent_name = algo[i_alg]
+            relative_log_dir = getattr(args[i_alg], "log_dir", f"logs/{algo}")
+            relative_model_dir = getattr(args[i_alg], "model_dir", f"logs/{algo}")
+            args[i_alg].log_dir = os.path.join(relative_log_dir, args[i_alg].env_id, f"side_{i_alg}")
+            args[i_alg].model_dir = os.path.join(relative_model_dir, args[i_alg].env_id, f"side_{i_alg}")
+            args[i_alg].result_dir = os.path.join(f"results/{algo}", args[i_alg].env_id, f"side_{i_alg}")
 
         if rank == 0:
             print("Algorithm:", *agents_name_string)
@@ -243,22 +229,12 @@ def get_runner(method,
             return runner
         raise AttributeError("Both sides of policies are random!")
     else:
-        args.agent_name = method
-        notation = args.dl_toolbox + '/'
-        if ('model_dir' in args.__dict__) and ('log_dir' in args.__dict__):
-            args.model_dir = os.path.join(os.getcwd(), args.model_dir, args.dl_toolbox, args.env_id)
-            args.log_dir = os.path.join(args.log_dir, notation, args.env_id)
-        else:
-            if config_path is not None:
-                raise AttributeError(f"'model_dir' or 'log_dir' is not defined in {config_path} file.")
-            elif args.method not in method_list.keys():
-                raise AttributeError(f"The method named '{args.method}' is currently not supported in XuanCe.")
-            elif args.env not in method_list[args.method]:
-                raise AttributeError(f"The environment named '{args.env}' is currently not supported for {args.method}.")
-            else:
-                if rank == 0:
-                    print("Failed to load arguments for the implementation!")
-
+        args.agent_name = algo
+        relative_log_dir = getattr(args, "log_dir", f"logs/{algo}")
+        relative_model_dir = getattr(args, "model_dir", f"logs/{algo}")
+        args.log_dir = os.path.join(relative_log_dir, args.env_id)
+        args.model_dir = os.path.join(relative_model_dir, args.env_id)
+        args.result_dir = os.path.join(f"results/{algo}", args.env_id)
         if rank == 0:
             print("Algorithm:", args.agent)
             print("Environment:", args.env_name)
@@ -272,12 +248,10 @@ def create_directory(path):
     Args:
         path: the path of the directory
     """
-    dir_split = path.split("/")
-    current_dir = dir_split[0] + "/"
-    for i in range(1, len(dir_split)):
-        if not os.path.exists(current_dir):
-            os.mkdir(current_dir)
-        current_dir = current_dir + dir_split[i] + "/"
+    """Create a directory (recursively) if it does not exist."""
+    if not path:
+        return
+    os.makedirs(path, exist_ok=True)
 
 
 def combined_shape(length: int, shape=None):
@@ -291,8 +265,7 @@ def combined_shape(length: int, shape=None):
     Returns:
         tuple: A new shape expanded from the input shape.
 
-    Examples
-    --------
+    Examples:
         >>> length = 2
         >>> shape_1 = None
         >>> shape_2 = 3
@@ -397,11 +370,10 @@ def discount_cumsum(x, discount=0.99):
     Returns:
         The discounted cumulative returns for each step.
 
-    Examples
-    --------
-    >>> x = [0, 1, 2, 2]
-    >>> y = discount_cumsum(x, discount=0.99)
-    [4.890798, 4.9402, 3.98, 2.0]
+    Examples:
+        >>> x = [0, 1, 2, 2]
+        >>> y = discount_cumsum(x, discount=0.99)
+        [4.890798, 4.9402, 3.98, 2.0]
     """
     return scipy.signal.lfilter([1], [1, float(-discount)], x[::-1], axis=0)[::-1]
 

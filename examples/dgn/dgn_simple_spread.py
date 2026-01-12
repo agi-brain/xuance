@@ -2,8 +2,6 @@ import argparse
 import numpy as np
 from copy import deepcopy
 
-from xuance.torch.agents import IQL_Agents
-
 from examples.dgn.dgn_agents import DGN_Agents
 from xuance.common import get_configs, recursive_dict_update
 from xuance.environment import make_envs
@@ -38,7 +36,7 @@ if __name__ == "__main__":
         print(f"{k}: {v}")
 
     if configs.benchmark:
-        def env_fn():  # Define an environment function for test method.
+        def env_fn():  # Define an environment function for test algo.
             configs_test = deepcopy(configs)
             configs_test.parallels = configs_test.test_episode
             return make_envs(configs_test)

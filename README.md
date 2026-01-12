@@ -1,5 +1,5 @@
 <div align="center">
-<img src="docs/source/_static/figures/logo_1.png" width="480" height="auto" align=center />
+<img src="docs/source/_static/figures/logo_1.png" width="400" height="auto" align=center />
 </div>
 
 # XuanCe: A Comprehensive and Unified Deep Reinforcement Learning Library
@@ -18,7 +18,6 @@
 [![gymnasium](https://img.shields.io/badge/gymnasium-%3E%3D0.28.1-blue)](https://www.gymlibrary.dev/)
 [![pettingzoo](https://img.shields.io/badge/PettingZoo-%3E%3D1.23.0-blue)](https://pettingzoo.farama.org/)
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/xuance)
-
 
 **[Full Documentation](https://xuance.readthedocs.io/en/latest/)**
 | **[README_CN.md](README_CN.md)**
@@ -40,7 +39,7 @@ We expect it to be compatible with multiple deep learning toolboxes(
 **[MindSpore](https://www.mindspore.cn/en)**),
 and hope it can really become a zoo full of DRL algorithms.
 
-Paper link: [https://arxiv.org/pdf/2312.16248.pdf](https://arxiv.org/pdf/2312.16248.pdf)
+**Paper link**: [**https://arxiv.org/pdf/2312.16248.pdf**](https://arxiv.org/pdf/2312.16248.pdf)
 
 ## Table of Contents:
 
@@ -60,7 +59,7 @@ Paper link: [https://arxiv.org/pdf/2312.16248.pdf](https://arxiv.org/pdf/2312.16
 - :tada: Abundant [algorithms](https://xuance.readthedocs.io/en/latest/#list-of-algorithms) with various tasks.
 - :couple: Supports both DRL and MARL tasks.
 - :key: High compatibility for different users. (PyTorch, TensorFlow2, MindSpore, CPU, GPU, Linux, Windows, MacOS, etc.)
-- :zap: Fast running speed with parallel environments. 
+- :zap: Fast running speed with parallel environments.
 - :computer: Distributed training with multi-GPUs.
 - 🎛️ Support automatically hyperparameters tuning.
 - :chart_with_upwards_trend: Good visualization effect with [tensorboard](https://www.tensorflow.org/tensorboard) or [wandb](https://wandb.ai/site) tool.
@@ -83,8 +82,8 @@ Paper link: [https://arxiv.org/pdf/2312.16248.pdf](https://arxiv.org/pdf/2312.16
 - **A2C**: Advantage Actor Critic [[Paper](http://proceedings.mlr.press/v48/mniha16.pdf)] [[Code](https://github.com/openai/baselines/tree/master/baselines/a2c)]
 - **SAC**: Soft Actor-Critic [[Paper](http://proceedings.mlr.press/v80/haarnoja18b/haarnoja18b.pdf)] [[Code](http://github.com/haarnoja/sac)]
 - **SAC-Discrete**: Soft Actor-Critic for Discrete Actions [[Paper](https://arxiv.org/pdf/1910.07207.pdf)] [[Code](https://github.com/p-christ/Deep-Reinforcement-Learning-Algorithms-with-PyTorch)]
-- **PPO-Clip**: Proximal Policy Optimization with Clipped Objective [[Paper](https://arxiv.org/pdf/1707.06347.pdf)] [[Code]( https://github.com/berkeleydeeprlcourse/homework/tree/master/hw4)]
-- **PPO-KL**: Proximal Policy Optimization with KL Divergence [[Paper](https://arxiv.org/pdf/1707.06347.pdf)] [[Code]( https://github.com/berkeleydeeprlcourse/homework/tree/master/hw4)]
+- **PPO-Clip**: Proximal Policy Optimization with Clipped Objective [[Paper](https://arxiv.org/pdf/1707.06347.pdf)] [[Code](https://github.com/berkeleydeeprlcourse/homework/tree/master/hw4)]
+- **PPO-KL**: Proximal Policy Optimization with KL Divergence [[Paper](https://arxiv.org/pdf/1707.06347.pdf)] [[Code](https://github.com/berkeleydeeprlcourse/homework/tree/master/hw4)]
 - **DDPG**: Deep Deterministic Policy Gradient [[Paper](https://arxiv.org/pdf/1509.02971.pdf)] [[Code](https://github.com/openai/baselines/tree/master/baselines/ddpg)]
 - **TD3**: Twin Delayed Deep Deterministic Policy Gradient [[Paper](http://proceedings.mlr.press/v80/fujimoto18a/fujimoto18a.pdf)][[Code](https://github.com/sfujim/TD3)]
 - **P-DQN**: Parameterised Deep Q-Network [[Paper](https://arxiv.org/pdf/1810.06394.pdf)]
@@ -121,9 +120,11 @@ Paper link: [https://arxiv.org/pdf/2312.16248.pdf](https://arxiv.org/pdf/2312.16
 - **CommNet**: Communication Neural Net [[Paper](https://proceedings.neurips.cc/paper_files/paper/2016/file/55b1927fdafef39c48e5b73b5d61ea60-Paper.pdf)][[Code](https://github.com/cts198859/deeprl_network.git)]
 
 ### :point_right: Contrastive Reinforcement Learning (CRL)
+
 - **CURL**: Contrastive Unsupervised Representation Learning for Sample-Efficient Reinforcement Learning [[Paper](http://proceedings.mlr.press/v119/laskin20a/laskin20a.pdf)] [[Code](https://github.com/MishaLaskin/curl/blob/master/curl_sac.py)]
 - **SPR**: Data-Efficient Reinforcement Learning with Self-Predictive Representations [[Paper]](https://arxiv.org/abs/2007.05929) [[Code]](https://github.com/mila-iqia/spr)
 - **DrQ**: Image Augmentation Is All You Need: Regularizing Deep Reinforcement Learning from Pixels [[Paper]](https://openreview.net/forum?id=GY6-6sTvGaf) [[Code]](https://sites.google.com/view/data-regularized-q)
+
 ## Environments
 
 ### [Classic Control](https://xuance.readthedocs.io/en/latest/documents/api/environments/single_agent_env/gym.html#classic-control)
@@ -302,47 +303,6 @@ Paper link: [https://arxiv.org/pdf/2312.16248.pdf](https://arxiv.org/pdf/2312.16
 </tr>
 </table>
 
-[//]: # (### [Magent2]&#40;https://magent2.farama.org/&#41;)
-
-[//]: #
-[//]: # (<details open>)
-
-[//]: # (<summary>&#40;Click to hide&#41;</summary>)
-
-[//]: #
-[//]: # (<table rules="none" align="center"><tr>)
-
-[//]: # (<td> <center>)
-
-[//]: # (<img src="./docs/source/figures/magent/battle.gif" height=100" /><br/><font color="AAAAAA">Battle</font>)
-
-[//]: # (</center></td>)
-
-[//]: # (<td> <center>)
-
-[//]: # (<img src="./docs/source/figures/magent/tiger_deer.gif" height=100" /> <br/> <font color="AAAAAA">Tiger Deer</font>)
-
-[//]: # (</center> </td>)
-
-[//]: # (<td> <center>)
-
-[//]: # (<img src="./docs/source/figures/magent/battlefield.gif" height=100" /> <br/> <font color="AAAAAA">Battle Field</font>)
-
-[//]: # (</center> </td>)
-
-[//]: # (<td> <center>)
-
-[//]: # (<br/> <font color="AAAAAA">...</font>)
-
-[//]: # (</center> </td>)
-
-[//]: # (</tr>)
-
-[//]: # (</table>)
-
-[//]: #
-[//]: # (</details>)
-
 ### [SMAC](https://xuance.readthedocs.io/en/latest/documents/api/environments/multi_agent_env/smac.html)
 
 <div align="center">
@@ -357,27 +317,20 @@ Paper link: [https://arxiv.org/pdf/2312.16248.pdf](https://arxiv.org/pdf/2312.16
 
 ## :point_right: Installation
 
-:computer: The library can be run at Linux, Windows, MacOS, and EulerOS, etc.
+:computer: XuanCe can run at Linux, Windows, MacOS, and EulerOS, etc.
 
-Before installing **XuanCe**, you should install [Anaconda](https://www.anaconda.com/download) to prepare a python
-environment.
-(Note: select a proper version of Anaconda from [**here**](https://repo.anaconda.com/archive/).)
+**Step 1**: Set up a Python environment
 
-After that, open a terminal and install **XuanCe** by the following steps.
+We recommend installing [Anaconda](https://www.anaconda.com/download) to manage your Python environment.
+(You can also download a specific Anaconda installer from [**here**](https://repo.anaconda.com/archive/).)
 
-**Step 1**: Create and activate a new conda environment (python>=3.8 is suggested):
+Then open a terminal and create/activate a new conda environment (Python >= 3.8 is recommended):
 
 ```bash
 conda create -n xuance_env python=3.8 && conda activate xuance_env
 ```
 
-**Step 2**: Install the mpi4py dependency:
-
-```bash
-conda install mpi4py
-```
-
-**Step 3**: Install the library:
+**Step 2**: Install XuanCe
 
 ```bash
 pip install xuance
@@ -399,11 +352,10 @@ Click [**here**](https://xuance.readthedocs.io/en/latest/documents/usage/install
 ```python
 import xuance
 
-runner = xuance.get_runner(method='dqn',
+runner = xuance.get_runner(algo='ppo',
                            env='classic_control',
-                           env_id='CartPole-v1',
-                           is_test=False)
-runner.run()
+                           env_id='CartPole-v1')
+runner.run(mode='train')
 ```
 
 ### Test the Model
@@ -411,11 +363,10 @@ runner.run()
 ```python
 import xuance
 
-runner_test = xuance.get_runner(method='dqn',
-                                env='classic_control',
-                                env_id='CartPole-v1',
-                                is_test=True)
-runner_test.run()
+runner = xuance.get_runner(algo='ppo',
+                           env='classic_control',
+                           env_id='CartPole-v1')
+runner.run(mode='test')
 ```
 
 ### Visualize the results
@@ -426,9 +377,10 @@ You can use tensorboard to visualize what happened in the training process. Afte
 automatically generated in the directory ".results/" and you should be able to see some training data after running the
 command.
 
-``` 
+```
 $ tensorboard --logdir ./logs/dqn/torch/CartPole-v0
 ```
+
 <div align="center">
 <img src="docs/source/_static/figures/log/tensorboard.png" width="700" height="auto" align=center />
 </div>
@@ -437,7 +389,7 @@ $ tensorboard --logdir ./logs/dqn/torch/CartPole-v0
 
 XuanCe also supports Weights & Biases (wandb) tools for users to visualize the results of the running implementation.
 
-How to use wandb online? :arrow_right: [https://github.com/wandb/wandb.git/](https://github.com/wandb/wandb.git/) 
+How to use wandb online? :arrow_right: [https://github.com/wandb/wandb.git/](https://github.com/wandb/wandb.git/)
 
 How to use wandb offline? :arrow_right: [https://github.com/wandb/server.git/](https://github.com/wandb/server.git/)
 
@@ -455,7 +407,7 @@ How to use wandb offline? :arrow_right: [https://github.com/wandb/server.git/](h
 - Github discussions: [https://github.com/orgs/agi-brain/discussions](https://github.com/orgs/agi-brain/discussions)
 - Discord invite link: [https://discord.gg/HJn2TBQS7y](https://discord.gg/HJn2TBQS7y)
 - Slack invite link: [https://join.slack.com/t/xuancerllib/](https://join.slack.com/t/xuancerllib/shared_invite/zt-2x2r98msi-iMX6mSVcgWwXYj95abcXIw)
-- QQ App's group number: 552432695 (Full), 153966755
+- QQ App's group number: 552432695, 153966755
 - WeChat account: "玄策 RLlib"
 
 (Note: You can also post your questions on [Stack Overflow](https://stackoverflow.com/).)
@@ -465,10 +417,13 @@ How to use wandb offline? :arrow_right: [https://github.com/wandb/server.git/](h
 
 <table rules="none" align="center"><tr>
 <td> <center>
-<img src="docs/source/_static/figures/QQ_group.jpeg" width="150" height="auto" /><br/><font color="AAAAAA">QQ group</font>
+<img src="docs/source/_static/figures/QQ_group_1.JPG" width="150" height="auto" /><br/><font color="AAAAAA">QQ group 1</font>
 </center></td>
 <td> <center>
-<img src="docs/source/_static/figures/Official_Account.jpg" width="150" height="auto" /> <br/> <font color="AAAAAA">Official account (WeChat)</font>
+<img src="docs/source/_static/figures/QQ_group_2.JPG" width="150" height="auto" /><br/><font color="AAAAAA">QQ group 2</font>
+</center></td>
+<td> <center>
+<img src="docs/source/_static/figures/Official_Account_Wechat.JPG" width="150" height="auto" /> <br/> <font color="AAAAAA">Official account (WeChat)</font>
 </center> </td>
 </tr>
 </table>

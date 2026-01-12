@@ -1,7 +1,8 @@
 from tqdm import tqdm
 from copy import deepcopy
 from argparse import Namespace
-from xuance.common import Union, Optional, BaseCallback
+from gymnasium.spaces import Space
+from xuance.common import Optional, BaseCallback
 from xuance.environment import DummyVecEnv, SubprocVecEnv
 from xuance.mindspore import Module
 from xuance.mindspore.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions
@@ -17,11 +18,15 @@ class PPOKL_Agent(OnPolicyAgent):
         envs: the vectorized environments.
         callback: A user-defined callback function object to inject custom logic during training.
     """
-    def __init__(self,
-                 config: Namespace,
-                 envs: Union[DummyVecEnv, SubprocVecEnv],
-                 callback: Optional[BaseCallback] = None):
-        super(PPOKL_Agent, self).__init__(config, envs, callback)
+    def __init__(
+            self,
+            config: Namespace,
+            envs: Optional[DummyVecEnv | SubprocVecEnv] = None,
+            observation_space: Optional[Space] = None,
+            action_space: Optional[Space] = None,
+            callback: Optional[BaseCallback] = None
+    ):
+        super(PPOKL_Agent, self).__init__(config, envs, observation_space, action_space, callback)
         self.auxiliary_info_shape = {"old_dist": None}
         self.memory = self._build_memory(self.auxiliary_info_shape)  # build memory
         self.policy = self._build_policy()  # build policy
@@ -66,16 +71,16 @@ class PPOKL_Agent(OnPolicyAgent):
 
     def train(self, train_steps):
         train_info = {}
-        obs = self.envs.buf_obs
+        obs = self.train_envs.buf_obs
         for _ in tqdm(range(train_steps)):
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
             policy_out = self.action(obs, return_dists=True, return_logpi=False)
             acts, vals = policy_out['actions'], policy_out['values']
-            next_obs, rewards, terminals, truncations, infos = self.envs.step(acts)
+            next_obs, rewards, terminals, truncations, infos = self.train_envs.step(acts)
             aux_info = self.get_aux_info(policy_out)
 
-            self.callback.on_train_step(self.current_step, envs=self.envs, policy=self.policy,
+            self.callback.on_train_step(self.current_step, envs=self.train_envs, policy=self.policy,
                                         obs=obs, policy_out=policy_out, acts=acts, vals=vals, next_obs=next_obs,
                                         rewards=rewards, terminals=terminals, truncations=truncations,
                                         infos=infos, aux_info=aux_info, train_steps=train_steps)
@@ -111,7 +116,7 @@ class PPOKL_Agent(OnPolicyAgent):
                             vals = self.get_terminated_values(next_obs, rewards)
                             self.memory.finish_path(vals[i], i)
                         obs[i] = infos[i]["reset_obs"]
-                        self.envs.buf_obs[i] = obs[i]
+                        self.train_envs.buf_obs[i] = obs[i]
                         self.current_episode[i] += 1
                         if self.use_wandb:
                             episode_info = {
@@ -125,12 +130,12 @@ class PPOKL_Agent(OnPolicyAgent):
                             }
                         self.log_infos(episode_info, self.current_step)
                         train_info.update(episode_info)
-                        self.callback.on_train_episode_info(envs=self.envs, policy=self.policy, env_id=i,
+                        self.callback.on_train_episode_info(envs=self.train_envs, policy=self.policy, env_id=i,
                                                             infos=infos, use_wandb=self.use_wandb,
                                                             current_step=self.current_step,
                                                             current_episode=self.current_episode,
                                                             train_steps=train_steps)
             self.current_step += self.n_envs
-            self.callback.on_train_step_end(self.current_step, envs=self.envs, policy=self.policy,
+            self.callback.on_train_step_end(self.current_step, envs=self.train_envs, policy=self.policy,
                                             train_steps=train_steps, train_info=train_info)
         return train_info

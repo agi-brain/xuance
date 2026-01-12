@@ -38,5 +38,5 @@ grad_clip_norm: 10
 eval_interval: 100000
 test_episode: 5
 
-log_dir: "./logs/masac/"
-model_dir: "./models/masac/"
+log_dir: "logs/masac/"
+model_dir: "models/masac/"

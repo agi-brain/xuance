@@ -57,5 +57,5 @@ rewnorm_range: 5
 test_steps: 10000
 eval_interval: 5000
 test_episode: 1
-log_dir: "./logs/c51/"
-model_dir: "./models/c51/"
+log_dir: "logs/c51/"
+model_dir: "models/c51/"

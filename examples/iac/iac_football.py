@@ -172,6 +172,6 @@ if __name__ == "__main__":
 
     runner = RunnerFootball(configs)
     if parser.benchmark:
-        runner.benchmark()
+        runner.run(mode='benchmark')
     else:
-        runner.run()
+        runner.run(mode='train')

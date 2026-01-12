@@ -82,8 +82,8 @@ Here we show a config file named "ppo_configs/ppo_mujoco_config.yaml" for MuJoCo
     test_steps: 10000  # The total steps for testing.
     eval_interval: 5000  # The evaluate interval when use benchmark method.
     test_episode: 5  # The test episodes.
-    log_dir: "./logs/ppo/"  # The main directory of log files.
-    model_dir: "./models/ppo/"  # The main directory of model files.
+    log_dir: "logs/ppo/"  # The main directory of log files.
+    model_dir: "models/ppo/"  # The main directory of model files.
 
 
 Step 2: Get the attributes of the example
@@ -116,8 +116,6 @@ which uses the Python package `argparse` to read the command line instructions a
     def parse_args():
         parser = argparse.ArgumentParser("Example of XuanCe: PPO for MuJoCo.")
         parser.add_argument("--env-id", type=str, default="InvertedPendulum-v4")
-        parser.add_argument("--test", type=int, default=0)
-        parser.add_argument("--benchmark", type=int, default=1)
 
         return parser.parse_args()
 
@@ -159,8 +157,6 @@ Step 3: Create environment, PPO Agent, and run the task
     def parse_args():
         parser = argparse.ArgumentParser("Example of XuanCe: PPO for MuJoCo.")
         parser.add_argument("--env-id", type=str, default="InvertedPendulum-v4")
-        parser.add_argument("--test", type=int, default=0)
-        parser.add_argument("--benchmark", type=int, default=1)
 
         return parser.parse_args()
 
@@ -183,50 +179,9 @@ Step 3: Create environment, PPO Agent, and run the task
         for k, v in train_information.items():
             print(f"{k}: {v}")
 
-        if configs.benchmark:
-            def env_fn():
-                configs_test = deepcopy(configs)
-                configs_test.parallels = configs_test.test_episode
-                return make_envs(configs_test)
-
-            train_steps = configs.running_steps // configs.parallels
-            eval_interval = configs.eval_interval // configs.parallels
-            test_episode = configs.test_episode
-            num_epoch = int(train_steps / eval_interval)
-
-            test_scores = Agent.test(env_fn, test_episode)
-            Agent.save_model(model_name="best_model.pth")
-            best_scores_info = {"mean": np.mean(test_scores),
-                                "std": np.std(test_scores),
-                                "step": Agent.current_step}
-            for i_epoch in range(num_epoch):
-                print("Epoch: %d/%d:" % (i_epoch, num_epoch))
-                Agent.train(eval_interval)
-                test_scores = Agent.test(env_fn, test_episode)
-
-                if np.mean(test_scores) > best_scores_info["mean"]:
-                    best_scores_info = {"mean": np.mean(test_scores),
-                                        "std": np.std(test_scores),
-                                        "step": Agent.current_step}
-                    # save best model
-                    Agent.save_model(model_name="best_model.pth")
-            # end benchmarking
-            print("Best Model Score: %.2f, std=%.2f" % (best_scores_info["mean"], best_scores_info["std"]))
-        else:
-            if configs.test:
-                def env_fn():
-                    configs.parallels = configs.test_episode
-                    return make_envs(configs)
-
-
-                Agent.load_model(path=Agent.model_dir_load)
-                scores = Agent.test(env_fn, configs.test_episode)
-                print(f"Mean Score: {np.mean(scores)}, Std: {np.std(scores)}")
-                print("Finish testing.")
-            else:
-                Agent.train(configs.running_steps // configs.parallels)
-                Agent.save_model("final_train_model.pth")
-                print("Finish training!")
+        Agent.train(configs.running_steps // configs.parallels)
+        Agent.save_model("final_train_model.pth")
+        print("Finish training!")
 
         Agent.finish()
 
@@ -235,7 +190,7 @@ After finishing the above three steps, you can run the `python_mujoco.py` file i
 
 .. code-block:: bash
 
-    python ppo_mujoco.py --env-id Ant-v4 --benchmark 1
+    python ppo_mujoco.py --env-id Ant-v4
 
 The source code of this example can be visited at the following link:
 

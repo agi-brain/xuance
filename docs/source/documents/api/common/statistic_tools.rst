@@ -1,4 +1,4 @@
-Statistic Tool
+statistic_tools
 ----------------------
 
 .. automodule:: xuance.common.statistic_tools

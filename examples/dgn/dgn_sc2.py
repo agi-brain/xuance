@@ -184,9 +184,9 @@ if __name__ == "__main__":
 
     runner = RunnerSC2(configs)
     if parser.benchmark:
-        runner.benchmark()
+        runner.run(mode='benchmark')
     else:
-        runner.run()
+        runner.run(mode='train')
 
 
 

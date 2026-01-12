@@ -1,33 +1,68 @@
 import os.path
 import wandb
 import socket
+import xuance
 import numpy as np
-from abc import ABC
+from abc import ABC, abstractmethod
 from pathlib import Path
 from argparse import Namespace
-from mpi4py import MPI
 from gymnasium.spaces import Dict, Space
 from torch.utils.tensorboard import SummaryWriter
-from xuance.common import get_time_string, create_directory, RunningMeanStd, space2shape, EPS, Optional, Union, \
-    BaseCallback
+from xuance.common import (
+    get_time_string, create_directory, set_device, RunningMeanStd, space2shape, EPS, Optional, BaseCallback
+)
 from xuance.environment import DummyVecEnv, SubprocVecEnv
 from xuance.mindspore import REGISTRY_Representation, REGISTRY_Learners, Module, ms
-from xuance.mindspore.utils import InitializeFunctions, NormalizeFunctions, ActivationFunctions
+from xuance.mindspore.utils import InitializeFunctions, NormalizeFunctions, ActivationFunctions, set_seed
 
 
 class Agent(ABC):
-    """Base class of agent for single-agent DRL.
+    """Base class for single-agent Deep Reinforcement Learning (DRL).
+
+    This class defines the common interface and shared infrastructure for
+    single-agent DRL algorithms in XuanCe. An Agent encapsulates the policy,
+    learner, and training/testing logic, while environments are managed
+    externally by the runner or provided explicitly by the user.
+
+    The agent can be initialized either with training environments (`envs`)
+    or, for inference/testing-only scenarios, without environments but with
+    explicit observation and action spaces.
 
     Args:
-        config: the Namespace variable that provides hyperparameters and other settings.
-        envs: the vectorized environments.
-        callback: A user-defined callback function object to inject custom logic during training.
+        config (Namespace): Configuration object containing hyperparameters,
+            runtime settings, and environment specifications.
+        envs (Optional[DummyVecEnv | SubprocVecEnv]): Vectorized environments
+            used for training. If None, the agent will not initialize training
+            environments and must be provided with `observation_space` and
+            `action_space` to build networks.
+        observation_space (Optional[gymnasium.spaces.Space]): Observation space
+            specification used to construct policy networks when `envs` is None.
+            Typically obtained from `test_envs.observation_space`.
+        action_space (Optional[gymnasium.spaces.Space]): Action space
+            specification used to construct policy networks when `envs` is None.
+            Typically obtained from `test_envs.action_space`.
+        callback (Optional[BaseCallback]): Optional callback object for injecting
+            custom logic during training or evaluation (e.g., logging, early
+            stopping, or custom hooks).
+
+    Notes:
+        - When `envs` is provided, the agent assumes a training context and
+          derives observation/action spaces from the environments.
+        - When `envs` is None, the agent can still be used for evaluation or
+          inference as long as the corresponding spaces are explicitly given.
+        - Environment creation and lifecycle management are intentionally
+          decoupled from the agent and handled by the runner or user code.
     """
 
-    def __init__(self,
-                 config: Namespace,
-                 envs: Union[DummyVecEnv, SubprocVecEnv],
-                 callback: Optional[BaseCallback] = None):
+    def __init__(
+            self,
+            config: Namespace,
+            envs: Optional[DummyVecEnv | SubprocVecEnv] = None,
+            observation_space: Optional[Space] = None,
+            action_space: Optional[Space] = None,
+            callback: Optional[BaseCallback] = None
+    ):
+        set_seed(config.seed)
         # Training settings.
         self.config = config
         self.use_rnn = config.use_rnn if hasattr(config, "use_rnn") else False
@@ -39,29 +74,38 @@ class Agent(ABC):
         self.training_frequency = config.training_frequency if hasattr(config, "start_training") else 1
         self.n_epochs = config.n_epochs if hasattr(config, "n_epochs") else 1
         self.static_graph = getattr(config, "static_graph", True)
-        self.device = config.device
+        self.device = self.config.device = set_device(self.config.dl_toolbox, self.config.device)
 
         # Environment attributes.
-        self.envs = envs
-        self.envs.reset()
-        self.episode_length = self.config.episode_length = envs.max_episode_steps
+        self.train_envs = envs
         self.render = config.render
         self.fps = config.fps
-        self.n_envs = envs.num_envs
-        self.observation_space = envs.observation_space
-        self.action_space = envs.action_space
+        if self.train_envs is None:
+            if observation_space is None or action_space is None:
+                raise ValueError("Please provide the observation_space and action_space when the envs is not provided."
+                                 "Or the networks cannot be built."
+                                 "You can get them from test_envs.observation_space and test_envs.action_space.")
+            self.n_envs = self.config.parallels
+            self.observation_space = observation_space
+            self.action_space = action_space
+            self.episode_length = self.config.episode_length = None
+        else:
+            self.train_envs.reset()
+            self.n_envs = self.train_envs.num_envs
+            self.episode_length = self.config.episode_length = self.train_envs.max_episode_steps
+            self.observation_space = self.train_envs.observation_space
+            self.action_space = self.train_envs.action_space
         self.current_step = 0
         self.current_episode = np.zeros((self.n_envs,), np.int32)
 
         # Set normalizations for observations and rewards.
-        self.comm = MPI.COMM_WORLD
-        self.obs_rms = RunningMeanStd(shape=space2shape(self.observation_space), comm=self.comm, use_mpi=False)
-        self.ret_rms = RunningMeanStd(shape=(), comm=self.comm, use_mpi=False)
+        self.obs_rms = RunningMeanStd(shape=space2shape(self.observation_space))
+        self.ret_rms = RunningMeanStd(shape=())
         self.use_obsnorm = config.use_obsnorm
         self.use_rewnorm = config.use_rewnorm
         self.obsnorm_range = config.obsnorm_range
         self.rewnorm_range = config.rewnorm_range
-        self.returns = np.zeros((self.envs.num_envs,), np.float32)
+        self.returns = np.zeros((self.train_envs.num_envs,), np.float32)
 
         # Prepare directories.
         time_string = get_time_string()
@@ -109,15 +153,19 @@ class Agent(ABC):
         self.memory: Optional[object] = None
         self.callback = callback or BaseCallback()
 
-    def save_model(self, model_name):
+        self.meta_data = dict(algo=self.config.agent, env=self.config.env_name, env_id=self.config.env_id,
+                              dl_toolbox=self.config.dl_toolbox, device=self.device, seed=self.config.seed,
+                              xuance_version=xuance.__version__)
+
+    def save_model(self, model_name, model_path=None):
         # save the neural networks
-        if not os.path.exists(self.model_dir_save):
-            os.makedirs(self.model_dir_save)
-        model_path = os.path.join(self.model_dir_save, model_name)
-        self.learner.save_model(model_path)
+        model_path = self.model_dir_save if model_path is None else model_path
+        if not os.path.exists(model_path):
+            os.makedirs(model_path)
+        self.learner.save_model(os.path.join(model_path, model_name))
         # save the observation status
         if self.use_obsnorm:
-            obs_norm_path = os.path.join(self.model_dir_save, "obs_rms.npy")
+            obs_norm_path = os.path.join(model_path, "obs_rms.npy")
             observation_stat = {'count': self.obs_rms.count,
                                 'mean': self.obs_rms.mean,
                                 'var': self.obs_rms.var}
@@ -218,19 +266,26 @@ class Agent(ABC):
             raise AttributeError(f"{representation_key} is not registered in REGISTRY_Representation.")
         return representation
 
+    @abstractmethod
     def _build_policy(self) -> Module:
         raise NotImplementedError
 
     def _build_learner(self, *args):
         return REGISTRY_Learners[self.config.learner](*args)
 
+    @abstractmethod
     def action(self, observations):
         raise NotImplementedError
 
-    def train(self, steps):
+    @abstractmethod
+    def train(self, train_steps: int) -> dict:
         raise NotImplementedError
 
-    def test(self, env_fn, steps):
+    @abstractmethod
+    def test(self,
+             test_episodes: int,
+             test_envs: Optional[DummyVecEnv | SubprocVecEnv] = None,
+             close_envs: bool = True):
         raise NotImplementedError
 
     def finish(self):
@@ -238,4 +293,4 @@ class Agent(ABC):
             wandb.finish()
         else:
             self.writer.close()
-        self.envs.close()
+        self.train_envs.close()

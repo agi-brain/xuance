@@ -68,8 +68,9 @@ class CommNet_Learner(IPPO_Learner):
         rnn_hidden_critic = {k: self.policy.critic_representation[k].init_hidden(bs_rnn) for k in self.model_keys}
 
         # feedforward
-        _, pi_dist_dict = self.policy(obs, agent_ids=IDs, avail_actions=avail_actions, rnn_hidden=rnn_hidden_actor, alive_ally=alive_ally)
-        _, value_pred_dict = self.policy.get_values(observation=obs, agent_ids=IDs, rnn_hidden=rnn_hidden_critic, alive_ally=alive_ally)
+        _, pi_dist_dict = self.policy(obs, agent_ids=IDs, avail_actions=avail_actions, rnn_hidden=rnn_hidden_actor,
+                                      alive_ally=alive_ally)
+        _, value_pred_dict = self.policy.get_values(critic_input, agent_ids=IDs, rnn_hidden=rnn_hidden_critic)
 
         # calculate losses for each agent
         loss_a, loss_e, loss_c = [], [], []

@@ -2,7 +2,8 @@ import numpy as np
 from tqdm import tqdm
 from copy import deepcopy
 from argparse import Namespace
-from xuance.common import Union, Optional, DummyOffPolicyBuffer, DummyOffPolicyBuffer_Atari, BaseCallback
+from gymnasium.spaces import Space
+from xuance.common import Optional, DummyOffPolicyBuffer, DummyOffPolicyBuffer_Atari, BaseCallback
 from xuance.environment import DummyVecEnv, SubprocVecEnv
 from xuance.mindspore import Module, Tensor
 from xuance.mindspore.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions
@@ -11,18 +12,15 @@ from xuance.mindspore.agents import Agent
 
 
 class NoisyDQN_Agent(Agent):
-    """The implementation of Noisy DQN agent.
-
-    Args:
-        config: the Namespace variable that provides hyperparameters and other settings.
-        envs: the vectorized environments.
-        callback: A user-defined callback function object to inject custom logic during training.
-    """
-    def __init__(self,
-                 config: Namespace,
-                 envs: Union[DummyVecEnv, SubprocVecEnv],
-                 callback: Optional[BaseCallback] = None):
-        super(NoisyDQN_Agent, self).__init__(config, envs, callback)
+    def __init__(
+            self,
+            config: Namespace,
+            envs: Optional[DummyVecEnv | SubprocVecEnv] = None,
+            observation_space: Optional[Space] = None,
+            action_space: Optional[Space] = None,
+            callback: Optional[BaseCallback] = None
+    ):
+        super(NoisyDQN_Agent, self).__init__(config, envs, observation_space, action_space, callback)
 
         self.start_noise, self.end_noise = config.start_noise, config.end_noise
         self.noise_scale = config.start_noise
@@ -56,7 +54,8 @@ class NoisyDQN_Agent(Agent):
         if self.config.policy == "Noisy_Q_network":
             policy = REGISTRY_Policy["Noisy_Q_network"](
                 action_space=self.action_space, representation=representation, hidden_size=self.config.q_hidden_size,
-                normalize=normalize_fn, initialize=initializer, activation=activation)
+                normalize=normalize_fn, initialize=initializer, activation=activation,
+                use_distributed_training=self.distributed_training)
         else:
             raise AttributeError(f"{self.config.agent} currently does not support the policy named {self.config.policy}.")
 
@@ -76,16 +75,16 @@ class NoisyDQN_Agent(Agent):
             train_info = self.learner.update(**samples)
         return train_info
 
-    def train(self, train_steps):
+    def train(self, train_steps: int) -> dict:
         train_info = {}
-        obs = self.envs.buf_obs
+        obs = self.train_envs.buf_obs
         for _ in tqdm(range(train_steps)):
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
             acts = self.action(obs)
-            next_obs, rewards, terminals, truncations, infos = self.envs.step(acts)
+            next_obs, rewards, terminals, truncations, infos = self.train_envs.step(acts)
 
-            self.callback.on_train_step(self.current_step, envs=self.envs, policy=self.policy,
+            self.callback.on_train_step(self.current_step, envs=self.train_envs, policy=self.policy,
                                         obs=obs, acts=acts, next_obs=next_obs, rewards=rewards,
                                         terminals=terminals, truncations=truncations, infos=infos,
                                         train_steps=train_steps)
@@ -106,7 +105,7 @@ class NoisyDQN_Agent(Agent):
                         pass
                     else:
                         obs[i] = infos[i]["reset_obs"]
-                        self.envs.buf_obs[i] = obs[i]
+                        self.train_envs.buf_obs[i] = obs[i]
                         self.current_episode[i] += 1
                         if self.use_wandb:
                             episode_info = {
@@ -120,7 +119,7 @@ class NoisyDQN_Agent(Agent):
                             }
                         self.log_infos(episode_info, self.current_step)
                         train_info.update(episode_info)
-                        self.callback.on_train_episode_info(envs=self.envs, policy=self.policy, env_id=i,
+                        self.callback.on_train_episode_info(envs=self.train_envs, policy=self.policy, env_id=i,
                                                             infos=infos, use_wandb=self.use_wandb,
                                                             current_step=self.current_step,
                                                             current_episode=self.current_episode,
@@ -131,12 +130,16 @@ class NoisyDQN_Agent(Agent):
                 self.noise_scale = self.noise_scale - self.delta_noise
             if terminals[0]:
                 self.policy.update_noise(self.noise_scale)
-            self.callback.on_train_step_end(self.current_step, envs=self.envs, policy=self.policy,
+            self.callback.on_train_step_end(self.current_step, envs=self.train_envs, policy=self.policy,
                                             train_steps=train_steps, train_info=train_info)
         return train_info
 
-    def test(self, env_fn, test_episodes):
-        test_envs = env_fn()
+    def test(self,
+             test_episodes: int,
+             test_envs: Optional[DummyVecEnv | SubprocVecEnv] = None,
+             close_envs: bool = True) -> list:
+        if test_envs is None:
+            raise ValueError("`test_envs` must be provided for evaluation.")
         num_envs = test_envs.num_envs
         videos, episode_videos, images = [[] for _ in range(num_envs)], [], None
         current_episode, current_step, scores, best_score = 0, 0, [], -np.inf
@@ -198,6 +201,7 @@ class NoisyDQN_Agent(Agent):
                                   current_step=current_step, current_episode=current_episode,
                                   scores=scores, best_score=best_score)
 
-        test_envs.close()
+        if close_envs:
+            test_envs.close()
 
         return scores

@@ -2,9 +2,10 @@ import os.path
 import wandb
 import socket
 import torch
+import xuance
 import numpy as np
 import torch.distributed as dist
-from abc import ABC
+from abc import ABC, abstractmethod
 from pathlib import Path
 from argparse import Namespace
 from operator import itemgetter
@@ -12,29 +13,68 @@ from gymnasium.spaces import Space
 from torch import nn
 from torch.utils.tensorboard import SummaryWriter
 from torch.distributed import destroy_process_group
-from xuance.common import get_time_string, create_directory, space2shape, Optional, List, Dict, Union, \
-    MultiAgentBaseCallback
+from xuance.common import (
+    get_time_string, create_directory, space2shape, set_device, Optional, List, Dict, Union, MultiAgentBaseCallback
+)
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
 from xuance.torch import ModuleDict, REGISTRY_Representation, REGISTRY_Learners, Module
 from xuance.torch.learners import learner
-from xuance.torch.utils import NormalizeFunctions, ActivationFunctions, init_distributed_mode
+from xuance.torch.utils import NormalizeFunctions, ActivationFunctions, init_distributed_mode, set_seed
 
 
 class MARLAgents(ABC):
-    """Base class of agents for MARL.
+    """Base class for Multi-Agent Reinforcement Learning (MARL) agents.
+
+    This class defines the common interface and shared functionalities for all
+    MARL agent implementations in XuanCe. It handles environment interaction,
+    logging, model saving/loading, distributed training setup, and representation
+    construction, while leaving algorithm-specific logic to subclasses.
+
+    Subclasses should implement the abstract methods to define:
+        - how experiences are stored,
+        - how actions are selected,
+        - how training and evaluation are performed.
 
     Args:
-        config: the Namespace variable that provides hyperparameters and other settings.
-        envs: the vectorized environments.
-        callback: A user-defined callback function object to inject custom logic during training.
+        config (Namespace):
+            A configuration object that contains hyperparameters and runtime
+            settings, such as algorithm name, environment name, learning rates,
+            device, seed, and logging options.
+        envs (Optional[DummyVecMultiAgentEnv | SubprocVecMultiAgentEnv]):
+            Vectorized multi-agent environments for training. If not provided,
+            environment-related attributes (e.g., observation/action spaces)
+            must be specified explicitly.
+        num_agents (Optional[int]):
+            Number of agents in the environment. Required if `envs` is None.
+        agent_keys (Optional[List[str]]):
+            Unique identifiers for each agent. Required if `envs` is None.
+        state_space (Optional[Space]):
+            Global state space used by centralized critics or state-based
+            representations. Required when `use_global_state` is enabled and
+            `envs` is None.
+        observation_space (Optional[Space]):
+            Observation space for each agent. Required if `envs` is None.
+        action_space (Optional[Space]):
+            Action space for each agent. Required if `envs` is None.
+        callback (Optional[MultiAgentBaseCallback]):
+            A user-defined callback object for injecting custom logic during
+            training and evaluation (e.g., logging, early stopping, debugging).
     """
-
-    def __init__(self,
-                 config: Namespace,
-                 envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv],
-                 callback: Optional[MultiAgentBaseCallback] = None):
+    def __init__(
+            self,
+            config: Namespace,
+            envs: Optional[DummyVecMultiAgentEnv | SubprocVecMultiAgentEnv] = None,
+            num_agents: Optional[int] = None,
+            agent_keys: Optional[List[str]] = None,
+            state_space: Optional[Space] = None,
+            observation_space: Optional[Space] = None,
+            action_space: Optional[Space] = None,
+            callback: Optional[MultiAgentBaseCallback] = None
+    ):
+        set_seed(config.seed)
         # Training settings.
         self.config = config
+        self.use_cnn = getattr(config, "use_cnn", False)
         self.use_rnn = getattr(config, "use_rnn", False)
         self.use_parameter_sharing = config.use_parameter_sharing
         self.use_actions_mask = getattr(config, "use_actions_mask", False)
@@ -53,23 +93,38 @@ class MARLAgents(ABC):
         self.start_training = getattr(config, "start_training", 1)
         self.training_frequency = getattr(config, "training_frequency", 1)
         self.n_epochs = getattr(config, "n_epochs", 1)
-        self.device = config.device
+        self.device = self.config.device = set_device(self.config.dl_toolbox, self.config.device)
 
         # Environment attributes.
-        self.envs = envs
-        try:
-            self.envs.reset()
-        except:
-            pass
-        self.n_agents = self.config.n_agents = envs.num_agents
+        self.train_envs = envs
         self.render = config.render
         self.fps = config.fps
-        self.n_envs = envs.num_envs
-        self.agent_keys = envs.agents
-        self.state_space = envs.state_space if self.use_global_state else None
-        self.observation_space = envs.observation_space
-        self.action_space = envs.action_space
-        self.episode_length = getattr(config, "episode_length", envs.max_episode_steps)
+        if self.train_envs is None:
+            if observation_space is None or action_space is None or agent_keys is None or num_agents is None:
+                raise ValueError(
+                    "Please provide the num_agents, agent_keys, observation_space, and action_space when the envs is not provided. Or the networks cannot be built."
+                    "You can get them from test_envs.num_agents, test_envs.agents, test_envs.observation_space, and test_envs.action_space.")
+            if self.use_global_state and state_space is None:
+                raise ValueError("Please provide the state_space when the envs is not provided.")
+            self.n_envs = self.config.parallels
+            self.n_agents = self.config.n_agents = num_agents
+            self.agent_keys = agent_keys
+            self.state_space = state_space if self.use_global_state else None
+            self.observation_space = observation_space
+            self.action_space = action_space
+            self.episode_length = None
+        else:
+            try:
+                self.train_envs.reset()
+            except:
+                pass
+            self.n_agents = self.config.n_agents = self.train_envs.num_agents
+            self.n_envs = self.train_envs.num_envs
+            self.agent_keys = self.train_envs.agents
+            self.state_space = self.train_envs.state_space if self.use_global_state else None
+            self.observation_space = self.train_envs.observation_space
+            self.action_space = self.train_envs.action_space
+            self.episode_length = getattr(config, "episode_length", self.train_envs.max_episode_steps)
         self.config.episode_length = self.episode_length
         self.current_step = 0
         self.current_episode = np.zeros((self.n_envs,), np.int32)
@@ -133,19 +188,24 @@ class MARLAgents(ABC):
         self.memory: Optional[object] = None
         self.callback = callback or MultiAgentBaseCallback()
 
+        self.meta_data = dict(algo=self.config.agent, env=self.config.env_name, env_id=self.config.env_id,
+                              dl_toolbox=self.config.dl_toolbox, device=self.device, seed=self.config.seed,
+                              xuance_version=xuance.__version__)
+
+    @abstractmethod
     def store_experience(self, *args, **kwargs):
         raise NotImplementedError
 
-    def save_model(self, model_name):
+    def save_model(self, model_name, model_path=None):
         if self.distributed_training:
             if self.rank > 0:
                 return
 
         # save the neural networks
-        if not os.path.exists(self.model_dir_save):
-            os.makedirs(self.model_dir_save)
-        model_path = os.path.join(self.model_dir_save, model_name)
-        self.learner.save_model(model_path)
+        model_path = self.model_dir_save if model_path is None else model_path
+        if not os.path.exists(model_path):
+            os.makedirs(model_path)
+        self.learner.save_model(os.path.join(model_path, model_name))
 
     def load_model(self, path, model=None):
         # load neural networks
@@ -223,6 +283,7 @@ class MARLAgents(ABC):
                 raise AttributeError(f"{representation_key} is not registered in REGISTRY_Representation.")
         return representation
 
+    @abstractmethod
     def _build_policy(self) -> Module:
         raise NotImplementedError
 
@@ -250,6 +311,10 @@ class MARLAgents(ABC):
         if self.use_parameter_sharing:
             key = self.agent_keys[0]
             obs_array = np.array([itemgetter(*self.agent_keys)(data) for data in obs_dict])
+            if self.use_cnn and len(obs_array.shape) > 3:  # obs_array consists of images
+                obs_shape_item = obs_array.shape[2:]
+            else:
+                obs_shape_item = (-1,)
             agents_id = torch.eye(self.n_agents).unsqueeze(0).expand(batch_size, -1, -1).to(self.device)
             avail_actions_array = np.array([itemgetter(*self.agent_keys)(data)
                                             for data in avail_actions_dict]) if self.use_actions_mask else None
@@ -259,7 +324,7 @@ class MARLAgents(ABC):
                 if self.use_actions_mask:
                     avail_actions_input = {key: avail_actions_array.reshape([bs, 1, -1])}
             else:
-                obs_input = {key: obs_array.reshape([bs, -1])}
+                obs_input = {key: obs_array.reshape([bs, *obs_shape_item])}
                 agents_id = agents_id.reshape(bs, -1)
                 if self.use_actions_mask:
                     avail_actions_input = {key: avail_actions_array.reshape([bs, -1])}
@@ -277,15 +342,19 @@ class MARLAgents(ABC):
                                            for k in self.agent_keys}
         return obs_input, agents_id, avail_actions_input
 
+    @abstractmethod
     def action(self, **kwargs):
         raise NotImplementedError
 
+    @abstractmethod
     def train_epochs(self, *args, **kwargs):
         raise NotImplementedError
 
+    @abstractmethod
     def train(self, **kwargs):
         raise NotImplementedError
 
+    @abstractmethod
     def test(self, **kwargs):
         raise NotImplementedError
 

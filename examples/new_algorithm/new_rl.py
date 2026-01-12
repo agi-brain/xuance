@@ -19,7 +19,7 @@ class MyPolicy(nn.Module):
         n_actions (int): The total number of discrete actions available to the agent in the environment.
         device (torch.device): The calculating device.
 
-    Note: The inputs to the __init__ method are not rigidly defined. You can extend or modify them as needed to accommodate additional settings or configurations specific to your application.
+    Note: The inputs to the __init__ algo are not rigidly defined. You can extend or modify them as needed to accommodate additional settings or configurations specific to your application.
     """
 
     def __init__(self, representation: nn.Module, hidden_dim: int, n_actions: int, device: torch.device):
@@ -106,7 +106,7 @@ class MyAgent(OffPolicyAgent):
     def _build_policy(self):
         # First create the representation module.
         representation = self._build_representation("Basic_MLP", self.observation_space, self.config)
-        # Build your customized policy module.
+        # Build your custom policy module.
         policy = MyPolicy(representation, 64, self.action_space.n, self.config.device)
         return policy
 
@@ -122,7 +122,7 @@ if __name__ == '__main__':
         agent.save_model("final_train_model.pth")  # After training, save the model.
     else:  # Testing mode.
         config.parallels = 1  # Test on one environment.
-        env_fn = lambda: make_envs(config)  # The method to create testing environment.
+        env_fn = lambda: make_envs(config)  # The algo to create testing environment.
         agent.load_model(agent.model_dir_load)  # Load pre-trained model.
         scores = agent.test(env_fn, config.test_episode)  # Test your agent.
 

@@ -102,7 +102,7 @@ class ConfigurableParameterSharingLearner(MADDPG_Learner):
         """
         Rebuild optimizers to support parameter sharing without gradient conflicts.
 
-        This method creates a single shared optimizer for all good agents when
+        This algo creates a single shared optimizer for all good agents when
         parameter sharing is enabled, while maintaining separate optimizers
         for adversary agents. This prevents gradient conflicts that occur when
         multiple agents try to update the same shared parameters simultaneously.
@@ -111,7 +111,7 @@ class ConfigurableParameterSharingLearner(MADDPG_Learner):
         instance, even if multiple agents reference the same network.
 
         Note:
-            This method modifies self.optimizer and self.scheduler dictionaries
+            This algo modifies self.optimizer and self.scheduler dictionaries
             to ensure proper parameter sharing without conflicts.
         """
         print("🔧 Rebuilding optimizers for parameter sharing...")
@@ -195,7 +195,7 @@ class ConfigurableParameterSharingLearner(MADDPG_Learner):
         """
         Update agents using the modified optimizer structure.
 
-        This method performs the standard MADDPG update but with careful
+        This algo performs the standard MADDPG update but with careful
         handling of shared optimizers to prevent duplicate updates.
 
         Args:
@@ -361,7 +361,7 @@ class ConfigurableParameterSharingAgents(MADDPG_Agents):
         """
         Build policy and configure parameter sharing based on configuration.
 
-        This method builds the standard MADDPG policy and then configures
+        This algo builds the standard MADDPG policy and then configures
         parameter sharing for good agents based on the configuration file.
 
         Returns:
@@ -385,7 +385,7 @@ class ConfigurableParameterSharingAgents(MADDPG_Agents):
         """
         Set up parameter sharing for good agents.
 
-        This method configures all good agents to share the same network
+        This algo configures all good agents to share the same network
         instances for both actor and critic networks, enabling parameter
         sharing while keeping adversary agents independent.
 
@@ -422,7 +422,7 @@ class ConfigurableParameterSharingAgents(MADDPG_Agents):
         """
         Verify that good agents have independent parameters.
 
-        This method checks that all good agents have separate network
+        This algo checks that all good agents have separate network
         instances, ensuring parameter independence.
 
         Args:

@@ -105,5 +105,5 @@ test_steps: 10000
 eval_interval: 200
 test_episode: 3
 
-log_dir: "./logs/dreamer-v2/"
-model_dir: "./models/dreamer-v2/"
+log_dir: "logs/dreamer-v2/"
+model_dir: "models/dreamer-v2/"

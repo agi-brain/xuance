@@ -1,7 +1,8 @@
 import numpy as np
 from argparse import Namespace
 from operator import itemgetter
-from xuance.common import List, Optional, Union, MultiAgentBaseCallback
+from gymnasium.spaces import Space
+from xuance.common import List, Optional, MultiAgentBaseCallback
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
 from xuance.mindspore import ops, Module
 from xuance.mindspore.utils import NormalizeFunctions, InitializeFunctions, ActivationFunctions
@@ -10,11 +11,20 @@ from xuance.mindspore.agents import OnPolicyMARLAgents
 
 
 class VDAC_Agents(OnPolicyMARLAgents):
-    def __init__(self,
-                 config: Namespace,
-                 envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv],
-                 callback: Optional[MultiAgentBaseCallback] = None):
-        super(VDAC_Agents, self).__init__(config, envs, callback)
+    def __init__(
+            self,
+            config: Namespace,
+            envs: Optional[DummyVecMultiAgentEnv | SubprocVecMultiAgentEnv] = None,
+            num_agents: Optional[int] = None,
+            agent_keys: Optional[List[str]] = None,
+            state_space: Optional[Space] = None,
+            observation_space: Optional[Space] = None,
+            action_space: Optional[Space] = None,
+            callback: Optional[MultiAgentBaseCallback] = None
+    ):
+        super(VDAC_Agents, self).__init__(
+            config, envs, num_agents, agent_keys, state_space, observation_space, action_space, callback
+        )
         self.state_space = envs.state_space
         self.mixer = config.mixer
 

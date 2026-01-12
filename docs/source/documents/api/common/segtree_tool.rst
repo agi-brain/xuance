@@ -1,4 +1,4 @@
-Segtree Tool
+segtree_tool
 ----------------------
 
 .. automodule:: xuance.common.segtree_tool

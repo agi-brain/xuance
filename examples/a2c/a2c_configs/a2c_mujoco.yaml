@@ -52,5 +52,5 @@ rewnorm_range: 5  # The range of reward if use reward normalization.
 test_steps: 10000  # The total steps for testing.
 eval_interval: 5000  # The evaluate interval when use benchmark method.
 test_episode: 5  # The test episodes.
-log_dir: "./logs/a2c/"  # The main directory of log files.
-model_dir: "./models/a2c/"  # The main directory of model files.
+log_dir: "logs/a2c/"  # The main directory of log files.
+model_dir: "models/a2c/"  # The main directory of model files.

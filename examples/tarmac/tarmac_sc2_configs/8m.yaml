@@ -14,7 +14,7 @@ agent: "TarMAC"
 env_name: "StarCraft2"
 env_id: "8m"
 env_seed: 1
-learner: "TarMac_Learner"
+learner: "TarMAC_Learner"
 policy: "TarMAC_Policy"
 representation: "Basic_RNN"
 vectorize: "Subproc_StarCraft2"
@@ -74,5 +74,5 @@ running_steps: 1000000
 eval_interval: 10000
 test_episode: 16
 
-log_dir: "./logs/tarmac/"
-model_dir: "./models/tarmac/"
+log_dir: "logs/tarmac/"
+model_dir: "models/tarmac/"

@@ -72,5 +72,5 @@ running_steps: 2000000
 eval_interval: 20000
 test_episode: 16
 
-log_dir: "./logs/commnet"
-model_dir: "./models/commnet"
+log_dir: "logs/commnet"
+model_dir: "models/commnet"

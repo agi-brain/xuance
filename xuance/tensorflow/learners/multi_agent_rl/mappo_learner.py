@@ -12,14 +12,14 @@ from xuance.tensorflow import tf, tk, Module
 from xuance.tensorflow.learners.multi_agent_rl.ippo_learner import IPPO_Learner
 
 
-class MAPPO_Clip_Learner(IPPO_Learner):
+class MAPPO_Learner(IPPO_Learner):
     def __init__(self,
                  config: Namespace,
                  model_keys: List[str],
                  agent_keys: List[str],
                  policy: Module,
                  callback):
-        super(MAPPO_Clip_Learner, self).__init__(config, model_keys, agent_keys, policy, callback)
+        super(MAPPO_Learner, self).__init__(config, model_keys, agent_keys, policy, callback)
 
     # @tf.function
     def forward_fn(self, *args):

@@ -54,6 +54,6 @@ use_actions_mask: False
 
 eval_interval: 250000
 test_episode: 50
-log_dir: "./logs/qmix/"
-model_dir: "./models/qmix/"
+log_dir: "logs/qmix/"
+model_dir: "models/qmix/"
 videos_dir: "./videos/qmix/"

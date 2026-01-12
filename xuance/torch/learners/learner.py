@@ -86,7 +86,7 @@ class Learner(ABC):
         model_names.sort()
         model_path = os.path.join(path, model_names[-1])
         self.policy.load_state_dict(torch.load(str(model_path), map_location={
-            f"cuda:{i}": self.device for i in range(MAX_GPUs)}))
+            f"cuda:{i}": self.device for i in range(MAX_GPUs)}, weights_only=True))
         print(f"Successfully load model from '{path}'.")
         return path
 
@@ -128,6 +128,7 @@ class LearnerMAS(ABC):
         self.use_linear_lr_decay = getattr(config, 'use_linear_lr_decay', False)
         self.end_factor_lr_decay = getattr(config, 'end_factor_lr_decay', 0.5)
         self.gamma = getattr(config, 'gamma', 0.99)
+        self.use_cnn = getattr(config, "use_cnn", False)
         self.use_rnn = getattr(config, 'use_rnn', False)
         self.use_actions_mask = getattr(config, 'use_actions_mask', False)
         self.policy = policy
@@ -196,6 +197,12 @@ class LearnerMAS(ABC):
                                              axis=1)).float().to(self.device)
                 msk_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['agent_mask']),
                                              axis=1)).float().to(self.device)
+
+            if self.use_cnn and len(obs_tensor.shape) > 3:  # obs_array consists of images
+                obs_shape_item = obs_tensor.shape[2:]
+            else:
+                obs_shape_item = (-1,)
+
             if self.use_rnn:
                 obs = {k: obs_tensor.reshape(bs, seq_length + 1, -1)}
                 if len(actions_tensor.shape) == 3:
@@ -210,7 +217,7 @@ class LearnerMAS(ABC):
                 IDs = torch.eye(self.n_agents).unsqueeze(1).unsqueeze(0).expand(
                     batch_size, -1, seq_length + 1, -1).reshape(bs, seq_length + 1, self.n_agents).to(self.device)
             else:
-                obs = {k: obs_tensor.reshape(bs, -1)}
+                obs = {k: obs_tensor.reshape(bs, *obs_shape_item)}
                 if len(actions_tensor.shape) == 2:
                     actions = {k: actions_tensor.reshape(bs)}
                 elif len(actions_tensor.shape) == 3:
@@ -221,7 +228,7 @@ class LearnerMAS(ABC):
                 terminals = {k: ter_tensor.reshape(batch_size, self.n_agents)}
                 agent_mask = {k: msk_tensor.reshape(bs)}
                 obs_next = {k: Tensor(np.stack(itemgetter(*self.agent_keys)(sample['obs_next']),
-                                               axis=1)).to(self.device).reshape(bs, -1)}
+                                               axis=1)).to(self.device).reshape(bs, *obs_shape_item)}
                 IDs = torch.eye(self.n_agents).unsqueeze(0).expand(
                     batch_size, -1, -1).reshape(bs, self.n_agents).to(self.device)
 

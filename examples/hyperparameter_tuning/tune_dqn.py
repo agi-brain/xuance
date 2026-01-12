@@ -1,7 +1,7 @@
 from xuance.common import HyperParameterTuner, set_hyperparameters
 from optuna.visualization import plot_optimization_history
 
-tuner = HyperParameterTuner(method='dqn',
+tuner = HyperParameterTuner(algo='dqn',
                             config_path='../dqn/dqn_configs/dqn_cartpole.yaml',
                             running_steps=10000,
                             test_episodes=2)

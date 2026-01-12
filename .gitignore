@@ -5,11 +5,11 @@ docs/.DS_Store
 **/.DS_Store
 logs/
 videos/
+models/
+results/
 dist/
 .eggs/
 xuance.egg-info/
-models/
-*.sh
 .VSCodeCounter/
 **/__pycache__
 rank_0/
@@ -29,3 +29,8 @@ mnist.npz
 
 *-checkpoint.ipynb
 /.ipynb_checkpoints
+
+Gemfile
+Gemfile.lock
+_config.yml
+_site/

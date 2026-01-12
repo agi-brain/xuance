@@ -7,14 +7,11 @@ from operator import itemgetter
 from xuance.tensorflow.agents import REGISTRY_Agents
 from xuance.environment import make_envs
 from xuance.environment.vector_envs import combine_actions
-from xuance.tensorflow.utils.operations import set_seed
 
 
 class RunnerCompetition(object):
     def __init__(self, configs):
         self.configs = configs
-        # set random seeds
-        set_seed(self.configs[0].seed)
 
         # build environments
         self.envs = make_envs(self.configs[0])

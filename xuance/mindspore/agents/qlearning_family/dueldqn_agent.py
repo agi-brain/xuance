@@ -1,5 +1,6 @@
 from argparse import Namespace
-from xuance.common import Union, Optional, BaseCallback
+from gymnasium.spaces import Space
+from xuance.common import Optional, BaseCallback
 from xuance.environment import DummyVecEnv, SubprocVecEnv
 from xuance.mindspore import Module
 from xuance.mindspore.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions
@@ -15,11 +16,15 @@ class DuelDQN_Agent(DQN_Agent):
         envs: the vectorized environments.
         callback: A user-defined callback function object to inject custom logic during training.
     """
-    def __init__(self,
-                 config: Namespace,
-                 envs: Union[DummyVecEnv, SubprocVecEnv],
-                 callback: Optional[BaseCallback] = None):
-        super(DuelDQN_Agent, self).__init__(config, envs, callback)
+    def __init__(
+            self,
+            config: Namespace,
+            envs: Optional[DummyVecEnv | SubprocVecEnv] = None,
+            observation_space: Optional[Space] = None,
+            action_space: Optional[Space] = None,
+            callback: Optional[BaseCallback] = None
+    ):
+        super(DuelDQN_Agent, self).__init__(config, envs, observation_space, action_space, callback)
 
     def _build_policy(self) -> Module:
         normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None

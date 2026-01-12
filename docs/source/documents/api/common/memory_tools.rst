@@ -1,4 +1,4 @@
-Memory Tools
+memory_tools
 ----------------------
 
 .. automodule:: xuance.common.memory_tools

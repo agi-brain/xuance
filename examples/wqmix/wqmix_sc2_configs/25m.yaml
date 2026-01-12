@@ -60,5 +60,5 @@ grad_clip_norm: 0.5
 eval_interval: 50000
 test_episode: 16
 
-log_dir: "./logs/wqmix/"
-model_dir: "./models/wqmix/"
+log_dir: "logs/wqmix/"
+model_dir: "models/wqmix/"

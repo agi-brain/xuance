@@ -48,5 +48,5 @@ use_actions_mask: False
 
 eval_interval: 10000
 test_episode: 5
-log_dir: "./logs/mfq/"
-model_dir: "./models/mfq/"
+log_dir: "logs/mfq/"
+model_dir: "models/mfq/"

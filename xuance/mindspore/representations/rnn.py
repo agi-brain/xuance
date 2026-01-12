@@ -44,7 +44,7 @@ class Basic_RNN(Module):
                                                self.dropout, self.initialize)
         return nn.SequentialCell(*layers), rnn_layer, input_shape
 
-    def forward(self, x: Tensor, h: Tensor, c: Tensor = None):
+    def construct(self, x: Tensor, h: Tensor, c: Tensor = None):
         mlp_output = self.mlp(self.input_norm(x)) if self.use_normalize else self.mlp(x)
         self.rnn.flatten_parameters()
         if self.lstm:

@@ -41,5 +41,5 @@ test_period: 100
 
 eval_interval: 100000
 test_episode: 5
-log_dir: "./logs/mfq/"
-model_dir: "./models/mfq/"
+log_dir: "logs/mfq/"
+model_dir: "models/mfq/"

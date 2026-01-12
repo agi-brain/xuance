@@ -1,4 +1,4 @@
-# Contributing to XuanCe
+# Contribute to XuanCe
 
 Thank you for your interest in contributing to **XuanCe**! We welcome and appreciate contributions from the community to help improve and expand this deep reinforcement learning library. By participating in this project, you help make XuanCe more robust, versatile, and user-friendly for researchers, developers, and enthusiasts alike.
 
@@ -107,7 +107,7 @@ To maintain consistency and quality across the project, please follow these guid
 
 ### Code of Conduct
 
-By participating in this project, you agree to abide by our [Code of Conduct](https://github.com/agi-brain/xuance/blob/master/CODE_OF_CONDUCT.md).
+By participating in this project, you agree to abide by our [Code of Conduct](https://github.com/agi-brain/xuance/blob/master/CODE_OF_CONDUCT.md). 
 Please read it to understand the expectations for participation.
 
 ### Contributing to Documentation

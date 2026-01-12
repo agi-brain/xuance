@@ -2,7 +2,8 @@ import numpy as np
 from tqdm import tqdm
 from copy import deepcopy
 from argparse import Namespace
-from xuance.common import Union, Optional, RecurrentOffPolicyBuffer, EpisodeBuffer, BaseCallback
+from gymnasium.spaces import Space
+from xuance.common import Optional, RecurrentOffPolicyBuffer, EpisodeBuffer, BaseCallback
 from xuance.environment import DummyVecEnv, SubprocVecEnv
 from xuance.tensorflow import Module
 from xuance.tensorflow.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions
@@ -11,19 +12,15 @@ from xuance.tensorflow.agents import OffPolicyAgent
 
 
 class DRQN_Agent(OffPolicyAgent):
-    """The implementation of Deep Recurrent Q-Netowrk (DRQN) agent.
-
-    Args:
-        config: the Namespace variable that provides hyperparameters and other settings.
-        envs: the vectorized environments.
-        callback: A user-defined callback function object to inject custom logic during training.
-    """
-
-    def __init__(self,
-                 config: Namespace,
-                 envs: Union[DummyVecEnv, SubprocVecEnv],
-                 callback: Optional[BaseCallback] = None):
-        super(DRQN_Agent, self).__init__(config, envs, callback)
+    def __init__(
+            self,
+            config: Namespace,
+            envs: Optional[DummyVecEnv | SubprocVecEnv] = None,
+            observation_space: Optional[Space] = None,
+            action_space: Optional[Space] = None,
+            callback: Optional[BaseCallback] = None
+    ):
+        super(DRQN_Agent, self).__init__(config, envs, observation_space, action_space, callback)
 
         self.start_greedy, self.end_greedy = config.start_greedy, config.end_greedy
         self.egreedy = config.start_greedy
@@ -82,9 +79,9 @@ class DRQN_Agent(OffPolicyAgent):
             rnn_hidden_next_np = rnn_hidden_next.numpy()
         return {"actions": actions, "rnn_hidden_next": rnn_hidden_next_np}
 
-    def train(self, train_steps):
+    def train(self, train_steps: int) -> dict:
         train_info = {}
-        obs = self.envs.buf_obs
+        obs = self.train_envs.buf_obs
         episode_data = [EpisodeBuffer() for _ in range(self.n_envs)]
         for i_env in range(self.n_envs):
             episode_data[i_env].obs.append(self._process_observation(obs[i_env]))
@@ -95,9 +92,9 @@ class DRQN_Agent(OffPolicyAgent):
             obs = self._process_observation(obs)
             policy_out = self.action(obs, self.egreedy, self.rnn_hidden)
             acts, self.rnn_hidden = policy_out['actions'], policy_out['rnn_hidden_next']
-            next_obs, rewards, terminals, truncations, infos = self.envs.step(acts)
+            next_obs, rewards, terminals, truncations, infos = self.train_envs.step(acts)
 
-            self.callback.on_train_step(self.current_step, envs=self.envs, policy=self.policy,
+            self.callback.on_train_step(self.current_step, envs=self.train_envs, policy=self.policy,
                                         obs=obs, policy_out=policy_out, acts=acts, next_obs=next_obs, rewards=rewards,
                                         terminals=terminals, truncations=truncations, infos=infos,
                                         train_steps=train_steps, rnn_hidden=self.rnn_hidden)
@@ -134,10 +131,10 @@ class DRQN_Agent(OffPolicyAgent):
                         self.memory.store(episode_data[i])
                         episode_data[i] = EpisodeBuffer()
                         obs[i] = infos[i]["reset_obs"]
-                        self.envs.buf_obs[i] = obs[i]
+                        self.train_envs.buf_obs[i] = obs[i]
                         episode_data[i].obs.append(self._process_observation(obs[i]))
 
-                        self.callback.on_train_episode_info(envs=self.envs, policy=self.policy, env_id=i,
+                        self.callback.on_train_episode_info(envs=self.train_envs, policy=self.policy, env_id=i,
                                                             memory=self.memory,
                                                             infos=infos, use_wandb=self.use_wandb,
                                                             current_step=self.current_step,
@@ -147,12 +144,16 @@ class DRQN_Agent(OffPolicyAgent):
             self.current_step += self.n_envs
             if self.egreedy > self.end_greedy:
                 self.egreedy = self.egreedy - self.delta_egreedy
-            self.callback.on_train_step_end(self.current_step, envs=self.envs, policy=self.policy,
+            self.callback.on_train_step_end(self.current_step, envs=self.train_envs, policy=self.policy,
                                             train_steps=train_steps, train_info=train_info)
         return train_info
 
-    def test(self, env_fn, test_episodes):
-        test_envs = env_fn()
+    def test(self,
+             test_episodes: int,
+             test_envs: Optional[DummyVecEnv | SubprocVecEnv] = None,
+             close_envs: bool = True) -> list:
+        if test_envs is None:
+            raise ValueError("`test_envs` must be provided for evaluation.")
         num_envs = test_envs.num_envs
         videos, episode_videos, images = [[] for _ in range(num_envs)], [], None
         current_episode, current_step, scores, best_score = 0, 0, [], -np.inf
@@ -216,6 +217,7 @@ class DRQN_Agent(OffPolicyAgent):
                                   current_step=current_step, current_episode=current_episode,
                                   scores=scores, best_score=best_score)
 
-        test_envs.close()
+        if close_envs:
+            test_envs.close()
 
         return scores

@@ -4,7 +4,8 @@ from copy import deepcopy
 from argparse import Namespace
 from operator import itemgetter
 from tensorflow import one_hot
-from xuance.common import List, Optional, Union, MultiAgentBaseCallback
+from gymnasium.spaces import Space
+from xuance.common import List, Optional, MultiAgentBaseCallback
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
 from xuance.tensorflow import tf, Module, Tensor
 from xuance.tensorflow.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions
@@ -13,19 +14,20 @@ from xuance.tensorflow.agents import OnPolicyMARLAgents
 
 
 class COMA_Agents(OnPolicyMARLAgents):
-    """The implementation of COMA agents.
-
-    Args:
-        config: the Namespace variable that provides hyperparameters and other settings.
-        envs: the vectorized environments.
-        callback: A user-defined callback function object to inject custom logic during training.
-    """
-
-    def __init__(self,
-                 config: Namespace,
-                 envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv],
-                 callback: Optional[MultiAgentBaseCallback] = None):
-        super(COMA_Agents, self).__init__(config, envs, callback)
+    def __init__(
+            self,
+            config: Namespace,
+            envs: Optional[DummyVecMultiAgentEnv | SubprocVecMultiAgentEnv] = None,
+            num_agents: Optional[int] = None,
+            agent_keys: Optional[List[str]] = None,
+            state_space: Optional[Space] = None,
+            observation_space: Optional[Space] = None,
+            action_space: Optional[Space] = None,
+            callback: Optional[MultiAgentBaseCallback] = None
+    ):
+        super(COMA_Agents, self).__init__(
+            config, envs, num_agents, agent_keys, state_space, observation_space, action_space, callback
+        )
         self.start_greedy, self.end_greedy = config.start_greedy, config.end_greedy
         self.egreedy = self.start_greedy
         self.delta_egreedy = (self.start_greedy - self.end_greedy) / config.decay_step_greedy
@@ -71,19 +73,32 @@ class COMA_Agents(OnPolicyMARLAgents):
 
     def store_experience(self, obs_dict, avail_actions, actions_dict, log_pi_a, rewards_dict, values_dict,
                          terminals_dict, info, **kwargs):
-        """
-        Store experience data into replay buffer.
+        """Store a batch of multi-agent transitions into the on-policy buffer.
 
-        Parameters:
-            obs_dict (List[dict]): Observations for each agent in self.agent_keys.
-            avail_actions (List[dict]): Actions mask values for each agent in self.agent_keys.
-            actions_dict (List[dict]): Actions for each agent in self.agent_keys.
-            log_pi_a (dict): The log of pi.
-            rewards_dict (List[dict]): Rewards for each agent in self.agent_keys.
-            values_dict (dict): Critic values for each agent in self.agent_keys.
-            terminals_dict (List[dict]): Terminated values for each agent in self.agent_keys.
-            info (List[dict]): Other information for the environment at current step.
-            **kwargs: Other inputs.
+        This method converts per-environment dictionaries (one dict per vector environment) into per-agent batched
+        arrays and writes them into the on-policy trajectory buffer. It also stores auxiliary fields such as agent masks
+        and (optionally) global state and action masks. For RNN-based policies, episode-step indices are recorded to
+        support episode-aware bookkeeping.
+
+        Args:
+            obs_dict (List[dict]): Observations for each parallel environment.
+                Each element is a dict keyed by `self.agent_keys`.
+            avail_actions (Optional[List[dict]]): Available-action masks for each parallel environment when
+                `use_actions_mask=True`. Each element is a dict keyed by `self.agent_keys`.
+                Can be None when action masking is disabled.
+            actions_dict (List[dict]): Actions executed by each agent for each parallel environment.
+                Each element is a dict keyed by `self.agent_keys`.
+            log_pi_a (dict): Log-probabilities of the actions under the current policy
+                (typically computed during rollout collection).
+            rewards_dict (List[dict]): Rewards for each agent for each parallel environment.
+                Each element is a dict keyed by `self.agent_keys`.
+            values_dict (dict): Value estimates produced by the critic for each agent
+                (used for advantage/return computation).
+            terminals_dict (List[dict]): Termination flags for each agent for each parallel environment.
+                Each element is a dict keyed by `self.agent_keys`.
+            info (List[dict]): Environment info for each parallel environment at the current step.
+                Must contain `agent_mask` for each agent key.
+            **kwargs: Optional extra fields. When `use_global_state=True`, this method expects `state` to be provided.
         """
         experience_data = {
             'obs': {k: np.array([data[k] for data in obs_dict]) for k in self.agent_keys},
@@ -112,23 +127,40 @@ class COMA_Agents(OnPolicyMARLAgents):
                rnn_hidden_critic: Optional[dict] = None,
                test_mode: Optional[bool] = False,
                **kwargs):
-        """
-        Returns actions for agents.
+        """Compute actions (and optional value/log-prob outputs) for multi-agent execution.
 
-        Parameters:
-            obs_dict (dict): Observations for each agent in self.agent_keys.
-            state (Optional[np.ndarray]): The global state.
-            avail_actions_dict (Optional[List[dict]]): Actions mask values, default is None.
-            rnn_hidden_actor (Optional[dict]): The RNN hidden states of actor representation.
-            rnn_hidden_critic (Optional[dict]): The RNN hidden states of critic representation.
-            test_mode (Optional[bool]): True for testing without noises.
+        This method performs a forward pass through the current multi-agent actor-critic policy to produce actions for
+        each agent in each parallel environment. When RNN-based representations are enabled, the method consumes and
+        returns recurrent hidden states for both the actor and the critic. During training (`test_mode=False`),
+        this method also computes critic values and action log-probabilities needed for on-policy updates.
+        During evaluation (`test_mode=True`), critic values and log-probabilities are not computed to reduce overhead.
+
+        Args:
+            obs_dict (List[dict]): Observations for each parallel environment.
+                Each element is a dict keyed by `self.agent_keys`.
+            state (Optional[np.ndarray]): Global state array used by centralized critics when `use_global_state=True`.
+                The expected shape depends on the environment wrapper.
+            avail_actions_dict (Optional[List[dict]]): Available-action masks for each parallel environment when
+                `use_actions_mask=True`. Each element is a dict keyed by `self.agent_keys`.
+                Can be None when action masking is disabled.
+            rnn_hidden_actor (Optional[dict]): Current actor RNN hidden states keyed by `self.model_keys`.
+                Required when `self.use_rnn` is True.
+            rnn_hidden_critic (Optional[dict]): Current critic RNN hidden states keyed by `self.model_keys`.
+                Required when `self.use_rnn` is True and values are requested.
+            test_mode (bool): Whether to run in evaluation mode. When True, only actions are produced and
+                training-specific outputs (values/log_pi) are omitted.
 
         Returns:
-            rnn_hidden_actor_new (dict): The new RNN hidden states of actor representation (if self.use_rnn=True).
-            rnn_hidden_critic_new (dict): The new RNN hidden states of critic representation (if self.use_rnn=True).
-            actions_dict (dict): The output actions.
-            log_pi_a (dict): The log of pi.
-            values_dict (dict): The evaluated critic values (when test_mode is False).
+            dict: A dictionary containing:
+                - rnn_hidden_actor (Optional[dict]): Updated actor RNN hidden states when `self.use_rnn` is True;
+                    otherwise the value returned by the policy (typically None).
+                - rnn_hidden_critic (Optional[dict]): Updated critic RNN hidden states when computed;
+                    otherwise an empty dict.
+                - actions (List[dict]): Actions for each parallel environment. Each element is a dict keyed by
+                    `self.agent_keys`.
+                - log_pi (dict): Log-probabilities of sampled actions for each agent when `test_mode=False`;
+                    otherwise an empty dict.
+                - values (dict): Critic value estimates for each agent when `test_mode=False`; otherwise an empty dict.
         """
         n_env = len(obs_dict)
         rnn_hidden_critic_new, log_pi_a_dict, values_dict, actions_out = {}, {}, {}, None
@@ -202,19 +234,26 @@ class COMA_Agents(OnPolicyMARLAgents):
                     state: Optional[np.ndarray] = None,
                     actions_n: Optional[np.ndarray] = None,
                     rnn_hidden_critic: Optional[dict] = None):
-        """
-        Returns critic values of one environment that finished an episode.
+        """Compute bootstrapped critic values for an environment that reached a boundary.
 
-        Parameters:
-            i_env (int): The index of environment.
-            obs_dict (dict): Observations for each agent in self.agent_keys.
-            state (Optional[np.ndarray]): The global state.
-            actions_n (Optional[np.ndarray]): The actions that were token.
-            rnn_hidden_critic (Optional[dict]): The RNN hidden states of critic representation.
+        This method evaluates the critic on the terminal/next observations of a specific
+        vectorized environment (`i_env`) and returns per-agent value estimates used for bootstrapping
+        when finalizing trajectories (e.g., for GAE/return computation).
+
+        Args:
+            i_env (int): Index of the vectorized environment that is finishing an episode or trajectory segment.
+            obs_dict (dict): Per-agent observations for the selected environment.
+                This dict is keyed by `self.agent_keys`.
+            state (Optional[np.ndarray]): Global state for the selected environment when `use_global_state=True`.
+                If provided, it should correspond to the same `i_env` instance.
+            rnn_hidden_critic (Optional[dict]): Current critic RNN hidden states keyed by `self.model_keys`.
+                Required when `self.use_rnn` is True.
 
         Returns:
-            rnn_hidden_critic_new (dict): The new RNN hidden states of critic representation (if self.use_rnn=True).
-            values_dict: The critic values.
+            Tuple[Optional[dict], dict]: A tuple of `(rnn_hidden_critic_new, values_dict)`:
+                - rnn_hidden_critic_new (Optional[dict]): Updated critic hidden states for the selected environment
+                    when `self.use_rnn` is True; otherwise the value returned by the critic (typically None).
+                - values_dict (dict): Per-agent critic value estimates keyed by `self.agent_keys`.
         """
         n_env = 1
         bs = n_env * self.n_agents
@@ -267,18 +306,35 @@ class COMA_Agents(OnPolicyMARLAgents):
         values_dict = {k: values_out[i] for i, k in enumerate(self.agent_keys)}
         return rnn_hidden_critic_new, values_dict
 
-    def train(self, n_steps):
-        """
-        Train the model for numerous steps.
+    def train(self, train_steps: int) -> dict:
+        """Run the main multi-agent on-policy training loop.
 
-        Parameters:
-            n_steps (int): The number of steps to train the model.
+        This method interacts with the training environments to collect fresh rollouts from the current policy, stores
+        transitions in the on-policy trajectory buffer, and triggers policy/value updates when the buffer is full.
+        Training advances in vectorized increments (one iteration corresponds to stepping all parallel environments once).
+
+        Args:
+            train_steps (int): Number of rollout collection iterations to run. Each iteration steps all parallel
+                environments once, so the total number of environment steps is approximately `train_steps * self.n_envs`.
+
+        Returns:
+            dict: A dictionary containing aggregated training information and logged metrics collected during
+                training (e.g., policy loss, value loss, entropy, KL divergence, and episode statistics).
+
+        Notes:
+            - This method assumes that training environments (`self.train_envs`) and the trajectory buffer `self.memory`
+                have already been initialized.
+            - When the buffer becomes full, the agent finalizes trajectories by computing bootstrapped terminal values
+                via `values_next` and calling `finish_path`, then performs `n_epochs` optimization passes over
+                mini-batches using `train_epochs`.
+            - Episode termination and reset logic are handled per environment,
+                and episode-level statistics are reported via callbacks.
         """
         train_info = {}
         if self.use_rnn:
-            with tqdm(total=n_steps) as process_bar:
+            with tqdm(total=train_steps) as process_bar:
                 step_start, step_last = deepcopy(self.current_step), deepcopy(self.current_step)
-                n_steps_all = n_steps * self.n_envs
+                n_steps_all = train_steps * self.n_envs
                 while step_last - step_start < n_steps_all:
                     self.run_episodes(None, n_episodes=self.n_envs, test_mode=False)
                     update_info = self.train_epochs(n_epochs=self.n_epochs)
@@ -286,33 +342,33 @@ class COMA_Agents(OnPolicyMARLAgents):
                     train_info.update(update_info)
 
                     self.callback.on_train_epochs_end(self.current_step, policy=self.policy, memory=self.memory,
-                                                      current_episode=self.current_episode, n_steps=n_steps,
+                                                      current_episode=self.current_episode, train_steps=train_steps,
                                                       update_info=update_info)
 
                     process_bar.update((self.current_step - step_last) // self.n_envs)
                     step_last = deepcopy(self.current_step)
-                process_bar.update(n_steps - process_bar.last_print_n)
-                self.callback.on_train_step_end(self.current_step, envs=self.envs, policy=self.policy,
-                                                n_steps=n_steps, train_info=train_info)
+                process_bar.update(train_steps - process_bar.last_print_n)
+                self.callback.on_train_step_end(self.current_step, envs=self.train_envs, policy=self.policy,
+                                                train_steps=train_steps, train_info=train_info)
             return train_info
 
-        obs_dict = self.envs.buf_obs
-        avail_actions = self.envs.buf_avail_actions if self.use_actions_mask else None
-        state = self.envs.buf_state if self.use_global_state else None
-        for _ in tqdm(range(n_steps)):
+        obs_dict = self.train_envs.buf_obs
+        avail_actions = self.train_envs.buf_avail_actions if self.use_actions_mask else None
+        state = self.train_envs.buf_state if self.use_global_state else None
+        for _ in tqdm(range(train_steps)):
             policy_out = self.action(obs_dict=obs_dict, state=state, avail_actions_dict=avail_actions, test_mode=False)
             actions_dict, log_pi_a_dict = policy_out['actions'], policy_out['log_pi']
             values_dict = policy_out['values']
-            next_obs_dict, rewards_dict, terminated_dict, truncated, info = self.envs.step(actions_dict)
-            next_state = self.envs.buf_state.copy() if self.use_global_state else None
-            next_avail_actions = self.envs.buf_avail_actions if self.use_actions_mask else None
+            next_obs_dict, rewards_dict, terminated_dict, truncated, info = self.train_envs.step(actions_dict)
+            next_state = self.train_envs.buf_state.copy() if self.use_global_state else None
+            next_avail_actions = self.train_envs.buf_avail_actions if self.use_actions_mask else None
 
-            self.callback.on_train_step(self.current_step, envs=self.envs, policy=self.policy,
+            self.callback.on_train_step(self.current_step, envs=self.train_envs, policy=self.policy,
                                         obs=obs_dict, policy_out=policy_out, acts=actions_dict, next_obs=next_obs_dict,
                                         rewards=rewards_dict, state=state, next_state=next_state,
                                         avail_actions=avail_actions, next_avail_actions=next_avail_actions,
                                         terminals=terminated_dict, truncations=truncated, infos=info,
-                                        n_steps=n_steps, values_dict=values_dict)
+                                        train_steps=train_steps, values_dict=values_dict)
 
             self.store_experience(obs_dict, avail_actions, actions_dict, log_pi_a_dict, rewards_dict, values_dict,
                                   terminated_dict, info, **{'state': state})
@@ -330,7 +386,7 @@ class COMA_Agents(OnPolicyMARLAgents):
             self.log_infos(update_info, self.current_step)
             train_info.update(update_info)
             obs_dict, avail_actions = deepcopy(next_obs_dict), deepcopy(next_avail_actions)
-            state = self.envs.buf_state if self.use_global_state else None
+            state = self.train_envs.buf_state if self.use_global_state else None
 
             for i in range(self.n_envs):
                 if all(terminated_dict[i].values()) or truncated[i]:
@@ -343,13 +399,13 @@ class COMA_Agents(OnPolicyMARLAgents):
                     self.memory.finish_path(i_env=i, value_next=value_next,
                                             value_normalizer=self.learner.value_normalizer)
                     obs_dict[i] = info[i]["reset_obs"]
-                    self.envs.buf_obs[i] = info[i]["reset_obs"]
+                    self.train_envs.buf_obs[i] = info[i]["reset_obs"]
                     if self.use_actions_mask:
                         avail_actions[i] = info[i]["reset_avail_actions"]
-                        self.envs.buf_avail_actions[i] = info[i]["reset_avail_actions"]
+                        self.train_envs.buf_avail_actions[i] = info[i]["reset_avail_actions"]
                     if self.use_global_state:
                         state[i] = info[i]["reset_state"]
-                        self.envs.buf_state[i] = info[i]["reset_state"]
+                        self.train_envs.buf_state[i] = info[i]["reset_state"]
                     self.current_episode[i] += 1
                     if self.use_wandb:
                         episode_info = {
@@ -364,29 +420,42 @@ class COMA_Agents(OnPolicyMARLAgents):
                         }
                     self.log_infos(episode_info, self.current_step)
                     train_info.update(episode_info)
-                    self.callback.on_train_episode_info(envs=self.envs, policy=self.policy, env_id=i,
+                    self.callback.on_train_episode_info(envs=self.train_envs, policy=self.policy, env_id=i,
                                                         infos=info, use_wandb=self.use_wandb,
                                                         current_step=self.current_step,
                                                         current_episode=self.current_episode,
-                                                        n_steps=n_steps)
+                                                        train_steps=train_steps)
             self.current_step += self.n_envs
-            self.callback.on_train_step_end(self.current_step, envs=self.envs, policy=self.policy,
-                                            n_steps=n_steps, train_info=train_info)
+            self.callback.on_train_step_end(self.current_step, envs=self.train_envs, policy=self.policy,
+                                            train_steps=train_steps, train_info=train_info)
         return train_info
 
-    def run_episodes(self, env_fn=None, n_episodes: int = 1, test_mode: bool = False):
-        """
-        Run some episodes when use RNN.
+    def run_episodes(self,
+                     n_episodes: int = 1,
+                     run_envs: Optional[DummyVecMultiAgentEnv | SubprocVecMultiAgentEnv] = None,
+                     test_mode: bool = False,
+                     close_envs: bool = True) -> list:
+        """Run vectorized multi-agent episodes for rollout collection or evaluation.
 
-        Parameters:
-            env_fn: The function that can make some testing environments.
-            n_episodes (int): Number of episodes.
-            test_mode (bool): Whether to test the model.
+        This method steps a vectorized multi-agent environment using the current actor-critic policy until `n_episodes`
+        episodes have completed. When `test_mode` is False, collected transitions are stored into the on-policy
+        trajectory buffer and episode boundaries are tracked for bootstrapping and advantage computation (GAE).
+        When `test_mode` is True, training-time outputs (values/log-probabilities) are skipped, exploration schedules
+        are disabled by default, and episode scores are returned; optional RGB-array frames can be recorded and logged as a video.
+
+        Args:
+            n_episodes (int): Number of completed episodes to run across all parallel environments.
+            run_envs (Optional[DummyVecMultiAgentEnv | SubprocVecMultiAgentEnv]): Vectorized environments to run.
+                If None, `self.train_envs` is used.
+            test_mode (bool): Whether to run in evaluation mode. When True, the trajectory buffer is not written and
+                only episode scores are collected.
+            close_envs (bool): Whether to close `run_envs` before returning when `test_mode` is True.
+                Set this to False if the caller manages the environment lifecycle externally.
 
         Returns:
-            Scores: The episode scores.
+            list: Episode scores (mean reward across agents) for each completed episode.
         """
-        envs = self.envs if env_fn is None else env_fn()
+        envs = self.train_envs if run_envs is None else run_envs
         num_envs = envs.num_envs
         videos, episode_videos, images = [[] for _ in range(num_envs)], [], None
         current_episode, current_step, scores, best_score = 0, 0, [0.0 for _ in range(num_envs)], -np.inf
@@ -471,7 +540,7 @@ class COMA_Agents(OnPolicyMARLAgents):
                             }
                         self.current_step += info[i]["episode_step"]
                         self.log_infos(episode_info, self.current_step)
-                        self.callback.on_train_episode_info(envs=self.envs, policy=self.policy, env_id=i,
+                        self.callback.on_train_episode_info(envs=self.train_envs, policy=self.policy, env_id=i,
                                                             infos=info, use_wandb=self.use_wandb,
                                                             current_step=self.current_step,
                                                             current_episode=self.current_episode,
@@ -503,16 +572,24 @@ class COMA_Agents(OnPolicyMARLAgents):
                                       current_step=current_step, current_episode=current_episode,
                                       scores=scores, best_score=best_score)
 
-            if env_fn is not None:
+            if close_envs:
                 envs.close()
         return scores
 
-    def train_epochs(self, n_epochs=1):
-        """
-        Train the model for numerous epochs.
+    def train_epochs(self, n_epochs: int = 1) -> dict:
+        """Update policies for multiple epochs using mini-batches from the trajectory buffer.
+
+        This method performs `n_epochs` optimization passes over the rollout data stored in `self.memory`.
+        For each epoch, it shuffles transition indices and iterates over mini-batches to compute gradient updates via
+        the learner. When RNN-based policies are enabled, the RNN-specific update method is used.
+
+        Args:
+            n_epochs (int): Number of optimization epochs to perform over the current trajectory buffer.
 
         Returns:
-            info_train (dict): The information of training.
+            dict: A dictionary of training metrics returned by the learner from the last mini-batch update (e.g., policy
+                loss, value loss, entropy, KL divergence). Implementations may include additional diagnostics depending
+                on the algorithm.
         """
         if self.egreedy >= self.end_greedy:
             self.egreedy = self.start_greedy - self.delta_egreedy * self.current_step

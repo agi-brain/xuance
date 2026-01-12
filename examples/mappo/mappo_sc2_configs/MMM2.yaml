@@ -70,5 +70,5 @@ running_steps: 10000000  # 10M
 eval_interval: 100000
 test_episode: 16
 
-log_dir: "./logs/mappo/"
-model_dir: "./models/mappo/"
+log_dir: "logs/mappo/"
+model_dir: "models/mappo/"

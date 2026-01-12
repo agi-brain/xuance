@@ -31,5 +31,5 @@ learning_rate: 0.0004  # The learning rate.
 
 eval_interval: 5000  # Evaluate interval when use benchmark method.
 test_episode: 5  # The test episodes.
-log_dir: "./logs/"  # The main directory of log files.
-model_dir: "./models/"  # The main directory of model files.
+log_dir: "logs/"  # The main directory of log files.
+model_dir: "models/"  # The main directory of model files.

@@ -48,5 +48,5 @@ rewnorm_range: 5
 test_steps: 10000
 eval_interval: 5000
 test_episode: 10
-log_dir: "./logs/td3_bc/walker2d"
-model_dir: "./models/td3_bc/walker2d"
+log_dir: "logs/td3_bc/walker2d"
+model_dir: "models/td3_bc/walker2d"

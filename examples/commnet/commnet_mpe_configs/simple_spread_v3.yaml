@@ -10,7 +10,7 @@ device: "cuda:0"  # Choose an calculating device. PyTorch: "cpu", "cuda:0"; Tens
 distributed_training: False  # Whether to use multi-GPU for distributed training.
 master_port: '12355'  # The master port for current experiment when use distributed training.
 
-agent: "IC3Net"  # The agent name.
+agent: "CommNet"  # The agent name.
 env_name: "mpe"  # The environment name.
 env_id: "simple_spread_v3"  # The environment id.
 env_seed: 1
@@ -75,5 +75,5 @@ running_steps: 10000000  # The total running steps.
 eval_interval: 100000  # The interval between every two trainings.
 test_episode: 5  # The episodes to test in each test period.
 
-log_dir: "./logs/commnet"
-model_dir: "./models/commnet"
+log_dir: "logs/commnet"
+model_dir: "models/commnet"

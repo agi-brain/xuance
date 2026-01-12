@@ -41,5 +41,5 @@ use_rewnorm: False  # Whether to use reward normalization trick.
 obsnorm_range: 5
 rewnorm_range: 5
 
-log_dir: "./logs/spdqn/"
-model_dir: "./models/spdqn/"
+log_dir: "logs/spdqn/"
+model_dir: "models/spdqn/"

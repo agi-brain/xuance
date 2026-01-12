@@ -314,19 +314,13 @@
 
 安装步骤如下（在终端 / 命令行下执行）：
 
-**步骤 1**：创建一个新的 conda 虚拟环境（建议 python>=3.8）：
+**步骤 1**：创建一个新的 conda 虚拟环境（建议 python>=3.8）并激活：
 
 ```bash
-conda create -n xuance_env python=3.8
+conda create -n xuance_env python=3.8 && conda activate xuance_env
 ```
 
-**步骤 2**：激活该环境：
-
-```bash
-conda activate xuance_env
-```
-
-**步骤 3**：安装本库：
+**步骤 2**：安装“玄策”：
 
 ```bash
 pip install xuance
@@ -347,11 +341,10 @@ pip install xuance
 ```python
 import xuance
 
-runner = xuance.get_runner(method='dqn',
+runner = xuance.get_runner(algo='ppo',
                            env='classic_control',
-                           env_id='CartPole-v1',
-                           is_test=False)
-runner.run()
+                           env_id='CartPole-v1')
+runner.run(mode='train')
 ```
 
 ### 测试模型
@@ -359,11 +352,10 @@ runner.run()
 ```python
 import xuance
 
-runner_test = xuance.get_runner(method='dqn',
-                                env='classic_control',
-                                env_id='CartPole-v1',
-                                is_test=True)
-runner_test.run()
+runner = xuance.get_runner(algo='ppo',
+                           env='classic_control',
+                           env_id='CartPole-v1')
+runner.run(mode='test')
 ```
 
 ### 可视化训练结果
@@ -397,7 +389,7 @@ XuanCe 同样支持 Weights & Biases (wandb) 工具来可视化结果。
 - GitHub discussions: https://github.com/orgs/agi-brain/discussions
 - Discord 邀请链接: https://discord.gg/HJn2TBQS7y
 - Slack 邀请链接: https://join.slack.com/t/xuancerllib/
-- QQ 1群：552432695（已满）
+- QQ 1群：552432695
 - QQ 2群：153966755
 - 微信公众号：“玄策 RLlib”
 
@@ -409,10 +401,13 @@ XuanCe 同样支持 Weights & Biases (wandb) 工具来可视化结果。
 
 <table rules="none" align="center"><tr>
 <td> <center>
-<img src="docs/source/_static/figures/QQ_group.jpeg" width="150" height="auto" /><br/><font color="AAAAAA">QQ 群</font>
+<img src="docs/source/_static/figures/QQ_group_1.JPG" width="150" height="auto" /><br/><font color="AAAAAA">QQ 1群</font>
 </center></td>
 <td> <center>
-<img src="docs/source/_static/figures/Official_Account.jpg" width="150" height="auto" /> <br/> <font color="AAAAAA">微信公众号</font>
+<img src="docs/source/_static/figures/QQ_group_2.JPG" width="150" height="auto" /><br/><font color="AAAAAA">QQ 2群</font>
+</center></td>
+<td> <center>
+<img src="docs/source/_static/figures/Official_Account_Wechat.JPG" width="150" height="auto" /> <br/> <font color="AAAAAA">微信公众号</font>
 </center> </td>
 </tr>
 </table>

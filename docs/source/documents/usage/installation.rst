@@ -21,13 +21,7 @@ Install XuanCe
 
     conda create -n xuance_env python=3.8 && conda activate xuance_env
 
-**Step 2**: Install the ``mpi4py`` dependency.
-
-.. code-block:: bash
-    
-    conda install mpi4py
-
-**Step 3**: Install ``xuance``.
+**Step 2**: Install ``xuance``.
 
 .. tabs::
 

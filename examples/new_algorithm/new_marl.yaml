@@ -67,5 +67,5 @@ gain: 1.0  # Gain value for network initialization
 test_steps: 50000
 eval_interval: 100000  # Evaluation interval
 test_episode: 10  # Episodes for testing
-log_dir: "./logs/my_marl_agent/"
-model_dir: "./models/my_marl_agent/"
+log_dir: "logs/my_marl_agent/"
+model_dir: "models/my_marl_agent/"

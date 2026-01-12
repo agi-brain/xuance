@@ -1,5 +1,6 @@
 from argparse import Namespace
-from xuance.common import Union, Optional, MultiAgentBaseCallback
+from gymnasium.spaces import Space
+from xuance.common import List, Optional, MultiAgentBaseCallback
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
 from xuance.mindspore import Module
 from xuance.mindspore.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions
@@ -16,11 +17,20 @@ class QMIX_Agents(OffPolicyMARLAgents):
         callback: A user-defined callback function object to inject custom logic during training.
     """
 
-    def __init__(self,
-                 config: Namespace,
-                 envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv],
-                 callback: Optional[MultiAgentBaseCallback] = None):
-        super(QMIX_Agents, self).__init__(config, envs, callback)
+    def __init__(
+            self,
+            config: Namespace,
+            envs: Optional[DummyVecMultiAgentEnv | SubprocVecMultiAgentEnv] = None,
+            num_agents: Optional[int] = None,
+            agent_keys: Optional[List[str]] = None,
+            state_space: Optional[Space] = None,
+            observation_space: Optional[Space] = None,
+            action_space: Optional[Space] = None,
+            callback: Optional[MultiAgentBaseCallback] = None
+    ):
+        super(QMIX_Agents, self).__init__(
+            config, envs, num_agents, agent_keys, state_space, observation_space, action_space, callback
+        )
         self.state_space = envs.state_space
         self.use_global_state = True
 

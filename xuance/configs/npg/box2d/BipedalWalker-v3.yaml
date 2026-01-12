@@ -39,5 +39,5 @@ rewnorm_range: 5
 test_steps: 10000
 eval_interval: 10000
 test_episode: 1
-log_dir: "./logs/npg/"
-model_dir: "./models/npg/"
+log_dir: "logs/npg/"
+model_dir: "models/npg/"

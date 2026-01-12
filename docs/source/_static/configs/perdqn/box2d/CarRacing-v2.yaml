@@ -45,5 +45,5 @@ PER_beta0: 0.4
 test_steps: 10000
 eval_interval: 100000
 test_episode: 1
-log_dir: "./logs/perdqn/"
-model_dir: "./models/perdqn/"
+log_dir: "logs/perdqn/"
+model_dir: "models/perdqn/"

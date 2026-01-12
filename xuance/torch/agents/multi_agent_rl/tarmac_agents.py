@@ -1,27 +1,37 @@
 from argparse import Namespace
-from typing import Union, Optional, Dict
+from typing import Union, Optional, Dict, List
 import gymnasium as gym
 import numpy as np
 import torch
 from gymnasium import Space
 from torch.nn import Module, ModuleDict
 
-from xuance.common import space2shape, MultiAgentBaseCallback
+from xuance.common import space2shape
 
 from xuance.torch import REGISTRY_Policy
 from xuance.torch.communications.attention_comm import TarMAC
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
+from xuance.common import MultiAgentBaseCallback
 
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
 from xuance.torch.agents.multi_agent_rl.ic3net_agents import IC3Net_Agents
 
 
 class TarMAC_Agents(IC3Net_Agents):
-    def __init__(self,
-                 config: Namespace,
-                 envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv],
-                 callback: Optional[MultiAgentBaseCallback] = None):
-        super(TarMAC_Agents, self).__init__(config, envs, callback)
+    def __init__(
+            self,
+            config: Namespace,
+            envs: Optional[DummyVecMultiAgentEnv | SubprocVecMultiAgentEnv] = None,
+            num_agents: Optional[int] = None,
+            agent_keys: Optional[List[str]] = None,
+            state_space: Optional[Space] = None,
+            observation_space: Optional[Space] = None,
+            action_space: Optional[Space] = None,
+            callback: Optional[MultiAgentBaseCallback] = None
+    ):
+        super(TarMAC_Agents, self).__init__(
+            config, envs, num_agents, agent_keys, state_space, observation_space, action_space, callback
+        )
         self.policy = self._build_policy()
         self.memory = self._build_memory()  # build memory
         self.learner = self._build_learner(self.config, self.model_keys, self.agent_keys, self.policy, callback)
@@ -49,13 +59,20 @@ class TarMAC_Agents(IC3Net_Agents):
         activation = ActivationFunctions[self.config.activation]
         device = self.device
         agent = self.config.agent
-
+        max_length = max(space.shape[0] for space in self.observation_space.values())
+        self.observation_space = {agent: gym.spaces.Box(-np.inf, np.inf, (max_length,), dtype=np.float32)
+                                  for agent in self.observation_space}
         # build representations
         communicator = self._build_communicator(self.observation_space)
         space_actor_in = {agent: gym.spaces.Box(-np.inf, np.inf, (self.config.recurrent_hidden_size,), dtype=np.float32)
                           for agent in self.observation_space}
+        if self.use_global_state:
+            dim_obs_all = sum(self.state_space.shape)
+        else:
+            dim_obs_all = sum([sum(self.observation_space[k].shape) for k in self.agent_keys])
+        space_critic_in = {k: (dim_obs_all,) for k in self.agent_keys}
         A_representation = self._build_representation(self.config.representation, space_actor_in, self.config)
-        C_representation = self._build_representation(self.config.representation, space_actor_in, self.config)
+        C_representation = self._build_representation(self.config.representation, space_critic_in, self.config)
 
         # build policies
         if self.config.policy == "TarMAC_Policy":

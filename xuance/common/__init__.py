@@ -1,7 +1,7 @@
 from typing import Optional, Union, List, Dict, Sequence, Callable, Any, Tuple, SupportsFloat, Type, Mapping
 from xuance.common.callback import BaseCallback, MultiAgentBaseCallback
 from xuance.common.common_tools import EPS, recursive_dict_update, get_configs, get_arguments, get_runner, \
-    create_directory, combined_shape, space2shape, discount_cumsum, get_time_string
+    create_directory, combined_shape, space2shape, set_device, discount_cumsum, get_time_string
 from xuance.common.statistic_tools import mpi_mean, mpi_moments, RunningMeanStd
 from xuance.common.memory_tools import create_memory, store_element, sample_batch, Buffer, EpisodeBuffer, \
     DummyOnPolicyBuffer, DummyOnPolicyBuffer_Atari, DummyOffPolicyBuffer, DummyOffPolicyBuffer_Atari, \
@@ -20,7 +20,7 @@ __all__ = [
     "BaseCallback", "MultiAgentBaseCallback",
     # common_tools
     "EPS", "recursive_dict_update", "get_configs", "get_arguments", "get_runner", "create_directory", "combined_shape",
-    "space2shape", "discount_cumsum", "get_time_string",
+    "space2shape", "set_device", "discount_cumsum", "get_time_string",
     # statistic_tools
     "mpi_mean", "mpi_moments", "RunningMeanStd",
     # memory_tools

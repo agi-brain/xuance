@@ -45,6 +45,7 @@ from .multi_agent_rl import IPPO_Agents
 from .multi_agent_rl import MAPPO_Agents
 from .multi_agent_rl import ISAC_Agents
 from .multi_agent_rl import MASAC_Agents
+from .multi_agent_rl import ITD3_Agents
 from .multi_agent_rl import MATD3_Agents
 
 from .multi_agent_rl import CommNet_Agents
@@ -101,6 +102,7 @@ REGISTRY_Agents = {
     "MAPPO": MAPPO_Agents,
     "ISAC": ISAC_Agents,
     "MASAC": MASAC_Agents,
+    "ITD3": ITD3_Agents,
     "MATD3": MATD3_Agents,
     "IC3Net": IC3Net_Agents,
     "CommNet": CommNet_Agents,

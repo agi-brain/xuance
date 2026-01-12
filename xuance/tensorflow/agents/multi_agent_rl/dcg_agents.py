@@ -1,7 +1,8 @@
 import numpy as np
 from tqdm import tqdm
 from argparse import Namespace
-from xuance.common import Union, DummyOffPolicyBuffer, DummyOffPolicyBuffer_Atari
+from gymnasium.spaces import Space
+from xuance.common import List, Optional, MultiAgentBaseCallback
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
 from xuance.tensorflow import tk, Module
 from xuance.tensorflow.agents import MARLAgents
@@ -9,10 +10,20 @@ from xuance.tensorflow.learners import DQN_Learner
 
 
 class DCG_Agents(MARLAgents):
-    def __init__(self,
-                 config: Namespace,
-                 envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv],
-                 device: str = "cpu:0"):
+    def __init__(
+            self,
+            config: Namespace,
+            envs: Optional[DummyVecMultiAgentEnv | SubprocVecMultiAgentEnv] = None,
+            num_agents: Optional[int] = None,
+            agent_keys: Optional[List[str]] = None,
+            state_space: Optional[Space] = None,
+            observation_space: Optional[Space] = None,
+            action_space: Optional[Space] = None,
+            callback: Optional[MultiAgentBaseCallback] = None
+    ):
+        super(DCG_Agents, self).__init__(
+            config, envs, num_agents, agent_keys, state_space, observation_space, action_space, callback
+        )
         self.gamma = config.gamma
         self.start_greedy, self.end_greedy = config.start_greedy, config.end_greedy
         self.egreedy = self.start_greedy

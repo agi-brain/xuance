@@ -148,15 +148,24 @@ class IC3Net_Learner(CommNet_Learner):
             alive_ally = {k: agent_mask[k].unsqueeze(-1) for k in self.model_keys}
 
         if self.use_parameter_sharing:
+            key = self.model_keys[0]
             filled = filled.unsqueeze(1).expand(batch_size, self.n_agents, seq_len).reshape(bs_rnn, seq_len)
+            joint_obs = obs[key].reshape(batch_size, self.n_agents, seq_len, -1).transpose(
+                1, 2).reshape(batch_size, seq_len, -1)
+            joint_obs = joint_obs.unsqueeze(1).expand(-1, self.n_agents, -1, -1).reshape(bs_rnn, seq_len, -1)
+            critic_input = {key: joint_obs}
+        else:
+            joint_obs = self.get_joint_input(obs, (batch_size, seq_len, -1))
+            critic_input = {k: joint_obs for k in self.agent_keys}
 
         # feedfowrd
         rnn_hidden_actor = {k: self.policy.actor_representation[k].init_hidden(bs_rnn) for k in self.model_keys}
         rnn_hidden_critic = {k: self.policy.critic_representation[k].init_hidden(bs_rnn) for k in self.model_keys}
 
         # feedforward
-        _, pi_dist_dict, gate_log_probs = self.policy(obs, agent_ids=IDs, avail_actions=avail_actions, rnn_hidden=rnn_hidden_actor, alive_ally=alive_ally)
-        _, value_pred_dict = self.policy.get_values(observation=obs, agent_ids=IDs, rnn_hidden=rnn_hidden_critic, alive_ally=alive_ally)
+        _, pi_dist_dict, gate_log_probs = self.policy(obs, agent_ids=IDs, avail_actions=avail_actions,
+                                                      rnn_hidden=rnn_hidden_actor, alive_ally=alive_ally)
+        _, value_pred_dict = self.policy.get_values(observation=critic_input, agent_ids=IDs, rnn_hidden=rnn_hidden_critic)
 
         # calculate losses for each agent
         loss_gate, loss_a, loss_e, loss_c = [], [], [], []
