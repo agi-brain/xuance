@@ -352,11 +352,10 @@ Click [**here**](https://xuance.readthedocs.io/en/latest/documents/usage/install
 ```python
 import xuance
 
-runner = xuance.get_runner(algo='dqn',
+runner = xuance.get_runner(algo='ppo',
                            env='classic_control',
-                           env_id='CartPole-v1',
-                           is_test=False)
-runner.run()
+                           env_id='CartPole-v1')
+runner.run(mode='train')
 ```
 
 ### Test the Model
@@ -364,11 +363,10 @@ runner.run()
 ```python
 import xuance
 
-runner_test = xuance.get_runner(algo='dqn',
-                                env='classic_control',
-                                env_id='CartPole-v1',
-                                is_test=True)
-runner_test.run()
+runner = xuance.get_runner(algo='ppo',
+                           env='classic_control',
+                           env_id='CartPole-v1')
+runner.run(mode='test')
 ```
 
 ### Visualize the results
@@ -444,26 +442,3 @@ If you use XuanCe in your research or development, please cite the paper:
   year={2023}
 }
 ```
-
-[//]: #
-[//]: #
-[//]: #
-[//]: #
-[//]: #
-[//]: #
-[//]: #
-[//]: #
-[//]: #
-[//]: #
-[//]: #
-[//]: #
-[//]: #
-[//]: #
-[//]: #
-[//]: #
-[//]: #
-[//]: #
-[//]: #
-[//]: #
-[//]: #
-[//]: #

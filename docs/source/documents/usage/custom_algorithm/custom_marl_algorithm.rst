@@ -353,18 +353,9 @@ Finally, we can create the agent and make environments to train the model.
         envs = make_envs(config)  # Make vectorized multi-agent environments
         agents = MyMARLAgents(config, envs)  # Instantiate your pre-build multi-agent class
 
-        if not config.test_mode:  # Training mode.
-            train_steps = config.running_steps // config.parallels
-            agents.train(train_steps)  # Train your agents
-            agents.save_model("final_train_model.pth")  # After training, save the model
-        else:  # Testing mode.
-            def env_fn():
-                config.parallels = config.test_episode
-                return make_envs(config)
-
-            agents.load_model(path=agents.model_dir_load)  # Load pre-trained model
-            scores = agents.test(env_fn, config.test_episode)  # Test your agents
-            print(f"Mean Score: {np.array(scores).mean()}, Std: {np.array(scores).std()}")
+        train_steps = config.running_steps // config.parallels
+        agents.train(train_steps)  # Train your agents
+        agents.save_model("final_train_model.pth")  # After training, save the model
 
         agents.finish()  # Finish the agents
         envs.close()  # Close the environments

@@ -170,14 +170,8 @@ Finally, we can create the agent and make environments to train the model.
         envs = make_envs(config)  # Make vectorized environments.
         agent = MyAgent(config, envs)  # Instantiate your pre-build agent class.
 
-        if not config.test_mode:  # Training mode.
-            agent.train(config.running_steps // envs.num_envs)  # Train your agent.
-            agent.save_model("final_train_model.pth")  # After training, save the model.
-        else:  # Testing mode.
-            config.parallels = 1  # Test on one environment.
-            env_fn = lambda: make_envs(config)  # The method to create testing environment.
-            agent.load_model(agent.model_dir_load)  # Load pre-trained model.
-            scores = agent.test(env_fn, config.test_episode)  # Test your agent.
+        agent.train(config.running_steps // envs.num_envs)  # Train your agent.
+        agent.save_model("final_train_model.pth")  # After training, save the model.
 
         agent.finish()  # Finish the agent.
         envs.close()  # Close the environments.
