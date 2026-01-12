@@ -1,6 +1,6 @@
 agent: "NoisyDQN"
 env_name: "Box2D"
-env_id: "CarRacing-v2"
+env_id: "CarRacing-v3"
 env_seed: 1
 vectorize: "DummyVecEnv"
 learner: "DQN_Learner"

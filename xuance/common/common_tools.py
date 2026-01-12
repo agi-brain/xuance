@@ -71,7 +71,7 @@ def get_arguments(algo, env, env_id, config_path=None, parser_args=None, is_test
     ''' get the arguments from xuance/config/basic.yaml '''
     config_basic = get_configs(os.path.join(config_path_default, "basic.yaml"))
 
-    ''' get the arguments from, e.g., xuance/config/dqn/box2d/CarRacing-v2.yaml '''
+    ''' get the arguments from, e.g., xuance/config/dqn/box2d/CarRacing-v3.yaml '''
     if type(algo) == list:  # for different groups of MARL algorithms.
         if config_path is None:
             config_path = []

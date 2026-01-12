@@ -17,7 +17,7 @@ class Gym_Env(gym.Wrapper):
     """
 
     def __init__(self, config, **kwargs):
-        if config.env_id == "CarRacing-v2":
+        if config.env_id == "CarRacing-v3":
             kwargs['continuous'] = False
         self.env = gym.make(config.env_id, render_mode=config.render_mode, **kwargs)
         self.env.action_space.seed(seed=config.env_seed)

@@ -9,7 +9,7 @@ from xuance.torch.agents import NoisyDQN_Agent
 
 def parse_args():
     parser = argparse.ArgumentParser("Example of XuanCe: NoisyDQN for Car Racing.")
-    parser.add_argument("--env-id", type=str, default="CarRacing-v2")
+    parser.add_argument("--env-id", type=str, default="CarRacing-v3")
     parser.add_argument("--test", type=int, default=0)
     parser.add_argument("--benchmark", type=int, default=1)
 
