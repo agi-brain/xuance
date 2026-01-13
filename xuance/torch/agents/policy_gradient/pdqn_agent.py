@@ -217,12 +217,8 @@ class PDQN_Agent(Agent):
                 if best_score < episode_score:
                     best_score = episode_score
                 episode_score = 0
-                if self.config.test_mode:
-                    print("Episode: %d, Score: %.2f" % (current_episode, episode_score))
-            current_step += 1
 
-        if self.config.test_mode:
-            print("Best Score: %.2f" % (best_score))
+            current_step += 1
 
         test_info = {
             "Test-Episode-Rewards/Mean-Score": np.mean(scores),

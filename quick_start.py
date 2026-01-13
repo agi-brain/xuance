@@ -14,9 +14,9 @@ def parse_args():
 
 if __name__ == '__main__':
     parser = parse_args()
-    runner = xuance.get_runner(algo=parser.method,
+    runner = xuance.get_runner(algo=parser.algo,
                                env=parser.env,
                                env_id=parser.env_id,
                                parser_args=parser,
                                is_test=parser.test)
-    runner.run(mode="benchmark")
+    runner.run(mode="train")

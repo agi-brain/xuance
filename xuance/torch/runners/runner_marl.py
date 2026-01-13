@@ -48,7 +48,10 @@ class RunnerMARL(RunnerBase):
         if self.rank == 0:
             self.agent.load_model(model_path)
             scores = self.agent.test(test_episodes=test_episodes, test_envs=test_envs, close_envs=True)
+            print("\n---------------------Testing Results--------------------")
+            print("Test Episode Scores: ", scores)
             print(f"Mean Score: {np.mean(scores)}, Std: {np.std(scores)}")
+            print("Best Score: %.2f" % max(scores))
             print("Finish testing.")
 
     def _run_benchmark(self, **kwargs):

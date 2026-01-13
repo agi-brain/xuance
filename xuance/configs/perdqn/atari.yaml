@@ -47,7 +47,6 @@ rewnorm_range: 5
 PER_alpha: 0.5
 PER_beta0: 0.4
 
-test_steps: 10000
 eval_interval: 500000
 test_episode: 1
 log_dir: "logs/perdqn/"

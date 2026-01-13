@@ -291,8 +291,7 @@ class DreamerV3Agent(OffPolicyAgent):
                         if best_score < infos[i]["episode_score"]:
                             best_score = infos[i]["episode_score"]
                             episode_videos = videos[i].copy()
-                        if self.config.test_mode:
-                            print("Episode: %d, Score: %.2f" % (current_episode, infos[i]["episode_score"]))
+
             if len(done_idxes) > 0:
                 test_player.init_states(reset_envs=done_idxes, num_envs=num_envs)
 
@@ -300,9 +299,6 @@ class DreamerV3Agent(OffPolicyAgent):
             # time, height, width, channel -> time, channel, height, width
             videos_info = {"Videos_Test": np.array([episode_videos], dtype=np.uint8).transpose((0, 1, 4, 2, 3))}
             self.log_videos(info=videos_info, fps=self.fps, x_index=self.current_step)  # fps cannot work
-
-        if self.config.test_mode:
-            print("Best Score: %.2f" % best_score)
 
         test_info = {
             "Test-Episode-Rewards/Mean-Score": np.mean(scores),

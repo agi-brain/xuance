@@ -43,7 +43,6 @@ use_rewnorm: False  # Whether to use reward normalization trick.
 obsnorm_range: 5
 rewnorm_range: 5
 
-test_steps: 10000
 eval_interval: 100000
 test_episode: 3
 log_dir: "logs/ddpg/"

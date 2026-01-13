@@ -44,7 +44,6 @@ use_rewnorm: False # this for online RL
 obsnorm_range: 5
 rewnorm_range: 5
 
-test_steps: 10000
 eval_interval: 5000
 test_episode: 10
 log_dir: "logs/td3_bc/halfcheetah"
