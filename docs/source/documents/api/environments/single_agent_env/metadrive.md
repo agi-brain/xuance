@@ -47,10 +47,8 @@ def parse_args():
     parser.add_argument("--algo", type=str, default="ppo")
     parser.add_argument("--env", type=str, default="metadrive")
     parser.add_argument("--env-id", type=str, default="your_map")
-    parser.add_argument("--test", type=int, default=0)
     parser.add_argument("--device", type=str, default="cuda:0")
     parser.add_argument("--parallels", type=int, default=10)
-    parser.add_argument("--benchmark", type=int, default=1)
     parser.add_argument("--test-episode", type=int, default=5)
 
     return parser.parse_args()
@@ -61,12 +59,8 @@ if __name__ == '__main__':
     runner = get_runner(algo=parser.method,
                         env=parser.env,
                         env_id=parser.env_id,
-                        parser_args=parser,
-                        is_test=parser.test)
-    if parser.benchmark:
-        runner.benchmark()
-    else:
-        runner.run()
+                        parser_args=parser)
+    runner.run(mode='benchmark')
 ```
 
 Open the terminal the type the python command:
@@ -80,7 +74,7 @@ Then, let your GPU and CPU work and wait for the training process to finish.
 Finally, you can test the trained model and view the effectiveness.
 
 ```{code-block} bash
-python demo_metadrive.py --benchmark 0 --test 1
+python demo_metadrive.py
 ```
 
 ```{eval-rst}

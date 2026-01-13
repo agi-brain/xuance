@@ -191,7 +191,7 @@ import xuance
 runner = xuance.get_runner(algo='ppo',  # Note: The default yaml file uses PPO_Clip
                            env='classic_control',  # Choices: classic_control, box2d, atari, etc.
                            env_id='CartPole-v1',  # Choices: CartPole-v1, Pendulum-v1, etc.
-                           is_test=False)
+                           )
 runner.run()  # Or runner.benchmark()
 ```
 
@@ -207,7 +207,7 @@ runner = xuance.get_runner(algo='ppo',
                        env='classic_control',  # Choices: classic_control, box2d, atari, etc.
                        env_id='CartPole-v1',  # Choices: CartPole-v1, Pendulum-v1, etc.
                        config_path="my_config.yaml",  # The path of my_config.yaml file should be correct.
-                       is_test=False)
+                       )
 runner.run()  # Or runner.benchmark()
 ```
 

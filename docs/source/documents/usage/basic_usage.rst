@@ -92,7 +92,7 @@ Test
 -----------------------
 
 After completing the algorithm training, XuanCe will save the model files and training log information in the designated directory.
-Users can specify "is_test=True" to perform testing.
+Users can specify "mode='test'" to perform testing.
 
 .. code-block:: python
 

@@ -251,7 +251,7 @@ import xuance
 runner = xuance.get_runner(algo='qtran',
                            env='sc2',  # Choices: mpe.
                            env_id='8m', # Choices: 1c3sc5, 3m, MMM2, 25m.
-                           is_test=False)
+                           )
 runner.run()  # Or runner.benchmark()
 ```
 
@@ -266,7 +266,7 @@ runner = xuance.get_runner(algo='qtran',
                        env='sc2',  # Choices: mpe.
                        env_id='8m', # Choices: 1c3sc5, 3m, MMM2, 25m.
                        config_path="my_config.yaml",  # The path of my_config.yaml file should be correct.
-                       is_test=False)
+                       )
 runner.run()  # Or runner.benchmark()
 ```
 

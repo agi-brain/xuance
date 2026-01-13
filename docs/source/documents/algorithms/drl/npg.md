@@ -100,7 +100,7 @@ import xuance
 runner = xuance.get_runner(algo='npg',
                            env='classic_control',  # Choices: classic_control, box2d, atari.
                            env_id='CartPole-v1',  # Choices: CartPole-v1, LunarLander-v3, ALE/Breakout-v5, etc.
-                           is_test=False)
+                           )
 runner.run()  # Or runner.benchmark()
 ```
 
@@ -115,7 +115,7 @@ runner = xuance.get_runner(algo='npg',
                        env='classic_control',  # Choices: classic_control, box2d, atari.
                        env_id='CartPole-v1',  # Choices: CartPole-v1, LunarLander-v3, ALE/Breakout-v5, etc.
                        config_path="my_config.yaml",  # The path of my_config.yaml file should be correct.
-                       is_test=False)
+                       )
 runner.run()  # Or runner.benchmark()
 ```
 

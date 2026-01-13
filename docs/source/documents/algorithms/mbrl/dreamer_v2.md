@@ -97,7 +97,7 @@ import xuance
 runner = xuance.get_runner(algo='DreamerV2',
                            env='classic_control',  # Choices: classic_control, atari.
                            env_id='CartPole-v1',  # Choices: CartPole-v1, Pendulum-v1, ALE/Pong-v5.
-                           is_test=False)
+                           )
 runner.run()  # Or runner.benchmark()
 ```
 
@@ -112,7 +112,7 @@ runner = xuance.get_runner(algo='DreamerV2',
                            env='classic_control',  # Choices: classic_control, atari.
                            env_id='CartPole-v1',  # Choices: CartPole-v1, Pendulum-v1, ALE/Pong-v5.
                            config_path="my_config.yaml",  # The path of my_config.yaml file should be correct.
-                           is_test=False)
+                           )
 runner.run()  # Or runner.benchmark()
 ```
 

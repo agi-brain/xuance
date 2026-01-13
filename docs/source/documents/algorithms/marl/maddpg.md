@@ -108,7 +108,7 @@ import xuance
 runner = xuance.get_runner(algo='maddpg',
                            env='mpe',  # Choices: mpe, Drones, NewEnv_MAS.
                            env_id='simple_spread_v3',  # Choices: simple_spread_v3, etc.
-                           is_test=False)
+                           )
 runner.run()  # Or runner.benchmark()
 ```
 
@@ -119,7 +119,7 @@ import xuance
 runner = xuance.get_runner(algo=["maddpg", "iddpg"],
                            env='mpe',  # Choices: mpe.
                            env_id='simple_push_v3',  # Choices: simple_adversary_v3, simple_push_v3, etc.
-                           is_test=False)
+                           )
 runner.run()
 ```
 
@@ -137,7 +137,7 @@ runner = xuance.get_runner(algo='maddpg',
                        env='mpe',  # Choices: mpe, Drones, NewEnv_MAS.
                        env_id='simple_spread_v3',  # Choices: simple_spread_v3, etc.
                        config_path="my_config.yaml",  # The path of my_config.yaml file should be correct.
-                       is_test=False)
+                       )
 runner.run()  # Or runner.benchmark()
 ```
 

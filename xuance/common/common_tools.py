@@ -52,7 +52,7 @@ def get_configs(file_dir):
     return config_dict
 
 
-def get_arguments(algo, env, env_id, config_path=None, parser_args=None, is_test=False):
+def get_arguments(algo, env, env_id, config_path=None, parser_args=None):
     """Get arguments from ``.yaml`` files
     Args:
         algo: the algorithm name that will be implemented,
@@ -99,10 +99,6 @@ def get_arguments(algo, env, env_id, config_path=None, parser_args=None, is_test
         args = [SN(**config_i) for config_i in configs]
         for arg in args:
             arg.device = set_device(arg.dl_toolbox, arg.device)
-        if is_test:  # for test mode
-            for i_args in range(len(args)):
-                args[i_args].test_mode = int(is_test)
-                args[i_args].parallels = 1
     elif type(algo) == str:
         if config_path is None:
             file_name_env_id = env + "/" + env_id + ".yaml"
@@ -131,20 +127,18 @@ def get_arguments(algo, env, env_id, config_path=None, parser_args=None, is_test
             configs['env_id'] = env_id
         args = SN(**configs)
         args.device = set_device(args.dl_toolbox, args.device)
-        if is_test:
-            args.test_mode = int(is_test)
-            args.parallels = 1
     else:
         raise AttributeError("Unsupported agent_name or env_name!")
     return args
 
 
-def get_runner(algo,
-               env,
-               env_id,
-               config_path=None,
-               parser_args=None,
-               is_test=False):
+def get_runner(
+        algo,
+        env,
+        env_id,
+        config_path=None,
+        parser_args=None
+):
     """
     This method returns a runner that specified by the users according to the inputs.
     Args:
@@ -153,12 +147,11 @@ def get_runner(algo,
         env_id: The name of the scenario in the environment.
         config_path: default is None, if None, the default configs (``xuance/configs/.../*.yaml``) will be loaded.
         parser_args: arguments that specified by parser tools.
-        is_test: default is False, if True, it will load the models and run the environment with rendering.
 
     Returns:
         An implementation of a runner that enables to run the DRL algorithms.
     """
-    args = get_arguments(algo, env, env_id, config_path, parser_args, is_test)
+    args = get_arguments(algo, env, env_id, config_path, parser_args)
 
     if type(args) == list:
         device = args[0].device
@@ -388,4 +381,3 @@ def get_time_string():
     t_sec = str(t_now.tm_sec).zfill(2)
     time_string = f"{t_year}_{t_month}{t_day}_{t_hour}{t_min}{t_sec}"
     return time_string
-

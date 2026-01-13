@@ -71,7 +71,7 @@ import xuance
 runner = xuance.get_runner(algo='iac',
                     env='mpe',  
                     env_id='simple_spread_v3',  
-                    is_test=False)
+                    )
 runner.run() 
 ```
 ### Run With Self-defined Configs
@@ -85,7 +85,7 @@ runner = xuance.get_runner(algo='iac',
                        env='mpe', 
                        env_id='simple_spread_v3',  
                        config_path="my_config.yaml",  # The path of my_config.yaml file should be correct.
-                       is_test=False)
+                       )
 runner.run()
 ```
 ### Run With Custom Environment

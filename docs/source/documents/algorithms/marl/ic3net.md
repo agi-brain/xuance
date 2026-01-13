@@ -195,7 +195,7 @@ import xuance
 runner = xuance.get_runner(algo='ic3net',
                            env='mpe',  # Choices: mpe, sc2
                            env_id='simple_spread_v3',  # Choices: simple_spread_v3, etc
-                           is_test=False)
+                           )
 runner.run()
 ```
 
@@ -210,7 +210,7 @@ runner = xp.get_runner(algo='ic3net',
                        env='mpe',  # Choices: mpe, sc2
                        env_id='simple_spread_v3',  # Choices: simple_spread_v3, etc
                        config_path="my_config.yaml",  # The path of my_config.yaml file should be correct.
-                       is_test=False)
+                       )
 runner.run()  # Or runner.benchmark()
 ```
 

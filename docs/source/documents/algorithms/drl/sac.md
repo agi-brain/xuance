@@ -50,7 +50,7 @@ import xuance
 runner = xuance.get_runner(algo='SAC',
                            env='classic_control',  # Choices: claasi_control, box2d, atari.
                            env_id='Pendulum-v1', 
-                           is_test=False)
+                           )
 runner.run()  # Or runner.benchmark()
 ```
 ### Run With Self-defined Configs
@@ -62,7 +62,7 @@ runner = xuance.get_runner(algo='SAC',
                        env='classic_control',  # Choices: claasi_control, box2d, .
                        env_id='Pendulum-v1',  
                        config_path="my_config.yaml",  # The path of my_config.yaml file should be correct.
-                       is_test=False)
+                       )
 runner.run()  # Or runner.benchmark()
 ```
 To learn more about the configurations, please visit the

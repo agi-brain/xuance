@@ -90,7 +90,7 @@ import xuance
 runner = xuance.get_runner(algo='mpdqn',
                            env='parameterised_action_space',  # Choices: parameterised_action_space
                            env_id='Platform-v0',  # Choices: Platform-v0, Goal-v0, etc.
-                           is_test=False)
+                           )
 runner.run()  # Or runner.benchmark()
 ```
 ### Run With Self-defined Configs
@@ -103,7 +103,7 @@ runner = xp.get_runner(algo='mpdqn',
                        env='parameterised_action_space',  # Choices: parameterised_action_space
                        env_id='Platform-v0',  # Choices: Platform-v0, Goal-v0, etc.
                        config_path="my_mpdqn_config.yaml",  # The path of my_mpdqn_config.yaml file should be correct.
-                       is_test=False)
+                       )
 runner.run()  # Or runner.benchmark()
 ```
 

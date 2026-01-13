@@ -73,10 +73,8 @@ Create a python file named, e.g., "demo_drones.py".
         parser.add_argument("--algo", type=str, default="iddpg")
         parser.add_argument("--env", type=str, default="drones")
         parser.add_argument("--env-id", type=str, default="MultiHoverAviary")
-        parser.add_argument("--test", type=int, default=0)
         parser.add_argument("--device", type=str, default="cuda:0")
         parser.add_argument("--parallels", type=int, default=10)
-        parser.add_argument("--benchmark", type=int, default=1)
         parser.add_argument("--test-episode", type=int, default=5)
 
         return parser.parse_args()
@@ -86,12 +84,8 @@ Create a python file named, e.g., "demo_drones.py".
         runner = get_runner(algo=parser.method,
                             env=parser.env,
                             env_id=parser.env_id,
-                            parser_args=parser,
-                            is_test=parser.test)
-        if parser.benchmark:
-            runner.benchmark()
-        else:
-            runner.run()
+                            parser_args=parser)
+        runner.run(mode='benchmark')
 
 Open the terminal and type the python command:
 
@@ -104,7 +98,7 @@ Open the terminal and type the python command:
 
 .. code-block:: bash
 
-    python demo_drones.py --benchmark 0 --test 1
+    python demo_drones.py
 
 .. raw:: html
 

@@ -11,6 +11,5 @@ However, during the process of obtaining the runner, it is necessary to specify 
     runner = xuance.get_runner(algo='dqn',
                                env='classic_control',
                                env_id='CartPole-v1',
-                               config_path="xxx/xxx.yaml",
-                               is_test=False)
-    runner.run()
+                               config_path="xxx/xxx.yaml")
+    runner.run(mode='train')
