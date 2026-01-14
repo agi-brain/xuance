@@ -14,13 +14,13 @@ algorithm_legend = {
     'dqn': 'DQN',
     'drqn': 'DRQN',
     'dueldqn': 'DuelingDQN',
-    'noisydqn': 'NoisyDQN',
+    # 'noisydqn': 'NoisyDQN',
     'perdqn': 'PerDQN',
     'pg': 'PG',
     'ppg': 'PPG',
     'ppo': 'PPO',
     'qrdqn': 'QRDQN',
-    'sac': 'SAC',
+    # 'sac': 'SAC',
 }
 fig_title = "LunarLander-v3"
 

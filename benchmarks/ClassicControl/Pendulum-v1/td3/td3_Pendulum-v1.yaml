@@ -27,7 +27,7 @@ actor_update_delay: 3
 start_noise: 0.25
 end_noise: 0.05
 training_frequency: 2
-running_steps: 500000
+running_steps: 200000
 start_training: 2000
 
 use_grad_clip: False  # gradient normalization
@@ -39,7 +39,7 @@ obsnorm_range: 5
 rewnorm_range: 5
 
 test_steps: 10000
-eval_interval: 50000
-test_episode: 1
+eval_interval: 2000
+test_episode: 3
 log_dir: "logs/td3/"
 model_dir: "models/td3/"

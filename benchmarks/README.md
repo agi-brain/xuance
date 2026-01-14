@@ -1,4 +1,4 @@
-# Benchmark
+# XuanCe Benchmark
 
 XuanCe provides standardized and reproducible benchmark scripts for evaluating deep reinforcement learning (DRL) and
 multi-agent reinforcement learning (MARL) algorithms. Benchmarks are designed with the following principles:
@@ -22,19 +22,21 @@ multi-agent reinforcement learning (MARL) algorithms. Benchmarks are designed wi
 
 Benchmarks are organized by environment->scenario->algorithm:
 ```text
-benchmarks/
-├── MPE/
-│ └── simple_spread_v3/
-│ ├── iql/
-│ │ ├── iql_simple_spread_v3.yaml
-│ │ └── run_iql_simple_spread_v3.sh
-│ ├── qmix/
-│ │ ├── qmix.yaml
-│ │ └── run_qmix_simple_spread_v3.sh
-│ ├── vdn/
-│ │ ├── vdn.yaml
-│ │ └── run_vdn_simple_spread_v3.sh
-│ └── run_simple_spread_all.sh
+xuance-benchmarks/
+├── MuJoCo/
+│ └── Ant-v5/
+│   ├── a2c/
+│   │ ├── a2c_Ant-v5.yaml
+│   │ └── run_a2c_Ant-v5.sh
+│   ├── ddpg/
+│   │ ├── ddpg_Ant-v5.yaml
+│   │ └── run_ddpg_Ant-v5.sh
+│   ├── ppo/
+│   │ ├── ppo_Ant-v5.yaml
+│   │ └── run_ppo_Ant-v5.sh
+│   └── run_Ant-v5_all.sh
+│── ...
+│── benchmark.py
 ```
 
 - Each algorithm-specific script (run_*.sh) defines an atomic benchmark.
@@ -44,9 +46,9 @@ benchmarks/
 
 Each benchmark script runs the same task with multiple random seeds (default: 5).
 
-Example: run MADDPG on MPE simple_spread_v3
+Example: run PPO on MuJoCo Ant-v5
 ```bash
-bash benchmarks/MPE/simple_spread_v3/iql/run_iql_simple_spread_v3.sh
+bash MuJoCo/Ant-v5/ppo/run_ppo_Ant-v5.sh
 ```
 
 During execution, XuanCe prints algorith, environment, and evaluation information, while the benchmark script prints
@@ -56,7 +58,7 @@ clear START / END boundaries for each seed.
 
 To evaluate all supported algorithms on a given task, use the suite script:
 ```bash
-bash benchmarks/MPE/simple_spread_v3/run_simple_spread_all.sh
+bash benchmarks/MuJoCo/Ant-v5/run_Ant-v5_all.sh
 ```
 
 This will sequentially run Algorithm_1, Algorithm_2, ..., Algorithm_N on the same environment with identical evaluation
@@ -142,10 +144,10 @@ run_<algorithm>_<scenario>.sh
 
 For example:
 ```text
-run_iql_simple_spread_v3.sh
+run_ppo_Breakout-v5.sh
 ```
 Each benchmark script should:
-- Call the shared train.py script
+- Call the shared benchmark.py script
 - Run multiple random seeds (default: 5)
 - Clearly indicate the start and end of each seed
 - Not duplicate algorithm or environment information already printed by XuanCe
@@ -172,7 +174,7 @@ for SEED in 1 2 3 4 5; do
   echo "========== [Benchmark START] seed=${SEED} =========="
   START_TIME=$(date +%s)
 
-  if ${PYTHON} "${PROJECT_ROOT}/train.py" \
+  if ${PYTHON} "${PROJECT_ROOT}/benchmark.py" \
       --algo "${ALGO}" \
       --env "${ENV}" \
       --env-id "${ENV_ID}" \

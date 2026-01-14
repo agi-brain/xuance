@@ -16,7 +16,7 @@ activation_action: 'tanh'  # The activation function for the output of actor.
 
 seed: 1  # Random seeds.
 parallels: 10  # Number of environments that to be implemented in parallel.
-running_steps: 1000000  # The total running steps.
+running_steps: 200000  # The total running steps.
 horizon_size: 64  # the horizon size for an environment, buffer_size = horizon_size * parallels.
 n_epochs: 1  # Number of epochs to update the model.
 n_minibatch: 1  # Number of minibatch.
@@ -39,7 +39,7 @@ obsnorm_range: 5  # The observation normalization range.
 rewnorm_range: 5  # The reward normalization range.
 
 test_steps: 10000  # The test steps.
-eval_interval: 50000  # The interval between every two trainings.
+eval_interval: 2000  # The interval between every two trainings.
 test_episode: 3  # The episodes to test in each test period.
 
 log_dir: "logs/a2c/"  # The directory to store logger file.

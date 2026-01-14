@@ -6,10 +6,10 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="${SCRIPT_DIR}/../../"
 PYTHON=python
 
-ALGO="noisydqn"
+ALGO="ddqn"
 ENV="atari"
-ENV_ID="ALE/Breakout-v5"
-ENV_TAG="${ENV_ID//\//_}"   # ALE_Breakout-v5
+ENV_TAG="Breakout-v5"
+ENV_ID="ALE/${ENV_TAG}"
 CONFIG_PATH="${SCRIPT_DIR}/${ALGO}_atari.yaml"
 
 OUT_ROOT="${SCRIPT_DIR}/results/${ENV_TAG}"
@@ -22,7 +22,7 @@ for SEED in 1 2 3 4 5; do
   echo "========== [Benchmark START] seed=${SEED} =========="
 
   START_TIME=$(date +%s)
-  if ${PYTHON} "${PROJECT_ROOT}/train.py" \
+  if ${PYTHON} "${PROJECT_ROOT}/benchmark.py" \
     --algo "${ALGO}" \
     --env "${ENV}" \
     --env-id "${ENV_ID}" \

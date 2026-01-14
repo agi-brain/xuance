@@ -23,7 +23,7 @@ seed: 1
 parallels: 2
 buffer_size: 200
 batch_size: 8  # batch size for training
-learning_rate: 0.001
+learning_rate: 0.0001
 gamma: 0.99
 
 start_greedy: 0.5
@@ -45,6 +45,6 @@ rewnorm_range: 5
 
 test_steps: 10000
 eval_interval: 100000
-test_episode: 1
+test_episode: 3
 log_dir: "logs/drqn/"
 model_dir: "models/drqn/"

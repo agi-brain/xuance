@@ -60,7 +60,7 @@ gae_lambda: 0.95
 clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
 
 running_steps: 10000000  # 10M
-eval_interval: 50000
+eval_interval: 100000
 test_episode: 16
 
 log_dir: "logs/vdac/"

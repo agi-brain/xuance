@@ -21,7 +21,7 @@ for SEED in 1 2 3 4 5; do
   echo "========== [Benchmark START] seed=${SEED} =========="
 
   START_TIME=$(date +%s)
-  if ${PYTHON} "${PROJECT_ROOT}/train.py" \
+  if ${PYTHON} "${PROJECT_ROOT}/benchmark.py" \
     --algo "${ALGO}" \
     --env "${ENV}" \
     --env-id "${ENV_ID}" \

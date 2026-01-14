@@ -6,7 +6,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="${SCRIPT_DIR}/../../../"
 PYTHON=python
 
-ALGO="noisydqn"
+ALGO="dueldqn"
 ENV="box2d"
 ENV_ID="LunarLander-v3"
 CONFIG_PATH="${SCRIPT_DIR}/${ALGO}_${ENV_ID}.yaml"
@@ -21,7 +21,7 @@ for SEED in 1 2 3 4 5; do
   echo "========== [Benchmark START] seed=${SEED} =========="
 
   START_TIME=$(date +%s)
-  if ${PYTHON} "${PROJECT_ROOT}/train.py" \
+  if ${PYTHON} "${PROJECT_ROOT}/benchmark.py" \
     --algo "${ALGO}" \
     --env "${ENV}" \
     --env-id "${ENV_ID}" \

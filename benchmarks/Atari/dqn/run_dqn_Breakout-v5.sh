@@ -3,15 +3,16 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-PROJECT_ROOT="${SCRIPT_DIR}/../../../"
+PROJECT_ROOT="${SCRIPT_DIR}/../../"
 PYTHON=python
 
-ALGO="dueldqn"
-ENV="box2d"
-ENV_ID="LunarLander-v3"
-CONFIG_PATH="${SCRIPT_DIR}/${ALGO}_${ENV_ID}.yaml"
+ALGO="dqn"
+ENV="atari"
+ENV_TAG="Breakout-v5"
+ENV_ID="ALE/${ENV_TAG}"
+CONFIG_PATH="${SCRIPT_DIR}/${ALGO}_atari.yaml"
 
-OUT_ROOT="${SCRIPT_DIR}/results"
+OUT_ROOT="${SCRIPT_DIR}/results/${ENV_TAG}"
 
 
 for SEED in 1 2 3 4 5; do
@@ -21,7 +22,7 @@ for SEED in 1 2 3 4 5; do
   echo "========== [Benchmark START] seed=${SEED} =========="
 
   START_TIME=$(date +%s)
-  if ${PYTHON} "${PROJECT_ROOT}/train.py" \
+  if ${PYTHON} "${PROJECT_ROOT}/benchmark.py" \
     --algo "${ALGO}" \
     --env "${ENV}" \
     --env-id "${ENV_ID}" \

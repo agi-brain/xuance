@@ -24,7 +24,7 @@ activation: "relu"  # The activation function of each hidden layer.
 
 seed: 1
 parallels: 8
-running_steps: 10000000  # 10M
+running_steps: 50000000
 horizon_size: 128  # the horizon size for an environment, buffer_size = horizon_size * parallels.
 n_epochs: 4
 n_minibatch: 4
@@ -50,7 +50,7 @@ obsnorm_range: 5
 rewnorm_range: 5
 
 test_steps: 10000
-eval_interval: 100000
+eval_interval: 500000
 test_episode: 3
 log_dir: "logs/ppo/"
 model_dir: "models/ppo/"

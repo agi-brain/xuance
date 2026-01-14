@@ -24,7 +24,7 @@ end_noise: 0.0
 decay_step_noise: 500000
 sync_frequency: 100
 training_frequency: 2
-running_steps: 500000
+running_steps: 200000
 start_training: 1000
 
 use_grad_clip: False  # gradient normalization
@@ -36,7 +36,7 @@ obsnorm_range: 5
 rewnorm_range: 5
 
 test_steps: 10000
-eval_interval: 50000
-test_episode: 1
+eval_interval: 2000
+test_episode: 3
 log_dir: "logs/noisy_dqn/"
 model_dir: "models/noisy_dqn/"

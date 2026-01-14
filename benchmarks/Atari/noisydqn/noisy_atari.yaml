@@ -1,4 +1,4 @@
-agent: "Duel_DQN"
+agent: "NoisyDQN"
 vectorize: "Dummy_Atari"
 env_name: "Atari"
 env_id: "ALE/Breakout-v5"
@@ -8,9 +8,9 @@ img_size: [84, 84]  # default is 210 x 160 in gym[Atari]
 num_stack: 4  # frame stack trick
 frame_skip: 4  # frame skip trick
 noop_max: 30  # Do no-op action for a number of steps in [1, noop_max].
-policy: "Duel_Q_network"
+learner: "DQN_Learner"
+policy: "Noisy_Q_network"
 representation: "Basic_CNN"
-learner: "DuelDQN_Learner"
 runner: "DRL"
 
 # the following three arguments are for "Basic_CNN" representation.
@@ -28,8 +28,8 @@ batch_size: 32  # 64
 learning_rate: 0.0001
 gamma: 0.99
 
-start_greedy: 0.5
-end_greedy: 0.05
+start_noise: 0.05
+end_noise: 0.0
 decay_step_greedy: 10000000  # 10M
 sync_frequency: 500
 training_frequency: 1
@@ -45,7 +45,7 @@ obsnorm_range: 5
 rewnorm_range: 5
 
 test_steps: 10000
-save_model_frequency: 500000
-test_episode: 1
-log_dir: "logs/dueldqn/"
-model_dir: "models/dueldqn/"
+eval_interval: 500000
+test_episode: 3
+log_dir: "logs/noisy_dqn/"
+model_dir: "models/noisy_dqn/"

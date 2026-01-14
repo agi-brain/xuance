@@ -15,7 +15,7 @@ activation_action: 'tanh'
 
 seed: 1
 parallels: 10
-running_steps: 300000
+running_steps: 200000
 horizon_size: 500
 n_epochs: 1
 n_minibatch: 1
@@ -37,7 +37,7 @@ obsnorm_range: 5
 rewnorm_range: 5
 
 test_steps: 10000
-eval_interval: 50000
-test_episode: 1
+eval_interval: 2000
+test_episode: 3
 log_dir: "logs/pg/"
 model_dir: "models/pg/"
