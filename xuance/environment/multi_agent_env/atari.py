@@ -1,6 +1,7 @@
 import numpy as np
 import importlib
 import supersuit
+from gymnasium.spaces.box import Box
 from xuance.environment import RawMultiAgentEnv
 
 
@@ -45,13 +46,14 @@ class AtariMultiAgentEnv(RawMultiAgentEnv):
 
         self.metadata = self.env.metadata
         self.agents = self.env.agents
-        self.state_space = self.env.observation_space(self.agents[0])
+        self.state_space = Box(low=0, high=255, shape=[784,])  # 28 * 28 = 784
         self.observation_space = {agent: self.env.observation_space(agent) for agent in self.agents}
         self.action_space = {agent: self.env.action_space(agent) for agent in self.agents}
         self.num_agents = self.env.num_agents
         self.max_episode_steps = self.env.unwrapped.max_cycles
         self.individual_episode_reward = {k: 0.0 for k in self.agents}
         self._episode_score = 0.0
+        self.global_state = None
 
     def close(self):
         """Close the environment."""
@@ -69,16 +71,18 @@ class AtariMultiAgentEnv(RawMultiAgentEnv):
         reset_info = {"infos": infos,
                       "individual_episode_rewards": self.individual_episode_reward}
         self._episode_step = 0
+        self.global_state = observations[self.agents[0]][::3, ::3, 0].reshape(-1)
         return observations, reset_info
 
     def step(self, actions):
         """Take an action as input, perform a step in the underlying pettingzoo environment."""
         observations, rewards, terminated, truncated, info = self.env.step(actions)
+        self.global_state = observations[self.agents[0]][::3, ::3, 0].reshape(-1)  # down sampling: 84*84*4 -> 28*28=784
         return self.env.step(actions)
 
     def state(self):
         """Returns the global state of the environment."""
-        return
+        return self.global_state
 
     def agent_mask(self):
         """

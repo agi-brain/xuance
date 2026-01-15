@@ -1,4 +1,4 @@
-agent: "VDN"  # the learning algorithms_marl
+agent: "QMIX"  # the learning algorithms_marl
 env_name: "atari"  # Name of the environment.
 env_id: "basketball_pong_v3"
 env_seed: 1  # The random seed of the environment.
@@ -7,7 +7,7 @@ img_size: [84, 84]  # default is 210 x 160 in gym[Atari]
 num_stack: 4  # frame stack trick
 frame_skip: 4  # frame skip trick
 noop_max: 30  # Do no-op action for a number of steps in [1, noop_max].
-learner: "VDN_Learner"
+learner: "QMIX_Learner"
 policy: "Mixing_Q_network"
 representation: "Basic_CNN"
 vectorize: "DummyVecMultiAgentEnv"
@@ -29,6 +29,11 @@ dropout: 0  # dropout should be a number in range [0, 1], the probability of an 
 representation_hidden_size: [64, ]
 q_hidden_size: [64, ]  # the units for each hidden layer
 activation: "relu"  # The activation function of each hidden layer.
+use_parameter_sharing: False
+use_actions_mask: False
+
+hidden_dim_mixing_net: 128  # hidden units of mixing network
+hidden_dim_hyper_net: 128  # hidden units of hyper network
 
 seed: 1069
 parallels: 5
@@ -41,17 +46,15 @@ double_q: True  # use double q learning
 start_greedy: 0.5
 end_greedy: 0.05
 decay_step_greedy: 1000000
-start_training: 10000  # start training after n steps
+start_training: 100  # start training after n steps
 running_steps: 50000000  # 10M
-training_frequency: 1
+training_frequency: 100
 sync_frequency: 500
 
 use_grad_clip: False
 grad_clip_norm: 0.5
-use_parameter_sharing: True
-use_actions_mask: False
 
 eval_interval: 500000
 test_episode: 5
-log_dir: "logs/vdn/"
-model_dir: "models/vdn/"
+log_dir: "logs/qmix/"
+model_dir: "models/qmix/"
