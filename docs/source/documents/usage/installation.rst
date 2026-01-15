@@ -132,6 +132,14 @@ Alternatively, you can also install ``xuance`` from its GitHub repository.
 
         pip install mpi4py
 
+.. note::
+
+    This issue only affects **XuanCe versions earlier than v1.4.0**.
+    Starting from **v1.4.0**, ``mpi4py`` is no longer a required dependency of XuanCe.
+
+    If you are using an older version of XuanCe and encounter this error,
+    you can resolve it using the methods described above.
+
 .. tip::
 
     If your IP address is in Chinese mainland, you can install it with a mirror image to speed up the installation,
@@ -161,6 +169,8 @@ Then, test the installation of xuance by typing:
 
 
 .. error::
+
+    (For XuanCe versions earlier than v1.4.0)
 
     If you are using Windows OS to import xuance, you might get an error likes this:
 
