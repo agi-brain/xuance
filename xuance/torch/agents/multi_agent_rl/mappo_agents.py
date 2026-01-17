@@ -11,7 +11,6 @@ from xuance.torch.policies import REGISTRY_Policy
 from xuance.torch.agents.multi_agent_rl.ippo_agents import IPPO_Agents
 
 
-
 class MAPPO_Agents(IPPO_Agents):
     """The implementation of MAPPO agents.
 
@@ -48,14 +47,21 @@ class MAPPO_Agents(IPPO_Agents):
         activation = ActivationFunctions[self.config.activation]
         activation_action = ActivationFunctions[self.config.activation_action] if self.continuous_control else None
         device = self.device
+
         # build representations
         A_representation = self._build_representation(self.config.representation, self.observation_space, self.config)
         if self.use_global_state:
-            dim_obs_all = sum(self.state_space.shape)
+            space_critic_in = {k: (sum(self.state_space.shape),) for k in self.agent_keys}
         else:
-            dim_obs_all = sum([sum(self.observation_space[k].shape) for k in self.agent_keys])
-        space_critic_in = {k: (dim_obs_all,) for k in self.agent_keys}
+            if self.use_cnn:
+                space_critic_in = {k: (*self.observation_space[k].shape[:-1],
+                                       self.observation_space[k].shape[-1] * self.n_agents)
+                                   for k in self.agent_keys}
+            else:
+                dim_obs_all = sum([sum(self.observation_space[k].shape) for k in self.agent_keys])
+                space_critic_in = {k: (dim_obs_all,) for k in self.agent_keys}
         C_representation = self._build_representation(self.config.representation, space_critic_in, self.config)
+
         # build policies
         policy_settings = dict(
             action_space=self.action_space, n_agents=self.n_agents,
@@ -93,16 +99,29 @@ class MAPPO_Agents(IPPO_Agents):
                 critic_input = np.stack([state for _ in range(self.n_agents)], axis=1).reshape([bs, -1])
             else:
                 key = self.model_keys[0]
-                critic_input = obs_batch[key].reshape([batch_size, self.n_agents, -1]).reshape([batch_size, 1, -1])
-                critic_input = np.repeat(critic_input, repeats=self.n_agents, axis=1)
+                obs_array = obs_batch[key]
+                if self.use_cnn and len(obs_array.shape) > 3:  # bs * height * width * channel
+                    obs_shape_item = obs_array.shape[1:]
+                    critic_input = obs_array.reshape([batch_size, self.n_agents, *obs_shape_item])
+                    critic_input = np.transpose(critic_input, (0, 2, 3, 1, 4))
+                    critic_input = critic_input.reshape([batch_size,
+                                                         *obs_shape_item[:-1],  # height * width
+                                                         obs_shape_item[-1] * self.n_agents])  # channel * n_agents
+                    critic_input = np.repeat(critic_input, repeats=self.n_agents,
+                                             axis=1).reshape([bs, *obs_shape_item[:-1],  # height * width
+                                                              obs_shape_item[-1] * self.n_agents])  # channel * n_agents
+                else:
+                    critic_input = obs_array.reshape([batch_size, self.n_agents, -1]).reshape([batch_size, 1, -1])
+                    critic_input = np.repeat(critic_input, repeats=self.n_agents, axis=1).reshape([bs, -1])
         else:
             bs = batch_size
             if self.use_global_state:
-                critic_input = np.array(state)
+                critic_input = np.array(state).reshape([bs, -1])
             else:
-                critic_input = np.stack(itemgetter(*self.agent_keys)(obs_batch), axis=1)
+                critic_input = np.stack(itemgetter(*self.agent_keys)(obs_batch), axis=1).reshape([bs, -1])
 
-        critic_input = critic_input.reshape([bs, 1, -1]) if self.use_rnn else critic_input.reshape([bs, -1])
+        if self.use_rnn:
+            critic_input = np.newaxis(critic_input, axis=1)
         critic_input_dict = {k: critic_input for k in self.model_keys}
         return critic_input_dict
 
@@ -197,54 +216,38 @@ class MAPPO_Agents(IPPO_Agents):
         """
         n_env = 1
         rnn_hidden_critic_i = None
+        agents_id = None
         if self.use_parameter_sharing:
-            key = self.agent_keys[0]
-            if self.use_rnn:
-                hidden_item_index = np.arange(i_env * self.n_agents, (i_env + 1) * self.n_agents)
-                rnn_hidden_critic_i = {key: self.policy.critic_representation[key].get_hidden_item(
-                    hidden_item_index, *rnn_hidden_critic[key])}
-                batch_size = n_env * self.n_agents
-                if self.use_global_state:
-                    critic_input = np.repeat(state.reshape([n_env, 1, -1]),
-                                             self.n_agents, axis=1).reshape([batch_size, 1, -1])
-                else:
-                    obs_array = np.array(itemgetter(*self.agent_keys)(obs_dict))
-                    critic_input = np.repeat(obs_array.reshape([n_env, 1, -1]),
-                                             self.n_agents, axis=1).reshape([batch_size, 1, -1])
-                agents_id = torch.eye(self.n_agents).unsqueeze(0).expand(n_env, -1, -1).reshape(batch_size, 1, -1).to(
-                    self.device)
+            bs = n_env * self.n_agents
+            if self.use_global_state:
+                critic_input = np.repeat(state.reshape([n_env, 1, -1]), self.n_agents, axis=1).reshape([bs, -1])
             else:
-                if self.use_global_state:
-                    critic_input = np.repeat(state.reshape([n_env, 1, -1]), self.n_agents, axis=1)
-                else:
-                    obs_array = np.array([itemgetter(*self.agent_keys)(obs_dict)]).reshape([n_env, 1, -1])
-                    critic_input = np.repeat(obs_array, self.n_agents, axis=1)
-                agents_id = torch.eye(self.n_agents).unsqueeze(0).expand(n_env, -1, -1).to(self.device)
-
-            rnn_hidden_critic_new, values_out = self.policy.get_values(observation={key: critic_input},
-                                                                       agent_ids=agents_id,
-                                                                       rnn_hidden=rnn_hidden_critic_i)
-            values_out = values_out[key].reshape(self.n_agents)
-            values_dict = {k: values_out[i].cpu().detach().numpy() for i, k in enumerate(self.agent_keys)}
-
+                obs_array = np.array([itemgetter(*self.agent_keys)(obs_dict)]).reshape([n_env, 1, -1])
+                critic_input = np.repeat(obs_array, self.n_agents, axis=1)
+            agents_id = torch.eye(self.n_agents).unsqueeze(0).expand(n_env, -1, -1).to(self.device).reshape([bs, -1])
         else:
-            if self.use_rnn:
-                rnn_hidden_critic_i = {k: self.policy.critic_representation[k].get_hidden_item(
-                    [i_env, ], *rnn_hidden_critic[k]) for k in self.agent_keys}
-                if self.use_global_state:
-                    critic_input = state.reshape([n_env, 1, -1])
-                else:
-                    joint_obs = np.stack(itemgetter(*self.agent_keys)(obs_dict), axis=0).reshape([n_env, 1, -1])
-                    critic_input = {k: joint_obs for k in self.agent_keys}
+            if self.use_global_state:
+                critic_input = state.reshape([n_env, -1])
             else:
-                critic_input_array = np.concatenate([obs_dict[k].reshape(n_env, 1, -1) for k in self.agent_keys],
-                                                    axis=1).reshape(n_env, -1)
-                if self.use_global_state:
-                    critic_input_array = state.reshape([n_env, -1])
-                critic_input = {k: critic_input_array for k in self.agent_keys}
+                critic_input = np.stack(itemgetter(*self.agent_keys)(obs_dict), axis=0).reshape([n_env, -1])
 
-            rnn_hidden_critic_new, values_out = self.policy.get_values(observation=critic_input,
-                                                                       rnn_hidden=rnn_hidden_critic_i)
+        if self.use_rnn:
+            hidden_item_index = np.arange(i_env * self.n_agents,
+                                          (i_env + 1) * self.n_agents) if self.use_parameter_sharing else [i_env, ]
+            rnn_hidden_critic_i = {k: self.policy.critic_representation[k].get_hidden_item(
+                hidden_item_index, *rnn_hidden_critic[k]) for k in self.model_keys}
+            if self.use_parameter_sharing:
+                agents_id = agents_id.unsqueeze(1)
+            critic_input = np.newaxis(critic_input, axis=1)
+
+        critic_input_dict = {k: critic_input for k in self.model_keys}
+        rnn_hidden_critic_new, values_out = self.policy.get_values(observation=critic_input_dict,
+                                                                   agent_ids=agents_id,
+                                                                   rnn_hidden=rnn_hidden_critic_i)
+        if self.use_parameter_sharing:
+            values_out = values_out[self.agent_keys[0]].reshape(self.n_agents)
+            values_dict = {k: values_out[i].cpu().detach().numpy() for i, k in enumerate(self.agent_keys)}
+        else:
             values_dict = {k: values_out[k].cpu().detach().numpy().reshape([]) for k in self.agent_keys}
 
         return rnn_hidden_critic_new, values_dict
