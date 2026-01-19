@@ -107,7 +107,7 @@ class MAPPO_Agents(IPPO_Agents):
                     critic_input = critic_input.reshape([batch_size,
                                                          *obs_shape_item[:-1],  # height * width
                                                          obs_shape_item[-1] * self.n_agents])  # channel * n_agents
-                    critic_input = np.repeat(critic_input, repeats=self.n_agents,
+                    critic_input = np.repeat(critic_input[:, None], repeats=self.n_agents,
                                              axis=1).reshape([bs, *obs_shape_item[:-1],  # height * width
                                                               obs_shape_item[-1] * self.n_agents])  # channel * n_agents
                 else:
@@ -118,10 +118,18 @@ class MAPPO_Agents(IPPO_Agents):
             if self.use_global_state:
                 critic_input = np.array(state).reshape([bs, -1])
             else:
-                critic_input = np.stack(itemgetter(*self.agent_keys)(obs_batch), axis=1).reshape([bs, -1])
+                obs_array = np.stack(itemgetter(*self.agent_keys)(obs_batch), axis=1)
+                if self.use_cnn and len(obs_array.shape):
+                    obs_shape_item = obs_array.shape[2:]
+                    critic_input = np.transpose(obs_array, (0, 2, 3, 1, 4))
+                    critic_input = critic_input.reshape([batch_size,
+                                                         *obs_shape_item[:-1],  # height * width
+                                                         obs_shape_item[-1] * self.n_agents])  # channel * n_agents
+                else:
+                    critic_input = obs_array.reshape([bs, -1])
 
         if self.use_rnn:
-            critic_input = np.newaxis(critic_input, axis=1)
+            critic_input = critic_input[:, None]
         critic_input_dict = {k: critic_input for k in self.model_keys}
         return critic_input_dict
 
@@ -222,14 +230,34 @@ class MAPPO_Agents(IPPO_Agents):
             if self.use_global_state:
                 critic_input = np.repeat(state.reshape([n_env, 1, -1]), self.n_agents, axis=1).reshape([bs, -1])
             else:
-                obs_array = np.array([itemgetter(*self.agent_keys)(obs_dict)]).reshape([n_env, 1, -1])
-                critic_input = np.repeat(obs_array, self.n_agents, axis=1)
+                obs_array = np.array([itemgetter(*self.agent_keys)(obs_dict)])
+                if self.use_cnn and len(obs_array.shape) > 3:
+                    obs_shape_item = obs_array.shape[2:]
+                    critic_input = obs_array.reshape([n_env, self.n_agents, *obs_shape_item])
+                    critic_input = np.transpose(critic_input, (0, 2, 3, 1, 4))
+                    critic_input = critic_input.reshape([n_env,
+                                                         *obs_shape_item[:-1],  # height * width
+                                                         obs_shape_item[-1] * self.n_agents])  # channel * n_agents
+                    critic_input = np.repeat(critic_input[:, None], repeats=self.n_agents,
+                                             axis=1).reshape([bs, *obs_shape_item[:-1],  # height * width
+                                                              obs_shape_item[-1] * self.n_agents])
+                else:
+                    critic_input = np.repeat(obs_array.reshape([n_env, 1, -1]), self.n_agents, axis=1).reshape([bs, -1])
             agents_id = torch.eye(self.n_agents).unsqueeze(0).expand(n_env, -1, -1).to(self.device).reshape([bs, -1])
         else:
             if self.use_global_state:
                 critic_input = state.reshape([n_env, -1])
             else:
-                critic_input = np.stack(itemgetter(*self.agent_keys)(obs_dict), axis=0).reshape([n_env, -1])
+                obs_array = np.stack(itemgetter(*self.agent_keys)(obs_dict), axis=0)
+                if self.use_cnn and len(obs_array.shape) > 3:
+                    obs_shape_item = obs_array.shape[1:]
+                    critic_input = obs_array.reshape([n_env, self.n_agents, *obs_shape_item])
+                    critic_input = np.transpose(critic_input, (0, 2, 3, 1, 4))
+                    critic_input = critic_input.reshape([n_env,
+                                                         *obs_shape_item[:-1],  # height * width
+                                                         obs_shape_item[-1] * self.n_agents])  # channel * n_agents
+                else:
+                    critic_input = obs_array.reshape([n_env, -1])
 
         if self.use_rnn:
             hidden_item_index = np.arange(i_env * self.n_agents,
@@ -238,7 +266,7 @@ class MAPPO_Agents(IPPO_Agents):
                 hidden_item_index, *rnn_hidden_critic[k]) for k in self.model_keys}
             if self.use_parameter_sharing:
                 agents_id = agents_id.unsqueeze(1)
-            critic_input = np.newaxis(critic_input, axis=1)
+            critic_input = critic_input[:, None]
 
         critic_input_dict = {k: critic_input for k in self.model_keys}
         rnn_hidden_critic_new, values_out = self.policy.get_values(observation=critic_input_dict,

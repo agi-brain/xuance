@@ -48,8 +48,22 @@ class MAPPO_Learner(IPPO_Learner):
                 critic_input = {key: state.reshape(batch_size, 1, -1).expand(
                     batch_size, self.n_agents, -1).reshape(bs, -1)}
             else:
-                critic_input = {key: obs[key].reshape(batch_size, 1, -1).expand(
-                    batch_size, self.n_agents, -1).reshape(bs, -1)}
+                if self.use_cnn and len(obs[key].shape) > 3:
+                    obs_array = obs[key]
+                    obs_shape_item = obs_array.shape[1:]
+                    obs_array = obs_array.reshape([batch_size, self.n_agents, *obs_shape_item])
+                    obs_array = obs_array.permute(0, 2, 3, 1, 4)
+                    obs_array = obs_array.reshape([batch_size,
+                                                   *obs_shape_item[:-1],  # height * width
+                                                   obs_shape_item[-1] * self.n_agents])  # channel * n_agents
+                    obs_array = obs_array.unsqueeze(1).expand(batch_size, self.n_agents,
+                                                              *obs_shape_item[:-1],
+                                                              obs_shape_item[-1] * self.n_agents)
+                    critic_input = {key: obs_array.reshape([bs, *obs_shape_item[:-1],
+                                                            obs_shape_item[-1] * self.n_agents])}
+                else:
+                    critic_input = {
+                        key: obs[key].reshape(batch_size, 1, -1).expand(batch_size, self.n_agents, -1).reshape(bs, -1)}
         else:
             bs = batch_size
             if self.use_global_state:
