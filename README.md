@@ -19,9 +19,9 @@
 [![pettingzoo](https://img.shields.io/badge/PettingZoo-%3E%3D1.23.0-blue)](https://pettingzoo.farama.org/)
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/xuance)
 
-**[Full Documentation](https://xuance.readthedocs.io/en/latest/)**
+**[Full Documentation](https://xuance.org)**
 | **[README_CN.md](README_CN.md)**
-| **[中文文档](https://xuance.readthedocs.io/zh/latest/)**
+| **[中文文档](https://xuance.org/zh/latest/)**
 
 **XuanCe** is an open-source ensemble of Deep Reinforcement Learning (DRL) algorithm implementations.
 

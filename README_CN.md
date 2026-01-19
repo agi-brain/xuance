@@ -22,8 +22,8 @@
 [![pettingzoo](https://img.shields.io/badge/PettingZoo-%3E%3D1.23.0-blue)](https://pettingzoo.farama.org/)
 
 **[README.md](README.md)**
-|**[英文文档](https://xuance.readthedocs.io/en/latest/)**
-| **[中文文档](https://xuance.readthedocs.io/zh/latest/)**
+|**[英文文档](https://xuance.org)**
+| **[中文文档](https://xuance.org/zh/latest/)**
 
 **XuanCe** 是一个开源的深度强化学习（DRL）算法库。
 
