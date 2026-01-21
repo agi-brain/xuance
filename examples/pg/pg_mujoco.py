@@ -45,7 +45,7 @@ if __name__ == "__main__":
         test_episode = configs.test_episode
         num_epoch = int(train_steps / eval_interval)
 
-        test_scores = Agent.test(env_fn, test_episode)
+        test_scores = Agent.test(test_episodes=test_episode, test_envs=test_envs, close_envs=False)
         Agent.save_model(model_name="best_model.pth")
         best_scores_info = {"mean": np.mean(test_scores),
                             "std": np.std(test_scores),
@@ -53,7 +53,7 @@ if __name__ == "__main__":
         for i_epoch in range(num_epoch):
             print("Epoch: %d/%d:" % (i_epoch, num_epoch))
             Agent.train(eval_interval)
-            test_scores = Agent.test(env_fn, test_episode)
+            test_scores = Agent.test(test_episodes=test_episode, test_envs=test_envs, close_envs=False)
 
             if np.mean(test_scores) > best_scores_info["mean"]:
                 best_scores_info = {"mean": np.mean(test_scores),
@@ -62,16 +62,14 @@ if __name__ == "__main__":
                 # save best model
                 Agent.save_model(model_name="best_model.pth")
         # end benchmarking
+        test_envs.close()
         print("Best Model Score: %.2f, std=%.2f" % (best_scores_info["mean"], best_scores_info["std"]))
     else:
         if configs.test:
-            def env_fn():
-                configs.parallels = configs.test_episode
-                return make_envs(configs)
-
-
+            configs.parallels = configs.test_episode
+            test_envs = make_envs(configs)
             Agent.load_model(path=Agent.model_dir_load)
-            scores = Agent.test(env_fn, configs.test_episode)
+            scores = Agent.test(test_episodes=configs.test_episode, test_envs=test_envs, close_envs=True)
             print(f"Mean Score: {np.mean(scores)}, Std: {np.std(scores)}")
             print("Finish testing.")
         else:

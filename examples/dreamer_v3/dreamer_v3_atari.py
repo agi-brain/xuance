@@ -46,10 +46,9 @@ if __name__ == '__main__':
         print(f"{k}: {v}")
 
     if configs.benchmark:
-        def env_fn():
-            configs_test = deepcopy(configs)
-            configs_test.parallels = configs_test.test_episode
-            return make_envs(configs_test)
+        configs_test = deepcopy(configs)
+        configs_test.parallels = configs_test.test_episode
+        test_envs = make_envs(configs_test)
 
 
         train_steps = configs.running_steps // configs.parallels
@@ -57,7 +56,7 @@ if __name__ == '__main__':
         test_episode = configs.test_episode
         num_epoch = int(train_steps / eval_interval)
 
-        test_scores = Agent.test(env_fn, test_episode)
+        test_scores = Agent.test(test_episodes=test_episode, test_envs=test_envs, close_envs=False)
         Agent.save_model(model_name="best_model.pth")
         best_scores_info = {"mean": np.mean(test_scores),
                             "std": np.std(test_scores),
@@ -65,7 +64,7 @@ if __name__ == '__main__':
         for i_epoch in range(num_epoch):
             print("Epoch: %d/%d:" % (i_epoch, num_epoch))
             Agent.train(eval_interval)
-            test_scores = Agent.test(env_fn, test_episode)
+            test_scores = Agent.test(test_episodes=test_episode, test_envs=test_envs, close_envs=False)
 
             can_save = np.mean(test_scores) > best_scores_info["mean"]
             can_save |= (abs(np.mean(test_scores) - best_scores_info["mean"]) < 1e-6
@@ -77,6 +76,7 @@ if __name__ == '__main__':
                 # save best model
                 Agent.save_model(model_name="best_model.pth")
         # end benchmarking
+        test_envs.close()
         print("Best Model Score: %.2f, std=%.2f" % (best_scores_info["mean"], best_scores_info["std"]))
     else:
         if configs.test:

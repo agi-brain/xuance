@@ -52,8 +52,8 @@ class MyPolicy(nn.Module):
 
 # Step 2: Create the learner.
 class MyLearner(Learner):
-    def __init__(self, config, policy):
-        super(MyLearner, self).__init__(config, policy)
+    def __init__(self, config, policy, callback):
+        super(MyLearner, self).__init__(config, policy, callback)
         # Build the optimizer.
         self.optimizer = torch.optim.Adam(self.policy.parameters(), self.config.learning_rate, eps=1e-5)
         self.loss = nn.MSELoss()  # Build a loss function.
@@ -96,12 +96,12 @@ class MyLearner(Learner):
 
 # Step 3: Create the agent.
 class MyAgent(OffPolicyAgent):
-    def __init__(self, config, envs):
-        super(MyAgent, self).__init__(config, envs)
+    def __init__(self, config, envs, callback=None):
+        super(MyAgent, self).__init__(config, envs, callback)
         self.policy = self._build_policy()  # Build the policy module.
         self.memory = self._build_memory()  # Build the replay buffer.
         REGISTRY_Learners['MyLearner'] = MyLearner  # Registry your pre-defined learner.
-        self.learner = self._build_learner(self.config, self.policy)  # Build the learner.
+        self.learner = self._build_learner(self.config, self.policy, self.callback)  # Build the learner.
 
     def _build_policy(self):
         # First create the representation module.

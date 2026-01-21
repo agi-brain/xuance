@@ -5,9 +5,9 @@ from copy import deepcopy
 
 import numpy as np
 
-from xuance.common import get_configs, Union, Optional
+from xuance.common import get_configs, Union, Optional, MultiAgentBaseCallback
 from xuance.environment import make_envs, DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
-from xuance.torch.agents import OffPolicyMARLAgents, BaseCallback
+from xuance.torch.agents import OffPolicyMARLAgents
 from xuance.torch.learners import LearnerMAS, REGISTRY_Learners
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
 from xuance.torch.policies import REGISTRY_Policy
@@ -257,7 +257,7 @@ class MyMARLAgents(OffPolicyMARLAgents):
     
     def __init__(self, config: Namespace, 
                  envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv], 
-                 callback: Optional[BaseCallback] = None):
+                 callback: Optional[MultiAgentBaseCallback] = None):
         super(MyMARLAgents, self).__init__(config, envs, callback)
         
         # Initialize epsilon-greedy parameters
