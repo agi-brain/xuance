@@ -139,9 +139,6 @@ html_theme_options = {
     #     "color-brand-content": "#7C4DFF",
     # },
     "navigation_with_keys": True,  # Controls whether the user can navigate the documentation using the keyboard’s left and right arrows.
-    "extra_nav_links": {
-        "[中文]": "https://cn.xuance.org",
-    },
 }
 html_css_files = [
     'css/xuance.css',  # Name of xuance CSS file
