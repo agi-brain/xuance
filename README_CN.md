@@ -21,9 +21,9 @@
 [![gymnasium](https://img.shields.io/badge/gymnasium-%3E%3D0.28.1-blue)](https://www.gymlibrary.dev/)
 [![pettingzoo](https://img.shields.io/badge/PettingZoo-%3E%3D1.23.0-blue)](https://pettingzoo.farama.org/)
 
-**[README.md](README.md)**
-|**[英文文档](https://xuance.org)**
-| **[中文文档](https://xuance.org/zh/latest/)**
+**[英文文档](https://xuance.org)**
+| **[中文文档](https://cn.xuance.org)**
+|**[README.md](README.md)**
 
 **XuanCe** 是一个开源的深度强化学习（DRL）算法库。
 

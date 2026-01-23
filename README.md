@@ -20,8 +20,8 @@
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/xuance)
 
 **[Full Documentation](https://xuance.org)**
+| **[中文文档](https://cn.xuance.org)**
 | **[README_CN.md](README_CN.md)**
-| **[中文文档](https://xuance.org/zh/latest/)**
 
 **XuanCe** is an open-source ensemble of Deep Reinforcement Learning (DRL) algorithm implementations.
 
