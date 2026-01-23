@@ -132,7 +132,7 @@ html_theme_options = {
     "source_repository": "https://github.com/agi-brain/xuance",
     "source_branch": "../tree/master",
     "source_directory": "docs/source",
-    "top_of_page_buttons": ["view", "edit"],
+    "top_of_page_buttons": ["view"],
     # color
     # "light_css_variables": {
     #     "color-brand-primary": "#7C4DFF",
