@@ -80,7 +80,7 @@ Our goal is to turn it into a full-fledged DRL "zoo" where you can explore and e
 .. _TensorFlow: https://www.tensorflow.org/
 .. _MindSpore: https://www.mindspore.cn/en
 
-| **GitHub**: `https://github.com/agi-brain/xuance.git <https://github.com/agi-brain/xuance.git/>`_
+| **GitHub**: **`https://github.com/agi-brain/xuance.git <https://github.com/agi-brain/xuance.git/>`_**
 
 Why XuanCe?
 -----------------------------------------
