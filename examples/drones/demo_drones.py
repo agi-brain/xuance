@@ -26,7 +26,4 @@ if __name__ == '__main__':
                         env=parser.env,
                         env_id=parser.env_id,
                         parser_args=parser)
-    if parser.benchmark:
-        runner.run(mode='benchmark')
-    else:
-        runner.run(mode='train')
+    runner.run(mode='benchmark')
