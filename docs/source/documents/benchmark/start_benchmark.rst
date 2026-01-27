@@ -1,13 +1,22 @@
 Benchmark
 ======================================
 
-XuanCe provides standardized and reproducible benchmark scripts for evaluating deep reinforcement learning (DRL) and
-multi-agent reinforcement learning (MARL) algorithms. Benchmarks are designed with the following principles:
+XuanCe provides a standardized benchmark pipeline for evaluating reinforcement learning algorithms
+under reproducible settings.
 
-- Clarity: one script corresponds to one algorithm-task benchmark
-- Reproducibility: fixed evaluation protocol and multiple random seeds
-- Comparability: consistent directory layout and result format
-- Extensibility: easy to add new algorithms, environments, or suites
+To keep the core codebase lightweight, **official benchmark results are released separately** and
+maintained in the following repository:
+
+- **XuanCe Benchmarks**: `https://github.com/agi-brain/xuance-benchmarks.git <https://github.com/agi-brain/xuance-benchmarks.git>`_
+
+This repository includes:
+- Evaluation results across multiple environments and algorithms
+- Learning curves and summary figures
+- Configuration files and metadata for reproducibility
+- Pretrained models (best checkpoints)
+
+Users who are only interested in the benchmark results can directly consult the benchmark repository
+without running the experiments locally.
 
 Directory Structure
 ---------------------------------------

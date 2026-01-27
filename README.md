@@ -19,6 +19,8 @@
 [![pettingzoo](https://img.shields.io/badge/PettingZoo-%3E%3D1.23.0-blue)](https://pettingzoo.farama.org/)
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/xuance)
 
+[![Benchmarks](https://img.shields.io/badge/Benchmarks-Results-blue)](https://github.com/agi-brain/xuance-benchmarks.git)
+
 **[Full Documentation](https://xuance.org)**
 | **[中文文档](https://cn.xuance.org)**
 | **[README_CN.md](README_CN.md)**
@@ -400,6 +402,21 @@ How to use wandb offline? :arrow_right: [https://github.com/wandb/server.git/](h
 <!-- If everything going well, you should get a similar display like below. 
 
 ![Tensorboard](docs/source/figures/debug.png) -->
+
+## Benchmarks
+
+XuanCe provides an official benchmark pipeline for evaluating DRL and MARL algorithms.
+
+To avoid increasing the size of the main repository,
+**official benchmark results (including evaluation curves, summary tables, and pretrained models)**
+are maintained in a separate repository:
+
+👉 **https://github.com/agi-brain/xuance-benchmarks**
+
+Users can either:
+
+- Run benchmarks locally using the provided pipeline, or
+- Directly inspect and reuse the official benchmark results without rerunning experiments.
 
 ## Community
 

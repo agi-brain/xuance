@@ -55,6 +55,10 @@ XuanCe: A Comprehensive and Unified Deep Reinforcement Learning Library
         <img alt="Python" src="https://img.shields.io/pypi/pyversions/xuance">
    </a>
 
+   <a href="https://github.com/agi-brain/xuance-benchmarks.git">
+        <img alt="Benchmarks" src="https://img.shields.io/badge/Benchmarks-Results-blue">
+   </a>
+
    <a href="https://cn.xuance.org">
         <img alt="docs:chinese" src="https://img.shields.io/badge/Docs-%E4%B8%AD%E6%96%87-blue?logo=readthedocs">
    </a>
