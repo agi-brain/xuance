@@ -80,6 +80,7 @@ setup(
         "imageio",  # suggest version: 2.9.0
         "opencv-python",  # suggest version: 4.5.4.58
         "torch",
+        "torchvision"
     ],
     setup_requires=['pytest-runner'],
     tests_requires=['pytest'],

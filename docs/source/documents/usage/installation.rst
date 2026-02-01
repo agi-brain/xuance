@@ -25,17 +25,11 @@ Install XuanCe
 
 .. tabs::
 
-    .. tab:: No DL toolbox
+    .. tab:: |_3| |torch| |_3| (default)
 
         .. code-block:: bash
 
             pip install xuance
-
-    .. tab:: |_3| |torch| |_3|
-
-        .. code-block:: bash
-
-            pip install xuance[torch]
 
     .. tab:: |_3| |tensorflow| |_3|
 
@@ -59,7 +53,7 @@ Alternatively, you can also install ``xuance`` from its GitHub repository.
 
 .. tabs::
 
-    .. tab:: No DL toolbox
+    .. tab:: |_3| |torch| |_3| (default)
 
         .. code-block:: bash
 
@@ -67,15 +61,7 @@ Alternatively, you can also install ``xuance`` from its GitHub repository.
             cd xuance
             pip install -e .
 
-    .. tab:: |_4| |torch| |_4|
-
-        .. code-block:: bash
-
-            git clone https://github.com/agi-brain/xuance.git
-            cd xuance
-            pip install -e .[torch]
-
-    .. tab:: |tensorflow|
+    .. tab:: |_3| |tensorflow| |_3|
 
         .. code-block:: bash
 
@@ -83,7 +69,7 @@ Alternatively, you can also install ``xuance`` from its GitHub repository.
             cd xuance
             pip install -e .[tensorflow]
 
-    .. tab:: |mindspore|
+    .. tab:: |_3| |mindspore| |_3|
 
         .. code-block:: bash
 

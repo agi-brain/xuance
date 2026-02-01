@@ -40,7 +40,7 @@ use_rewnorm: True  # Whether to use reward normalization trick.
 obsnorm_range: 5
 rewnorm_range: 5
 
-eval_interval: 50000
-test_episode: 3
+eval_interval: 1000
+test_episode: 5
 log_dir: "logs/ppo/"
 model_dir: "models/ppo/"

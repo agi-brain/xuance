@@ -56,7 +56,7 @@ def parse_args():
 
 if __name__ == '__main__':
     parser = parse_args()
-    runner = get_runner(algo=parser.method,
+    runner = get_runner(algo=parser.algo,
                         env=parser.env,
                         env_id=parser.env_id,
                         parser_args=parser)
