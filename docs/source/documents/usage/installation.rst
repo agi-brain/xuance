@@ -25,7 +25,7 @@ Install XuanCe
 
 .. tabs::
 
-    .. tab:: |_3| |torch| |_3| (default)
+    .. tab:: |_3| |torch| |_3|
 
         .. code-block:: bash
 
@@ -53,7 +53,7 @@ Alternatively, you can also install ``xuance`` from its GitHub repository.
 
 .. tabs::
 
-    .. tab:: |_3| |torch| |_3| (default)
+    .. tab:: |_3| |torch| |_3|
 
         .. code-block:: bash
 
