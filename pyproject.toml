@@ -1,0 +1,102 @@
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "xuance"
+version = "1.4.0"
+description = "XuanCe: A Comprehensive and Unified Deep Reinforcement Learning Library."
+readme = "README.md"
+requires-python = ">=3.6"
+license = { text = "MIT" }
+
+authors = [
+  { name = "Wenzhang Liu", email = "liu_wzh@foxmail.com" }
+]
+
+keywords = [
+  "deep reinforcement learning",
+  "open source library",
+  "PyTorch",
+  "TensorFlow2",
+  "MindSpore"
+]
+
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "Topic :: Software Development :: Build Tools",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.6",
+  "Programming Language :: Python :: 3.7",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+]
+
+dependencies = [
+  "numpy",
+  "scipy",
+  "PyYAML",
+  "gymnasium",
+  "pygame",
+  "tqdm",
+  "pyglet==1.5.15",
+  "pettingzoo",
+  "tensorboard",
+  "wandb",
+  "moviepy==1.0.3",
+  "imageio",
+  "opencv-python",
+]
+
+[project.optional-dependencies]
+torch = ["torch", "torchvision"]
+tensorflow = ["tensorflow==2.19.0", "tf_keras==2.19.0"]
+mindspore = ["mindspore==2.6.0", "protobuf==3.20.0"]
+
+all = [
+  "torch",
+  "torchvision",
+  "tensorflow==2.19.0",
+  "tf_keras==2.19.0",
+  "mindspore==2.6.0",
+  "protobuf==3.20.0"
+]
+
+tune = [
+  "optuna>=4.1.0",
+  "optuna-dashboard>=0.17.0",
+  "plotly>=5.24.1"
+]
+
+mujoco = ["gymnasium[mujoco]"]
+atari = [
+  "gymnasium[accept-rom-license]",
+  "gymnasium[atari]",
+  "ale-py==0.10.1"
+]
+box2d = [
+  "swig==4.3.0",
+  "gymnasium[box2d]"
+]
+minigrid = ["minigrid==3.0.0"]
+metadrive = ["metadrive"]
+rware = ["rware"]
+einops = ["einops==0.8.1"]
+
+[tool.setuptools.packages.find]
+include = ["xuance", "xuance.*"]
+
+[tool.setuptools.package-data]
+xuance = [
+  "configs/*.yaml",
+  "configs/*/*.yaml",
+  "configs/*/*/*.yaml",
+  "environment/magent2/libmagent.so",
+  "environment/magent2/magent.dll",
+  "environment/magent2/libmagent.dylib"
+]
