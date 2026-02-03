@@ -7,7 +7,7 @@ from argparse import Namespace
 from operator import itemgetter
 from xuance.torch import Tensor
 
-MAX_GPUs = 100
+MAX_GPUs =  torch.cuda.device_count()
 
 
 class Learner(ABC):
@@ -61,47 +61,159 @@ class Learner(ABC):
         return total_iters
 
     def save_model(self, model_path):
-        torch.save(self.policy.state_dict(), model_path)
+        torch.save(
+            {
+                'policy': self.policy.state_dict(),
+                'optimizer': self.optimizer.state_dict(),
+                'rng_state': torch.get_rng_state(),
+                'cuda_rng_state': torch.cuda.get_rng_state_all(),
+            },
+            model_path)
         if self.distributed_training:
             self.save_snapshot()
 
     def load_model(self, path, model=None):
+
+        target_path = os.path.join(path, model) if model is not None else path
+        if os.path.isfile(target_path):
+            model_path = target_path
+            checkpoint = torch.load(str(model_path), map_location='cpu')
+
+
+            self.policy.load_state_dict(checkpoint['policy'], strict=False)
+
+
+            if 'optimizer' in checkpoint and self.optimizer is not None:
+                self.optimizer.load_state_dict(checkpoint['optimizer'])
+                current_lr = self.optimizer.param_groups[0]['lr']
+                self.learning_rate = current_lr
+
+
+            if 'rng_state' in checkpoint:
+                rng_state = checkpoint['rng_state']
+                rng_state = rng_state.cpu().to(dtype=torch.uint8)
+                torch.set_rng_state(rng_state)
+
+
+            if 'cuda_rng_state' in checkpoint and torch.cuda.is_available():
+                cuda_states = checkpoint['cuda_rng_state']
+                if isinstance(cuda_states, list):
+
+                    num_available_gpus = torch.cuda.device_count()
+                    cuda_states = cuda_states[:num_available_gpus]
+
+                    for i, state in enumerate(cuda_states):
+
+                        state = state.cpu().to(dtype=torch.uint8)
+
+                        torch.cuda.set_rng_state(state, device=i)
+
+            print(f"Successfully load model from file '{model_path}'.")
+            return model_path
+
+        if not os.path.isdir(path):
+            raise RuntimeError(f"The path '{path}' is not a valid directory or file!")
+
         file_names = os.listdir(path)
         if model is not None:
             path = os.path.join(path, model)
             if model not in file_names:
                 raise RuntimeError(f"The folder '{path}' does not exist, please specify a correct path to load model.")
         else:
-            for f in file_names:
-                if "seed_" not in f:
-                    file_names.remove(f)
+            file_names = [f for f in file_names if "seed_" in f]
             file_names.sort()
+            if not file_names:
+                raise RuntimeError(f"No model files with 'seed_' found in '{path}'!")
             path = os.path.join(path, file_names[-1])
 
         model_names = os.listdir(path)
-        if os.path.exists(path + "/obs_rms.npy"):
+        if os.path.exists(os.path.join(path, "obs_rms.npy")):
             model_names.remove("obs_rms.npy")
         if len(model_names) == 0:
             raise RuntimeError(f"There is no model file in '{path}'!")
         model_names.sort()
         model_path = os.path.join(path, model_names[-1])
-        self.policy.load_state_dict(torch.load(str(model_path), map_location={
-            f"cuda:{i}": self.device for i in range(MAX_GPUs)}))
-        print(f"Successfully load model from '{path}'.")
+
+
+        checkpoint = torch.load(str(model_path), map_location='cpu')
+
+
+        self.policy.load_state_dict(checkpoint['policy'], strict=False)
+
+        if 'optimizer' in checkpoint and self.optimizer is not None:
+            self.optimizer.load_state_dict(checkpoint['optimizer'])
+            current_lr = self.optimizer.param_groups[0]['lr']
+
+        if 'rng_state' in checkpoint:
+            rng_state = checkpoint['rng_state'].cpu().to(dtype=torch.uint8)
+            torch.set_rng_state(rng_state)
+
+
+        if 'cuda_rng_state' in checkpoint and torch.cuda.is_available():
+            cuda_states = checkpoint['cuda_rng_state']
+            if isinstance(cuda_states, list):
+                num_available_gpus = torch.cuda.device_count()
+                cuda_states = cuda_states[:num_available_gpus]
+                for i, state in enumerate(cuda_states):
+                    state = state.cpu().to(dtype=torch.uint8)
+                    torch.cuda.set_rng_state(state, device=i)
+
+        self._safe_scheduler_step()
+        print(f"Successfully load model from directory '{path}'.")
         return path
 
     def load_snapshot(self, snapshot_path):
-        loc = f"cuda: {self.device}"
+        loc = f"cuda:{self.device}" if torch.cuda.is_available() else "cpu"
         snapshot = torch.load(snapshot_path, map_location=loc)
-        self.policy.load_state_dict(snapshot["MODEL_STATE"])
-        print("Resuming training from snapshot.")
+
+        if "MODEL_STATE" in snapshot:
+            self.policy.load_state_dict(snapshot["MODEL_STATE"])
+        elif "policy" in snapshot:
+            self.policy.load_state_dict(snapshot["policy"])
+
+            if "optimizer" in snapshot and self.optimizer is not None:
+                self.optimizer.load_state_dict(snapshot["optimizer"])
+
+            if "rng_state" in snapshot:
+                torch.set_rng_state(snapshot["rng_state"].to('cpu'))
+            if "cuda_rng_state" in snapshot and torch.cuda.is_available():
+                cuda_states = snapshot["cuda_rng_state"]
+                if isinstance(cuda_states, list):
+                    for i, state in enumerate(cuda_states):
+                        torch.cuda.set_rng_state(state.to(f'cuda:{i}'), device=i)
+
+        print("Resuming training from snapshot (including optimizer/rng state).")
 
     def save_snapshot(self):
         snapshot = {
-            "MODEL_STATE": self.policy.state_dict(),
+            "policy": self.policy.state_dict(),
+            "optimizer": self.optimizer.state_dict(),
+            "rng_state": torch.get_rng_state(),
+            "cuda_rng_state": torch.cuda.get_rng_state_all() if torch.cuda.is_available() else None,
         }
         snapshot_pt = os.path.join(self.snapshot_path, "snapshot.pt")
+        os.makedirs(self.snapshot_path, exist_ok=True)
         torch.save(snapshot, snapshot_pt)
+
+    def _safe_scheduler_step(self):
+        if not hasattr(self, 'scheduler'):
+            return
+
+        if not hasattr(self.config, 'rt_epoch'):
+            return
+        try:
+            train_steps = self.config.running_steps // self.config.parallels
+            eval_interval = self.config.eval_interval // self.config.parallels
+            num_epoch = int(train_steps / eval_interval)
+            current_iters = int(self.total_iters *self.config.rt_epoch / num_epoch)
+            self.scheduler.step(current_iters)
+            print(f"scheduler.step success，rt_epoch={self.config.rt_epoch}")
+        except TypeError as e:
+            if "positional argument" in str(e) or "takes 1 positional argument" in str(e):
+                self.scheduler.step()
+                print(f"scheduler.step success, rt_epoch={self.config.rt_epoch}")
+        except Exception as e:
+            print(f"scheduler.step failure：{e}")
 
     @abstractmethod
     def update(self, *args):
