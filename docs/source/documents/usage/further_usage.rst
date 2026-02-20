@@ -246,5 +246,139 @@ XuanCe supports multi-GPU training to maximize GPU resource utilization, enablin
 
 To train DRL models using multiple GPUs, you need to set ``distributed_training`` to True,
 the following parameters are relevant:
+
 - distributed_training (bool): Specifies whether to enable multi-GPU distributed training. Set to True to activate distributed training; otherwise, it remains disabled.
+
 - master_port (int): Defines the master port for the current experiment when distributed training is enabled.`: The master port for current experiment when use distributed training.
+
+Hyperparameters Tuning
+----------------------------------------------
+
+XuanCe integrates an Optuna-based hyperparameter optimization module, supporting both single-objective and
+multi-objective search, while maintaining full compatibility with YAML-based configuration and reproducibility.
+
+The tuning process is fully integrated with XuanCe's training pipeline and logging system.
+
+Starting from Default Configurations
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Each algorithm in XuanCe is shipped with recommended default configurations that have been validated in
+our benchmark experiments. These default settings are located in:
+
+.. code-block:: bash
+
+    xuance/configs/<algorithm>/<environment>.yaml
+
+For most tasks, we recommend starting from the provided default configuration
+and modifying only a small subset of key parameters.
+
+Click `here <../api/configs/configuration_examples.html>`_ to see more examples of configurations.
+We suggest modifying one or two parameters at a time while keeping other settings fixed for controlled experiments.
+
+Manually Adjusting Sensitive Hyperparameters
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+In practice, only a small subset of hyperparameters significantly affects performance.
+
+For most algorithms, the following parameters are the most sensitive:
+
+**Learning Rate**
+
+The learning rate is often the most critical hyperparameter. If training is unstable or diverging:
+
+- try reducing it by a factor of 2–10.
+
+**Batch Size**
+
+Larger batch sizes improve stability but increase memory usage.
+Smaller batch sizes may improve sample efficiency but increase variance.
+
+**Discount Factor (gamma)**
+
+Common values range from 0.95 to 0.999. For long-horizon tasks, larger values are recommended.
+
+**Exploration Parameters**
+
+- DQN: epsilon schedule
+- SAC: entropy coefficient
+- PPO: entropy coefficient or clip range
+
+We recommend adjusting these parameters first before modifying secondary hyperparameters.
+In practice, tuning these primary parameters typically accounts for the majority of performance improvements.
+
+Automatic Hyperparameter Optimization
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Single-Objective
+**********************************************
+
+We provide the HyperParameterTuner API for optimizing a single objective (e.g., test score).
+
+Example usage (see full code by clicking `here <https://github.com/agi-brain/xuance/blob/master/examples/hyperparameter_tuning/tune_dqn.py>`_):
+
+.. code-block:: python
+
+    from xuance.common import HyperParameterTuner, set_hyperparameters
+
+    tuner = HyperParameterTuner(
+        algo='dqn',
+        config_path='./examples/dqn/dqn_configs/dqn_cartpole.yaml',
+        running_steps=1000,
+        test_episodes=2
+    )
+
+    selected_hyperparameters = tuner.select_hyperparameter(['learning_rate'])
+
+    study = tuner.tune(selected_hyperparameters, n_trials=30)
+
+Users may override default parameter ranges via set_hyperparameters.
+
+Optimization history can be visualized using:
+
+.. code-block:: python
+
+    from optuna.visualization import plot_optimization_history
+
+Multi-Objective
+**********************************************
+
+XuanCe also supports multi-objective hyperparameter tuning via the MultiObjectiveTuner API.
+
+Example usage (see full code by clicking `here <https://github.com/agi-brain/xuance/blob/master/examples/hyperparameter_tuning/tune_dqn_multiobjective.py>`_):
+
+.. code-block:: python
+
+    from xuance.common import MultiObjectiveTuner
+
+    tuner = MultiObjectiveTuner(
+        algo='dqn',
+        config_path='./examples/dqn/dqn_configs/dqn_cartpole.yaml',
+        running_steps=10000,
+        test_episodes=2
+    )
+
+    study = tuner.tune(
+        selected_hyperparameters,
+        n_trials=30,
+        directions=['maximize', 'maximize'],
+        selected_objectives=['test_score', 'Qloss']
+    )
+
+The Pareto front can be visualized using:
+
+.. code-block:: python
+
+    from optuna.visualization import plot_pareto_front
+
+Design Principles
+**********************************************
+
+- All hyperparameters remain explicitly defined in YAML files.
+
+- Tuning modifies parameters programmatically without breaking reproducibility.
+
+- Integration with Optuna allows flexible search strategies (grid, random, Bayesian).
+
+- Compatible with distributed training settings.
+
+For full API documentation, see `APIs → common → tuning_tools <../api/common/tuning_tools.html>`_.
