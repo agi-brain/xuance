@@ -3,7 +3,7 @@ import numpy as np
 from copy import deepcopy
 
 from xuance.environment import make_envs
-from xuance.torch.runners import RunnerBase
+from xuance.runners import RunnerBase
 from xuance.torch.agents import REGISTRY_Agents
 try:
     from xuance.common import load_d4rl_dataset

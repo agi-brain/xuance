@@ -43,7 +43,7 @@ Install XuanCe
 
             pip install xuance[mindspore]
 
-    .. tab:: All DL toolbox
+    .. tab:: All DL backend
 
         .. code-block:: bash
 
@@ -77,7 +77,7 @@ Alternatively, you can also install ``xuance`` from its GitHub repository.
             cd xuance
             pip install -e .[mindspore]
 
-    .. tab:: All DL toolbox
+    .. tab:: All DL backend
 
         .. code-block:: bash
 

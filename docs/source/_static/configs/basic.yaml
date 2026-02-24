@@ -1,4 +1,4 @@
-dl_toolbox: "torch"  # The deep learning toolbox. Choices: "torch", "mindspore", "tensorflow"
+dl_backend: "torch"  # The deep learning backend. Choices: "torch", "mindspore", "tensorflow"
 project_name: "XuanCe_Benchmark"
 logger: "tensorboard"  # Choices: "tensorboard", "wandb".
 wandb_user_name: "your_user_name"

@@ -1,4 +1,5 @@
-from xuance.common.common_tools import get_runner, get_arguments, get_configs
+from xuance.common import get_configs, get_arguments
+from xuance.runners import get_runner
 from xuance.environment import make_envs
 
 __all__ = [

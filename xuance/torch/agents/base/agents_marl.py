@@ -13,13 +13,11 @@ from gymnasium.spaces import Space
 from torch import nn
 from torch.utils.tensorboard import SummaryWriter
 from torch.distributed import destroy_process_group
-from xuance.common import (
-    get_time_string, create_directory, space2shape, set_device, Optional, List, Dict, Union, MultiAgentBaseCallback
-)
-from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
+from xuance.common import get_time_string, create_directory, Optional, List, Dict, Union, MultiAgentBaseCallback
+from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv, space2shape
 from xuance.torch import ModuleDict, REGISTRY_Representation, REGISTRY_Learners, Module
 from xuance.torch.learners import learner
-from xuance.torch.utils import NormalizeFunctions, ActivationFunctions, init_distributed_mode, set_seed
+from xuance.torch.utils import NormalizeFunctions, ActivationFunctions, init_distributed_mode, set_seed, set_device
 
 
 class MARLAgents(ABC):
@@ -93,7 +91,7 @@ class MARLAgents(ABC):
         self.start_training = getattr(config, "start_training", 1)
         self.training_frequency = getattr(config, "training_frequency", 1)
         self.n_epochs = getattr(config, "n_epochs", 1)
-        self.device = self.config.device = set_device(self.config.dl_toolbox, self.config.device)
+        self.device = self.config.device = set_device(self.config.device)
 
         # Environment attributes.
         self.train_envs = envs

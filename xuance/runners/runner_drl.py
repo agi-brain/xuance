@@ -5,12 +5,12 @@ import csv
 import gymnasium as gym
 import numpy as np
 from copy import deepcopy
+from typing import Optional
 from argparse import Namespace
 from datetime import datetime
-from xuance.common import Optional, create_directory
+from xuance.common.common_tools import create_directory
 from xuance.environment import DummyVecEnv, SubprocVecEnv, make_envs
-from xuance.torch.runners import RunnerBase
-from xuance.torch.agents import REGISTRY_Agents, Agent
+from xuance.runners import RunnerBase
 
 
 class RunnerDRL(RunnerBase):
@@ -35,7 +35,7 @@ class RunnerDRL(RunnerBase):
     def __init__(self,
                  config: Namespace,
                  envs: Optional[DummyVecEnv | SubprocVecEnv] = None,
-                 agent: Agent = None,
+                 agent=None,
                  manage_resources: bool = None):
         """Initialize the DRL runner.
 
@@ -78,6 +78,18 @@ class RunnerDRL(RunnerBase):
             self.config.action_space = self.envs.action_space
 
         # Build agent if not injected externally
+        if getattr(self.config, 'dl_toolbox', 'torch'):
+            from xuance.torch.agents import REGISTRY_Agents
+            from xuance.torch.utils import collect_device_info
+        elif getattr(self.config, 'dl_toolbox', 'tensorflow'):
+            from xuance.tensorflow.agents import REGISTRY_Agents
+            from xuance.tensorflow.utils import collect_device_info
+        elif getattr(self.config, 'dl_toolbox', 'mindspore'):
+            from xuance.mindspore.agents import REGISTRY_Agents
+            from xuance.mindspore.utils import collect_device_info
+        else:
+            raise NotImplementedError
+        self.collect_device_info = collect_device_info
         self.agent = REGISTRY_Agents[self.config.agent](self.config, self.envs) if agent is None else agent
 
         # Distributed training setup (rank-aware behavior)
@@ -136,7 +148,7 @@ class RunnerDRL(RunnerBase):
             "eval_interval": eval_interval,
             "test_episodes": test_episodes,
         }
-        meta_data["system_info"] = self.collect_device_info()
+        meta_data["system_info"] = self.collect_device_info(rank=int(getattr(self, "rank", 0)), agent=self.agent)
         config_dict = vars(self.agent.config).copy()
         config_dict.pop("observation_space", None)
         config_dict.pop("action_space", None)

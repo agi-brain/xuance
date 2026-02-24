@@ -98,7 +98,7 @@ envs.close()
 Take ``DQN`` as an example, you need to first prepare a config file like "dqn_minigrid.yaml":
 
 ```{code-block} yaml
-dl_toolbox: "torch"  # The deep learning toolbox. Choices: "torch", "mindspore", "tensorlayer"
+dl_backend: "torch"  # The deep learning backend. Choices: "torch", "mindspore", "tensorlayer"
 project_name: "XuanCe_Benchmark"
 logger: "tensorboard"  # Choices: tensorboard, wandb.
 wandb_user_name: "your_user_name"

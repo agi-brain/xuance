@@ -25,7 +25,7 @@ Here we show a config file named "ppo_configs/ppo_mujoco_config.yaml" for MuJoCo
 
 .. code-block:: yaml
 
-    dl_toolbox: "torch"  # The deep learning toolbox. Choices: "torch", "mindspore", "tensorlayer"
+    dl_backend: "torch"  # The deep learning backend. Choices: "torch", "mindspore", "tensorlayer"
     project_name: "XuanCe_Benchmark"
     logger: "tensorboard"  # Choices: tensorboard, wandb.
     wandb_user_name: "your_user_name"  # The username of wandb when the logger is wandb.
@@ -175,7 +175,7 @@ Step 3: Create environment, PPO Agent, and run the task
         envs = make_envs(configs)  # Make the environment.
         Agent = PPOCLIP_Agent(config=configs, envs=envs)  # Create the PPO agent.
 
-        train_information = {"Deep learning toolbox": configs.dl_toolbox,
+        train_information = {"Deep learning backend": configs.dl_backend,
                              "Calculating device": configs.device,
                              "Algorithm": configs.agent,
                              "Environment": configs.env_name,

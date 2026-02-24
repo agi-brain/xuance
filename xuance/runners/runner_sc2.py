@@ -6,16 +6,15 @@ import numpy as np
 from argparse import Namespace
 from datetime import datetime
 from xuance.common import Optional, create_directory
-from xuance.torch.runners import RunnerBase
-from xuance.torch.agents import REGISTRY_Agents, Agent
-from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv, make_envs
+from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
+from xuance.runners import RunnerBase
 
 
 class RunnerSC2(RunnerBase):
     def __init__(self,
                  config: Namespace,
                  envs: Optional[DummyVecMultiAgentEnv | SubprocVecMultiAgentEnv] = None,
-                 agent: Agent = None,
+                 agent=None,
                  manage_resources: bool = None):
         # Store configuration
         self.config = config
@@ -23,6 +22,14 @@ class RunnerSC2(RunnerBase):
         self.running_steps = config.running_steps
 
         super(RunnerSC2, self).__init__(self.config, envs, agent, manage_resources)
+        if getattr(self.config, 'dl_toolbox', 'torch'):
+            from xuance.torch.agents import REGISTRY_Agents
+        elif getattr(self.config, 'dl_toolbox', 'tensorflow'):
+            from xuance.tensorflow.agents import REGISTRY_Agents
+        elif getattr(self.config, 'dl_toolbox', 'mindspore'):
+            from xuance.mindspore.agents import REGISTRY_Agents
+        else:
+            raise NotImplementedError
         self.config.n_agents = self.envs.num_agents
         self.agent = REGISTRY_Agents[self.config.agent](self.config, self.envs) if agent is None else agent
         self.num_agents, self.num_enemies = self.get_agent_num()

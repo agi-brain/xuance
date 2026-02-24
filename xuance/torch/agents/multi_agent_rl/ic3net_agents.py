@@ -8,14 +8,13 @@ import torch
 from gymnasium import Space
 from torch.nn import Module, ModuleDict
 
-from xuance.common import space2shape
 from xuance.common.memory_tools_marl import IC3Net_OnPolicyBuffer_RNN
 from xuance.torch.communications import IC3NetComm
 
 from xuance.torch import REGISTRY_Policy
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
 
-from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
+from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv, space2shape
 from xuance.common import MultiAgentBaseCallback
 from xuance.torch.agents.multi_agent_rl.commnet_agents import CommNet_Agents
 

@@ -65,7 +65,7 @@ Here is an example of configurations for DDPG algorithm, named "ddpg_new_env.yam
 
 .. code-block:: python
 
-    dl_toolbox: "torch"  # The deep learning toolbox. Choices: "torch", "mindspore", "tensorlayer"
+    dl_backend: "torch"  # The deep learning backend. Choices: "torch", "mindspore", "tensorlayer"
     project_name: "XuanCe_Benchmark"
     logger: "tensorboard"  # Choices: tensorboard, wandb.
     wandb_user_name: "your_user_name"

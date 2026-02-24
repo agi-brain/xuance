@@ -89,7 +89,7 @@ Here is an example of configurations for DDPG algorithm, named "ippo_new_configs
 
 .. code-block:: python
 
-    dl_toolbox: "torch"  # The deep learning toolbox. Choices: "torch", "mindspore", "tensorlayer"
+    dl_backend: "torch"  # The deep learning backend. Choices: "torch", "mindspore", "tensorlayer"
     project_name: "XuanCe_Benchmark"
     logger: "tensorboard"  # Choices: tensorboard, wandb.
     wandb_user_name: "your_user_name"

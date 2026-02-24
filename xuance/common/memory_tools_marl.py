@@ -1,8 +1,9 @@
 import numpy as np
 from abc import ABC, abstractmethod
-from xuance.common import List, Dict, Optional
 from gymnasium.spaces import Space
-from xuance.common import space2shape, create_memory
+from typing import List, Dict, Optional
+from xuance.common import create_memory
+from xuance.environment.utils import space2shape
 
 
 class BaseBuffer(ABC):

@@ -35,7 +35,7 @@ and suffering from unstable training processes, therefore, sometimes DRL algorit
 This project gives a thorough, high-quality and easy-to-understand implementation of DRL algorithms,
 and hope this implementation can give a hint on the magics of reinforcement learning.
 
-We expect it to be compatible with multiple deep learning toolboxes(
+We expect it to be compatible with multiple deep learning backends(
 **[PyTorch](https://pytorch.org/)**,
 **[TensorFlow](https://www.tensorflow.org/)**, and
 **[MindSpore](https://www.mindspore.cn/en)**),
@@ -338,7 +338,7 @@ conda create -n xuance_env python=3.8 && conda activate xuance_env
 pip install xuance
 ```
 
-This command does not include the dependencies of deep learning toolboxes. To install the **XuanCe** with
+This command does not include the dependencies of deep learning backends. To install the **XuanCe** with
 deep learning tools, you can type `pip install xuance[torch]` for [PyTorch](https://pytorch.org/get-started/locally/),
 `pip install xuance[tensorflow]` for [TensorFlow2](https://www.tensorflow.org/install),
 `pip install xuance[mindspore]` for [MindSpore](https://www.mindspore.cn/install/en),

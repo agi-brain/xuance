@@ -2,11 +2,11 @@ import random
 import numpy as np
 from gymnasium import Space
 from abc import ABC, abstractmethod
-from xuance.common import Optional, Union
-from xuance.common import space2shape, discount_cumsum
-from xuance.common.segtree_tool import SumSegmentTree, MinSegmentTree
+from typing import Optional, Union, Dict
 from collections import deque
-from xuance.common import Dict
+from xuance.common.common_tools import discount_cumsum
+from xuance.common.segtree_tool import SumSegmentTree, MinSegmentTree
+from xuance.environment.utils import space2shape
 
 
 def create_memory(shape: Optional[Union[tuple, dict]],

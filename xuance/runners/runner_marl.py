@@ -7,23 +7,35 @@ from copy import deepcopy
 from argparse import Namespace
 from datetime import datetime
 from xuance.common import Optional, create_directory
-from xuance.torch.runners import RunnerBase
-from xuance.torch.agents import REGISTRY_Agents, Agent
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv, make_envs
+from xuance.runners import RunnerBase
 
 
 class RunnerMARL(RunnerBase):
     def __init__(self,
                  config: Namespace,
                  envs: Optional[DummyVecMultiAgentEnv | SubprocVecMultiAgentEnv] = None,
-                 agent: Agent = None,
+                 agent=None,
                  manage_resources: bool = None):
         # Store configuration
         self.config = config
         self.env_id = self.config.env_id
         
         super(RunnerMARL, self).__init__(self.config, envs, agent, manage_resources)
+
         # Build agent if not injected externally
+        if getattr(self.config, 'dl_toolbox', 'torch'):
+            from xuance.torch.agents import REGISTRY_Agents
+            from xuance.torch.utils import collect_device_info
+        elif getattr(self.config, 'dl_toolbox', 'tensorflow'):
+            from xuance.tensorflow.agents import REGISTRY_Agents
+            from xuance.tensorflow.utils import collect_device_info
+        elif getattr(self.config, 'dl_toolbox', 'mindspore'):
+            from xuance.mindspore.agents import REGISTRY_Agents
+            from xuance.mindspore.utils import collect_device_info
+        else:
+            raise NotImplementedError
+        self.collect_device_info = collect_device_info
         self.agent = REGISTRY_Agents[self.config.agent](self.config, self.envs) if agent is None else agent
 
         # Distributed training setup (rank-aware behavior)
@@ -81,7 +93,7 @@ class RunnerMARL(RunnerBase):
             "eval_interval": eval_interval,
             "test_episodes": test_episodes,
         }
-        meta_data["system_info"] = self.collect_device_info()
+        meta_data["system_info"] = self.collect_device_info(rank=int(getattr(self, "rank", 0)), agent=self.agent)
         config_dict = vars(self.agent.config).copy()
         config_dict.pop("observation_space", None)
         config_dict.pop("action_space", None)

@@ -112,6 +112,42 @@ Here are its key features:
 List of Algorithms
 -------------------
 
+.. mermaid::
+
+   flowchart LR
+
+   subgraph UNIFIED [Unified Framework (Backend-agnostic)]
+      CONFIGS[Configs<br/>dqn/atari.yaml, ddpg/mujoco.yam, ...]
+      TOOLS[]
+
+
+   COMMON[Unified Framework (Backend-agnostic)<br/>Configs + CommonTools + Memory...]
+   ENV[Unified Framework (Backend-agnostic)<br/>Single-Agent/Multi-agent + Vectorization]
+
+   CORE[Unified Framework (Backend-specific)<br/>Utils + Representation + Policy +<br/>Communication (for MARL)<br/>+ Learner + Agent + Runner]
+   COMMON --> CORE
+   ENV --> CORE
+   CORE --> Value[Value-based]
+   CORE --> Policy[Policy-based]
+   CORE --> MARL[MARL]
+   CORE --> Model[Model-based]
+   CORE --> Contrastive[Contrastive RL]
+   CORE --> Offline[Offline RL]
+
+   Value --> DQN[DQN/DDQN/DuelDQN...]
+   Policy --> ON[PG/A2C/PPO...]
+   Policy --> OFF[DDPG/SAC/TD3...]
+
+   MARL --> ONMA[VDAC/COMA/IPPO/MAPPO...]
+   MARL --> OFFMA[VDN/QMIX/MADDPG/MASAC...]
+   MARL --> COMMMA[CommNet/IC3Net/TarMAC...]
+
+   Model --> MBRL[DreamerV2/DreamerV3/HarmonyDreamer...]
+
+   Contrastive --> CRL[CURL/DrQ/SPR...]
+
+   Offline --> OFFLINERL[TD3BC...]
+
 **Value-based:**
 
 * :class:`DQN` : :doc:`Deep Q-Network (DQN) <documents/algorithms/drl/dqn>`.
@@ -188,7 +224,7 @@ The overall framework of XuanCe is shown as below.
 XuanCe contains four main parts:
 
 - Part I: Configs. The configurations of hyper-parameters, environments, models, etc.
-- Part II: Common tools. Reusable tools that are independent of the choice of DL toolbox.
+- Part II: Common tools. Reusable tools that are independent of the choice of DL backend.
 - Part III: Environments. The supported simulated environments.
 - Part IV: Algorithms. The key part to build DRL algorithms.
 

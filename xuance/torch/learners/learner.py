@@ -7,7 +7,7 @@ from argparse import Namespace
 from operator import itemgetter
 from xuance.torch import Tensor
 
-MAX_GPUs =  torch.cuda.device_count()
+MAX_GPUs = torch.cuda.device_count()
 
 
 class Learner(ABC):
@@ -61,39 +61,48 @@ class Learner(ABC):
         return total_iters
 
     def save_model(self, model_path):
-        torch.save(
-            {
-                'policy': self.policy.state_dict(),
-                'optimizer': self.optimizer.state_dict(),
-                'rng_state': torch.get_rng_state(),
-                'cuda_rng_state': torch.cuda.get_rng_state_all(),
-            },
-            model_path)
+        if type(self.optimizer) == dict:
+            torch.save(
+                {
+                    'policy': self.policy.state_dict(),
+                    'optimizer': {k: v.state_dict() for k, v in self.optimizer.items()},
+                    'rng_state': torch.get_rng_state(),
+                    'cuda_rng_state': torch.cuda.get_rng_state_all(),
+                },
+                model_path)
+        else:
+            torch.save(
+                {
+                    'policy': self.policy.state_dict(),
+                    'optimizer': self.optimizer.state_dict(),
+                    'rng_state': torch.get_rng_state(),
+                    'cuda_rng_state': torch.cuda.get_rng_state_all(),
+                },
+                model_path)
         if self.distributed_training:
             self.save_snapshot()
 
     def load_model(self, path, model=None):
-
         target_path = os.path.join(path, model) if model is not None else path
         if os.path.isfile(target_path):
             model_path = target_path
             checkpoint = torch.load(str(model_path), map_location='cpu')
 
-
             self.policy.load_state_dict(checkpoint['policy'], strict=False)
 
-
             if 'optimizer' in checkpoint and self.optimizer is not None:
-                self.optimizer.load_state_dict(checkpoint['optimizer'])
+                if type(self.optimizer) == dict:
+                    for k, v in self.optimizer.items():
+                        v.load_state_dict(checkpoint['optimizer'][k])
+                else:
+                    self.optimizer.load_state_dict(checkpoint['optimizer'])
                 current_lr = self.optimizer.param_groups[0]['lr']
                 self.learning_rate = current_lr
-
 
             if 'rng_state' in checkpoint:
                 rng_state = checkpoint['rng_state']
                 rng_state = rng_state.cpu().to(dtype=torch.uint8)
                 torch.set_rng_state(rng_state)
-
 
             if 'cuda_rng_state' in checkpoint and torch.cuda.is_available():
                 cuda_states = checkpoint['cuda_rng_state']
@@ -103,7 +112,6 @@ class Learner(ABC):
                     cuda_states = cuda_states[:num_available_gpus]
 
                     for i, state in enumerate(cuda_states):
-
                         state = state.cpu().to(dtype=torch.uint8)
 
                         torch.cuda.set_rng_state(state, device=i)
@@ -134,9 +142,7 @@ class Learner(ABC):
         model_names.sort()
         model_path = os.path.join(path, model_names[-1])
 
-
         checkpoint = torch.load(str(model_path), map_location='cpu')
-
 
         self.policy.load_state_dict(checkpoint['policy'], strict=False)
 
@@ -147,7 +153,6 @@ class Learner(ABC):
         if 'rng_state' in checkpoint:
             rng_state = checkpoint['rng_state'].cpu().to(dtype=torch.uint8)
             torch.set_rng_state(rng_state)
-
 
         if 'cuda_rng_state' in checkpoint and torch.cuda.is_available():
             cuda_states = checkpoint['cuda_rng_state']
@@ -205,7 +210,7 @@ class Learner(ABC):
             train_steps = self.config.running_steps // self.config.parallels
             eval_interval = self.config.eval_interval // self.config.parallels
             num_epoch = int(train_steps / eval_interval)
-            current_iters = int(self.total_iters *self.config.rt_epoch / num_epoch)
+            current_iters = int(self.total_iters * self.config.rt_epoch / num_epoch)
             self.scheduler.step(current_iters)
             print(f"scheduler.step success，rt_epoch={self.config.rt_epoch}")
         except TypeError as e:
@@ -240,6 +245,7 @@ class LearnerMAS(ABC):
         self.use_linear_lr_decay = getattr(config, 'use_linear_lr_decay', False)
         self.end_factor_lr_decay = getattr(config, 'end_factor_lr_decay', 0.5)
         self.gamma = getattr(config, 'gamma', 0.99)
+        self.use_cnn = getattr(config, "use_cnn", False)
         self.use_rnn = getattr(config, 'use_rnn', False)
         self.use_actions_mask = getattr(config, 'use_actions_mask', False)
         self.policy = policy
@@ -308,6 +314,12 @@ class LearnerMAS(ABC):
                                              axis=1)).float().to(self.device)
                 msk_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['agent_mask']),
                                              axis=1)).float().to(self.device)
+
+            if self.use_cnn and len(obs_tensor.shape) > 3:  # obs_array consists of images
+                obs_shape_item = obs_tensor.shape[2:]
+            else:
+                obs_shape_item = (-1,)
+
             if self.use_rnn:
                 obs = {k: obs_tensor.reshape(bs, seq_length + 1, -1)}
                 if len(actions_tensor.shape) == 3:
@@ -322,7 +334,7 @@ class LearnerMAS(ABC):
                 IDs = torch.eye(self.n_agents).unsqueeze(1).unsqueeze(0).expand(
                     batch_size, -1, seq_length + 1, -1).reshape(bs, seq_length + 1, self.n_agents).to(self.device)
             else:
-                obs = {k: obs_tensor.reshape(bs, -1)}
+                obs = {k: obs_tensor.reshape(bs, *obs_shape_item)}
                 if len(actions_tensor.shape) == 2:
                     actions = {k: actions_tensor.reshape(bs)}
                 elif len(actions_tensor.shape) == 3:
@@ -333,7 +345,7 @@ class LearnerMAS(ABC):
                 terminals = {k: ter_tensor.reshape(batch_size, self.n_agents)}
                 agent_mask = {k: msk_tensor.reshape(bs)}
                 obs_next = {k: Tensor(np.stack(itemgetter(*self.agent_keys)(sample['obs_next']),
-                                               axis=1)).to(self.device).reshape(bs, -1)}
+                                               axis=1)).to(self.device).reshape(bs, *obs_shape_item)}
                 IDs = torch.eye(self.n_agents).unsqueeze(0).expand(
                     batch_size, -1, -1).reshape(bs, self.n_agents).to(self.device)
 
@@ -402,28 +414,74 @@ class LearnerMAS(ABC):
         raise NotImplementedError
 
     def save_model(self, model_path):
-        torch.save(self.policy.state_dict(), model_path)
+        if type(self.optimizer) == dict:
+            if type(list(self.optimizer.values())[0]) == dict:
+                torch.save(
+                    {
+                        'policy': self.policy.state_dict(),
+                        'optimizer': {k_a: {k: v.state_dict() for k, v in v_a.items()}
+                                      for k_a, v_a in self.optimizer.items()},  # agent-wise
+                        'rng_state': torch.get_rng_state(),
+                        'cuda_rng_state': torch.cuda.get_rng_state_all(),
+                    },
+                    model_path)
+            else:
+                torch.save(
+                    {
+                        'policy': self.policy.state_dict(),
+                        'optimizer': {k: v.state_dict() for k, v in self.optimizer.items()},
+                        'rng_state': torch.get_rng_state(),
+                        'cuda_rng_state': torch.cuda.get_rng_state_all(),
+                    },
+                    model_path)
+        else:
+            torch.save(
+                {
+                    'policy': self.policy.state_dict(),
+                    'optimizer': self.optimizer.state_dict(),
+                    'rng_state': torch.get_rng_state(),
+                    'cuda_rng_state': torch.cuda.get_rng_state_all(),
+                },
+                model_path)
 
     def load_model(self, path, model=None):
-        file_names = os.listdir(path)
-        if model is not None:
-            path = os.path.join(path, model)
-            if model not in file_names:
-                raise RuntimeError(f"The folder '{path}' does not exist, please specify a correct path to load model.")
-        else:
-            for f in file_names:
-                if "seed_" not in f:
-                    file_names.remove(f)
-            file_names.sort()
-            path = os.path.join(path, file_names[-1])
+        target_path = os.path.join(path, model) if model is not None else path
+        if os.path.isfile(target_path):
+            model_path = target_path
+            checkpoint = torch.load(str(model_path), map_location='cpu')
 
-        model_names = os.listdir(path)
-        if os.path.exists(path + "/obs_rms.npy"):
-            model_names.remove("obs_rms.npy")
-        if len(model_names) == 0:
-            raise RuntimeError(f"There is no model file in '{path}'!")
-        model_names.sort()
-        model_path = os.path.join(path, model_names[-1])
-        self.policy.load_state_dict(torch.load(str(model_path), map_location={
-            f"cuda:{i}": self.device for i in range(MAX_GPUs)}))
-        print(f"Successfully load model from '{path}'.")
+            self.policy.load_state_dict(checkpoint['policy'], strict=False)
+
+            if 'optimizer' in checkpoint and self.optimizer is not None:
+                if type(self.optimizer) == dict:
+                    if type(list(self.optimizer.values())[0]) == dict:
+                        for k_a, v_a in self.optimizer.items():  # agent-wise
+                            for k, v in v_a.items():
+                                v.load_state_dict(checkpoint['optimizer'][k_a][k])
+                    else:
+                        for k, v in self.optimizer.items():
+                            v.load_state_dict(checkpoint['optimizer'][k])
+                else:
+                    self.optimizer.load_state_dict(checkpoint['optimizer'])
+                current_lr = self.optimizer.param_groups[0]['lr']
+                self.learning_rate = current_lr
+
+            if 'rng_state' in checkpoint:
+                rng_state = checkpoint['rng_state']
+                rng_state = rng_state.cpu().to(dtype=torch.uint8)
+                torch.set_rng_state(rng_state)
+
+            if 'cuda_rng_state' in checkpoint and torch.cuda.is_available():
+                cuda_states = checkpoint['cuda_rng_state']
+                if isinstance(cuda_states, list):
+
+                    num_available_gpus = torch.cuda.device_count()
+                    cuda_states = cuda_states[:num_available_gpus]
+
+                    for i, state in enumerate(cuda_states):
+                        state = state.cpu().to(dtype=torch.uint8)
+
+                        torch.cuda.set_rng_state(state, device=i)
+
+            print(f"Successfully load model from file '{model_path}'.")
+            return model_path

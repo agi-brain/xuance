@@ -8,13 +8,12 @@ from gymnasium import Space
 from argparse import Namespace
 from xuance.torch.agents.multi_agent_rl.mappo_agents import MAPPO_Agents
 
-from xuance.common import Optional, Union, space2shape
+from xuance.common import Optional, Union, MultiAgentBaseCallback
 import gymnasium as gym
-from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
+from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv, space2shape
 from xuance.torch import Module, REGISTRY_Policy, ModuleDict
 from xuance.torch.communications.comm_net import CommNet
 from xuance.torch.utils import ActivationFunctions, NormalizeFunctions
-from xuance.common import MultiAgentBaseCallback
 
 
 class CommNet_Agents(MAPPO_Agents):

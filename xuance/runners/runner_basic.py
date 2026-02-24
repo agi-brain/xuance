@@ -1,11 +1,6 @@
-import os
-import platform
-import xuance
-import tensorflow as tf
+from typing import Optional
 from abc import ABC, abstractmethod
-from xuance.common import Optional
 from xuance.environment import make_envs
-from xuance.tensorflow.agents import Agent
 
 
 class RunnerBase(ABC):
@@ -76,7 +71,7 @@ class RunnerBase(ABC):
         # Default rank (may be overridden by distributed runners)
         self.rank = 0
 
-        self.agent: Optional[Agent] = agent
+        self.agent = agent
 
     @abstractmethod
     def _run_train(self, **kwargs):
@@ -133,74 +128,6 @@ class RunnerBase(ABC):
         finally:
             self._finalize()
 
-    def collect_device_info(self) -> dict:
-        """Collect runtime device / system info for reproducibility (TensorFlow 2.x).
-
-        Returns a JSON-serializable dict.
-        """
-        info = {
-            "Platform": platform.platform(),
-            "Python": platform.python_version(),
-            "XuanCe": xuance.__version__,
-            "PID": os.getpid(),
-            "Rank": int(getattr(self, "rank", 0)),
-        }
-
-        try:
-            info["TensorFlow"] = getattr(tf, "__version__", "unknown")
-
-            # Physical devices visible to TF
-            gpus = tf.config.list_physical_devices("GPU")
-            cpus = tf.config.list_physical_devices("CPU")
-
-            info["CUDA_Available"] = bool(gpus)  # “TF能看到GPU”通常就是最关心的
-            info["num_gpus"] = len(gpus)
-            info["num_cpus"] = len(cpus)
-
-            # GPU details (best-effort; names are not always available)
-            gpu_details = []
-            for i, d in enumerate(gpus):
-                # d.name often like '/physical_device:GPU:0'
-                gpu_details.append({"index": i, "name": getattr(d, "name", str(d)), "device_type": "GPU"})
-            info["gpus"] = gpu_details
-
-            # Logical devices (useful when virtual GPUs / memory limits are set)
-            logical_gpus = tf.config.list_logical_devices("GPU")
-            info["num_logical_gpus"] = len(logical_gpus)
-
-            # Build info sometimes contains cuda/cudnn versions (not always present)
-            build_info = {}
-            try:
-                build_info = tf.sysconfig.get_build_info() or {}
-            except Exception:
-                build_info = {}
-
-            # These keys vary across TF versions; keep it best-effort & JSON-safe
-            if build_info:
-                info["tf_build_info"] = {k: str(v) for k, v in build_info.items()}
-
-            # Optional: record current visible devices env var (helps debug)
-            info["cuda_visible_devices"] = os.environ.get("CUDA_VISIBLE_DEVICES", None)
-
-            # Optional: if your Agent exposes its own device/strategy info, store it
-            agent = getattr(self, "agent", None)
-            if agent is not None:
-                # common patterns: agent.device / agent.strategy
-                if hasattr(agent, "device"):
-                    info["agent_device"] = str(getattr(agent, "device"))
-                if hasattr(agent, "strategy"):
-                    try:
-                        info["tf_strategy"] = type(getattr(agent, "strategy")).__name__
-                    except Exception:
-                        pass
-
-        except Exception as e:
-            # Keep it minimal but valid if TF isn't available or anything fails.
-            info["CUDA_Available"] = False
-            info["device_info_error"] = repr(e)
-
-        return info
-
     def _finalize(self):
         """Finalize resources held by the runner.
 
@@ -236,3 +163,14 @@ class RunnerBase(ABC):
                 self.envs = None
         else:
             return
+
+    def rprint(self, info: str):
+        """Rank-aware print utility.
+
+        Only prints messages on rank 0, which is useful for distributed training to avoid duplicated logs.
+
+        Args:
+            info: Message to print.
+        """
+        if self.rank == 0:
+            print(info)
