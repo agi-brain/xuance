@@ -17,4 +17,5 @@ dependencies:
   - sphinx-design
   - sphinx-favicon
   - sphinxcontrib-mermaid
+  - sphinx-github-changelog
 prefix: /home/docs/.conda/envs/xuance_env
