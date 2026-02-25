@@ -1,7 +1,8 @@
 import numpy as np
 from gymnasium import Space
-from xuance.common import Optional, space2shape
+from typing import Optional
 from xuance.common.memory_tools import Buffer, create_memory, store_element, sample_batch
+from xuance.environment.utils import space2shape
 
 
 class OfflineBuffer_D4RL(Buffer):

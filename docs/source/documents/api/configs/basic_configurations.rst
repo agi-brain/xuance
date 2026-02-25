@@ -5,7 +5,7 @@ The basic parameter configuration is stored in the "xuance/config/basic.yaml" fi
 
 .. code-block:: yaml
 
-    dl_toolbox: "torch"  # The deep learning toolbox. Choices: "torch", "mindspore", "tensorflow"
+    dl_backend: "torch"  # The deep learning backend. Choices: "torch", "mindspore", "tensorflow"
 
     project_name: "XuanCe_Benchmark"
     logger: "tensorboard"  # Choices: "tensorboard", "wandb".

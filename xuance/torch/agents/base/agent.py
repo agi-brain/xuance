@@ -11,12 +11,10 @@ from argparse import Namespace
 from gymnasium.spaces import Dict, Space
 from torch.utils.tensorboard import SummaryWriter
 from torch.distributed import destroy_process_group
-from xuance.common import (
-    get_time_string, create_directory, set_device, RunningMeanStd, space2shape, EPS, Optional, BaseCallback
-)
-from xuance.environment import DummyVecEnv, SubprocVecEnv
+from xuance.common import get_time_string, create_directory, RunningMeanStd, EPS, Optional, BaseCallback
+from xuance.environment import DummyVecEnv, SubprocVecEnv, space2shape
 from xuance.torch import REGISTRY_Representation, REGISTRY_Learners, Module
-from xuance.torch.utils import nn, NormalizeFunctions, ActivationFunctions, init_distributed_mode, set_seed
+from xuance.torch.utils import nn, NormalizeFunctions, ActivationFunctions, init_distributed_mode, set_seed, set_device
 
 
 class Agent(ABC):
@@ -84,7 +82,7 @@ class Agent(ABC):
         self.start_training = getattr(config, "start_training", 1)
         self.training_frequency = getattr(config, "training_frequency", 1)
         self.n_epochs = getattr(config, "n_epochs", 1)
-        self.device = self.config.device = set_device(self.config.dl_toolbox, self.config.device)
+        self.device = self.config.device = set_device(self.config.device)
 
         # Environment attributes.
         self.train_envs = envs

@@ -25,17 +25,11 @@ Install XuanCe
 
 .. tabs::
 
-    .. tab:: No DL toolbox
-
-        .. code-block:: bash
-
-            pip install xuance
-
     .. tab:: |_3| |torch| |_3|
 
         .. code-block:: bash
 
-            pip install xuance[torch]
+            pip install xuance
 
     .. tab:: |_3| |tensorflow| |_3|
 
@@ -49,7 +43,7 @@ Install XuanCe
 
             pip install xuance[mindspore]
 
-    .. tab:: All DL toolbox
+    .. tab:: All DL backend
 
         .. code-block:: bash
 
@@ -59,7 +53,7 @@ Alternatively, you can also install ``xuance`` from its GitHub repository.
 
 .. tabs::
 
-    .. tab:: No DL toolbox
+    .. tab:: |_3| |torch| |_3|
 
         .. code-block:: bash
 
@@ -67,15 +61,7 @@ Alternatively, you can also install ``xuance`` from its GitHub repository.
             cd xuance
             pip install -e .
 
-    .. tab:: |_4| |torch| |_4|
-
-        .. code-block:: bash
-
-            git clone https://github.com/agi-brain/xuance.git
-            cd xuance
-            pip install -e .[torch]
-
-    .. tab:: |tensorflow|
+    .. tab:: |_3| |tensorflow| |_3|
 
         .. code-block:: bash
 
@@ -83,7 +69,7 @@ Alternatively, you can also install ``xuance`` from its GitHub repository.
             cd xuance
             pip install -e .[tensorflow]
 
-    .. tab:: |mindspore|
+    .. tab:: |_3| |mindspore| |_3|
 
         .. code-block:: bash
 
@@ -91,7 +77,7 @@ Alternatively, you can also install ``xuance`` from its GitHub repository.
             cd xuance
             pip install -e .[mindspore]
 
-    .. tab:: All DL toolbox
+    .. tab:: All DL backend
 
         .. code-block:: bash
 
@@ -132,6 +118,14 @@ Alternatively, you can also install ``xuance`` from its GitHub repository.
 
         pip install mpi4py
 
+.. note::
+
+    This issue only affects **XuanCe versions earlier than v1.4.0**.
+    Starting from **v1.4.0**, ``mpi4py`` is no longer a required dependency of XuanCe.
+
+    If you are using an older version of XuanCe and encounter this error,
+    you can resolve it using the methods described above.
+
 .. tip::
 
     If your IP address is in Chinese mainland, you can install it with a mirror image to speed up the installation,
@@ -161,6 +155,8 @@ Then, test the installation of xuance by typing:
 
 
 .. error::
+
+    (For XuanCe versions earlier than v1.4.0)
 
     If you are using Windows OS to import xuance, you might get an error likes this:
 

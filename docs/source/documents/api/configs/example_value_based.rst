@@ -30,14 +30,14 @@ Value-based Algorithms
 
                 .. tabs::
 
-                    .. group-tab:: CarRacing-v2
+                    .. group-tab:: CarRacing-v3
 
-                        .. literalinclude:: ../../../_static/configs/dqn/box2d/CarRacing-v2.yaml
+                        .. literalinclude:: ../../../_static/configs/dqn/box2d/CarRacing-v3.yaml
                             :language: yaml
 
-                    .. group-tab:: LunarLander-v2
+                    .. group-tab:: LunarLander-v3
 
-                        .. literalinclude:: ../../../_static/configs/dqn/box2d/LunarLander-v2.yaml
+                        .. literalinclude:: ../../../_static/configs/dqn/box2d/LunarLander-v3.yaml
                             :language: yaml
 
             .. tab:: Atari
@@ -73,14 +73,14 @@ Value-based Algorithms
 
                 .. tabs::
 
-                    .. group-tab:: CarRacing-v2
+                    .. group-tab:: CarRacing-v3
 
-                        .. literalinclude:: ../../../_static/configs/c51/box2d/CarRacing-v2.yaml
+                        .. literalinclude:: ../../../_static/configs/c51/box2d/CarRacing-v3.yaml
                             :language: yaml
 
-                    .. group-tab:: LunarLander-v2
+                    .. group-tab:: LunarLander-v3
 
-                        .. literalinclude:: ../../../_static/configs/c51/box2d/LunarLander-v2.yaml
+                        .. literalinclude:: ../../../_static/configs/c51/box2d/LunarLander-v3.yaml
                             :language: yaml
 
             .. tab:: Atari
@@ -115,14 +115,14 @@ Value-based Algorithms
 
                 .. tabs::
 
-                    .. group-tab:: CarRacing-v2
+                    .. group-tab:: CarRacing-v3
 
-                        .. literalinclude:: ../../../_static/configs/ddqn/box2d/CarRacing-v2.yaml
+                        .. literalinclude:: ../../../_static/configs/ddqn/box2d/CarRacing-v3.yaml
                             :language: yaml
 
-                    .. group-tab:: LunarLander-v2
+                    .. group-tab:: LunarLander-v3
 
-                        .. literalinclude:: ../../../_static/configs/ddqn/box2d/LunarLander-v2.yaml
+                        .. literalinclude:: ../../../_static/configs/ddqn/box2d/LunarLander-v3.yaml
                             :language: yaml
 
             .. tab:: Atari
@@ -157,14 +157,14 @@ Value-based Algorithms
 
                 .. tabs::
 
-                    .. group-tab:: CarRacing-v2
+                    .. group-tab:: CarRacing-v3
 
-                        .. literalinclude:: ../../../_static/configs/dueldqn/box2d/CarRacing-v2.yaml
+                        .. literalinclude:: ../../../_static/configs/dueldqn/box2d/CarRacing-v3.yaml
                             :language: yaml
 
-                    .. group-tab:: LunarLander-v2
+                    .. group-tab:: LunarLander-v3
 
-                        .. literalinclude:: ../../../_static/configs/dueldqn/box2d/LunarLander-v2.yaml
+                        .. literalinclude:: ../../../_static/configs/dueldqn/box2d/LunarLander-v3.yaml
                             :language: yaml
 
             .. tab:: Atari
@@ -199,14 +199,14 @@ Value-based Algorithms
 
                 .. tabs::
 
-                    .. group-tab:: CarRacing-v2
+                    .. group-tab:: CarRacing-v3
 
-                        .. literalinclude:: ../../../_static/configs/noisydqn/box2d/CarRacing-v2.yaml
+                        .. literalinclude:: ../../../_static/configs/noisydqn/box2d/CarRacing-v3.yaml
                             :language: yaml
 
-                    .. group-tab:: LunarLander-v2
+                    .. group-tab:: LunarLander-v3
 
-                        .. literalinclude:: ../../../_static/configs/noisydqn/box2d/LunarLander-v2.yaml
+                        .. literalinclude:: ../../../_static/configs/noisydqn/box2d/LunarLander-v3.yaml
                             :language: yaml
 
             .. tab:: Atari
@@ -241,14 +241,14 @@ Value-based Algorithms
 
                 .. tabs::
 
-                    .. group-tab:: CarRacing-v2
+                    .. group-tab:: CarRacing-v3
 
-                        .. literalinclude:: ../../../_static/configs/perdqn/box2d/CarRacing-v2.yaml
+                        .. literalinclude:: ../../../_static/configs/perdqn/box2d/CarRacing-v3.yaml
                             :language: yaml
 
-                    .. group-tab:: LunarLander-v2
+                    .. group-tab:: LunarLander-v3
 
-                        .. literalinclude:: ../../../_static/configs/perdqn/box2d/LunarLander-v2.yaml
+                        .. literalinclude:: ../../../_static/configs/perdqn/box2d/LunarLander-v3.yaml
                             :language: yaml
 
             .. tab:: Atari
@@ -283,14 +283,14 @@ Value-based Algorithms
 
                 .. tabs::
 
-                    .. group-tab:: CarRacing-v2
+                    .. group-tab:: CarRacing-v3
 
-                        .. literalinclude:: ../../../_static/configs/qrdqn/box2d/CarRacing-v2.yaml
+                        .. literalinclude:: ../../../_static/configs/qrdqn/box2d/CarRacing-v3.yaml
                             :language: yaml
 
-                    .. group-tab:: LunarLander-v2
+                    .. group-tab:: LunarLander-v3
 
-                        .. literalinclude:: ../../../_static/configs/qrdqn/box2d/LunarLander-v2.yaml
+                        .. literalinclude:: ../../../_static/configs/qrdqn/box2d/LunarLander-v3.yaml
                             :language: yaml
 
             .. tab:: Atari

@@ -113,7 +113,7 @@ import xuance
 runner = xuance.get_runner(algo='vdn',
                            env='sc2',  # Choices: sc2, mpe, robotic_warehouse, football
                            env_id='3m',  # Choices: 3m, 2m_vs_1z, 8m, 1c3s5z, 2s3z, 25m, 5m_vs_6m, 8m_vs_9m, MMM2, etc.
-                           is_test=False)  # False for training, True for testing
+                           )  # False for training, True for testing
 runner.run()  # Start running (or runner.benchmark() for benchmarking)
 ```
 
@@ -129,7 +129,7 @@ runner = xp.get_runner(algo='vdn',
                        env='sc2',  # Choices: sc2, mpe, robotic_warehouse, football
                        env_id='3m',  # Choices: 3m, 2m_vs_1z, 8m, 1c3s5z, 2s3z, 25m, 5m_vs_6m, 8m_vs_9m, MMM2, etc.
                        config_path="my_config.yaml",  # The path of my_config.yaml file should be correct.
-                       is_test=False)  # False for training, True for testing
+                       )  # False for training, True for testing
 runner.run()  # Start running (or runner.benchmark() for benchmarking)
 ```
 

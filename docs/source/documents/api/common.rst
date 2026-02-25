@@ -1,7 +1,7 @@
 common
 ===================
 
-Within the common module, various resuable tools are developed, which are independent of the choice of DL toolbox.
+Within the common module, various resuable tools are developed, which are independent of the choice of DL backend.
 These tools encompass common tools, memory tools for DRL and MARL, and statistic tools, etc. 
 
 .. toctree::

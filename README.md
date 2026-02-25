@@ -19,9 +19,11 @@
 [![pettingzoo](https://img.shields.io/badge/PettingZoo-%3E%3D1.23.0-blue)](https://pettingzoo.farama.org/)
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/xuance)
 
-**[Full Documentation](https://xuance.readthedocs.io/en/latest/)**
+[![Benchmarks](https://img.shields.io/badge/Benchmarks-Results-blue)](https://github.com/agi-brain/xuance-benchmarks.git)
+
+**[Full Documentation](https://xuance.org)**
+| **[中文文档](https://cn.xuance.org)**
 | **[README_CN.md](README_CN.md)**
-| **[中文文档](https://xuance.readthedocs.io/zh/latest/)**
 
 **XuanCe** is an open-source ensemble of Deep Reinforcement Learning (DRL) algorithm implementations.
 
@@ -33,7 +35,7 @@ and suffering from unstable training processes, therefore, sometimes DRL algorit
 This project gives a thorough, high-quality and easy-to-understand implementation of DRL algorithms,
 and hope this implementation can give a hint on the magics of reinforcement learning.
 
-We expect it to be compatible with multiple deep learning toolboxes(
+We expect it to be compatible with multiple deep learning backends(
 **[PyTorch](https://pytorch.org/)**,
 **[TensorFlow](https://www.tensorflow.org/)**, and
 **[MindSpore](https://www.mindspore.cn/en)**),
@@ -336,7 +338,7 @@ conda create -n xuance_env python=3.8 && conda activate xuance_env
 pip install xuance
 ```
 
-This command does not include the dependencies of deep learning toolboxes. To install the **XuanCe** with
+This command does not include the dependencies of deep learning backends. To install the **XuanCe** with
 deep learning tools, you can type `pip install xuance[torch]` for [PyTorch](https://pytorch.org/get-started/locally/),
 `pip install xuance[tensorflow]` for [TensorFlow2](https://www.tensorflow.org/install),
 `pip install xuance[mindspore]` for [MindSpore](https://www.mindspore.cn/install/en),
@@ -400,6 +402,21 @@ How to use wandb offline? :arrow_right: [https://github.com/wandb/server.git/](h
 <!-- If everything going well, you should get a similar display like below. 
 
 ![Tensorboard](docs/source/figures/debug.png) -->
+
+## Benchmarks
+
+XuanCe provides an official benchmark pipeline for evaluating DRL and MARL algorithms.
+
+To avoid increasing the size of the main repository,
+**official benchmark results (including evaluation curves, summary tables, and pretrained models)**
+are maintained in a separate repository:
+
+👉 **https://github.com/agi-brain/xuance-benchmarks**
+
+Users can either:
+
+- Run benchmarks locally using the provided pipeline, or
+- Directly inspect and reuse the official benchmark results without rerunning experiments.
 
 ## Community
 

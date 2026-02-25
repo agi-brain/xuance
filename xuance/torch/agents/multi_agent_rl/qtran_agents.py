@@ -35,6 +35,10 @@ class QTRAN_Agents(OffPolicyMARLAgents):
         self.state_space = envs.state_space
         self.use_global_state = True
 
+        self.start_greedy, self.end_greedy = config.start_greedy, config.end_greedy
+        self.e_greedy = self.start_greedy
+        self.delta_egreedy = (self.start_greedy - self.end_greedy) / (config.decay_step_greedy / self.n_envs)
+
         # build policy, optimizers, schedulers
         self.policy = self._build_policy()  # build policy
         self.memory = self._build_memory()  # build memory

@@ -38,7 +38,6 @@ use_rewnorm: True  # Whether to use reward normalization trick.
 obsnorm_range: 5  # The observation normalization range.
 rewnorm_range: 5  # The reward normalization range.
 
-test_steps: 10000  # The test steps.
 eval_interval: 50000  # The interval between every two trainings.
 test_episode: 5  # The episodes to test in each test period.
 

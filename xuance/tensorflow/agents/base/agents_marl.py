@@ -9,13 +9,11 @@ from argparse import Namespace
 from operator import itemgetter
 from gymnasium.spaces import Space
 from torch.utils.tensorboard import SummaryWriter
-from xuance.common import (
-    get_time_string, create_directory, space2shape, set_device, Optional, List, Dict, Union, MultiAgentBaseCallback
-)
-from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
+from xuance.common import get_time_string, create_directory, Optional, List, Dict, Union, MultiAgentBaseCallback
+from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv, space2shape
 from xuance.tensorflow import Module, REGISTRY_Representation, REGISTRY_Learners
 from xuance.tensorflow.learners import learner
-from xuance.tensorflow.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions, set_seed
+from xuance.tensorflow.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions, set_seed, set_device
 
 
 class MARLAgents(ABC):

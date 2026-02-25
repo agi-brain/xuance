@@ -6,14 +6,12 @@ import torch
 from gymnasium import Space
 from torch.nn import Module, ModuleDict
 
-from xuance.common import space2shape
-
 from xuance.torch import REGISTRY_Policy
 from xuance.torch.communications.attention_comm import TarMAC
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
 from xuance.common import MultiAgentBaseCallback
 
-from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
+from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv, space2shape
 from xuance.torch.agents.multi_agent_rl.ic3net_agents import IC3Net_Agents
 
 

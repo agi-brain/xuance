@@ -38,3 +38,7 @@ h3 {
     border-radius: 5px;
     border: 1px solid #ddd; /* Optional: Add a border for better separation */
 }
+
+#rtd-footer-container {
+    display: none !important;
+}

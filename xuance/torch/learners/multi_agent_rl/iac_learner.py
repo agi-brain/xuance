@@ -85,8 +85,12 @@ class IAC_Learner(LearnerMAS):
             log_pi_old_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['log_pi_old']), 1)).to(self.device)
             ter_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['terminals']), 1)).float().to(self.device)
             msk_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['agent_mask']), 1)).float().to(self.device)
+            if self.use_cnn and len(obs_tensor.shape) > 3:
+                obs_shape_item = obs_tensor.shape[2:]
+            else:
+                obs_shape_item = (-1, )
             if self.use_rnn:
-                obs = {k: obs_tensor.reshape(bs, seq_length, -1)}
+                obs = {k: obs_tensor.reshape(bs, seq_length, *obs_shape_item)}
                 if len(actions_tensor.shape) == 3:
                     actions = {k: actions_tensor.reshape(bs, seq_length)}
                 elif len(actions_tensor.shape) == 4:
@@ -102,7 +106,7 @@ class IAC_Learner(LearnerMAS):
                 IDs = torch.eye(self.n_agents).unsqueeze(1).unsqueeze(0).expand(
                     batch_size, -1, seq_length, -1).reshape(bs, seq_length, self.n_agents).to(self.device)
             else:
-                obs = {k: obs_tensor.reshape(bs, -1)}
+                obs = {k: obs_tensor.reshape(bs, *obs_shape_item)}
                 if len(actions_tensor.shape) == 2:
                     actions = {k: actions_tensor.reshape(bs)}
                 elif len(actions_tensor.shape) == 3:
@@ -126,7 +130,14 @@ class IAC_Learner(LearnerMAS):
                     avail_actions = {k: Tensor(avail_a.reshape([bs, -1])).float().to(self.device)}
 
         else:
-            obs = {k: Tensor(sample['obs'][k]).to(self.device) for k in self.agent_keys}
+            obs = {}
+            for key in self.agent_keys:
+                obs_tensor = Tensor(sample['obs'][key]).to(self.device)
+                if self.use_cnn and len(obs_tensor.shape) > 3:
+                    obs_shape_item = obs_tensor.shape[1:]
+                else:
+                    obs_shape_item = (-1,)
+                obs[key] = obs_tensor.reshape([batch_size, *obs_shape_item])
             actions = {k: Tensor(sample['actions'][k]).to(self.device) for k in self.agent_keys}
             values = {k: Tensor(sample['values'][k]).to(self.device) for k in self.agent_keys}
             returns = {k: Tensor(sample['returns'][k]).to(self.device) for k in self.agent_keys}

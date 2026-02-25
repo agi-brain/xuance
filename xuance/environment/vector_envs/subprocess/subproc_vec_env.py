@@ -1,6 +1,6 @@
 import numpy as np
 from multiprocessing import Process, Pipe
-from xuance.common import space2shape, combined_shape
+from xuance.environment.utils import space2shape, combined_shape
 from xuance.environment.vector_envs.vector_env import VecEnv
 from xuance.environment.vector_envs import clear_mpi_env_vars, flatten_list, CloudpickleWrapper
 

@@ -13,13 +13,11 @@ from gymnasium.spaces import Space
 from torch import nn
 from torch.utils.tensorboard import SummaryWriter
 from torch.distributed import destroy_process_group
-from xuance.common import (
-    get_time_string, create_directory, space2shape, set_device, Optional, List, Dict, Union, MultiAgentBaseCallback
-)
-from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
+from xuance.common import get_time_string, create_directory, Optional, List, Dict, Union, MultiAgentBaseCallback
+from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv, space2shape
 from xuance.torch import ModuleDict, REGISTRY_Representation, REGISTRY_Learners, Module
 from xuance.torch.learners import learner
-from xuance.torch.utils import NormalizeFunctions, ActivationFunctions, init_distributed_mode, set_seed
+from xuance.torch.utils import NormalizeFunctions, ActivationFunctions, init_distributed_mode, set_seed, set_device
 
 
 class MARLAgents(ABC):
@@ -93,7 +91,7 @@ class MARLAgents(ABC):
         self.start_training = getattr(config, "start_training", 1)
         self.training_frequency = getattr(config, "training_frequency", 1)
         self.n_epochs = getattr(config, "n_epochs", 1)
-        self.device = self.config.device = set_device(self.config.dl_toolbox, self.config.device)
+        self.device = self.config.device = set_device(self.config.device)
 
         # Environment attributes.
         self.train_envs = envs
@@ -306,12 +304,13 @@ class MARLAgents(ABC):
         """
         batch_size = len(obs_dict)
         bs = batch_size * self.n_agents if self.use_parameter_sharing else batch_size
-        avail_actions_input = None
+        obs_input = {}
+        avail_actions_input = {} if self.use_actions_mask else None
 
         if self.use_parameter_sharing:
             key = self.agent_keys[0]
             obs_array = np.array([itemgetter(*self.agent_keys)(data) for data in obs_dict])
-            if self.use_cnn and len(obs_array.shape) > 3:  # obs_array consists of images
+            if self.use_cnn and len(obs_array.shape) > 3:  # batch * n_agent * height * width * channels (images)
                 obs_shape_item = obs_array.shape[2:]
             else:
                 obs_shape_item = (-1,)
@@ -319,7 +318,7 @@ class MARLAgents(ABC):
             avail_actions_array = np.array([itemgetter(*self.agent_keys)(data)
                                             for data in avail_actions_dict]) if self.use_actions_mask else None
             if self.use_rnn:
-                obs_input = {key: obs_array.reshape([bs, 1, -1])}
+                obs_input = {key: obs_array.reshape([bs, 1, *obs_shape_item])}
                 agents_id = agents_id.reshape(bs, 1, -1)
                 if self.use_actions_mask:
                     avail_actions_input = {key: avail_actions_array.reshape([bs, 1, -1])}
@@ -330,16 +329,23 @@ class MARLAgents(ABC):
                     avail_actions_input = {key: avail_actions_array.reshape([bs, -1])}
         else:
             agents_id = None
-            if self.use_rnn:
-                obs_input = {k: np.stack([data[k] for data in obs_dict]).reshape([bs, 1, -1]) for k in self.agent_keys}
-                if self.use_actions_mask:
-                    avail_actions_input = {k: np.stack([data[k] for data in avail_actions_dict]).reshape([bs, 1, -1])
-                                           for k in self.agent_keys}
-            else:
-                obs_input = {k: np.stack([data[k] for data in obs_dict]).reshape(bs, -1) for k in self.agent_keys}
-                if self.use_actions_mask:
-                    avail_actions_input = {k: np.array([data[k] for data in avail_actions_dict]).reshape([bs, -1])
-                                           for k in self.agent_keys}
+            for key in self.agent_keys:
+                obs_array = np.stack([data[key] for data in obs_dict])
+                if self.use_cnn and len(obs_array.shape) > 3:  # batch * height * width * channels (images)
+                    obs_shape_item = obs_array.shape[1:]
+                else:
+                    obs_shape_item = (-1,)
+                if self.use_rnn:
+                    obs_input[key] = obs_array.reshape([bs, 1, *obs_shape_item])
+                    if self.use_actions_mask:
+                        avail_actions_input[key] = np.stack(
+                            [data[key] for data in avail_actions_dict]).reshape([bs, 1, -1])
+                else:
+                    obs_input[key] = obs_array.reshape([bs, *obs_shape_item])
+                    if self.use_actions_mask:
+                        avail_actions_input[key] = np.stack(
+                            [data[key] for data in avail_actions_dict]).reshape([bs, -1])
+
         return obs_input, agents_id, avail_actions_input
 
     @abstractmethod

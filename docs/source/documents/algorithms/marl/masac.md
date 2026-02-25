@@ -106,7 +106,7 @@ import xuance
 runner = xuance.get_runner(algo='masac',
                            env='mpe',
                            env_id='simple_spread_v3',
-                           is_test=False)
+                           )
 runner.run()  # Or runner.benchmark()
 ```
 
@@ -121,7 +121,7 @@ runner = xuance.get_runner(algo='masac',
                        env='mpe',
                        env_id='simple_spread_v3',
                        config_path="my_config.yaml",
-                       is_test=False)
+                       )
 runner.run()  # Or runner.benchmark()
 ```
 

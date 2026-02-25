@@ -15,7 +15,7 @@ print("[DOCS] xuance library path: {}".format(sys.path[0]))
 project = 'XuanCe'
 copyright = '2023, XuanCe Contributors.'
 author = 'Wenzhang Liu, etc.'
-release = "1.4.0"
+release = "1.4.1"
 
 # The master toctree document.
 master_doc = 'index'
@@ -40,7 +40,8 @@ extensions = [
     "sphinx_design",
     "sphinx_favicon",
     "notfound.extension",
-    "sphinx_github_changelog"
+    "sphinx_github_changelog",
+    "sphinxcontrib.mermaid"
 ]
 
 napoleon_google_docstring = True
@@ -132,7 +133,7 @@ html_theme_options = {
     "source_repository": "https://github.com/agi-brain/xuance",
     "source_branch": "../tree/master",
     "source_directory": "docs/source",
-    "top_of_page_buttons": ["view", "edit"],
+    "top_of_page_buttons": ["view"],
     # color
     # "light_css_variables": {
     #     "color-brand-primary": "#7C4DFF",

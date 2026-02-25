@@ -25,7 +25,7 @@ Here we show a config file named "ppo_configs/ppo_mujoco_config.yaml" for MuJoCo
 
 .. code-block:: yaml
 
-    dl_toolbox: "torch"  # The deep learning toolbox. Choices: "torch", "mindspore", "tensorlayer"
+    dl_backend: "torch"  # The deep learning backend. Choices: "torch", "mindspore", "tensorlayer"
     project_name: "XuanCe_Benchmark"
     logger: "tensorboard"  # Choices: tensorboard, wandb.
     wandb_user_name: "your_user_name"  # The username of wandb when the logger is wandb.
@@ -116,6 +116,8 @@ which uses the Python package `argparse` to read the command line instructions a
     def parse_args():
         parser = argparse.ArgumentParser("Example of XuanCe: PPO for MuJoCo.")
         parser.add_argument("--env-id", type=str, default="InvertedPendulum-v4")
+        parser.add_argument("--test", type=int, default=0)
+        parser.add_argument("--benchmark", type=int, default=1)
 
         return parser.parse_args()
 
@@ -157,31 +159,72 @@ Step 3: Create environment, PPO Agent, and run the task
     def parse_args():
         parser = argparse.ArgumentParser("Example of XuanCe: PPO for MuJoCo.")
         parser.add_argument("--env-id", type=str, default="InvertedPendulum-v4")
+        parser.add_argument("--test", type=int, default=0)
+        parser.add_argument("--benchmark", type=int, default=1)
 
         return parser.parse_args()
 
 
     if __name__ == "__main__":
         parser = parse_args()
-        configs_dict = get_configs(file_dir="ppo_configs/ppo_mujoco_config.yaml")
+        configs_dict = get_configs(file_dir="ppo_configs/ppo_mujoco.yaml")
         configs_dict = recursive_dict_update(configs_dict, parser.__dict__)
         configs = argparse.Namespace(**configs_dict)
 
-        set_seed(configs.seed)
-        envs = make_envs(configs)
-        Agent = PPOCLIP_Agent(config=configs, envs=envs)
+        set_seed(configs.seed)  # Set the random seed.
+        envs = make_envs(configs)  # Make the environment.
+        Agent = PPOCLIP_Agent(config=configs, envs=envs)  # Create the PPO agent.
 
-        train_information = {"Deep learning toolbox": configs.dl_toolbox,
+        train_information = {"Deep learning backend": configs.dl_backend,
                              "Calculating device": configs.device,
                              "Algorithm": configs.agent,
                              "Environment": configs.env_name,
                              "Scenario": configs.env_id}
-        for k, v in train_information.items():
+        for k, v in train_information.items():  # Print the training information.
             print(f"{k}: {v}")
 
-        Agent.train(configs.running_steps // configs.parallels)
-        Agent.save_model("final_train_model.pth")
-        print("Finish training!")
+        if configs.benchmark:
+            def env_fn():  # Define an environment function for test algo.
+                configs_test = deepcopy(configs)
+                configs_test.parallels = configs_test.test_episode
+                return make_envs(configs_test)
+
+            train_steps = configs.running_steps // configs.parallels
+            eval_interval = configs.eval_interval // configs.parallels
+            test_episode = configs.test_episode
+            num_epoch = int(train_steps / eval_interval)
+
+            test_scores = Agent.test(test_episodes=test_episode, test_envs=test_envs, close_envs=False)
+            Agent.save_model(model_name="best_model.pth")
+            best_scores_info = {"mean": np.mean(test_scores),
+                                "std": np.std(test_scores),
+                                "step": Agent.current_step}
+            for i_epoch in range(num_epoch):
+                print("Epoch: %d/%d:" % (i_epoch, num_epoch))
+                Agent.train(eval_interval)
+                test_scores = Agent.test(test_episodes=test_episode, test_envs=test_envs, close_envs=False)
+
+                if np.mean(test_scores) > best_scores_info["mean"]:
+                    best_scores_info = {"mean": np.mean(test_scores),
+                                        "std": np.std(test_scores),
+                                        "step": Agent.current_step}
+                    # save best model
+                    Agent.save_model(model_name="best_model.pth")
+            # end benchmarking
+            test_envs.close()
+            print("Best Model Score: %.2f, std=%.2f" % (best_scores_info["mean"], best_scores_info["std"]))
+        else:
+            if configs.test:
+                configs.parallels = configs.test_episode
+                test_envs = make_envs(configs)
+                Agent.load_model(path=Agent.model_dir_load)
+                scores = Agent.test(test_episodes=configs.test_episode, test_envs=test_envs, close_envs=True)
+                print(f"Mean Score: {np.mean(scores)}, Std: {np.std(scores)}")
+                print("Finish testing.")
+            else:
+                Agent.train(configs.running_steps // configs.parallels)
+                Agent.save_model("final_train_model.pth")
+                print("Finish training!")
 
         Agent.finish()
 
@@ -203,5 +246,139 @@ XuanCe supports multi-GPU training to maximize GPU resource utilization, enablin
 
 To train DRL models using multiple GPUs, you need to set ``distributed_training`` to True,
 the following parameters are relevant:
+
 - distributed_training (bool): Specifies whether to enable multi-GPU distributed training. Set to True to activate distributed training; otherwise, it remains disabled.
+
 - master_port (int): Defines the master port for the current experiment when distributed training is enabled.`: The master port for current experiment when use distributed training.
+
+Hyperparameters Tuning
+----------------------------------------------
+
+XuanCe integrates an Optuna-based hyperparameter optimization module, supporting both single-objective and
+multi-objective search, while maintaining full compatibility with YAML-based configuration and reproducibility.
+
+The tuning process is fully integrated with XuanCe's training pipeline and logging system.
+
+Starting from Default Configurations
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Each algorithm in XuanCe is shipped with recommended default configurations that have been validated in
+our benchmark experiments. These default settings are located in:
+
+.. code-block:: bash
+
+    xuance/configs/<algorithm>/<environment>.yaml
+
+For most tasks, we recommend starting from the provided default configuration
+and modifying only a small subset of key parameters.
+
+Click `here <../api/configs/configuration_examples.html>`_ to see more examples of configurations.
+We suggest modifying one or two parameters at a time while keeping other settings fixed for controlled experiments.
+
+Manually Adjusting Sensitive Hyperparameters
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+In practice, only a small subset of hyperparameters significantly affects performance.
+
+For most algorithms, the following parameters are the most sensitive:
+
+**Learning Rate**
+
+The learning rate is often the most critical hyperparameter. If training is unstable or diverging:
+
+- try reducing it by a factor of 2–10.
+
+**Batch Size**
+
+Larger batch sizes improve stability but increase memory usage.
+Smaller batch sizes may improve sample efficiency but increase variance.
+
+**Discount Factor (gamma)**
+
+Common values range from 0.95 to 0.999. For long-horizon tasks, larger values are recommended.
+
+**Exploration Parameters**
+
+- DQN: epsilon schedule
+- SAC: entropy coefficient
+- PPO: entropy coefficient or clip range
+
+We recommend adjusting these parameters first before modifying secondary hyperparameters.
+In practice, tuning these primary parameters typically accounts for the majority of performance improvements.
+
+Automatic Hyperparameter Optimization
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Single-Objective
+**********************************************
+
+We provide the HyperParameterTuner API for optimizing a single objective (e.g., test score).
+
+Example usage (see full code by clicking `here <https://github.com/agi-brain/xuance/blob/master/examples/hyperparameter_tuning/tune_dqn.py>`_):
+
+.. code-block:: python
+
+    from xuance.common import HyperParameterTuner, set_hyperparameters
+
+    tuner = HyperParameterTuner(
+        algo='dqn',
+        config_path='./examples/dqn/dqn_configs/dqn_cartpole.yaml',
+        running_steps=1000,
+        test_episodes=2
+    )
+
+    selected_hyperparameters = tuner.select_hyperparameter(['learning_rate'])
+
+    study = tuner.tune(selected_hyperparameters, n_trials=30)
+
+Users may override default parameter ranges via set_hyperparameters.
+
+Optimization history can be visualized using:
+
+.. code-block:: python
+
+    from optuna.visualization import plot_optimization_history
+
+Multi-Objective
+**********************************************
+
+XuanCe also supports multi-objective hyperparameter tuning via the MultiObjectiveTuner API.
+
+Example usage (see full code by clicking `here <https://github.com/agi-brain/xuance/blob/master/examples/hyperparameter_tuning/tune_dqn_multiobjective.py>`_):
+
+.. code-block:: python
+
+    from xuance.common import MultiObjectiveTuner
+
+    tuner = MultiObjectiveTuner(
+        algo='dqn',
+        config_path='./examples/dqn/dqn_configs/dqn_cartpole.yaml',
+        running_steps=10000,
+        test_episodes=2
+    )
+
+    study = tuner.tune(
+        selected_hyperparameters,
+        n_trials=30,
+        directions=['maximize', 'maximize'],
+        selected_objectives=['test_score', 'Qloss']
+    )
+
+The Pareto front can be visualized using:
+
+.. code-block:: python
+
+    from optuna.visualization import plot_pareto_front
+
+Design Principles
+**********************************************
+
+- All hyperparameters remain explicitly defined in YAML files.
+
+- Tuning modifies parameters programmatically without breaking reproducibility.
+
+- Integration with Optuna allows flexible search strategies (grid, random, Bayesian).
+
+- Compatible with distributed training settings.
+
+For full API documentation, see `APIs → common → tuning_tools <../api/common/tuning_tools.html>`_.

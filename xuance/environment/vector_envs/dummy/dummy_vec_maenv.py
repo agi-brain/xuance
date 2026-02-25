@@ -1,5 +1,5 @@
 import numpy as np
-from xuance.common import space2shape
+from xuance.environment.utils import space2shape
 from xuance.environment.vector_envs.vector_env import VecEnv, AlreadySteppingError, NotSteppingError
 
 

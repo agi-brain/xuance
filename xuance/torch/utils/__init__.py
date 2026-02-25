@@ -1,3 +1,4 @@
+from .device import set_device, collect_device_info
 from .layers import (
     torch, nn,
     ModuleType,

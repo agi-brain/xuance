@@ -18,8 +18,6 @@ use_cnn: True  # Whether to use convolutional neural networks as representation.
 filters: [32, 32, 64, 64]
 kernels: [8, 4, 4, 4]
 strides: [4, 2, 2, 2]
-actor_hidden_size: [128, 128]  # A list of hidden units for each layer of actor network.
-critic_hidden_size: [128, 128]  # A list of hidden units for each layer of critic network.
 
 use_rnn: False  # Whether to use recurrent neural networks.
 rnn: "GRU"  # Choice of recurrent networks: GRU or LSTM.

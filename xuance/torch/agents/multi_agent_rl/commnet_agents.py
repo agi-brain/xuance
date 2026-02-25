@@ -8,13 +8,12 @@ from gymnasium import Space
 from argparse import Namespace
 from xuance.torch.agents.multi_agent_rl.mappo_agents import MAPPO_Agents
 
-from xuance.common import Optional, Union, space2shape
+from xuance.common import Optional, Union, MultiAgentBaseCallback
 import gymnasium as gym
-from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
+from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv, space2shape
 from xuance.torch import Module, REGISTRY_Policy, ModuleDict
 from xuance.torch.communications.comm_net import CommNet
 from xuance.torch.utils import ActivationFunctions, NormalizeFunctions
-from xuance.common import MultiAgentBaseCallback
 
 
 class CommNet_Agents(MAPPO_Agents):
@@ -209,8 +208,6 @@ class CommNet_Agents(MAPPO_Agents):
                         if best_score < episode_score:
                             best_score = episode_score
                             episode_videos = videos[i].copy()
-                        if self.config.test_mode:
-                            print("Episode: %d, Score: %.2f" % (episode_count, episode_score))
                     else:
                         if all(terminated_dict[i].values()):
                             value_next = {key: 0.0 for key in self.agent_keys}
@@ -244,9 +241,6 @@ class CommNet_Agents(MAPPO_Agents):
                 # time, height, width, channel -> time, channel, height, width
                 videos_info = {"Videos_Test": np.array([episode_videos], dtype=np.uint8).transpose((0, 1, 4, 2, 3))}
                 self.log_videos(info=videos_info, fps=self.fps, x_index=self.current_step)
-
-            if self.config.test_mode:
-                print("Best Score: %.2f" % best_score)
 
             test_info = {
                 "Test-Results/Episode-Rewards/Mean-Score": np.mean(scores),

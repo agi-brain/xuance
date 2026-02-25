@@ -106,8 +106,8 @@ The key features of each scenario are summarized in the table below:
 | Env-id           | Observation Space                                                                                                                                                                                                                                                             | Action Space                                                |
 |------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------|
 | BipedalWalker-v3 | ``Box([-3.1415927 -5. -5. -5. -3.1415927 -5. -3.1415927 -5. -0. -3.1415927 -5. -3.1415927 -5. -0. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. ], [3.1415927 5. 5. 5. 3.1415927 5. 3.1415927 5. 5. 3.1415927 5. 3.1415927 5. 5. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. ], (24,), float32)`` | ``Box(-1.0, 1.0, (4,), float32)``                           |
-| CarRacing-v2     | ``Box(0, 255, (96, 96, 3), uint8)``                                                                                                                                                                                                                                           | ``Discrete(5)`` or ``Box([-1. 0. 0.], 1.0, (3,), float32)`` | 
-| LunarLander-v2   | ``Box([ -2.5 -2.5 -10. -10. -6.2831855 -10. -0. -0. ], [ 2.5 2.5 10. 10. 6.2831855 10. 1. 1. ], (8,), float32)``                                                                                                                                                              | ``Discrete(4)`` or ``Box(-1, +1, (2,), dtype=np.float32)``  |
+| CarRacing-v3     | ``Box(0, 255, (96, 96, 3), uint8)``                                                                                                                                                                                                                                           | ``Discrete(5)`` or ``Box([-1. 0. 0.], 1.0, (3,), float32)`` | 
+| LunarLander-v3   | ``Box([ -2.5 -2.5 -10. -10. -6.2831855 -10. -0. -0. ], [ 2.5 2.5 10. 10. 6.2831855 10. 1. 1. ], (8,), float32)``                                                                                                                                                              | ``Discrete(4)`` or ``Box(-1, +1, (2,), dtype=np.float32)``  |
 
 </font>
 
@@ -150,7 +150,7 @@ In XuanCe, the arguments for running Box2D environment are listed below.
 | ``parallels``   | The number of environments that run in parallel.                                                                      |
 | ``env_seed``    | The env-seed for the first environment of vectorized environments.                                                    |
 | ``render_mode`` | The render mode to visualize the environment, default is "human". Choices: "human", "rgb_array".                      |
-| ``continuous``  | Determines if discrete or continuous actions will be used. (Only CarRacing-v2 and LunarLander-v2 have this argument.) |
+| ``continuous``  | Determines if discrete or continuous actions will be used. (Only CarRacing-v3 and LunarLander-v3 have this argument.) |
 
 ### Run in XuanCe
 

@@ -518,8 +518,6 @@ class COMA_Agents(OnPolicyMARLAgents):
                         if best_score < episode_score:
                             best_score = episode_score
                             episode_videos = videos[i].copy()
-                        if self.config.test_mode:
-                            print("Episode: %d, Score: %.2f" % (current_episode, episode_score))
                     else:
                         if all(terminated_dict[i].values()):
                             value_next = {key: 0.0 for key in self.agent_keys}
@@ -562,9 +560,6 @@ class COMA_Agents(OnPolicyMARLAgents):
                 # time, height, width, channel -> time, channel, height, width
                 videos_info = {"Videos_Test": np.array([episode_videos], dtype=np.uint8).transpose((0, 1, 4, 2, 3))}
                 self.log_videos(info=videos_info, fps=self.fps, x_index=self.current_step)
-
-            if self.config.test_mode:
-                print("Best Score: %.2f" % best_score)
 
             test_info = {
                 "Test-Results/Episode-Rewards/Mean-Score": np.mean(scores),

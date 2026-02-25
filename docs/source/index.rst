@@ -17,22 +17,22 @@ XuanCe: A Comprehensive and Unified Deep Reinforcement Learning Library
         <img alt="pypi" src="https://img.shields.io/pypi/v/xuance">
    </a>
    <a href="https://xuance.readthedocs.io">
-        <img alt="pypi" src="https://readthedocs.org/projects/xuance/badge/?version=latest">
+        <img alt="docs" src="https://readthedocs.org/projects/xuance/badge/?version=latest">
    </a>
    <a href="https://github.com/agi-brain/xuance/blob/master/LICENSE.txt">
-        <img alt="pypi" src="https://img.shields.io/github/license/agi-brain/xuance">
+        <img alt="license" src="https://img.shields.io/github/license/agi-brain/xuance">
    </a>
    <a href="https://pepy.tech/project/xuance">
-        <img alt="pypi" src="https://static.pepy.tech/badge/xuance">
+        <img alt="downloads" src="https://static.pepy.tech/badge/xuance">
    </a>
    <a href="https://github.com/agi-brain/xuance/stargazers">
-        <img alt="pypi" src="https://img.shields.io/github/stars/agi-brain/xuance?style=social">
+        <img alt="stars" src="https://img.shields.io/github/stars/agi-brain/xuance?style=social">
    </a>
    <a href="https://github.com/agi-brain/xuance/forks">
-        <img alt="pypi" src="https://img.shields.io/github/forks/agi-brain/xuance?style=social">
+        <img alt="forks" src="https://img.shields.io/github/forks/agi-brain/xuance?style=social">
    </a>
    <a href="https://github.com/agi-brain/xuance/watchers">
-        <img alt="pypi" src="https://img.shields.io/github/watchers/agi-brain/xuance?style=social">
+        <img alt="watchers" src="https://img.shields.io/github/watchers/agi-brain/xuance?style=social">
    </a>
 
    <a href="https://pytorch.org/get-started/locally/">
@@ -53,6 +53,14 @@ XuanCe: A Comprehensive and Unified Deep Reinforcement Learning Library
    </a>
    <a href="https://img.shields.io/pypi/pyversions/xuance">
         <img alt="Python" src="https://img.shields.io/pypi/pyversions/xuance">
+   </a>
+
+   <a href="https://github.com/agi-brain/xuance-benchmarks.git">
+        <img alt="Benchmarks" src="https://img.shields.io/badge/Benchmarks-Results-blue">
+   </a>
+
+   <a href="https://cn.xuance.org">
+        <img alt="docs:chinese" src="https://img.shields.io/badge/Docs-%E4%B8%AD%E6%96%87-blue?logo=readthedocs">
    </a>
 
 .. raw:: html
@@ -103,6 +111,42 @@ Here are its key features:
 
 List of Algorithms
 -------------------
+
+.. mermaid::
+
+   flowchart LR
+
+   subgraph UNIFIED [Unified Framework (Backend-agnostic)]
+      CONFIGS[Configs<br/>dqn/atari.yaml, ddpg/mujoco.yam, ...]
+      TOOLS[]
+
+
+   COMMON[Unified Framework (Backend-agnostic)<br/>Configs + CommonTools + Memory...]
+   ENV[Unified Framework (Backend-agnostic)<br/>Single-Agent/Multi-agent + Vectorization]
+
+   CORE[Unified Framework (Backend-specific)<br/>Utils + Representation + Policy +<br/>Communication (for MARL)<br/>+ Learner + Agent + Runner]
+   COMMON --> CORE
+   ENV --> CORE
+   CORE --> Value[Value-based]
+   CORE --> Policy[Policy-based]
+   CORE --> MARL[MARL]
+   CORE --> Model[Model-based]
+   CORE --> Contrastive[Contrastive RL]
+   CORE --> Offline[Offline RL]
+
+   Value --> DQN[DQN/DDQN/DuelDQN...]
+   Policy --> ON[PG/A2C/PPO...]
+   Policy --> OFF[DDPG/SAC/TD3...]
+
+   MARL --> ONMA[VDAC/COMA/IPPO/MAPPO...]
+   MARL --> OFFMA[VDN/QMIX/MADDPG/MASAC...]
+   MARL --> COMMMA[CommNet/IC3Net/TarMAC...]
+
+   Model --> MBRL[DreamerV2/DreamerV3/HarmonyDreamer...]
+
+   Contrastive --> CRL[CURL/DrQ/SPR...]
+
+   Offline --> OFFLINERL[TD3BC...]
 
 **Value-based:**
 
@@ -180,7 +224,7 @@ The overall framework of XuanCe is shown as below.
 XuanCe contains four main parts:
 
 - Part I: Configs. The configurations of hyper-parameters, environments, models, etc.
-- Part II: Common tools. Reusable tools that are independent of the choice of DL toolbox.
+- Part II: Common tools. Reusable tools that are independent of the choice of DL backend.
 - Part III: Environments. The supported simulated environments.
 - Part IV: Algorithms. The key part to build DRL algorithms.
 

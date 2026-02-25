@@ -35,9 +35,9 @@ Policy-based Algorithms
                         .. literalinclude:: ../../../_static/configs/pg/box2d/BipedalWalker-v3.yaml
                             :language: yaml
 
-                    .. group-tab:: LunarLander-v2
+                    .. group-tab:: LunarLander-v3
 
-                        .. literalinclude:: ../../../_static/configs/pg/box2d/LunarLander-v2.yaml
+                        .. literalinclude:: ../../../_static/configs/pg/box2d/LunarLander-v3.yaml
                             :language: yaml
 
             .. tab:: MuJoCo
@@ -82,9 +82,9 @@ Policy-based Algorithms
                         .. literalinclude:: ../../../_static/configs/ppg/box2d/BipedalWalker-v3.yaml
                             :language: yaml
 
-                    .. group-tab:: LunarLander-v2
+                    .. group-tab:: LunarLander-v3
 
-                        .. literalinclude:: ../../../_static/configs/ppg/box2d/LunarLander-v2.yaml
+                        .. literalinclude:: ../../../_static/configs/ppg/box2d/LunarLander-v3.yaml
                             :language: yaml
 
             .. tab:: MuJoCo
@@ -129,14 +129,14 @@ Policy-based Algorithms
                         .. literalinclude:: ../../../_static/configs/ppo/box2d/BipedalWalker-v3.yaml
                             :language: yaml
 
-                    .. group-tab:: CarRacing-v2
+                    .. group-tab:: CarRacing-v3
 
-                        .. literalinclude:: ../../../_static/configs/ppo/box2d/CarRacing-v2.yaml
+                        .. literalinclude:: ../../../_static/configs/ppo/box2d/CarRacing-v3.yaml
                             :language: yaml
 
-                    .. group-tab:: LunarLander-v2
+                    .. group-tab:: LunarLander-v3
 
-                        .. literalinclude:: ../../../_static/configs/ppo/box2d/LunarLander-v2.yaml
+                        .. literalinclude:: ../../../_static/configs/ppo/box2d/LunarLander-v3.yaml
                             :language: yaml
 
             .. tab:: Atari
@@ -201,9 +201,9 @@ Policy-based Algorithms
                         .. literalinclude:: ../../../_static/configs/a2c/box2d/BipedalWalker-v3.yaml
                             :language: yaml
 
-                    .. group-tab:: LunarLander-v2
+                    .. group-tab:: LunarLander-v3
 
-                        .. literalinclude:: ../../../_static/configs/a2c/box2d/LunarLander-v2.yaml
+                        .. literalinclude:: ../../../_static/configs/a2c/box2d/LunarLander-v3.yaml
                             :language: yaml
 
             .. tab:: Atari
@@ -253,9 +253,9 @@ Policy-based Algorithms
                         .. literalinclude:: ../../../_static/configs/sac/box2d/BipedalWalker-v3.yaml
                             :language: yaml
 
-                    .. group-tab:: LunarLander-v2
+                    .. group-tab:: LunarLander-v3
 
-                        .. literalinclude:: ../../../_static/configs/sac/box2d/LunarLander-v2.yaml
+                        .. literalinclude:: ../../../_static/configs/sac/box2d/LunarLander-v3.yaml
                             :language: yaml
 
             .. tab:: Atari

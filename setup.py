@@ -14,9 +14,9 @@ setup(
                 "environment/magent2/libmagent.dylib"  # for magent2 environment on macOS (for Intel CPU)
             ]
     },
-    version="1.4.0",
+    version="1.4.1",
     description='XuanCe: A Comprehensive and Unified Deep Reinforcement Learning Library.',
-    long_description='XuanCe is an open-source ensemble of Deep Reinforcement Learning (DRL) algorithm implementations. We call it as Xuan-Ce (玄策) in Chinese. "Xuan (玄)" means incredible and magic box, "Ce (策)" means policy. DRL algorithms are sensitive to hyperparameters tuning, varying in performance with different tricks, and suffering from unstable training processes, therefore, sometimes DRL algorithms seems elusive and "Xuan". This project gives a thorough, high-quality and easy-to-understand implementation of DRL algorithms, and hope this implementation can give a hint on the magics of reinforcement learning. We expect it to be compatible with multiple deep learning toolboxes( PyTorch, TensorFlow, and MindSpore), and hope it can really become a zoo full of DRL algorithms.',
+    long_description='XuanCe is an open-source ensemble of Deep Reinforcement Learning (DRL) algorithm implementations. We call it as Xuan-Ce (玄策) in Chinese. "Xuan (玄)" means incredible and magic box, "Ce (策)" means policy. DRL algorithms are sensitive to hyperparameters tuning, varying in performance with different tricks, and suffering from unstable training processes, therefore, sometimes DRL algorithms seems elusive and "Xuan". This project gives a thorough, high-quality and easy-to-understand implementation of DRL algorithms, and hope this implementation can give a hint on the magics of reinforcement learning. We expect it to be compatible with multiple deep learning backends (PyTorch, TensorFlow, and MindSpore), and hope it can really become a zoo full of DRL algorithms.',
     author='Wenzhang Liu, et al.',
     author_email='liu_wzh@foxmail.com',
     license='MIT',
@@ -79,8 +79,8 @@ setup(
         "moviepy==1.0.3",  # suggest version: >=1.0.3
         "imageio",  # suggest version: 2.9.0
         "opencv-python",  # suggest version: 4.5.4.58
-        # "mpi4py",  # suggest version: 3.1.3
         "torch",
+        "torchvision"
     ],
     setup_requires=['pytest-runner'],
     tests_requires=['pytest'],

@@ -1,6 +1,7 @@
 from xuance.common import Dict, Any
 from .wrapper import XuanCeEnvWrapper, XuanCeAtariEnvWrapper, XuanCeMultiAgentEnvWrapper
 from .base import RawEnvironment, RawMultiAgentEnv, MultiAgentDict, AgentKeys
+from .shapes import space2shape, combined_shape
 
 
 EnvName = Any
@@ -17,4 +18,6 @@ __all__ = [
     "EnvironmentDict",
     "MultiAgentDict",
     "AgentKeys",
+    "space2shape",
+    "combined_shape"
 ]

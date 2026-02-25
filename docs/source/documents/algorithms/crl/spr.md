@@ -185,7 +185,7 @@ import xuance
 runner = xuance.get_runner(algo='spr',
                            env='atari',  # Currently only atari environments are supported.
                            env_id='ALE/Breakout-v5',  # Choices: ALE/Breakout-v5, ALE/Pong-v5, etc.
-                           is_test=False)
+                           )
 runner.run()  # Or runner.benchmark()
 ```
 
@@ -200,7 +200,7 @@ runner = xuance.get_runner(algo='spr',
                        env='atari',  # Currently only atari environments are supported.
                        env_id='ALE/Breakout-v5',  # Choices: ALE/Breakout-v5, ALE/Pong-v5, etc.
                        config_path="my_config.yaml",  # The path of my_config.yaml file should be correct.
-                       is_test=False)
+                       )
 runner.run()  # Or runner.benchmark()
 ```
 

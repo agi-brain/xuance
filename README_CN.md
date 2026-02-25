@@ -15,15 +15,15 @@
 [![PyTorch](https://img.shields.io/badge/PyTorch-%3E%3D1.13.0-red)](https://pytorch.org/get-started/locally/)
 [![TensorFlow](https://img.shields.io/badge/TensorFlow-%3E%3D2.6.0-orange)](https://www.tensorflow.org/install)
 [![MindSpore](https://img.shields.io/badge/MindSpore-%3E%3D1.10.1-blue)](https://www.mindspore.cn/install/en)
-
-[![Python](https://img.shields.io/badge/Python-3.7%7C3.8%7C3.9%7C3.10-yellow)](https://www.anaconda.com/download)
-[![gym](https://img.shields.io/badge/gym-%3E%3D0.21.0-blue)](https://www.gymlibrary.dev/)
 [![gymnasium](https://img.shields.io/badge/gymnasium-%3E%3D0.28.1-blue)](https://www.gymlibrary.dev/)
 [![pettingzoo](https://img.shields.io/badge/PettingZoo-%3E%3D1.23.0-blue)](https://pettingzoo.farama.org/)
+![PyPI - Python Version](https://img.shields.io/pypi/pyversions/xuance)
 
-**[README.md](README.md)**
-|**[英文文档](https://xuance.readthedocs.io/en/latest/)**
-| **[中文文档](https://xuance.readthedocs.io/zh/latest/)**
+[![Benchmarks](https://img.shields.io/badge/Benchmarks-Results-blue)](https://github.com/agi-brain/xuance-benchmarks.git)
+
+**[英文文档](https://xuance.org)**
+| **[中文文档](https://cn.xuance.org)**
+|**[README.md](README.md)**
 
 **XuanCe** 是一个开源的深度强化学习（DRL）算法库。
 
@@ -383,8 +383,20 @@ XuanCe 同样支持 Weights & Biases (wandb) 工具来可视化结果。
 <img src="docs/source/_static/figures/log/wandb.png" width="700" height="auto" align=center />
 </div>
 
+## Benchmark 基准测试
 
-社区交流
+XuanCe 提供了一套标准化的 benchmark 流程，用于评估强化学习算法的性能。
+
+为了避免主仓库体量过大，**官方 benchmark 结果（包括评测曲线、汇总表格以及预训练模型）** 被维护在一个独立的仓库中：
+
+👉 **https://github.com/agi-brain/xuance-benchmarks**
+
+用户可以根据需要选择：
+- 使用 XuanCe 提供的 benchmark 流程自行运行实验；  
+- 或直接查看和复用官方发布的 benchmark 结果，而无需重复运行实验。
+
+## 社区交流
+
 - GitHub issues: https://github.com/agi-brain/xuance/issues
 - GitHub discussions: https://github.com/orgs/agi-brain/discussions
 - Discord 邀请链接: https://discord.gg/HJn2TBQS7y
@@ -414,9 +426,6 @@ XuanCe 同样支持 Weights & Biases (wandb) 工具来可视化结果。
 
 
 </details>
-
-
-[@TFBestPractices](https://twitter.com/TFBestPractices/status/1665770204398223361)
 
 ### 引用
 

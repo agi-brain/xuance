@@ -1,3 +1,4 @@
+from .device import set_device, collect_device_info
 from .layers import tk, ModuleType, mlp_block, cnn_block, pooling_block, gru_block, lstm_block
 from .distributions import (merge_distributions, split_distributions,
                             Distribution, CategoricalDistribution,

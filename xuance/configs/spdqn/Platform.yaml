@@ -28,7 +28,6 @@ training_frequency: 1
 running_steps: 30000
 start_training: 1000
 
-test_steps: 10000
 eval_interval: 1000
 test_episode: 5
 

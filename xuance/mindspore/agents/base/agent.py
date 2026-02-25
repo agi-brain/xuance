@@ -8,12 +8,10 @@ from pathlib import Path
 from argparse import Namespace
 from gymnasium.spaces import Dict, Space
 from torch.utils.tensorboard import SummaryWriter
-from xuance.common import (
-    get_time_string, create_directory, set_device, RunningMeanStd, space2shape, EPS, Optional, BaseCallback
-)
-from xuance.environment import DummyVecEnv, SubprocVecEnv
+from xuance.common import get_time_string, create_directory, RunningMeanStd, EPS, Optional, BaseCallback
+from xuance.environment import DummyVecEnv, SubprocVecEnv, space2shape
 from xuance.mindspore import REGISTRY_Representation, REGISTRY_Learners, Module, ms
-from xuance.mindspore.utils import InitializeFunctions, NormalizeFunctions, ActivationFunctions, set_seed
+from xuance.mindspore.utils import InitializeFunctions, NormalizeFunctions, ActivationFunctions, set_seed, set_device
 
 
 class Agent(ABC):

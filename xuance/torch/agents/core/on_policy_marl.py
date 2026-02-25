@@ -317,20 +317,25 @@ class OnPolicyMARLAgents(MARLAgents):
         """
         n_env = 1
         rnn_hidden_critic_i = None
+        obs_input = {}
         if self.use_parameter_sharing:
             key = self.agent_keys[0]
+            batch_size = n_env * self.n_agents
+            obs_array = np.array(itemgetter(*self.agent_keys)(obs_dict))
+            if self.use_cnn and len(obs_array.shape) > 3:
+                obs_shape_item = obs_array.shape[1:]
+            else:
+                obs_shape_item = (-1,)
+            agents_id = torch.eye(self.n_agents).unsqueeze(0).expand(n_env, -1, -1).to(self.device)
             if self.use_rnn:
                 hidden_item_index = np.arange(i_env * self.n_agents, (i_env + 1) * self.n_agents)
                 rnn_hidden_critic_i = {key: self.policy.critic_representation[key].get_hidden_item(
                     hidden_item_index, *rnn_hidden_critic[key])}
-                batch_size = n_env * self.n_agents
-                obs_array = np.array(itemgetter(*self.agent_keys)(obs_dict))
-                obs_input = {key: obs_array.reshape([batch_size, 1, -1])}
-                agents_id = torch.eye(self.n_agents).unsqueeze(0).expand(n_env, -1, -1).reshape(batch_size, 1, -1).to(
-                    self.device)
+                obs_input = {key: obs_array.reshape([batch_size, 1, *obs_shape_item])}
+                agents_id = agents_id.reshape(batch_size, 1, -1)
             else:
-                obs_input = {key: np.array([itemgetter(*self.agent_keys)(obs_dict)])}
-                agents_id = torch.eye(self.n_agents).unsqueeze(0).expand(n_env, -1, -1).to(self.device)
+                obs_input = {key: obs_array.reshape(batch_size, *obs_shape_item)}
+                agents_id = agents_id.reshape(batch_size, -1)
 
             rnn_hidden_critic_new, values_out = self.policy.get_values(observation=obs_input,
                                                                        agent_ids=agents_id,
@@ -339,10 +344,19 @@ class OnPolicyMARLAgents(MARLAgents):
             values_dict = {k: values_out[i].cpu().detach().numpy() for i, k in enumerate(self.agent_keys)}
 
         else:
+            for key in self.agent_keys:
+                obs_array = obs_dict[key]
+                if self.use_cnn and len(obs_array.shape) >= 3:
+                    obs_shape_item = obs_array.shape
+                else:
+                    obs_shape_item = (-1,)
+                if self.use_rnn:
+                    obs_input[key] = obs_array.reshape([n_env, 1, *obs_shape_item])
+                else:
+                    obs_input[key] = obs_array.reshape([n_env, *obs_shape_item])
             if self.use_rnn:
                 rnn_hidden_critic_i = {k: self.policy.critic_representation[k].get_hidden_item(
                     [i_env, ], *rnn_hidden_critic[k]) for k in self.agent_keys}
-            obs_input = {k: obs_dict[k][None, :] for k in self.agent_keys} if self.use_rnn else obs_dict
 
             rnn_hidden_critic_new, values_out = self.policy.get_values(observation=obs_input,
                                                                        rnn_hidden=rnn_hidden_critic_i)
@@ -556,8 +570,6 @@ class OnPolicyMARLAgents(MARLAgents):
                         if best_score < episode_score:
                             best_score = episode_score
                             episode_videos = videos[i].copy()
-                        if self.config.test_mode:
-                            print("Episode: %d, Score: %.2f" % (_current_episode, episode_score))
                     else:
                         if all(terminated_dict[i].values()):
                             value_next = {key: 0.0 for key in self.agent_keys}
@@ -601,9 +613,6 @@ class OnPolicyMARLAgents(MARLAgents):
                 # time, height, width, channel -> time, channel, height, width
                 videos_info = {"Videos_Test": np.array([episode_videos], dtype=np.uint8).transpose((0, 1, 4, 2, 3))}
                 self.log_videos(info=videos_info, fps=self.fps, x_index=self.current_step)
-
-            if self.config.test_mode:
-                print("Best Score: %.2f" % best_score)
 
             test_info = {
                 "Test-Results/Episode-Rewards/Mean-Score": np.mean(scores),

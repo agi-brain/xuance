@@ -1,6 +1,6 @@
 import numpy as np
 from gymnasium.spaces import Dict
-from xuance.common import space2shape, combined_shape
+from xuance.environment.utils import space2shape, combined_shape
 from xuance.environment.vector_envs.vector_env import VecEnv, AlreadySteppingError, NotSteppingError
 
 
