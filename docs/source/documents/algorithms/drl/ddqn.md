@@ -70,10 +70,10 @@ we can rewrite the
 in DQN and compare them from the formulae listed as following:
 
 $$
-\begin{align}
-    & y = r + \gamma Q(s', \arg\max_{a'}Q(s', a'; \theta^{-}); \theta^{-}) & \hspace{1cm} \text{(DQN)}\\
-    & y = r + \gamma Q(s', \arg\max_{a'}Q(s', a'; \theta); \theta^{-}) & \hspace{1cm} \text{(Double DQN)}
-\end{align}
+\mathrm{DQN}: y = r + \gamma Q(s', \arg\max_{a'}Q(s', a'; \theta^{-}); \theta^{-})
+$$
+$$
+\mathrm{Double DQN}: y = r + \gamma Q(s', \arg\max_{a'}Q(s', a'; \theta); \theta^{-})
 $$
 
 It can be found that the main difference between DQN and Double DQN is the greedy action that is evaluated by the target Q-network.

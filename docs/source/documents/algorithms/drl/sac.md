@@ -17,9 +17,11 @@ This table lists some general features about SAC algorithm:
 ## Key Ideas of SAC
 **Objective Setting Based on Maximum Entropy:**
 Traditional reinforcement learning aims to maximize the sum of expected rewards. In contrast, the maximum entropy reinforcement learning objective adopted by SAC is
+
 $$
 J(\pi) = \sum_{t=0}^{T} \mathbb{E}_{(s_t, a_t) \sim \rho_{\pi}} \left[ r(s_t, a_t) + \alpha \mathcal{H}(\pi(\cdot | s_t)) \right]
 $$
+
 where:
 + $\mathcal{H}(π(⋅|s_t))$ represents the entropy of policy π in state st.
 + $α$ is a hyperparameter that controls the importance of entropy.
