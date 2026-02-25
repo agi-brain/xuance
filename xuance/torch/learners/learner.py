@@ -1,6 +1,7 @@
 import os
 import torch
 import numpy as np
+from pathlib import Path
 from abc import ABC, abstractmethod
 from xuance.common import Optional, List, Union
 from argparse import Namespace
@@ -61,7 +62,7 @@ class Learner(ABC):
         return total_iters
 
     def save_model(self, model_path):
-        if type(self.optimizer) == dict:
+        if type(self.optimizer) is dict:
             torch.save(
                 {
                     'policy': self.policy.state_dict(),
@@ -84,88 +85,62 @@ class Learner(ABC):
 
     def load_model(self, path, model=None):
         target_path = os.path.join(path, model) if model is not None else path
-        if os.path.isfile(target_path):
+        if os.path.isfile(target_path):  # load the specified model file
             model_path = target_path
-            checkpoint = torch.load(str(model_path), map_location='cpu')
-
-            self.policy.load_state_dict(checkpoint['policy'], strict=False)
-
-            if 'optimizer' in checkpoint and self.optimizer is not None:
-                if type(self.optimizer) == dict:
-                    for k, v in self.optimizer.items():
-                        v.load_state_dict(checkpoint['optimizer'][k])
-                else:
-                    self.optimizer.load_state_dict(checkpoint['optimizer'])
-                current_lr = self.optimizer.param_groups[0]['lr']
-                self.learning_rate = current_lr
-
-            if 'rng_state' in checkpoint:
-                rng_state = checkpoint['rng_state']
-                rng_state = rng_state.cpu().to(dtype=torch.uint8)
-                torch.set_rng_state(rng_state)
-
-            if 'cuda_rng_state' in checkpoint and torch.cuda.is_available():
-                cuda_states = checkpoint['cuda_rng_state']
-                if isinstance(cuda_states, list):
-
-                    num_available_gpus = torch.cuda.device_count()
-                    cuda_states = cuda_states[:num_available_gpus]
-
-                    for i, state in enumerate(cuda_states):
-                        state = state.cpu().to(dtype=torch.uint8)
-
-                        torch.cuda.set_rng_state(state, device=i)
-
-            print(f"Successfully load model from file '{model_path}'.")
-            return model_path
-
-        if not os.path.isdir(path):
-            raise RuntimeError(f"The path '{path}' is not a valid directory or file!")
-
-        file_names = os.listdir(path)
-        if model is not None:
-            path = os.path.join(path, model)
-            if model not in file_names:
-                raise RuntimeError(f"The folder '{path}' does not exist, please specify a correct path to load model.")
+            dir_name = os.path.dirname(model_path)
         else:
-            file_names = [f for f in file_names if "seed_" in f]
-            file_names.sort()
-            if not file_names:
+            if not os.path.isdir(path):
+                raise RuntimeError(f"The path '{path}' is not a valid directory or file!")
+            folder_names = [f for f in os.listdir(path) if "seed_" in f]
+            folder_names.sort()
+            if not folder_names:
                 raise RuntimeError(f"No model files with 'seed_' found in '{path}'!")
-            path = os.path.join(path, file_names[-1])
+            path = Path(os.path.join(path, folder_names[-1]))
+            dir_name = str(path)
+            model_names = list(path.glob("*.pth"))
+            model_path = None
+            if len(model_names) == 0:
+                raise FileNotFoundError(f"No .pth file found in {path}")
+            else:
+                for f in model_names:
+                    if "final_train_model.pth" in str(f):
+                        model_path = f
+                        break
+                    model_path = str(model_names)
 
-        model_names = os.listdir(path)
-        if os.path.exists(os.path.join(path, "obs_rms.npy")):
-            model_names.remove("obs_rms.npy")
-        if len(model_names) == 0:
-            raise RuntimeError(f"There is no model file in '{path}'!")
-        model_names.sort()
-        model_path = os.path.join(path, model_names[-1])
-
-        checkpoint = torch.load(str(model_path), map_location='cpu')
-
+        checkpoint = torch.load(str(model_path), map_location={f"cuda:{i}": self.device
+                                                                    for i in range(MAX_GPUs)}, weights_only=True)
         self.policy.load_state_dict(checkpoint['policy'], strict=False)
 
         if 'optimizer' in checkpoint and self.optimizer is not None:
-            self.optimizer.load_state_dict(checkpoint['optimizer'])
+            if type(self.optimizer) is dict:
+                for k, v in self.optimizer.items():
+                    v.load_state_dict(checkpoint['optimizer'][k])
+            else:
+                self.optimizer.load_state_dict(checkpoint['optimizer'])
             current_lr = self.optimizer.param_groups[0]['lr']
+            self.learning_rate = current_lr
 
         if 'rng_state' in checkpoint:
-            rng_state = checkpoint['rng_state'].cpu().to(dtype=torch.uint8)
+            rng_state = checkpoint['rng_state']
+            rng_state = rng_state.cpu().to(dtype=torch.uint8)
             torch.set_rng_state(rng_state)
 
         if 'cuda_rng_state' in checkpoint and torch.cuda.is_available():
             cuda_states = checkpoint['cuda_rng_state']
             if isinstance(cuda_states, list):
+
                 num_available_gpus = torch.cuda.device_count()
                 cuda_states = cuda_states[:num_available_gpus]
+
                 for i, state in enumerate(cuda_states):
                     state = state.cpu().to(dtype=torch.uint8)
+
                     torch.cuda.set_rng_state(state, device=i)
 
         self._safe_scheduler_step()
-        print(f"Successfully load model from directory '{path}'.")
-        return path
+        print(f"Successfully load model from '{model_path}'.")
+        return dir_name
 
     def load_snapshot(self, snapshot_path):
         loc = f"cuda:{self.device}" if torch.cuda.is_available() else "cpu"
@@ -225,7 +200,7 @@ class Learner(ABC):
         raise NotImplementedError
 
 
-class LearnerMAS(ABC):
+class LearnerMAS(Learner):
     def __init__(self,
                  config: Namespace,
                  model_keys: List[str],
@@ -234,6 +209,7 @@ class LearnerMAS(ABC):
                  callback):
         self.value_normalizer = None
         self.config = config
+        self.distributed_training = config.distributed_training
         self.n_agents = config.n_agents
         self.dim_id = self.n_agents
 
@@ -414,8 +390,8 @@ class LearnerMAS(ABC):
         raise NotImplementedError
 
     def save_model(self, model_path):
-        if type(self.optimizer) == dict:
-            if type(list(self.optimizer.values())[0]) == dict:
+        if type(self.optimizer) is dict:
+            if type(list(self.optimizer.values())[0]) is dict:
                 torch.save(
                     {
                         'policy': self.policy.state_dict(),
@@ -446,42 +422,64 @@ class LearnerMAS(ABC):
 
     def load_model(self, path, model=None):
         target_path = os.path.join(path, model) if model is not None else path
-        if os.path.isfile(target_path):
+        if os.path.isfile(target_path):  # load the specified model file
             model_path = target_path
-            checkpoint = torch.load(str(model_path), map_location='cpu')
+            dir_name = os.path.dirname(model_path)
+        else:
+            if not os.path.isdir(path):
+                raise RuntimeError(f"The path '{path}' is not a valid directory or file!")
+            folder_names = [f for f in os.listdir(path) if "seed_" in f]
+            folder_names.sort()
+            if not folder_names:
+                raise RuntimeError(f"No model files with 'seed_' found in '{path}'!")
+            path = Path(os.path.join(path, folder_names[-1]))
+            dir_name = str(path)
+            model_names = list(path.glob("*.pth"))
+            model_path = None
+            if len(model_names) == 0:
+                raise FileNotFoundError(f"No .pth file found in {path}")
+            else:
+                for f in model_names:
+                    if "final_train_model.pth" in str(f):
+                        model_path = f
+                        break
+                    model_path = str(model_names)
 
-            self.policy.load_state_dict(checkpoint['policy'], strict=False)
+        checkpoint = torch.load(str(model_path), map_location={f"cuda:{i}": self.device
+                                                                    for i in range(MAX_GPUs)}, weights_only=True)
+        self.policy.load_state_dict(checkpoint['policy'], strict=False)
 
-            if 'optimizer' in checkpoint and self.optimizer is not None:
-                if type(self.optimizer) == dict:
-                    if type(list(self.optimizer.values())[0]) == dict:
-                        for k_a, v_a in self.optimizer.items():  # agent-wise
-                            for k, v in v_a.items():
-                                v.load_state_dict(checkpoint['optimizer'][k_a][k])
-                    else:
-                        for k, v in self.optimizer.items():
-                            v.load_state_dict(checkpoint['optimizer'][k])
+        if 'optimizer' in checkpoint and self.optimizer is not None:
+            if type(self.optimizer) is dict:
+                if type(list(self.optimizer.values())[0]) is dict:
+                    for k_a, v_a in self.optimizer.items():  # agent-wise
+                        for k, v in v_a.items():
+                            v.load_state_dict(checkpoint['optimizer'][k_a][k])
                 else:
-                    self.optimizer.load_state_dict(checkpoint['optimizer'])
-                current_lr = self.optimizer.param_groups[0]['lr']
-                self.learning_rate = current_lr
+                    for k, v in self.optimizer.items():
+                        v.load_state_dict(checkpoint['optimizer'][k])
+            else:
+                self.optimizer.load_state_dict(checkpoint['optimizer'])
+            current_lr = self.optimizer.param_groups[0]['lr']
+            self.learning_rate = current_lr
 
-            if 'rng_state' in checkpoint:
-                rng_state = checkpoint['rng_state']
-                rng_state = rng_state.cpu().to(dtype=torch.uint8)
-                torch.set_rng_state(rng_state)
+        if 'rng_state' in checkpoint:
+            rng_state = checkpoint['rng_state']
+            rng_state = rng_state.cpu().to(dtype=torch.uint8)
+            torch.set_rng_state(rng_state)
 
-            if 'cuda_rng_state' in checkpoint and torch.cuda.is_available():
-                cuda_states = checkpoint['cuda_rng_state']
-                if isinstance(cuda_states, list):
+        if 'cuda_rng_state' in checkpoint and torch.cuda.is_available():
+            cuda_states = checkpoint['cuda_rng_state']
+            if isinstance(cuda_states, list):
 
-                    num_available_gpus = torch.cuda.device_count()
-                    cuda_states = cuda_states[:num_available_gpus]
+                num_available_gpus = torch.cuda.device_count()
+                cuda_states = cuda_states[:num_available_gpus]
 
-                    for i, state in enumerate(cuda_states):
-                        state = state.cpu().to(dtype=torch.uint8)
+                for i, state in enumerate(cuda_states):
+                    state = state.cpu().to(dtype=torch.uint8)
 
-                        torch.cuda.set_rng_state(state, device=i)
+                    torch.cuda.set_rng_state(state, device=i)
 
-            print(f"Successfully load model from file '{model_path}'.")
-            return model_path
+        self._safe_scheduler_step()
+        print(f"Successfully load model from '{model_path}'.")
+        return dir_name

@@ -41,7 +41,7 @@ def get_runner(
         env_id,
         config_path=None,
         parser_args=None
-):
+) -> RunnerBase:
     """
     This method returns a runner that specified by the users according to the inputs.
     Args:

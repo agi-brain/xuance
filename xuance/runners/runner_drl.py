@@ -109,11 +109,12 @@ class RunnerDRL(RunnerBase):
         config_test.render = kwargs.get('render', True)
         config_test.render_mode = kwargs.get('render_mode', getattr(self.config, 'render_mode', 'human'))
         model_path = kwargs.get('model_path', self.agent.model_dir_load)
+        model_name = kwargs.get('model_name', None)
         test_episodes = kwargs.get('test_episodes', self.config.test_episode)
         test_envs = make_envs(config_test)
 
         if self.rank == 0:
-            self.agent.load_model(model_path)
+            self.agent.load_model(model_path, model=model_name)
             scores = self.agent.test(test_episodes=test_episodes, test_envs=test_envs, close_envs=True)
             print("\n---------------------Testing Results--------------------")
             print("Test Episode Scores: ", scores)
