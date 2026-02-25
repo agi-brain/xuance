@@ -21,7 +21,9 @@ This table lists some general features about MP-DQN algorithm:
 Parameterised action spaces combine discrete actions with continuous parameters. 
 Each discrete action $k \in K$ has associated continuous parameters $x_k \in X_k$. 
 The full action space is defined as:
+
 $$\mathcal{A}=\bigcup_{k\in[K]}\{a_k=(k,x_k)|x_k\in\mathcal{X}_k\}.$$
+
 This hybrid structure makes traditional RL algorithms insufficient, as they typically handle either discrete or continuous actions, 
 but not both simultaneously.
 
@@ -35,7 +37,9 @@ Discrete Action Head: Estimates Q-values for each discrete action $Q(s, k)$
 Continuous Parameter Heads: For each discrete action $k$, a separate network predicts the optimal continuous parameters $\mu_k(s)$
 
 The network outputs both the Q-values for discrete actions and the corresponding continuous parameters:
+
 $$Q(s,k,x_k)=\mathbb{E}_{r,s^{\prime}}\left[r+\gamma\max_{k^{\prime}}Q(s^{\prime},k^{\prime},x_{k^{\prime}}^Q(s^{\prime}))|s,k,x_k\right]$$
+
 ## Multi-pass Q-value Estimation
 The key innovation in MP-DQN is the multi-pass approach for Q-value estimation:
 
@@ -44,20 +48,28 @@ Forward Pass: For each discrete action $k$, compute the continuous parameters $\
 Q-value Calculation: Estimate $Q(s, k, \mu_k(s))$ for each discrete action
 
 Action Selection: Choose the discrete action with the highest Q-value:
+
 $$k^*=\arg\max_{k\in K}Q(s,k,\mu_k(s))$$
-The selected action is then $(k^, \mu_{k^}(s))$.
+
+The selected action is then $(k^*, \mu_{k^*}(s))$.
 
 ## Loss Functions
 MP-DQN uses two separate loss functions:
 
 ## Q-value Loss
 The Q-network is trained using the temporal difference error:
+
 $$L_Q(\theta_Q)=\mathbb{E}_{(s,k,x_k,r,s^{\prime})\sim D}\left[\frac{1}{2}\left(y-Q(s,k,x_k;\theta_Q)\right)^2\right]$$
+
 where the target $y$ is:
+
 $$y=r+\gamma\operatorname*{max}_{k^{\prime}\in[K]}Q(s^{\prime},k^{\prime},x_{k^{\prime}}(s^{\prime};\theta_{x});\theta_{Q})$$
+
 ## Policy Loss
 The continuous parameter networks are trained to maximize the Q-values:
+
 $$L_x(\theta_x)=-\sum_{k=1}^KQ\left(s,k,\mathbf{x}(s;\theta_x);\theta_Q\right)$$
+
 where $\phi$ represents the parameters of the continuous policy networks.
 
 Experience Replay and Target Networks
@@ -67,7 +79,7 @@ Similar to DQN, MP-DQN employs:
 
 Target Networks: Maintains separate target networks for both Q-value and policy networks that are updated periodically
 
-ϵ-greedy Exploration: Uses epsilon-greedy strategy for discrete action selection with random continuous parameters during exploration
+$\epsilon$-greedy Exploration: Uses epsilon-greedy strategy for discrete action selection with random continuous parameters during exploration
 
 
 ## Framework
