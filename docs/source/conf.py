@@ -41,7 +41,7 @@ extensions = [
     "sphinx_favicon",
     "notfound.extension",
     "sphinx_github_changelog",
-    "sphinxcontrib.mermaid"
+    "sphinxcontrib_mermaid"
 ]
 
 napoleon_google_docstring = True
