@@ -116,17 +116,7 @@ List of Algorithms
 
    flowchart LR
 
-   subgraph UNIFIED [Unified Framework (Backend-agnostic)]
-      CONFIGS[Configs<br/>dqn/atari.yaml, ddpg/mujoco.yam, ...]
-      TOOLS[]
-
-
-   COMMON[Unified Framework (Backend-agnostic)<br/>Configs + CommonTools + Memory...]
-   ENV[Unified Framework (Backend-agnostic)<br/>Single-Agent/Multi-agent + Vectorization]
-
-   CORE[Unified Framework (Backend-specific)<br/>Utils + Representation + Policy +<br/>Communication (for MARL)<br/>+ Learner + Agent + Runner]
-   COMMON --> CORE
-   ENV --> CORE
+   CORE["Unified Framework (Modularized) <br/>Representation + Policy + Communication (for MARL) + Learner + Agent"]
    CORE --> Value[Value-based]
    CORE --> Policy[Policy-based]
    CORE --> MARL[MARL]
@@ -135,12 +125,12 @@ List of Algorithms
    CORE --> Offline[Offline RL]
 
    Value --> DQN[DQN/DDQN/DuelDQN...]
-   Policy --> ON[PG/A2C/PPO...]
-   Policy --> OFF[DDPG/SAC/TD3...]
+   Policy --> ON[On-policy: PG/A2C/PPO...]
+   Policy --> OFF[Off-policy: DDPG/SAC/TD3...]
 
-   MARL --> ONMA[VDAC/COMA/IPPO/MAPPO...]
-   MARL --> OFFMA[VDN/QMIX/MADDPG/MASAC...]
-   MARL --> COMMMA[CommNet/IC3Net/TarMAC...]
+   MARL --> ONMA[On-policy: VDAC/COMA/IPPO/MAPPO...]
+   MARL --> OFFMA[Off-policy: VDN/QMIX/MADDPG/MASAC...]
+   MARL --> COMMMA[Communication: CommNet/IC3Net/TarMAC...]
 
    Model --> MBRL[DreamerV2/DreamerV3/HarmonyDreamer...]
 
