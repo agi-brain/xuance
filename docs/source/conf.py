@@ -160,3 +160,5 @@ sphinx_github_changelog_token = (
     os.environ.get("SPHINX_GITHUB_CHANGELOG_TOKEN") or
     os.environ.get("GITHUB_TOKEN")
 )
+
+print("GITHUB_TOKEN length:", len(os.environ.get("GITHUB_TOKEN", "")))
