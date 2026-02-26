@@ -1,7 +1,7 @@
 agent: "MASAC"  # the learning algorithms_marl
 env_name: "mpe"  # Name of the environment.
 env_id: "simple_spread_v3"
-env_seed: 1
+env_seed: 1  # The random seed of the environment.
 continuous_action: True  # Continuous action space or not.
 learner: "MASAC_Learner"
 policy: "Gaussian_MASAC_Policy"
@@ -9,12 +9,23 @@ representation: "Basic_Identical"
 vectorize: "DummyVecMultiAgentEnv"
 runner: "MARL"  # Runner
 
+# recurrent settings for Basic_RNN representation.
+use_rnn: False  # If to use recurrent neural network as representation. (The representation should be "Basic_RNN").
+rnn: "GRU"  # The type of recurrent layer.
+fc_hidden_sizes: [64, 64, 64]  # The hidden size of feed forward layer in RNN representation.
+recurrent_hidden_size: 64  # The hidden size of the recurrent layer.
+N_recurrent_layers: 1  # The number of recurrent layer.
+dropout: 0  # dropout should be a number in range [0, 1], the probability of an element being zeroed.
+normalize: "LayerNorm"  # Layer normalization.
+initialize: "orthogonal"  # Network initializer.
+gain: 0.01
+
 representation_hidden_size: []  # the units for each hidden layer
 actor_hidden_size: [64, 64]
 critic_hidden_size: [64, 64]
 activation: 'leaky_relu'
 activation_action: 'sigmoid'
-use_parameter_sharing: False
+use_parameter_sharing: True
 use_actions_mask: False
 
 seed: 1

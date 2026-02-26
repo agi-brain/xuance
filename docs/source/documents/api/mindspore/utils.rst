@@ -1,6 +1,14 @@
 utils
 =============================
 
+device
+-----------------------------
+
+.. automodule:: xuance.mindspore.utils.device
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 distributions
 -----------------------------
 

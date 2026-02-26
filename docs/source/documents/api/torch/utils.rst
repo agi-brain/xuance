@@ -1,6 +1,14 @@
 utils
 =============================
 
+device
+-----------------------------
+
+.. automodule:: xuance.torch.utils.device
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 distributions
 -----------------------------
 

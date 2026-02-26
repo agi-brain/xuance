@@ -1,8 +1,8 @@
 agent: "OWQMIX"  # choice: CWQMIX, OWQMIX
-env_name: "StarCraft2"
+env_name: "StarCraft2"  # Name of the environment.
 env_id: "25m"
-env_seed: 1
-fps: 15
+env_seed: 1  # The random seed of the environment.
+fps: 15  # Frames per second.
 learner: "WQMIX_Learner"
 policy: "Weighted_Mixing_Q_network"
 representation: "Basic_RNN"

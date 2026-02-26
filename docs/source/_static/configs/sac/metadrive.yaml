@@ -1,11 +1,11 @@
 agent: "SAC"
 env_name: "MetaDrive"
 env_id: "metadrive"
-env_seed: 1
+env_seed: 1  # The random seed of the environment.
 env_config:  # the configs for MetaDrive environment
   map: "C"  # see https://metadrive-simulator.readthedocs.io/en/latest/rl_environments.html#generalization-environment for choices
 render: False
-vectorize: "SubprocVecEnv"
+vectorize: "DummyVecEnv"
 learner: "SAC_Learner"
 policy: "Gaussian_SAC"
 representation: "Basic_Identical"
@@ -36,12 +36,11 @@ use_grad_clip: False  # gradient normalization
 clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
 grad_clip_norm: 0.5
 use_actions_mask: False
-use_obsnorm: False
-use_rewnorm: False
+use_obsnorm: False  # Whether to use observation normalization trick.
+use_rewnorm: False  # Whether to use reward normalization trick.
 obsnorm_range: 5
 rewnorm_range: 5
 
-test_steps: 10000
 eval_interval: 10000
 test_episode: 5
 log_dir: "logs/sac/"

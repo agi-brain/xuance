@@ -1,7 +1,7 @@
 agent: "QTRAN_base"  # Options: QTRAN_base, QTRAN_alt
 env_name: "mpe"  # Name of the environment.
 env_id: "simple_spread_v3"
-env_seed: 1
+env_seed: 1  # The random seed of the environment.
 continuous_action: False  # Continuous action space or not.
 learner: "QTRAN_Learner"
 policy: "Qtran_Mixing_Q_network"
@@ -37,7 +37,7 @@ gamma: 0.99  # discount factor
 double_q: True  # use double q learning
 
 start_greedy: 1.0
-end_greedy: 0.05
+end_greedy: 0.1
 decay_step_greedy: 2500000
 start_training: 1000  # start training after n steps
 running_steps: 10000000  # 10M

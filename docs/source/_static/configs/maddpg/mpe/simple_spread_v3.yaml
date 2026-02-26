@@ -1,12 +1,12 @@
 agent: "MADDPG"  # the learning algorithms_marl
 env_name: "mpe"  # Name of the environment.
 env_id: "simple_spread_v3"
-env_seed: 1
+env_seed: 1  # The random seed of the environment.
 continuous_action: True  # Continuous action space or not.
 learner: "MADDPG_Learner"
 policy: "MADDPG_Policy"
 representation: "Basic_Identical"
-vectorize: "SubprocVecMultiAgentEnv"
+vectorize: "DummyVecMultiAgentEnv"
 runner: "MARL"  # Runner
 
 representation_hidden_size: []  # the units for each hidden layer

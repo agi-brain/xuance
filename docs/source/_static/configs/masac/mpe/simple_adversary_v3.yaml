@@ -1,7 +1,7 @@
 agent: "MASAC"  # the learning algorithms_marl
 env_name: "mpe"  # Name of the environment.
 env_id: "simple_adversary_v3"
-env_seed: 1
+env_seed: 1  # The random seed of the environment.
 continuous_action: True  # Continuous action space or not.
 learner: "MASAC_Learner"
 policy: "Gaussian_MASAC_Policy"
@@ -14,7 +14,7 @@ actor_hidden_size: [64, 64]
 critic_hidden_size: [64, 64]
 activation: 'leaky_relu'
 activation_action: 'sigmoid'
-use_parameter_sharing: False
+use_parameter_sharing: True
 use_actions_mask: False
 
 seed: 1

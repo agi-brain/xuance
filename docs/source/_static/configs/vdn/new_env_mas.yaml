@@ -1,7 +1,7 @@
 agent: "VDN"  # the learning algorithms_marl
 env_name: "NewEnv_MAS"
 env_id: "scenarios_1"
-env_seed: 1
+env_seed: 1  # The random seed of the environment.
 max_episode_steps: 200
 render: False
 sleep: 0.01

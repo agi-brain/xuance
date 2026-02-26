@@ -1,10 +1,10 @@
 agent: "DCG"  # Options: DCG, DCG_S
-env_name: "StarCraft2"
+env_name: "StarCraft2"  # Name of the environment.
 env_id: "MMM2"
-env_seed: 1
-fps: 15
-learner: "DCG_Learner"
-policy: "DCG_Policy"
+env_seed: 1  # The random seed of the environment.
+fps: 15  # Frames per second.
+learner: "DCG_Learner"  # Name of learner
+policy: "DCG_Policy"  # Name of policy
 representation: "Basic_RNN"
 vectorize: "Subproc_StarCraft2"
 runner: "RunnerStarCraft2"

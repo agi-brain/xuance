@@ -5,7 +5,7 @@ This section describes how to add a new benchmark to XuanCe.
 A benchmark in XuanCe is defined by one algorithm, one environment scenario, and multiple random seeds.
 
 Step 1: Choose the Benchmark Task
----------------------------------------
+-----------------------------------------------------------------------------
 
 Determine the target environment and scenario.
 For example:
@@ -19,7 +19,7 @@ Create the corresponding directory if it does not exist:
     benchmarks/Atari/Breakout-v5/
 
 Step 2: Create an Algorithm-Specific Directory
----------------------------------------
+-----------------------------------------------------------------------------
 
 Under the scenario directory, create a subdirectory for the algorithm:
 
@@ -36,7 +36,7 @@ For example, for PPO:
 
 
 Step 3: Prepare the Algorithm Configuration (Optional)
----------------------------------------
+-----------------------------------------------------------------------------
 
 If the algorithm requires a specific configuration file, place it in the algorithm directory:
 
@@ -48,7 +48,7 @@ If the algorithm requires a specific configuration file, place it in the algorit
 This configuration file defines hyperparameters and environment-specific settings used by the benchmark.
 
 Step 4: Write the Benchmark Script
----------------------------------------
+-----------------------------------------------------------------------------
 
 Create a benchmark script named:
 
@@ -110,7 +110,7 @@ Example structure:
     done
 
 Step 5: (Optional) Add the Benchmark to a Suite Script
----------------------------------------
+-----------------------------------------------------------------------------
 
 If you want the new benchmark to be included in a benchmark suite, edit the suite script under the scenario directory:
 
@@ -130,7 +130,7 @@ Add the new benchmark script to the list:
     )
 
 Step 6: Run and Verify
----------------------------------------
+-----------------------------------------------------------------------------
 
 Run the benchmark script:
 
@@ -146,7 +146,7 @@ Verify that:
 - The benchmark can be reproduced by re-running the script
 
 Design Principles
----------------------------------------
+-----------------------------------------------------------------------------
 
 When adding a new benchmark, please follow these principles:
 

@@ -272,7 +272,7 @@ our benchmark experiments. These default settings are located in:
 For most tasks, we recommend starting from the provided default configuration
 and modifying only a small subset of key parameters.
 
-Click `here <../api/configs/configuration_examples.html>`_ to see more examples of configurations.
+Click `Configuration Examples <../api/configs/configuration_examples.html>`_ to see more examples of configurations.
 We suggest modifying one or two parameters at a time while keeping other settings fixed for controlled experiments.
 
 Manually Adjusting Sensitive Hyperparameters
@@ -314,7 +314,7 @@ Single-Objective
 
 We provide the HyperParameterTuner API for optimizing a single objective (e.g., test score).
 
-Example usage (see full code by clicking `here <https://github.com/agi-brain/xuance/blob/master/examples/hyperparameter_tuning/tune_dqn.py>`_):
+Example usage (see full code by clicking `tune_dqn.py <https://github.com/agi-brain/xuance/blob/master/examples/hyperparameter_tuning/tune_dqn.py>`_):
 
 .. code-block:: python
 
@@ -344,7 +344,7 @@ Multi-Objective
 
 XuanCe also supports multi-objective hyperparameter tuning via the MultiObjectiveTuner API.
 
-Example usage (see full code by clicking `here <https://github.com/agi-brain/xuance/blob/master/examples/hyperparameter_tuning/tune_dqn_multiobjective.py>`_):
+Example usage (see full code by clicking `tune_dqn_multiobjective.py <https://github.com/agi-brain/xuance/blob/master/examples/hyperparameter_tuning/tune_dqn_multiobjective.py>`_):
 
 .. code-block:: python
 
