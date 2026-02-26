@@ -28,66 +28,24 @@ By isolating orchestration from implementation, Xuance ensures a clean
 separation between experiment control and algorithm realization, improving
 maintainability, extensibility, and cross-backend reproducibility.
 
-run_basic
------------------------------
+.. toctree::
+    :hidden:
 
-.. automodule:: xuance.engine.run_basic
-    :members:
-    :undoc-members:
-    :show-inheritance:
+    run_basic <engine/run_basic>
+    run_drl <engine/run_drl>
+    run_marl <engine/run_marl>
+    run_sc2 <engine/run_sc2>
+    run_football <engine/run_football>
+    run_competition <engine/run_competition>
+    run_offlinerl <engine/run_offlinerl>
 
-run_competition
------------------------------
+* :doc:`run_basic <engine/run_basic>`.
+* :doc:`run_drl <engine/run_drl>`.
+* :doc:`run_marl <engine/run_marl>`.
+* :doc:`run_sc2 <engine/run_sc2>`.
+* :doc:`run_football <engine/run_football>`.
+* :doc:`run_competition <engine/run_competition>`.
+* :doc:`run_offlinerl <engine/run_offlinerl>`.
 
-.. automodule:: xuance.engine.run_competition
-    :members:
-    :undoc-members:
-    :show-inheritance:
 
-run_drl
------------------------------
 
-.. automodule:: xuance.engine.run_drl
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-run_football
------------------------------
-
-.. automodule:: xuance.engine.run_football
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-run_marl
------------------------------
-
-.. automodule:: xuance.engine.run_marl
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-run_offlinerl
------------------------------
-
-.. automodule:: xuance.engine.run_offlinerl
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-run_pettingzoo
------------------------------
-
-.. automodule:: xuance.engine.run_pettingzoo
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-run_sc2
------------------------------
-
-.. automodule:: xuance.engine.run_sc2
-    :members:
-    :undoc-members:
-    :show-inheritance:

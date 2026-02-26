@@ -3,32 +3,29 @@ from xuance.common import get_arguments
 from .run_basic import RunnerBase
 from .run_drl import RunnerDRL
 from .run_marl import RunnerMARL
-from .run_competition import RunnerCompetition
-from .run_pettingzoo import RunnerPettingzoo
 from .run_sc2 import RunnerSC2
 from .run_football import RunnerFootball
+from .run_competition import RunnerCompetition
 from .run_offlinerl import RunnerOfflineRL
 
 
 REGISTRY_Runner = {
-    "DL_toolbox": "PyTorch",
-    "DRL": RunnerDRL,
-    "MARL": RunnerMARL,
-    "OfflineRL": RunnerOfflineRL,
-    "RunnerCompetition": RunnerCompetition,
-    "RunnerPettingzoo": RunnerPettingzoo,
-    "RunnerStarCraft2": RunnerSC2,
-    "RunnerFootball": RunnerFootball
+    "DRL": RunnerDRL,  # For single-agent DRL
+    "MARL": RunnerMARL,  # For MARL
+    "RunnerStarCraft2": RunnerSC2,  # For StarCraft MARL
+    "RunnerFootball": RunnerFootball,   # For GoogleFootballResearch MARL
+    "RunnerCompetition": RunnerCompetition,  # For MARL with competing tasks
+    "OfflineRL": RunnerOfflineRL,  # For Offline RL
 }
 
 __all__ = [
     "RunnerBase",
     "RunnerDRL",
     "RunnerMARL",
-    "RunnerOfflineRL",
-    "RunnerCompetition",
     "RunnerSC2",
     "RunnerFootball",
+    "RunnerCompetition",
+    "RunnerOfflineRL",
     "REGISTRY_Runner",
 ]
 
