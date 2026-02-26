@@ -4,7 +4,7 @@ import time
 from pathlib import Path
 import wandb
 from torch.utils.tensorboard import SummaryWriter
-from .runner_basic import RunnerBase, make_envs
+from .run_basic import RunnerBase, make_envs
 from xuance.torch.agents import REGISTRY_Agents
 from xuance.common import get_time_string
 from gymnasium.spaces.box import Box

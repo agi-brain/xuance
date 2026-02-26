@@ -1,6 +1,5 @@
 import torch
 import torch.nn as nn
-from xuance.common import Optional
 from xuance.torch.learners import Learner
 from argparse import Namespace
 try:

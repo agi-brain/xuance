@@ -2,26 +2,80 @@ import os
 import json
 import time
 import csv
+import gymnasium as gym
 import numpy as np
 from copy import deepcopy
+from typing import Optional
 from argparse import Namespace
 from datetime import datetime
-from xuance.common import Optional, create_directory
-from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv, make_envs
-from xuance.runners import RunnerBase
+from xuance.common.common_tools import create_directory
+from xuance.environment import DummyVecEnv, SubprocVecEnv, make_envs
+from xuance.engine import RunnerBase
 
 
-class RunnerMARL(RunnerBase):
+class RunnerDRL(RunnerBase):
+    """Runner for single-agent Deep Reinforcement Learning (DRL).
+
+    RunnerDRL orchestrates the full lifecycle of an experiment, including
+    environment creation, agent initialization, training, testing, and
+    benchmarking. It is responsible for experiment-level logic rather than
+    algorithmic details.
+
+    Responsibilities:
+        - Create and manage environments and agent (unless injected externally).
+        - Control training, testing, and benchmarking workflows.
+        - Handle experiment-level logic (run mode, evaluation loop, model saving).
+        - Manage resource lifecycle (envs.close(), agent.finish()) based on
+          ownership semantics.
+
+    Notes:
+        - Algorithm-specific logic should remain inside the Agent.
+        - Runner focuses on experiment orchestration and reproducibility.
+    """
     def __init__(self,
                  config: Namespace,
-                 envs: Optional[DummyVecMultiAgentEnv | SubprocVecMultiAgentEnv] = None,
+                 envs: Optional[DummyVecEnv | SubprocVecEnv] = None,
                  agent=None,
                  manage_resources: bool = None):
+        """Initialize the DRL runner.
+
+        This constructor sets up the experiment context. By default, the runner
+        creates environments and agent internally using the provided configuration.
+        Advanced users may inject pre-created environments or agents.
+
+        Resource ownership is determined automatically unless explicitly specified
+        via `manage_resources`.
+
+        Args:
+           config: Experiment configuration object. It contains environment,
+               agent, and runtime settings.
+           envs (optional): Pre-created environments. If None, environments will
+               be created internally by the runner.
+           agent (optional): Pre-created agent. If None, the runner will build
+               the agent using the registry.
+           manage_resources (optional): Whether the runner is responsible for
+               closing environments and finalizing the agent.
+               - If None, ownership is inferred automatically.
+               - If True, runner will call envs.close() and agent.finish().
+               - If False, resource lifecycle is managed externally.
+        """
         # Store configuration
         self.config = config
         self.env_id = self.config.env_id
-        
-        super(RunnerMARL, self).__init__(self.config, envs, agent, manage_resources)
+
+        super(RunnerDRL, self).__init__(self.config, envs, agent, manage_resources)
+
+        if self.env_id in ['Platform-v0']:
+            self.config.observation_space = self.envs.observation_space.spaces[0]
+            old_as = self.envs.action_space
+            num_disact = old_as.spaces[0].n
+            self.config.action_space = gym.spaces.Tuple(
+                (old_as.spaces[0], *(gym.spaces.Box(old_as.spaces[1].spaces[i].low,
+                                                    old_as.spaces[1].spaces[i].high, dtype=np.float32) for i in
+                                     range(0, num_disact))))
+        else:
+            self.config.observation_space = self.envs.observation_space
+            self.config.action_space = self.envs.action_space
 
         # Build agent if not injected externally
         if getattr(self.config, 'dl_toolbox', 'torch'):
@@ -43,7 +97,8 @@ class RunnerMARL(RunnerBase):
             self.rank = int(os.environ['RANK'])
 
     def _run_train(self, **kwargs):
-        n_train_steps = max(1, self.config.running_steps // self.n_envs)
+        running_steps = kwargs.get('running_steps', self.config.running_steps)
+        n_train_steps = max(1, running_steps // self.n_envs)
         self.agent.train(n_train_steps)
         self.rprint("Finish training.")
         self.agent.save_model(model_name="final_train_model.pth")
@@ -54,11 +109,12 @@ class RunnerMARL(RunnerBase):
         config_test.render = kwargs.get('render', True)
         config_test.render_mode = kwargs.get('render_mode', getattr(self.config, 'render_mode', 'human'))
         model_path = kwargs.get('model_path', self.agent.model_dir_load)
+        model_name = kwargs.get('model_name', None)
         test_episodes = kwargs.get('test_episodes', self.config.test_episode)
         test_envs = make_envs(config_test)
 
         if self.rank == 0:
-            self.agent.load_model(model_path)
+            self.agent.load_model(model_path, model=model_name)
             scores = self.agent.test(test_episodes=test_episodes, test_envs=test_envs, close_envs=True)
             print("\n---------------------Testing Results--------------------")
             print("Test Episode Scores: ", scores)
@@ -100,7 +156,7 @@ class RunnerMARL(RunnerBase):
 
         # Prepare testing environments.
         config_test = deepcopy(self.config)
-        config_test.parallels = 1  # config_test.test_episode
+        config_test.parallels = test_episodes
         test_envs = make_envs(config_test)
 
         train_steps = max(1, running_steps // self.n_envs)
@@ -170,3 +226,4 @@ class RunnerMARL(RunnerBase):
         self.rprint("Best Model Score: %.2f, std=%.2f. "
                     "Best Step: %d" % (best_scores_info["mean"], best_scores_info["std"],
                                        best_scores_info["step"]))
+

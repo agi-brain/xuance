@@ -7,7 +7,7 @@ from argparse import Namespace
 from datetime import datetime
 from xuance.common import Optional, create_directory
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
-from xuance.runners import RunnerBase
+from xuance.engine import RunnerBase
 
 
 class RunnerSC2(RunnerBase):

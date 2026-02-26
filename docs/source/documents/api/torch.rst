@@ -15,7 +15,6 @@ Users can easily extend or modify these APIs to build custom agents, policies, o
     learners <torch/learners>
     policies <torch/policies>
     representations <torch/representations>
-    runners <torch/runners>
     utils <torch/utils>
 
 * :doc:`agents <torch/agents>`.
@@ -23,6 +22,5 @@ Users can easily extend or modify these APIs to build custom agents, policies, o
 * :doc:`learners <torch/learners>`.
 * :doc:`policies <torch/policies>`.
 * :doc:`representations <torch/representations>`.
-* :doc:`runners <torch/runners>`.
 * :doc:`utils <torch/utils>`.
 

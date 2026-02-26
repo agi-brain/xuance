@@ -1,6 +1,6 @@
 import time
 import numpy as np
-from .runner_sc2 import RunnerSC2
+from .run_sc2 import RunnerSC2
 from xuance.torch.agents import REGISTRY_Agents
 
 

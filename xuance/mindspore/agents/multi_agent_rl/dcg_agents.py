@@ -1,11 +1,8 @@
 import numpy as np
-from tqdm import tqdm
 from argparse import Namespace
-from xuance.common import Union, DummyOffPolicyBuffer, DummyOffPolicyBuffer_Atari
+from xuance.common import Union
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
-from xuance.mindspore import ms, Module
 from xuance.mindspore.agents import MARLAgents
-from xuance.mindspore.learners import DQN_Learner
 
 
 class DCG_Agents(MARLAgents):

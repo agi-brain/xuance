@@ -17,7 +17,6 @@ powerful ecosystem, including modules such as tf.keras, tf.optimizers, and tf.da
     learners <tensorflow/learners>
     policies <tensorflow/policies>
     representations <tensorflow/representations>
-    runners <tensorflow/runners>
     utils <tensorflow/utils>
 
 * :doc:`agents <tensorflow/agents>`.
@@ -25,6 +24,5 @@ powerful ecosystem, including modules such as tf.keras, tf.optimizers, and tf.da
 * :doc:`learners <tensorflow/learners>`.
 * :doc:`policies <tensorflow/policies>`.
 * :doc:`representations <tensorflow/representations>`.
-* :doc:`runners <tensorflow/runners>`.
 * :doc:`utils <tensorflow/utils>`.
 

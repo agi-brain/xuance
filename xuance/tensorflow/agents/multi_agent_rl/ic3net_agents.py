@@ -8,14 +8,14 @@ import torch
 from gymnasium import Space
 from torch.nn import Module, ModuleDict
 
-from xuance.common import space2shape, MultiAgentBaseCallback
 from xuance.common.memory_tools_marl import IC3Net_OnPolicyBuffer_RNN
 from xuance.torch.communications import IC3NetComm
 
 from xuance.torch import REGISTRY_Policy
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
 
-from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
+from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv, space2shape
+from xuance.common import MultiAgentBaseCallback
 from xuance.torch.agents.multi_agent_rl.commnet_agents import CommNet_Agents
 
 
@@ -30,7 +30,7 @@ class IC3Net_Agents(CommNet_Agents):
             observation_space: Optional[Space] = None,
             action_space: Optional[Space] = None,
             callback: Optional[MultiAgentBaseCallback] = None
-    ):
+    ) -> None:
         super(IC3Net_Agents, self).__init__(
             config, envs, num_agents, agent_keys, state_space, observation_space, action_space, callback
         )
@@ -82,13 +82,20 @@ class IC3Net_Agents(CommNet_Agents):
         activation = ActivationFunctions[self.config.activation]
         device = self.device
         agent = self.config.agent
-
+        max_length = max(space.shape[0] for space in self.observation_space.values())
+        self.observation_space = {agent: gym.spaces.Box(-np.inf, np.inf, (max_length,), dtype=np.float32)
+                          for agent in self.observation_space}
         # build representations
         communicator = self._build_communicator(self.observation_space)
         space_actor_in = {agent: gym.spaces.Box(-np.inf, np.inf, (self.config.recurrent_hidden_size,), dtype=np.float32)
                           for agent in self.observation_space}
+        if self.use_global_state:
+            dim_obs_all = sum(self.state_space.shape)
+        else:
+            dim_obs_all = sum([sum(self.observation_space[k].shape) for k in self.agent_keys])
+        space_critic_in = {k: (dim_obs_all,) for k in self.agent_keys}
         A_representation = self._build_representation(self.config.representation, space_actor_in, self.config)
-        C_representation = self._build_representation(self.config.representation, space_actor_in, self.config)
+        C_representation = self._build_representation(self.config.representation, space_critic_in, self.config)
 
         # build policies
         if self.config.policy == "IC3Net_Policy":
@@ -126,11 +133,10 @@ class IC3Net_Agents(CommNet_Agents):
                                                      rnn_hidden=rnn_hidden_actor,
                                                      alive_ally=alive_ally)
         if not test_mode:
-            critic_input, _, _ = self._build_inputs(obs_dict, avail_actions_dict)
+            critic_input = self._build_critic_inputs(batch_size=n_env, obs_batch=obs_input, state=state)
             rnn_hidden_critic_new, values_out = self.policy.get_values(observation=critic_input,
                                                                        agent_ids=agents_id,
-                                                                       rnn_hidden=rnn_hidden_critic,
-                                                                       alive_ally=alive_ally)
+                                                                       rnn_hidden=rnn_hidden_critic)
 
         if self.use_parameter_sharing:
             key = self.agent_keys[0]
@@ -190,8 +196,12 @@ class IC3Net_Agents(CommNet_Agents):
                                                 for k in self.agent_keys}
         self.memory.store(**experience_data)
 
-    def run_episodes(self, env_fn=None, n_episodes: int = 1, test_mode: bool = False):
-        envs = self.train_envs if env_fn is None else env_fn()
+    def run_episodes(self,
+                     n_episodes: int = 1,
+                     run_envs: Optional[DummyVecMultiAgentEnv | SubprocVecMultiAgentEnv] = None,
+                     test_mode: bool = False,
+                     close_envs: bool = True) -> list:
+        envs = self.train_envs if run_envs is None else run_envs
         num_envs = envs.num_envs
         videos, episode_videos = [[] for _ in range(num_envs)], []
         episode_count, scores, best_score = 0, [], -np.inf
@@ -210,6 +220,7 @@ class IC3Net_Agents(CommNet_Agents):
         info = [{'agent_mask': {k: True for k in self.agent_keys}} for _ in range(num_envs)]
         while episode_count < n_episodes:
             step_info = {}
+            obs_dict = [self.pad_observation(obs) for obs in obs_dict]
             policy_out = self.action(obs_dict=obs_dict, state=state, avail_actions_dict=avail_actions,
                                      rnn_hidden_actor=rnn_hidden_actor, rnn_hidden_critic=rnn_hidden_critic,
                                      test_mode=test_mode, info=info)
@@ -229,7 +240,7 @@ class IC3Net_Agents(CommNet_Agents):
                                       terminated_dict, info, **{'state': state, 'log_pi_gate': log_pi_gate_dict})
             obs_dict, avail_actions = deepcopy(next_obs_dict), deepcopy(next_avail_actions)
             state = deepcopy(next_state) if self.use_global_state else None
-
+            obs_dict = [self.pad_observation(obs) for obs in obs_dict]
             for i in range(num_envs):
                 if all(terminated_dict[i].values()) or truncated[i]:
                     episode_count += 1
@@ -247,7 +258,7 @@ class IC3Net_Agents(CommNet_Agents):
                         else:
                             _, value_next = self.values_next(i_env=i, obs_dict=obs_dict[i],
                                                              state=None if state is None else state[i],
-                                                             rnn_hidden_critic=rnn_hidden_critic, info=info[i])
+                                                             rnn_hidden_critic=rnn_hidden_critic)
                         self.memory.finish_path(i_env=i, i_step=info[i]['episode_step'], value_next=value_next,
                                                 value_normalizer=self.learner.value_normalizer)
                         if self.use_rnn:
@@ -279,6 +290,6 @@ class IC3Net_Agents(CommNet_Agents):
                 "Test-Results/Episode-Rewards/Std-Score": np.std(scores),
             }
             self.log_infos(test_info, self.current_step)
-            if env_fn is not None:
+            if close_envs:
                 envs.close()
         return scores

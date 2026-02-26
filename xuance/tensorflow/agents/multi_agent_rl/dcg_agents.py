@@ -1,12 +1,10 @@
 import numpy as np
-from tqdm import tqdm
 from argparse import Namespace
 from gymnasium.spaces import Space
 from xuance.common import List, Optional, MultiAgentBaseCallback
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
-from xuance.tensorflow import tk, Module
+from xuance.tensorflow import tk
 from xuance.tensorflow.agents import MARLAgents
-from xuance.tensorflow.learners import DQN_Learner
 
 
 class DCG_Agents(MARLAgents):

@@ -1,14 +1,13 @@
 import os
 from xuance.common import get_arguments
-from .runner_basic import RunnerBase
-from .runner_drl import RunnerDRL
-from .runner_marl import RunnerMARL
-from .runner_competition import RunnerCompetition
-from .runner_pettingzoo import RunnerPettingzoo
-from .runner_magent import RunnerMAgent
-from .runner_sc2 import RunnerSC2
-from .runner_football import RunnerFootball
-from .runner_offlinerl import RunnerOfflineRL
+from .run_basic import RunnerBase
+from .run_drl import RunnerDRL
+from .run_marl import RunnerMARL
+from .run_competition import RunnerCompetition
+from .run_pettingzoo import RunnerPettingzoo
+from .run_sc2 import RunnerSC2
+from .run_football import RunnerFootball
+from .run_offlinerl import RunnerOfflineRL
 
 
 REGISTRY_Runner = {
@@ -18,7 +17,6 @@ REGISTRY_Runner = {
     "OfflineRL": RunnerOfflineRL,
     "RunnerCompetition": RunnerCompetition,
     "RunnerPettingzoo": RunnerPettingzoo,
-    "RunnerMAgent": RunnerMAgent,
     "RunnerStarCraft2": RunnerSC2,
     "RunnerFootball": RunnerFootball
 }

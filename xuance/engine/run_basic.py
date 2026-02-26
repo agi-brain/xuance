@@ -4,10 +4,10 @@ from xuance.environment import make_envs
 
 
 class RunnerBase(ABC):
-    """Abstract base class for all runners in XuanCe.
+    """Abstract base class for all engine in XuanCe.
 
     RunnerBase defines the common interface and shared infrastructure for
-    all concrete runners (e.g., DRLRunner, MARLRunner).
+    all concrete engine (e.g., DRLRunner, MARLRunner).
 
     A runner is responsible for experiment orchestration, including:
         - Environment lifecycle management.
@@ -61,14 +61,14 @@ class RunnerBase(ABC):
         ) if manage_resources is None else manage_resources
 
         # Reset environments once at initialization
-        # Note: This assumes online RL-style runners. Subclasses should be aware
+        # Note: This assumes online RL-style engine. Subclasses should be aware
         # of this design choice if different behavior is required.
         self.envs.reset()
 
         # Number of parallel environments
         self.n_envs = self.envs.num_envs
 
-        # Default rank (may be overridden by distributed runners)
+        # Default rank (may be overridden by distributed engine)
         self.rank = 0
 
         self.agent = agent
