@@ -1,5 +1,5 @@
 """
-Proximal Policy Optimization with clip trick (PPO_CLIP)
+Proximal Policy Optimization (PPO) with clip trick
 Paper link: https://arxiv.org/pdf/1707.06347.pdf
 Implementation: TensorFlow2
 """
@@ -9,12 +9,12 @@ from xuance.tensorflow import tf, tk, Module
 from xuance.tensorflow.learners import Learner
 
 
-class PPOCLIP_Learner(Learner):
+class PPO_Learner(Learner):
     def __init__(self,
                  config: Namespace,
                  policy: Module,
                  callback):
-        super(PPOCLIP_Learner, self).__init__(config, policy, callback)
+        super(PPO_Learner, self).__init__(config, policy, callback)
         if ("macOS" in self.os_name) and ("arm" in self.os_name):  # For macOS with Apple's M-series chips.
             if self.distributed_training:
                 with self.policy.mirrored_strategy.scope():

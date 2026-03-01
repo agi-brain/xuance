@@ -229,12 +229,12 @@ After that, you can run IC3Net in your own environment with the following code:
 
 ```python3
 import argparse
-from xuance.common import get_configs
+from xuance.common import load_yaml
 from xuance.environment import REGISTRY_ENV
 from xuance.environment import make_envs
 from xuance.torch.agents import IC3Net_Agents
 
-configs_dict = get_configs(file_dir="ic3net_myenv.yaml")
+configs_dict = load_yaml(file_dir="ic3net_myenv.yaml")
 configs = argparse.Namespace(**configs_dict)
 REGISTRY_ENV[configs.env_name] = MyNewEnv
 

@@ -1,6 +1,6 @@
 from typing import Optional, Union, List, Dict, Sequence, Callable, Any, Tuple, SupportsFloat, Type, Mapping
 from xuance.common.callback import BaseCallback, MultiAgentBaseCallback
-from xuance.common.common_tools import EPS, recursive_dict_update, get_configs, get_arguments, \
+from xuance.common.common_tools import EPS, recursive_dict_update, load_yaml, get_arguments, \
     create_directory, discount_cumsum, get_time_string
 from xuance.common.statistic_tools import mpi_mean, mpi_moments, RunningMeanStd
 from xuance.common.memory_tools import create_memory, store_element, sample_batch, Buffer, EpisodeBuffer, \
@@ -19,7 +19,7 @@ __all__ = [
     # callbacks
     "BaseCallback", "MultiAgentBaseCallback",
     # common_tools
-    "EPS", "recursive_dict_update", "get_configs", "get_arguments", "create_directory",
+    "EPS", "recursive_dict_update", "load_yaml", "get_arguments", "create_directory",
     "discount_cumsum", "get_time_string",
     # statistic_tools
     "mpi_mean", "mpi_moments", "RunningMeanStd",

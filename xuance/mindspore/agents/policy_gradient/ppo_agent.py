@@ -4,13 +4,13 @@ from argparse import Namespace
 from gymnasium.spaces import Space
 from xuance.common import Optional, BaseCallback
 from xuance.environment import DummyVecEnv, SubprocVecEnv
-from xuance.tensorflow import Module
-from xuance.tensorflow.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions
-from xuance.tensorflow.policies import REGISTRY_Policy
-from xuance.tensorflow.agents import OnPolicyAgent
+from xuance.mindspore import Module
+from xuance.mindspore.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions
+from xuance.mindspore.policies import REGISTRY_Policy
+from xuance.mindspore.agents import OnPolicyAgent
 
 
-class PPOCLIP_Agent(OnPolicyAgent):
+class PPO_Agent(OnPolicyAgent):
     """The implementation of PPO agent.
 
     Args:
@@ -27,7 +27,7 @@ class PPOCLIP_Agent(OnPolicyAgent):
             action_space: Optional[Space] = None,
             callback: Optional[BaseCallback] = None
     ):
-        super(PPOCLIP_Agent, self).__init__(config, envs, observation_space, action_space, callback)
+        super(PPO_Agent, self).__init__(config, envs, observation_space, action_space, callback)
         self.auxiliary_info_shape = {"old_logp": ()}
         self.memory = self._build_memory(self.auxiliary_info_shape)  # build memory
         self.policy = self._build_policy()  # build policy
@@ -46,17 +46,15 @@ class PPOCLIP_Agent(OnPolicyAgent):
             policy = REGISTRY_Policy["Categorical_AC"](
                 action_space=self.action_space, representation=representation,
                 actor_hidden_size=self.config.actor_hidden_size, critic_hidden_size=self.config.critic_hidden_size,
-                normalize=normalize_fn, initialize=initializer, activation=activation,
-                use_distributed_training=self.distributed_training)
+                normalize=normalize_fn, initialize=initializer, activation=activation)
         elif self.config.policy == "Gaussian_AC":
             policy = REGISTRY_Policy["Gaussian_AC"](
                 action_space=self.action_space, representation=representation,
                 actor_hidden_size=self.config.actor_hidden_size, critic_hidden_size=self.config.critic_hidden_size,
                 normalize=normalize_fn, initialize=initializer, activation=activation,
-                activation_action=ActivationFunctions[self.config.activation_action],
-                use_distributed_training=self.distributed_training)
+                activation_action=ActivationFunctions[self.config.activation_action])
         else:
-            raise AttributeError(f"PPO_CLIP currently does not support the policy named {self.config.policy}.")
+            raise AttributeError(f"PPO currently does not support the policy named {self.config.policy}.")
 
         return policy
 

@@ -57,10 +57,10 @@ ppg_agent
     :undoc-members:
     :show-inheritance:
 
-ppoclip_agent
+ppo_agent
 -----------------------------
 
-.. automodule:: xuance.mindspore.agents.policy_gradient.ppoclip_agent
+.. automodule:: xuance.mindspore.agents.policy_gradient.ppo_agent
     :members:
     :undoc-members:
     :show-inheritance:

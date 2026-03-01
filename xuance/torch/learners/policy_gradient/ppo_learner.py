@@ -1,5 +1,5 @@
 """
-Proximal Policy Optimization with clip trick (PPO_CLIP)
+Proximal Policy Optimization (PPO) with clip trick
 Paper link: https://arxiv.org/pdf/1707.06347.pdf
 Implementation: Pytorch
 """
@@ -9,12 +9,12 @@ from xuance.torch.learners import Learner
 from argparse import Namespace
 
 
-class PPOCLIP_Learner(Learner):
+class PPO_Learner(Learner):
     def __init__(self,
                  config: Namespace,
                  policy: nn.Module,
                  callback):
-        super(PPOCLIP_Learner, self).__init__(config, policy, callback)
+        super(PPO_Learner, self).__init__(config, policy, callback)
         self.optimizer = torch.optim.Adam(self.policy.parameters(), self.config.learning_rate, eps=1e-5)
         self.scheduler = torch.optim.lr_scheduler.LinearLR(self.optimizer,
                                                            start_factor=1.0,

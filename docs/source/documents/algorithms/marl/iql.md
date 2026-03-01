@@ -208,12 +208,12 @@ After that, you can run IQL in your own environment with the following code:
 
 ```python3
 import argparse
-from xuance.common import get_configs
-from xuance.environment import REGISTRY_MULTI_AGENT_ENV 
+from xuance.common import load_yaml
+from xuance.environment import REGISTRY_MULTI_AGENT_ENV
 from xuance.environment import make_envs
-from xuance.torch.agents.multi_agent_rl.iql_agents import IQL_Agents 
+from xuance.torch.agents.multi_agent_rl.iql_agents import IQL_Agents
 
-configs_dict = get_configs(file_dir="iql_myenv.yaml")
+configs_dict = load_yaml(file_dir="iql_myenv.yaml")
 configs = argparse.Namespace(**configs_dict)
 REGISTRY_MULTI_AGENT_ENV[configs.env_name] = MyNewEnv
 

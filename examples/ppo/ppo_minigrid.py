@@ -1,10 +1,10 @@
 import argparse
 import numpy as np
 from copy import deepcopy
-from xuance.common import get_configs, recursive_dict_update
+from xuance.common import load_yaml, recursive_dict_update
 from xuance.environment import make_envs
 from xuance.torch.utils.operations import set_seed
-from xuance.torch.agents import PPOCLIP_Agent
+from xuance.torch.agents import PPO_Agent
 
 
 def parse_args():
@@ -18,13 +18,13 @@ def parse_args():
 
 if __name__ == "__main__":
     parser = parse_args()
-    configs_dict = get_configs(file_dir="ppo_configs/ppo_minigrid.yaml")
+    configs_dict = load_yaml(file_dir="ppo_configs/ppo_minigrid.yaml")
     configs_dict = recursive_dict_update(configs_dict, parser.__dict__)
     configs = argparse.Namespace(**configs_dict)
 
     set_seed(configs.seed)
     envs = make_envs(configs)
-    Agent = PPOCLIP_Agent(config=configs, envs=envs)
+    Agent = PPO_Agent(config=configs, envs=envs)
 
     train_information = {"Deep learning toolbox": configs.dl_toolbox,
                          "Calculating device": configs.device,

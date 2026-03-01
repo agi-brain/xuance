@@ -96,12 +96,12 @@ After that, you can run **DreamerV3** in your own environment with the following
 
 ```python3
 import argparse
-from xuance.common import get_configs
+from xuance.common import load_yaml
 from xuance.environment import REGISTRY_ENV
 from xuance.environment import make_envs
 from xuance.torch.agents import DreamerV3Agent
 
-configs_dict = get_configs(file_dir="dreamerv3_myenv.yaml")
+configs_dict = load_yaml(file_dir="dreamerv3_myenv.yaml")
 configs = argparse.Namespace(**configs_dict)
 REGISTRY_ENV[configs.env_name] = MyNewEnv
 

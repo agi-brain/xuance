@@ -37,12 +37,12 @@ Here we show a config file named "ppo_configs/ppo_mujoco_config.yaml" for MuJoCo
     distributed_training: False  # Whether to use multi-GPU for distributed training.
     master_port: '12355'  # The master port for current experiment when use distributed training.
 
-    agent: "PPO_Clip"  # The agent name.
+    agent: "PPO"  # The agent name.
     env_name: "MuJoCo"  # The environment device.
     env_id: "Ant-v4"  # The environment id.
     env_seed: 1
     vectorize: "DummyVecEnv"  # The vecrized method to create n parallel environments. Choices: DummyVecEnv, or SubprocVecEnv.
-    learner: "PPOCLIP_Learner"
+    learner: "PPO_Learner"
     policy: "Gaussian_AC"  # choice: Gaussian_AC for continuous actions, Categorical_AC for discrete actions.
     representation: "Basic_MLP"  # The representation name.
 
@@ -64,7 +64,7 @@ Here we show a config file named "ppo_configs/ppo_mujoco_config.yaml" for MuJoCo
     ent_coef: 0.0  # Coefficient factor for entropy loss.
     target_kl: 0.25  # For PPO_KL learner.
     kl_coef: 1.0  # For PPO_KL learner.
-    clip_range: 0.2  # The clip range for ratio in PPO_Clip learner.
+    clip_range: 0.2  # The clip range for ratio in PPO learner.
     gamma: 0.99  # Discount factor.
     use_gae: True  # Use GAE trick.
     gae_lambda: 0.95  # The GAE lambda.
@@ -102,7 +102,7 @@ First, create a `ppo_mujoco.py` file. The code writing process can be divided in
     from xuance.common import get_configs, recursive_dict_update
     from xuance.environment import make_envs
     from xuance.torch.utils.operations import set_seed
-    from xuance.torch.agents import PPOCLIP_Agent
+    from xuance.torch.agents import PPO_Agent
 
 **Step 2.1 Get the hyper-parameters of command in console**
 
@@ -153,7 +153,7 @@ Step 3: Create environment, PPO Agent, and run the task
     from xuance.common import get_configs, recursive_dict_update
     from xuance.environment import make_envs
     from xuance.torch.utils.operations import set_seed
-    from xuance.torch.agents import PPOCLIP_Agent
+    from xuance.torch.agents import PPO_Agent
 
 
     def parse_args():
@@ -173,7 +173,7 @@ Step 3: Create environment, PPO Agent, and run the task
 
         set_seed(configs.seed)  # Set the random seed.
         envs = make_envs(configs)  # Make the environment.
-        Agent = PPOCLIP_Agent(config=configs, envs=envs)  # Create the PPO agent.
+        Agent = PPO_Agent(config=configs, envs=envs)  # Create the PPO agent.
 
         train_information = {"Deep learning backend": configs.dl_backend,
                              "Calculating device": configs.device,

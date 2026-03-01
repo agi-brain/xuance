@@ -1,7 +1,7 @@
 import argparse
 import numpy as np
 from copy import deepcopy
-from xuance.common import get_configs, recursive_dict_update
+from xuance.common import load_yaml, recursive_dict_update
 from xuance.environment import make_envs
 from xuance.torch.utils.operations import set_seed
 from xuance.torch.agents import DQN_Agent
@@ -18,7 +18,7 @@ def parse_args():
 
 if __name__ == "__main__":
     parser = parse_args()
-    configs_dict = get_configs(file_dir="dqn_configs/dqn_carracing.yaml")
+    configs_dict = load_yaml(file_dir="dqn_configs/dqn_carracing.yaml")
     configs_dict = recursive_dict_update(configs_dict, parser.__dict__)
     configs = argparse.Namespace(**configs_dict)
 

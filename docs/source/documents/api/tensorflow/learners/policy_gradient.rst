@@ -57,10 +57,10 @@ ppg_learner
     :undoc-members:
     :show-inheritance:
 
-ppoclip_learner
+ppo_learner
 -----------------------------
 
-.. automodule:: xuance.tensorflow.learners.policy_gradient.ppoclip_learner
+.. automodule:: xuance.tensorflow.learners.policy_gradient.ppo_learner
     :members:
     :undoc-members:
     :show-inheritance:

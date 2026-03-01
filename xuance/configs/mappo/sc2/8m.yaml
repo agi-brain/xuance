@@ -3,7 +3,7 @@ env_name: "StarCraft2"  # Name of the environment.
 env_id: "8m"
 env_seed: 1  # The random seed of the environment.
 fps: 15  # Frames per second.
-learner: "MAPPO_Clip_Learner"
+learner: "MAPPO_Learner"
 policy: "Categorical_MAAC_Policy"
 representation: "Basic_RNN"
 vectorize: "Subproc_StarCraft2"

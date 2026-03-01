@@ -142,7 +142,7 @@ Here is an example of configurations for DDPG algorithm, named "ippo_new_configs
     vf_coef: 0.5  # Coefficient factor for critic loss.
     ent_coef: 0.01  # Coefficient factor for entropy loss.
     target_kl: 0.25  # For MAPPO_KL learner.
-    clip_range: 0.2  # The clip range for ratio in MAPPO_Clip learner.
+    clip_range: 0.2  # The clip range for ratio in MAPPO learner.
     gamma: 0.99  # Discount factor.
 
     # tricks

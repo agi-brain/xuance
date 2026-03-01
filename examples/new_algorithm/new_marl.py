@@ -5,7 +5,7 @@ from copy import deepcopy
 
 import numpy as np
 
-from xuance.common import get_configs, Union, Optional, MultiAgentBaseCallback
+from xuance.common import load_yaml, Union, Optional, MultiAgentBaseCallback
 from xuance.environment import make_envs, DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
 from xuance.torch.agents import OffPolicyMARLAgents
 from xuance.torch.learners import LearnerMAS, REGISTRY_Learners
@@ -302,7 +302,7 @@ class MyMARLAgents(OffPolicyMARLAgents):
 
 
 if __name__ == '__main__':
-    config = get_configs(file_dir="new_marl.yaml")  # Get the config settings from .yaml file
+    config = load_yaml(file_dir="new_marl.yaml")  # Get the config settings from .yaml file
     config = Namespace(**config)  # Convert the config from dict to argparse
     envs = make_envs(config)  # Make vectorized multi-agent environments
     agents = MyMARLAgents(config, envs)  # Instantiate your pre-build multi-agent class

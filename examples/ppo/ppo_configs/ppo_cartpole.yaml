@@ -10,14 +10,14 @@ device: "cuda:0"  # Choose an calculating device. PyTorch: "cpu", "cuda:0"; Tens
 distributed_training: False  # Whether to use multi-GPU for distributed training.
 master_port: '12355'  # The master port for current experiment when use distributed training.
 
-agent: "PPO_Clip"  # Choice: PPO_Clip, PPO_KL
+agent: "PPO"  # Choice: PPO, PPO_KL
 env_name: "Classic Control"
 env_id: "CartPole-v1"
 env_seed: 1
 vectorize: "DummyVecEnv"
 representation: "Basic_MLP"
 policy: "Categorical_AC"
-learner: "PPOCLIP_Learner"  # Choice: PPOCLIP_Learner, PPOKL_Learner
+learner: "PPO_Learner"  # Choice: PPO_Learner, PPOKL_Learner
 runner: "DRL"
 
 representation_hidden_size: [128,]
@@ -37,7 +37,7 @@ vf_coef: 0.25
 ent_coef: 0.01
 target_kl: 0.25  # for PPO_KL agent
 kl_coef: 1.0  # for PPO_KL agent
-clip_range: 0.2  # for PPO_Clip agent
+clip_range: 0.2  # for PPO agent
 gamma: 0.98
 use_gae: True
 gae_lambda: 0.95

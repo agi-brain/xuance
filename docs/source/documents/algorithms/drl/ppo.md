@@ -188,7 +188,7 @@ After completing the installation, you can open a Python console and run **PPO**
 
 ```python3
 import xuance
-runner = xuance.get_runner(algo='ppo',  # Note: The default yaml file uses PPO_Clip
+runner = xuance.get_runner(algo='ppo',  # Choose the algorithm name.
                            env='classic_control',  # Choices: classic_control, box2d, atari, etc.
                            env_id='CartPole-v1',  # Choices: CartPole-v1, Pendulum-v1, etc.
                            )
@@ -197,17 +197,17 @@ runner.run()  # Or runner.benchmark()
 
 ### Run With Self-defined Configs
 
-If you want to run **PPO** with different configurations (PPO_Clip or PPO_KL, and other configurations), 
+If you want to run **PPO** with different configurations (PPO or PPO_KL, and other configurations), 
 you can build a new ``.yaml`` file, e.g. ``my_config.yaml``.
 Then, run the **PPO** by the following code block:
 
 ```python3
 import xuance
 runner = xuance.get_runner(algo='ppo',
-                       env='classic_control',  # Choices: classic_control, box2d, atari, etc.
-                       env_id='CartPole-v1',  # Choices: CartPole-v1, Pendulum-v1, etc.
-                       config_path="my_config.yaml",  # The path of my_config.yaml file should be correct.
-                       )
+                           env='classic_control',  # Choices: classic_control, box2d, atari, etc.
+                           env_id='CartPole-v1',  # Choices: CartPole-v1, Pendulum-v1, etc.
+                           config_path="my_config.yaml",  # The path of my_config.yaml file should be correct.
+                           )
 runner.run()  # Or runner.benchmark()
 ```
 
@@ -226,17 +226,17 @@ After that, you can run **PPO** in your own environment with the following code:
 
 ```python3
 import argparse
-from xuance.common import get_configs
+from xuance.common import load_yaml
 from xuance.environment import REGISTRY_ENV
 from xuance.environment import make_envs
-from xuance.torch.agents import PPOCLIP_Agent
+from xuance.torch.agents import PPO_Agent
 
-configs_dict = get_configs(file_dir="ppo_myenv.yaml")
+configs_dict = load_yaml(file_dir="ppo_myenv.yaml")
 configs = argparse.Namespace(**configs_dict)
 REGISTRY_ENV[configs.env_name] = MyNewEnv
 
 envs = make_envs(configs)  # Make parallel environments.
-Agent = PPOCLIP_Agent(config=configs, envs=envs)  # Create a ppo agent from XuanCe.
+Agent = PPO_Agent(config=configs, envs=envs)  # Create a ppo agent from XuanCe.
 Agent.train(configs.running_steps // configs.parallels)  # Train the model for numerous steps.
 Agent.save_model("final_train_model.pth")  # Save the model to model_dir.
 Agent.finish()  # Finish the training.

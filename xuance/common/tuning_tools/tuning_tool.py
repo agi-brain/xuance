@@ -4,7 +4,7 @@ from copy import deepcopy
 from argparse import Namespace
 from operator import itemgetter
 from xuance.environment import make_envs
-from xuance.common import get_configs, Optional, List
+from xuance.common import load_yaml, Optional, List
 from xuance.common.tuning_tools.hyperparameters import Hyperparameter, AlgorithmHyperparametersRegistry
 
 
@@ -131,7 +131,7 @@ class HyperParameterTuner:
             AttributeError: If the specified deep learning toolbox is not supported.
         """
         self.algo = algo
-        self.configs_dict = get_configs(config_path)
+        self.configs_dict = load_yaml(config_path)
         self.running_steps = self.configs_dict['running_steps'] if running_steps is None else running_steps
         self.test_episodes = self.configs_dict['test_episodes'] if test_episodes is None else test_episodes
         if self.configs_dict['dl_toolbox'] == "torch":

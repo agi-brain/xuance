@@ -156,7 +156,7 @@ List of Algorithms
 * :class:`PPG` : :doc:`Phasic Policy Gradient (PPG) <documents/algorithms/drl/ppg>`.
 * :class:`A2C` : :doc:`Advantage Actor Critic (A2C) <documents/algorithms/drl/a2c>`.
 * :class:`SAC` : :doc:`Soft Actor-Critic (SAC) <documents/algorithms/drl/sac>`.
-* :class:`PPOCLIP` : :doc:`Proximal Policy Optimization with Clipped Objective (PPO-Clip) <documents/algorithms/drl/ppoclip>`.
+* :class:`PPO` : :doc:`Proximal Policy Optimization with Clipped Objective (PPO-Clip) <documents/algorithms/drl/ppo>`.
 * :class:`PPOKL` : :doc:`Proximal Policy Optimization with KL Divergence (PPO-KL) <documents/algorithms/drl/ppokl>`.
 * :class:`DDPG` : :doc:`Deep Deterministic Policy Gradient (DDPG) <documents/algorithms/drl/ddpg>`.
 * :class:`TD3` : :doc:`Twin Delayed Deep Deterministic Policy Gradient (TD3) <documents/algorithms/drl/td3>`.

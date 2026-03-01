@@ -15,7 +15,7 @@ env_name: "mpe"  # The environment name.
 env_id: "simple_spread_v3"  # The environment id.
 env_seed: 1
 continuous_action: True  # If to use continuous control.
-learner: "MAPPO_Clip_Learner"
+learner: "MAPPO_Learner"
 policy: "Gaussian_MAAC_Policy"  # The policy name.
 representation: "Basic_MLP"  # The representation name.
 vectorize: "SubprocVecMultiAgentEnv"  # The method to vectorize your environment such that can run in parallel.
@@ -50,7 +50,7 @@ weight_decay: 0  # The steps to decay the greedy epsilon.
 vf_coef: 0.5  # Coefficient factor for critic loss.
 ent_coef: 0.01  # Coefficient factor for entropy loss.
 target_kl: 0.25  # For MAPPO_KL learner.
-clip_range: 0.2  # Ratio clip range, for MAPPO_Clip learner.
+clip_range: 0.2  # Ratio clip range, for MAPPO learner.
 clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm().
 gamma: 0.95  # Discount factor.
 

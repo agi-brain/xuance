@@ -1,10 +1,10 @@
 import argparse
 import numpy as np
 from copy import deepcopy
-from xuance.common import get_configs, recursive_dict_update
+from xuance.common import load_yaml, recursive_dict_update
 from xuance.environment import make_envs
 from xuance.torch.utils.operations import set_seed
-from xuance.torch.agents import PPOCLIP_Agent
+from xuance.torch.agents import PPO_Agent
 
 
 def parse_args():
@@ -18,13 +18,13 @@ def parse_args():
 
 if __name__ == "__main__":
     parser = parse_args()
-    configs_dict = get_configs(file_dir="ppo_configs/ppo_mujoco.yaml")
+    configs_dict = load_yaml(file_dir="ppo_configs/ppo_mujoco.yaml")
     configs_dict = recursive_dict_update(configs_dict, parser.__dict__)
     configs = argparse.Namespace(**configs_dict)
 
     set_seed(configs.seed)  # Set the random seed.
     envs = make_envs(configs)  # Make the environment.
-    Agent = PPOCLIP_Agent(config=configs, envs=envs)  # Create the PPO agent.
+    Agent = PPO_Agent(config=configs, envs=envs)  # Create the PPO agent.
 
     train_information = {"Deep learning toolbox": configs.dl_toolbox,
                          "Calculating device": configs.device,

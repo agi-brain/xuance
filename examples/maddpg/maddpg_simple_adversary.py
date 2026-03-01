@@ -20,7 +20,7 @@ import torch
 import torch.nn as nn
 from copy import deepcopy
 from argparse import Namespace
-from xuance.common import get_configs
+from xuance.common import load_yaml
 from xuance.environment import make_envs
 from xuance.torch.agents import REGISTRY_Agents
 from xuance.torch.learners.multi_agent_rl.maddpg_learner import MADDPG_Learner
@@ -468,7 +468,7 @@ def main():
     print("🎯 Configurable Good Agents Parameter Sharing MADDPG Solution")
     print("Supports switching between parameter sharing/independent modes via YAML config")
 
-    config = get_configs(file_dir="maddpg_mpe_configs/simple_adversary_v3_sharing.yaml")
+    config = load_yaml(file_dir="maddpg_mpe_configs/simple_adversary_v3_sharing.yaml")
     config = Namespace(**config)
 
     config.agent = "MADDPG"

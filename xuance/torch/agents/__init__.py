@@ -4,7 +4,7 @@ from .core import OnPolicyAgent, OffPolicyAgent, OffPolicyMARLAgents, OnPolicyMA
 '''Single-Agent Reinforcement Learning algorithms'''
 from .policy_gradient import PG_Agent
 from .policy_gradient import A2C_Agent
-from .policy_gradient import PPOCLIP_Agent
+from .policy_gradient import PPO_Agent
 from .policy_gradient import PPOKL_Agent
 from .policy_gradient import PPG_Agent
 from .policy_gradient import DDPG_Agent
@@ -59,7 +59,7 @@ from .contrastive_unsupervised_rl import CURL_Agent, SPR_Agent, DrQ_Agent
 REGISTRY_Agents = {
     "PG": PG_Agent,
     "A2C": A2C_Agent,
-    "PPO_Clip": PPOCLIP_Agent,
+    "PPO": PPO_Agent,
     "PPO_KL": PPOKL_Agent,
     "PPG": PPG_Agent,
     "DDPG": DDPG_Agent,
@@ -122,7 +122,7 @@ __all__ = [
 
     "REGISTRY_Agents",
 
-    "PG_Agent", "A2C_Agent", "PPOCLIP_Agent", "PPOKL_Agent", "PPG_Agent", "DDPG_Agent", "TD3_Agent", "PDQN_Agent",
+    "PG_Agent", "A2C_Agent", "PPO_Agent", "PPOKL_Agent", "PPG_Agent", "DDPG_Agent", "TD3_Agent", "PDQN_Agent",
     "MPDQN_Agent", "SPDQN_Agent", "SAC_Agent", "DQN_Agent", "DuelDQN_Agent", "DDQN_Agent",
     "NoisyDQN_Agent", "C51_Agent", "QRDQN_Agent", "PerDQN_Agent", "DRQN_Agent","NPG_Agent",
 

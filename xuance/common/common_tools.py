@@ -34,7 +34,7 @@ def recursive_dict_update(basic_dict, target_dict):
     return out_dict
 
 
-def get_configs(file_dir):
+def load_yaml(file_dir) -> dict:
     """Get dict variable from a YAML file.
     Args:
         file_dir: the directory of the YAML file.
@@ -67,7 +67,7 @@ def get_arguments(algo, env, env_id, config_path=None, parser_args=None):
     config_path_default = os.path.join(main_path_package, "configs")
 
     ''' get the arguments from xuance/config/basic.yaml '''
-    config_basic = get_configs(os.path.join(config_path_default, "basic.yaml"))
+    config_basic = load_yaml(os.path.join(config_path_default, "basic.yaml"))
 
     ''' get the arguments from, e.g., xuance/config/dqn/box2d/CarRacing-v3.yaml '''
     if type(algo) == list:  # for different groups of MARL algorithms.
@@ -89,7 +89,7 @@ def get_arguments(algo, env, env_id, config_path=None, parser_args=None):
                         f"in the `get_runner()` function.")
         else:
             config_path = [os.path.join(main_path, _path) for _path in config_path]
-        config_algo_default = [get_configs(_path) for _path in config_path]
+        config_algo_default = [load_yaml(_path) for _path in config_path]
         configs = [recursive_dict_update(config_basic, config_i) for config_i in config_algo_default]
         # load parser_args and rewrite the parameters if their names are same.
         if parser_args is not None:
@@ -124,7 +124,7 @@ def get_arguments(algo, env, env_id, config_path=None, parser_args=None):
                     f"in the `get_runner()` function.")
         else:
             config_path = os.path.join(main_path, config_path)
-        config_algo_default = get_configs(config_path)
+        config_algo_default = load_yaml(config_path)
         configs = recursive_dict_update(config_basic, config_algo_default)
         # load parser_args and rewrite the parameters if their names are same.
         if parser_args is not None:

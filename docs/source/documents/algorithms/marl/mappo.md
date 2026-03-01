@@ -122,19 +122,19 @@ After that, you can run MAPPO in your own environment with the following code:
 
 ```python3
 import argparse
-from xuance.common import get_configs
+from xuance.common import load_yaml
 from xuance.environment import REGISTRY_ENV
 from xuance.environment import make_envs
 from xuance.torch.agents import MAPPO_Agents
 
-configs_dict = get_configs(file_dir="mappo_myenv.yaml")
+configs_dict = load_yaml(file_dir="mappo_myenv.yaml")
 configs = argparse.Namespace(**configs_dict)
 REGISTRY_ENV[configs.env_name] = MyNewEnv
 
-envs = make_envs(configs) 
-Agent = MAPPO_Agents(config=configs, envs=envs) 
-Agent.train(configs.running_steps // configs.parallels)  
-Agent.save_model("final_train_model.pth") 
+envs = make_envs(configs)
+Agent = MAPPO_Agents(config=configs, envs=envs)
+Agent.train(configs.running_steps // configs.parallels)
+Agent.save_model("final_train_model.pth")
 Agent.finish()  # Finish the training.
 ```
 

@@ -7,7 +7,7 @@ img_size: [84, 84]  # default is 210 x 160 in gym[Atari]
 num_stack: 4  # frame stack trick
 frame_skip: 4  # frame skip trick
 noop_max: 30  # Do no-op action for a number of steps in [1, noop_max].
-learner: "MAPPO_Clip_Learner"
+learner: "MAPPO_Learner"
 policy: "Categorical_MAAC_Policy"  # The policy name.
 representation: "Basic_CNN"  # The representation name.
 vectorize: "SubprocVecMultiAgentEnv"  # The method to vectorize your environment such that can run in parallel.
@@ -49,7 +49,7 @@ weight_decay: 0  # The steps to decay the greedy epsilon.
 vf_coef: 0.5  # Coefficient factor for critic loss.
 ent_coef: 0.01  # Coefficient factor for entropy loss.
 target_kl: 0.25  # For MAPPO_KL learner.
-clip_range: 0.2  # Ratio clip range, for MAPPO_Clip learner.
+clip_range: 0.2  # Ratio clip range, for MAPPO learner.
 clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm().
 gamma: 0.95  # Discount factor.
 

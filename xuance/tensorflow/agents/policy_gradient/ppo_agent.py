@@ -1,17 +1,16 @@
-import torch
 from tqdm import tqdm
 from copy import deepcopy
 from argparse import Namespace
 from gymnasium.spaces import Space
 from xuance.common import Optional, BaseCallback
 from xuance.environment import DummyVecEnv, SubprocVecEnv
-from xuance.torch import Module
-from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
-from xuance.torch.policies import REGISTRY_Policy
-from xuance.torch.agents import OnPolicyAgent
+from xuance.tensorflow import Module
+from xuance.tensorflow.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions
+from xuance.tensorflow.policies import REGISTRY_Policy
+from xuance.tensorflow.agents import OnPolicyAgent
 
 
-class PPOCLIP_Agent(OnPolicyAgent):
+class PPO_Agent(OnPolicyAgent):
     """The implementation of PPO agent.
 
     Args:
@@ -28,7 +27,7 @@ class PPOCLIP_Agent(OnPolicyAgent):
             action_space: Optional[Space] = None,
             callback: Optional[BaseCallback] = None
     ):
-        super(PPOCLIP_Agent, self).__init__(config, envs, observation_space, action_space, callback)
+        super(PPO_Agent, self).__init__(config, envs, observation_space, action_space, callback)
         self.auxiliary_info_shape = {"old_logp": ()}
         self.memory = self._build_memory(self.auxiliary_info_shape)  # build memory
         self.policy = self._build_policy()  # build policy
@@ -36,9 +35,8 @@ class PPOCLIP_Agent(OnPolicyAgent):
 
     def _build_policy(self) -> Module:
         normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None
-        initializer = torch.nn.init.orthogonal_
+        initializer = InitializeFunctions[self.config.initialize] if hasattr(self.config, "initialize") else None
         activation = ActivationFunctions[self.config.activation]
-        device = self.device
 
         # build representation.
         representation = self._build_representation(self.config.representation, self.observation_space, self.config)
@@ -48,17 +46,17 @@ class PPOCLIP_Agent(OnPolicyAgent):
             policy = REGISTRY_Policy["Categorical_AC"](
                 action_space=self.action_space, representation=representation,
                 actor_hidden_size=self.config.actor_hidden_size, critic_hidden_size=self.config.critic_hidden_size,
-                normalize=normalize_fn, initialize=initializer, activation=activation, device=device,
+                normalize=normalize_fn, initialize=initializer, activation=activation,
                 use_distributed_training=self.distributed_training)
         elif self.config.policy == "Gaussian_AC":
             policy = REGISTRY_Policy["Gaussian_AC"](
                 action_space=self.action_space, representation=representation,
                 actor_hidden_size=self.config.actor_hidden_size, critic_hidden_size=self.config.critic_hidden_size,
-                normalize=normalize_fn, initialize=initializer, activation=activation, device=device,
-                use_distributed_training=self.distributed_training,
-                activation_action=ActivationFunctions[self.config.activation_action])
+                normalize=normalize_fn, initialize=initializer, activation=activation,
+                activation_action=ActivationFunctions[self.config.activation_action],
+                use_distributed_training=self.distributed_training)
         else:
-            raise AttributeError(f"PPO_CLIP currently does not support the policy named {self.config.policy}.")
+            raise AttributeError(f"PPO currently does not support the policy named {self.config.policy}.")
 
         return policy
 
@@ -125,18 +123,18 @@ class PPOCLIP_Agent(OnPolicyAgent):
                         self.current_episode[i] += 1
                         if self.use_wandb:
                             episode_info = {
-                                f"Episode-Steps/rank_{self.rank}/env-{i}": infos[i]["episode_step"],
-                                f"Train-Episode-Rewards/rank_{self.rank}/env-{i}": infos[i]["episode_score"]
+                                f"Episode-Steps/env-{i}": infos[i]["episode_step"],
+                                f"Train-Episode-Rewards/env-{i}": infos[i]["episode_score"]
                             }
                         else:
                             episode_info = {
-                                f"Episode-Steps/rank_{self.rank}": {f"env-{i}": infos[i]["episode_step"]},
-                                f"Train-Episode-Rewards/rank_{self.rank}": {f"env-{i}": infos[i]["episode_score"]}
+                                f"Episode-Steps": {f"env-{i}": infos[i]["episode_step"]},
+                                f"Train-Episode-Rewards": {f"env-{i}": infos[i]["episode_score"]}
                             }
                         self.log_infos(episode_info, self.current_step)
                         train_info.update(episode_info)
                         self.callback.on_train_episode_info(envs=self.train_envs, policy=self.policy, env_id=i,
-                                                            infos=infos, rank=self.rank, use_wandb=self.use_wandb,
+                                                            infos=infos, use_wandb=self.use_wandb,
                                                             current_step=self.current_step,
                                                             current_episode=self.current_episode,
                                                             train_steps=train_steps)

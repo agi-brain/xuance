@@ -10,7 +10,7 @@ device: "cuda:0"  # Choose an calculating device. PyTorch: "cpu", "cuda:0"; Tens
 distributed_training: False  # Whether to use multi-GPU for distributed training.
 master_port: '12355'  # The master port for current experiment when use distributed training.
 
-agent: "PPO_Clip"  # Choice: PPO_Clip, PPO_KL
+agent: "PPO"  # Choice: PPO, PPO_KL
 vectorize: "Dummy_Atari"
 env_name: "Atari"
 env_id: "ALE/Breakout-v5"
@@ -22,7 +22,7 @@ frame_skip: 4  # frame skip trick
 noop_max: 30  # Do no-op action for a number of steps in [1, noop_max].
 representation: "AC_CNN_Atari"  # CNN and FC layers
 policy: "Categorical_AC"
-learner: "PPOCLIP_Learner"
+learner: "PPO_Learner"
 
 # Good HyperParameters for Atari Games, Do not change them.
 filters: [32, 64, 64]
@@ -45,7 +45,7 @@ vf_coef: 0.25
 ent_coef: 0.01
 target_kl: 0.25  # for PPO_KL agent
 kl_coef: 1.0  # for PPO_KL agent
-clip_range: 0.2  # for PPO_Clip agent
+clip_range: 0.2  # for PPO agent
 gamma: 0.99
 use_gae: True
 gae_lambda: 0.95  # gae_lambda: Lambda parameter for calculating N-step advantage

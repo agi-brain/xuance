@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 from copy import deepcopy
 from argparse import Namespace
-from xuance.common import get_configs
+from xuance.common import load_yaml
 from xuance.environment import make_envs
 from xuance.torch.agents import OffPolicyAgent
 from xuance.torch.learners import Learner, REGISTRY_Learners
@@ -112,7 +112,7 @@ class MyAgent(OffPolicyAgent):
 
 
 if __name__ == '__main__':
-    config = get_configs(file_dir="new_rl.yaml")  # Get the config settings from .yaml file.
+    config = load_yaml(file_dir="new_rl.yaml")  # Get the config settings from .yaml file.
     config = Namespace(**config)  # Convert the config from dict to argparse.
     envs = make_envs(config)  # Make vectorized environments.
     agent = MyAgent(config, envs)  # Instantiate your pre-build agent class.

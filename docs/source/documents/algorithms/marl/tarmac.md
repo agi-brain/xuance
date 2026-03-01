@@ -169,12 +169,12 @@ After that, you can run TarMAC in your own environment with the following code:
 
 ```python3
 import argparse
-from xuance.common import get_configs
-from xuance.environment import REGISTRY_MULTI_AGENT_ENV 
+from xuance.common import load_yaml
+from xuance.environment import REGISTRY_MULTI_AGENT_ENV
 from xuance.environment import make_envs
-from xuance.torch.agents.multi_agent_rl.tarmac_agents import TarMAC_Agents 
+from xuance.torch.agents.multi_agent_rl.tarmac_agents import TarMAC_Agents
 
-configs_dict = get_configs(file_dir="TarMAC_myenv.yaml")
+configs_dict = load_yaml(file_dir="TarMAC_myenv.yaml")
 configs = argparse.Namespace(**configs_dict)
 REGISTRY_MULTI_AGENT_ENV[configs.env_name] = MyNewEnv
 

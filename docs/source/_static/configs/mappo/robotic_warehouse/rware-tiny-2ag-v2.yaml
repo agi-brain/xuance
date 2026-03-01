@@ -3,7 +3,7 @@ env_name: "RoboticWarehouse"
 env_id: "rware-tiny-2ag-v2"
 env_seed: 1  # The random seed of the environment.
 max_episode_steps: 100
-learner: "MAPPO_Clip_Learner"
+learner: "MAPPO_Learner"
 policy: "Categorical_MAAC_Policy"
 representation: "Basic_MLP"
 vectorize: "DummyVecMultiAgentEnv"
@@ -32,7 +32,7 @@ weight_decay: 0
 vf_coef: 0.5
 ent_coef: 0.01
 target_kl: 0.25  # for MAPPO_KL learner
-clip_range: 0.2  # ratio clip range, for MAPPO_Clip learner
+clip_range: 0.2  # ratio clip range, for MAPPO learner
 clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
 gamma: 0.95  # discount factor
 

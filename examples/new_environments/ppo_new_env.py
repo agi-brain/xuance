@@ -2,10 +2,10 @@ import argparse
 import numpy as np
 from copy import deepcopy
 from gymnasium.spaces import Box
-from xuance.common import get_configs, recursive_dict_update
+from xuance.common import load_yaml, recursive_dict_update
 from xuance.environment import make_envs, RawEnvironment, REGISTRY_ENV
 from xuance.torch.utils.operations import set_seed
-from xuance.torch.agents import PPOCLIP_Agent
+from xuance.torch.agents import PPO_Agent
 
 
 class MyNewEnv(RawEnvironment):
@@ -48,14 +48,14 @@ def parse_args():
 
 if __name__ == "__main__":
     parser = parse_args()
-    configs_dict = get_configs(file_dir="new_configs/ppo_new_env.yaml")
+    configs_dict = load_yaml(file_dir="new_configs/ppo_new_env.yaml")
     configs_dict = recursive_dict_update(configs_dict, parser.__dict__)
     configs = argparse.Namespace(**configs_dict)
 
     REGISTRY_ENV[configs.env_name] = MyNewEnv
     set_seed(configs.seed)
     envs = make_envs(configs)
-    Agent = PPOCLIP_Agent(config=configs, envs=envs)
+    Agent = PPO_Agent(config=configs, envs=envs)
 
     train_information = {"Deep learning toolbox": configs.dl_toolbox,
                          "Calculating device": configs.device,

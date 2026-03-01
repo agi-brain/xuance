@@ -1,5 +1,5 @@
 from .learner import Learner, LearnerMAS
-from .policy_gradient import PG_Learner, A2C_Learner, PPOCLIP_Learner, PPOKL_Learner, PPG_Learner, DDPG_Learner, \
+from .policy_gradient import PG_Learner, A2C_Learner, PPO_Learner, PPOKL_Learner, PPG_Learner, DDPG_Learner, \
     TD3_Learner, SAC_Learner, SACDIS_Learner, PDQN_Learner, MPDQN_Learner, SPDQN_Learner,NPG_Learner
 
 from .qlearning_family import DQN_Learner, DuelDQN_Learner, DDQN_Learner, PerDQN_Learner, C51_Learner, QRDQN_Learner, \
@@ -20,7 +20,7 @@ REGISTRY_Learners = {
     "BasicLearnerMAS": LearnerMAS,
     "PG_Learner": PG_Learner,
     "A2C_Learner": A2C_Learner,
-    "PPOCLIP_Learner": PPOCLIP_Learner,
+    "PPO_Learner": PPO_Learner,
     "PPOKL_Learner": PPOKL_Learner,
     "PPG_Learner": PPG_Learner,
     "DDPG_Learner": DDPG_Learner,
@@ -56,7 +56,7 @@ REGISTRY_Learners = {
     "MFQ_Learner": MFQ_Learner,
     "MFAC_Learner": MFAC_Learner,
     "IPPO_Learner": IPPO_Learner,
-    "MAPPO_Clip_Learner": MAPPO_Learner,
+    "MAPPO_Learner": MAPPO_Learner,
     "ISAC_Learner": ISAC_Learner,
     "ISACDIS_Learner": ISACDIS_Learner,
     "MASAC_Learner": MASAC_Learner,
@@ -77,7 +77,7 @@ REGISTRY_Learners = {
 __all__ = [
     "REGISTRY_Learners", "Learner", "LearnerMAS",
 
-    "PG_Learner", "A2C_Learner", "PPOCLIP_Learner", "PPOKL_Learner", "PPG_Learner", "DDPG_Learner", "TD3_Learner",
+    "PG_Learner", "A2C_Learner", "PPO_Learner", "PPOKL_Learner", "PPG_Learner", "DDPG_Learner", "TD3_Learner",
     "SAC_Learner", "SACDIS_Learner", "PDQN_Learner", "MPDQN_Learner", "SPDQN_Learner","NPG_Learner",
 
     "DQN_Learner", "DuelDQN_Learner", "DDQN_Learner", "PerDQN_Learner", "C51_Learner", "QRDQN_Learner", "DRQN_Learner",

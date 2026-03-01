@@ -10,14 +10,14 @@ device: "cuda:0"  # Choose an calculating device. PyTorch: "cpu", "cuda:0"; Tens
 distributed_training: False  # Whether to use multi-GPU for distributed training.
 master_port: '12355'  # The master port for current experiment when use distributed training.
 
-agent: "PPO_Clip"  # Choice: PPO_Clip, PPO_KL
+agent: "PPO"  # Choice: PPO, PPO_KL
 env_name: "Box2D"
 env_id: "CarRacing-v3"
 env_seed: 1
 vectorize: "DummyVecEnv"
 representation: "Basic_CNN"
 policy: "Categorical_AC"
-learner: "PPOCLIP_Learner"
+learner: "PPO_Learner"
 
 # the following three arguments are for "Basic_CNN" representation.
 filters: [16, 16, 32]  #  [16, 16, 32, 32]

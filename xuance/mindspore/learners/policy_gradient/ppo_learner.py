@@ -1,5 +1,5 @@
 """
-Proximal Policy Optimization with clip trick (PPO_CLIP)
+Proximal Policy Optimization (PPO) with clip trick
 Paper link: https://arxiv.org/pdf/1707.06347.pdf
 Implementation: MindSpore
 """
@@ -9,12 +9,12 @@ from xuance.mindspore import ms, msd, ops, Module, Tensor, optim
 from xuance.mindspore.learners import Learner
 
 
-class PPOCLIP_Learner(Learner):
+class PPO_Learner(Learner):
     def __init__(self,
                  config: Namespace,
                  policy: Module,
                  callback):
-        super(PPOCLIP_Learner, self).__init__(config, policy, callback)
+        super(PPO_Learner, self).__init__(config, policy, callback)
         self.optimizer = optim.Adam(params=self.policy.trainable_params(), lr=self.config.learning_rate, eps=1e-5)
         self.scheduler = optim.lr_scheduler.LinearLR(self.optimizer, start_factor=1.0, end_factor=self.end_factor_lr_decay,
                                                      total_iters=self.config.running_steps)

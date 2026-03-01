@@ -179,7 +179,7 @@ After completing the installation, you can open a Python console and run **PPO**
 
 ```python3
 import xuance
-runner = xuance.get_runner(algo='ppo',  # Note: The default yaml file uses PPO_Clip
+runner = xuance.get_runner(algo='ppo',  # Note: The default yaml file uses PPO
                            env='classic_control',  # Choices: classic_control, box2d, atari, etc.
                            env_id='CartPole-v1',  # Choices: CartPole-v1, Pendulum-v1, etc.
                            )
@@ -188,7 +188,7 @@ runner.run()  # Or runner.benchmark()
 
 ### Run With Self-defined Configs
 
-If you want to run **PPO** with different configurations (PPO_Clip or PPO_KL, and other configurations), 
+If you want to run **PPO** with different configurations (PPO or PPO_KL, and other configurations), 
 you can build a new ``.yaml`` file, e.g. ``my_config.yaml``.
 Then, run the **PPO** by the following code block:
 
@@ -217,12 +217,12 @@ After that, you can run **PPO** in your own environment with the following code:
 
 ```python3
 import argparse
-from xuance.common import get_configs
+from xuance.common import load_yaml
 from xuance.environment import REGISTRY_ENV
 from xuance.environment import make_envs
 from xuance.torch.agents import PPOKL_Agent
 
-configs_dict = get_configs(file_dir="ppo_myenv.yaml")
+configs_dict = load_yaml(file_dir="ppo_myenv.yaml")
 configs = argparse.Namespace(**configs_dict)
 REGISTRY_ENV[configs.env_name] = MyNewEnv
 

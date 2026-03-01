@@ -17,8 +17,8 @@ Deep Reinforcement Learning
     PG <drl/pg>
     NPG <drl/npg>
     A2C <drl/a2c>
+    PPO <drl/ppo>
     PPO-KL <drl/ppokl>
-    PPO-Clip <drl/ppoclip>
     PPG <drl/ppg>
     SAC <drl/sac>
     DDPG <drl/ddpg>
@@ -43,8 +43,8 @@ Deep Reinforcement Learning
 * :class:`PG` : :doc:`Policy Gradient (PG) <drl/pg>`.
 * :class:`NPG` : :doc:`Natural Policy Gradient (NPG) <drl/npg>`.
 * :class:`A2C` : :doc:`Advantage Actor Critic (A2C) <drl/a2c>`.
+* :class:`PPO` : :doc:`Proximal Policy Optimization (PPO) <drl/ppo>`.
 * :class:`PPOKL` : :doc:`Proximal Policy Optimization with KL Divergence (PPO-KL) <drl/ppokl>`.
-* :class:`PPOCLIP` : :doc:`Proximal Policy Optimization with Clipped Objective (PPO-Clip) <drl/ppoclip>`.
 * :class:`PPG` : :doc:`Phasic Policy Gradient (PPG) <drl/ppg>`.
 * :class:`SAC` : :doc:`Soft Actor-Critic (SAC) <drl/sac>`.
 * :class:`DDPG` : :doc:`Deep Deterministic Policy Gradient (DDPG) <drl/ddpg>`.
