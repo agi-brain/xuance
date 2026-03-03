@@ -208,7 +208,7 @@ The Framework of XuanCe
 
 The overall framework of XuanCe is shown as below. 
 
-.. image:: _static/figures/xuance_framework.png
+.. image:: _static/figures/XuanCe-Framework.png
 
 
 XuanCe contains four main parts:
