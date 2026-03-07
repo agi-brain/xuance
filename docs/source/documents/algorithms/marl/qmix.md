@@ -1,7 +1,7 @@
 # Q-Mixing Networks (QMIX)
 
 **Paper Link:** [**ICML 2018**](https://proceedings.mlr.press/v80/rashid18a/rashid18a.pdf).
-**Paper Link:** [**JMLR 2020**](https://dl.acm.org/doi/pdf/10.5555/3455716.3455894).
+**Paper Link:** [**JMLR 2020**](https://www.jmlr.org/papers/volume21/20-081/20-081.pdf).
 
 In the previous introduction to the [**VDN**](./vdn.md) algorithm, we mentioned QMIX. 
 
