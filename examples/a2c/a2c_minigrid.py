@@ -1,3 +1,9 @@
+"""
+To run this example, you need install the MiniGrid environment first:
+
+$ pip install minigrid
+"""
+
 import argparse
 import numpy as np
 from copy import deepcopy

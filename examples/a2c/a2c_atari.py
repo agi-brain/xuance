@@ -1,3 +1,11 @@
+"""
+To run this example, you need to install Atari first:
+
+$ pip install gymnasium[accept-rom-license]==0.28.1
+$ pip install gymnasium[atari]==0.28.1
+$ pip install ale-py==0.8.1
+"""
+
 import argparse
 import numpy as np
 from copy import deepcopy

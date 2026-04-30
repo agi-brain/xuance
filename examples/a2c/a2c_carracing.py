@@ -1,3 +1,10 @@
+"""
+To run this example, you need to install Box2D first:
+
+$ pip install swig==4.3.0
+$ pip install gymnasium[box2d]==0.28.1
+"""
+
 import argparse
 import numpy as np
 from copy import deepcopy

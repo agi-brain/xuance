@@ -1,3 +1,9 @@
+"""
+You need install MuJoCo first.
+
+$ pip install gymnasium[mujoco]
+"""
+
 import argparse
 import numpy as np
 from copy import deepcopy
@@ -35,10 +41,9 @@ if __name__ == "__main__":
         print(f"{k}: {v}")
 
     if configs.benchmark:
-        def env_fn():  # Define an environment function for test algo.
-            configs_test = deepcopy(configs)
-            configs_test.parallels = configs_test.test_episode
-            return make_envs(configs_test)
+        configs_test = deepcopy(configs)
+        configs_test.parallels = configs_test.test_episode
+        test_envs = make_envs(configs_test)
 
         train_steps = configs.running_steps // configs.parallels
         eval_interval = configs.eval_interval // configs.parallels
