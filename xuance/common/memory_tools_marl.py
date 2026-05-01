@@ -9,18 +9,39 @@ from xuance.environment.utils import space2shape
 class BaseBuffer(ABC):
     """
     Basic buffer for MARL algorithms.
+
+    Args:
+        agent_keys (List[str]): Keys that identify each agent.
+        state_space (Dict[str, Space]): Global state space, type: Discrete, Box.
+        observation_space (Dict[str, Dict[str, Space]]): Observation space for one agent.
+        action_space (Dict[str, Dict[str, Space]]): Action space for one agent.
+        n_envs (int): Number of parallel environments.
+        buffer_size (int): Buffer size of total experience data.
     """
 
-    def __init__(self, *args):
-        self.agent_keys, self.state_space, self.obs_space, self.act_space, self.n_envs, self.buffer_size = args
-        assert self.buffer_size % self.n_envs == 0, "buffer_size must be divisible by the number of envs (parallels)"
-        self.n_size = self.buffer_size // self.n_envs
+    def __init__(
+            self,
+            agent_keys: List[str],
+            state_space: Dict[str, Space] = None,
+            observation_space: Dict[str, Dict[str, Space]] = None,
+            action_space: Dict[str, Dict[str, Space]] = None,
+            num_envs: int = 1,
+            buffer_size: int = 1,
+    ):
+        assert buffer_size % num_envs == 0, "buffer_size must be divisible by the number of envs (parallels)"
+        self.agent_keys = agent_keys
+        self.state_space = state_space
+        self.observation_space = observation_space
+        self.action_space = action_space
+        self.num_envs = num_envs
+        self.buffer_size = buffer_size
+        self.per_env_buffer_size = self.buffer_size // self.num_envs
         self.ptr = 0  # last data pointer
-        self.size = 0  # current buffer size
+        self.size = 0  # current buffer size per environment.
 
     @property
     def full(self):
-        return self.size >= self.n_size
+        return self.size >= self.per_env_buffer_size
 
     @abstractmethod
     def store(self, *args, **kwargs):

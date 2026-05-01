@@ -94,17 +94,37 @@ class Buffer(ABC):
         auxiliary_info_shape: the shape for auxiliary data if needed.
     """
 
-    def __init__(self,
-                 observation_space: Space,
-                 action_space: Space,
-                 auxiliary_info_shape: Optional[dict]):
+    def __init__(
+            self,
+            observation_space: Space,
+            action_space: Space,
+            auxiliary_info_shape: Optional[dict],
+            num_envs: int,
+            buffer_size: int
+    ):
+        assert buffer_size % num_envs == 0, "buffer_size must be divisible by the number of envs (parallels)"
         self.observation_space = observation_space
         self.action_space = action_space
         self.auxiliary_shape = auxiliary_info_shape
-        self.size, self.ptr = 0, 0
+        # Pre-define the data that might be stored in replay buffer for training.
+        self.observations: Optional[np.ndarray] = None
+        self.next_observations: Optional[np.ndarray] = None
+        self.actions: Optional[np.ndarray] = None
+        self.auxiliary_infos: Optional[np.ndarray, dict] = None
+        self.rewards: Optional[np.ndarray] = None
+        self.terminals: Optional[np.ndarray] = None
+        self.returns: Optional[np.ndarray] = None
+        self.values: Optional[np.ndarray] = None
+        self.num_envs = num_envs
+        self.buffer_size = buffer_size
+        self.n_size = self.buffer_size // self.num_envs
+        self.advantages: Optional[np.ndarray] = None
+        self.ptr = 0  # last data pointer
+        self.size = 0  # current buffer size per environment.
 
+    @property
     def full(self):
-        pass
+        return self.size >= self.n_size
 
     @abstractmethod
     def store(self, *args):
@@ -185,21 +205,14 @@ class DummyOnPolicyBuffer(Buffer):
                  use_advnorm: bool = True,
                  gamma: float = 0.99,
                  gae_lam: float = 0.95):
-        super(DummyOnPolicyBuffer, self).__init__(observation_space, action_space, auxiliary_shape)
+        self.buffer_size = horizon_size * n_envs
+        super(DummyOnPolicyBuffer, self).__init__(observation_space, action_space, auxiliary_shape, n_envs, self.buffer_size)
         self.n_envs, self.horizon_size = n_envs, horizon_size
         self.n_size = self.horizon_size
-        self.buffer_size = self.n_size * self.n_envs
         self.use_gae, self.use_advnorm = use_gae, use_advnorm
         self.gamma, self.gae_lam = gamma, gae_lam
         self.start_ids = np.zeros(self.n_envs, np.int64)
-        self.observations = create_memory(space2shape(self.observation_space), self.n_envs, self.n_size)
-        self.actions = create_memory(space2shape(self.action_space), self.n_envs, self.n_size)
-        self.rewards = create_memory((), self.n_envs, self.n_size)
-        self.returns = create_memory((), self.n_envs, self.n_size)
-        self.values = create_memory((), self.n_envs, self.n_size)
-        self.terminals = create_memory((), self.n_envs, self.n_size)
-        self.advantages = create_memory((), self.n_envs, self.n_size)
-        self.auxiliary_infos = create_memory(self.auxiliary_shape, self.n_envs, self.n_size)
+        self.clear()
 
     @property
     def full(self):
@@ -302,16 +315,17 @@ class DummyOnPolicyBuffer_Atari(DummyOnPolicyBuffer):
                  gae_lam: float = 0.95):
         super(DummyOnPolicyBuffer_Atari, self).__init__(observation_space, action_space, auxiliary_shape,
                                                         n_envs, horizon_size, use_gae, use_advnorm, gamma, gae_lam)
-        self.observations = create_memory(space2shape(self.observation_space), self.n_envs, self.n_size, np.uint8)
 
     def clear(self):
         self.ptr, self.size = 0, 0
         self.observations = create_memory(space2shape(self.observation_space), self.n_envs, self.n_size, np.uint8)
         self.actions = create_memory(space2shape(self.action_space), self.n_envs, self.n_size)
-        self.auxiliary_infos = create_memory(self.auxiliary_shape, self.n_envs, self.n_size)
         self.rewards = create_memory((), self.n_envs, self.n_size)
         self.returns = create_memory((), self.n_envs, self.n_size)
+        self.values = create_memory((), self.n_envs, self.n_size)
+        self.terminals = create_memory((), self.n_envs, self.n_size)
         self.advantages = create_memory((), self.n_envs, self.n_size)
+        self.auxiliary_infos = create_memory(self.auxiliary_shape, self.n_envs, self.n_size)
 
 
 class DummyOffPolicyBuffer(Buffer):
@@ -334,21 +348,17 @@ class DummyOffPolicyBuffer(Buffer):
                  n_envs: int,
                  buffer_size: int,
                  batch_size: int):
-        super(DummyOffPolicyBuffer, self).__init__(observation_space, action_space, auxiliary_shape)
+        super(DummyOffPolicyBuffer, self).__init__(observation_space, action_space, auxiliary_shape, n_envs, buffer_size)
         self.n_envs, self.batch_size = n_envs, batch_size
         assert buffer_size % self.n_envs == 0, "buffer_size must be divisible by the number of envs (parallels)"
         self.n_size = buffer_size // self.n_envs
-        self.observations = create_memory(space2shape(self.observation_space), self.n_envs, self.n_size)
-        self.next_observations = create_memory(space2shape(self.observation_space), self.n_envs, self.n_size)
-        self.actions = create_memory(space2shape(self.action_space), self.n_envs, self.n_size)
-        self.auxiliary_infos = create_memory(self.auxiliary_shape, self.n_envs, self.n_size)
-        self.rewards = create_memory((), self.n_envs, self.n_size)
-        self.terminals = create_memory((), self.n_envs, self.n_size)
+        self.clear()
 
     def clear(self):
         self.observations = create_memory(space2shape(self.observation_space), self.n_envs, self.n_size)
         self.next_observations = create_memory(space2shape(self.observation_space), self.n_envs, self.n_size)
         self.actions = create_memory(space2shape(self.action_space), self.n_envs, self.n_size)
+        self.auxiliary_infos = create_memory(self.auxiliary_shape, self.n_envs, self.n_size)
         self.rewards = create_memory((), self.n_envs, self.n_size)
         self.terminals = create_memory((), self.n_envs, self.n_size)
 
@@ -609,8 +619,6 @@ class DummyOffPolicyBuffer_Atari(DummyOffPolicyBuffer):
                  batch_size: int):
         super(DummyOffPolicyBuffer_Atari, self).__init__(observation_space, action_space, auxiliary_shape,
                                                          n_envs, buffer_size, batch_size)
-        self.observations = create_memory(space2shape(self.observation_space), self.n_envs, self.n_size, np.uint8)
-        self.next_observations = create_memory(space2shape(self.observation_space), self.n_envs, self.n_size, np.uint8)
 
     def clear(self):
         self.observations = create_memory(space2shape(self.observation_space), self.n_envs, self.n_size, np.uint8)
@@ -633,6 +641,7 @@ class SequentialReplayBuffer(Buffer):
         buffer_size: the total size of the replay buffer.
         batch_size: size of transition data for a batch of sample.
     """
+
     def __init__(self,
                  observation_space: Space,
                  action_space: Space,
@@ -707,8 +716,10 @@ class SequentialReplayBuffer(Buffer):
         envs = np.broadcast_to(np.arange(self.n_envs)[:, None, None], idxes.shape)  # (env, seq, batch)
         envs, idxes = envs.ravel(), idxes.ravel()
         samples_dict = {  # (envs, seq, batch, ~)
-            'obs': self.obs[envs, idxes].reshape(self.n_envs, seq_len, self.batch_size, *space2shape(self.observation_space)),
-            'acts': self.acts[envs, idxes].reshape(self.n_envs, seq_len, self.batch_size, *space2shape(self.action_space)),
+            'obs': self.obs[envs, idxes].reshape(self.n_envs, seq_len, self.batch_size,
+                                                 *space2shape(self.observation_space)),
+            'acts': self.acts[envs, idxes].reshape(self.n_envs, seq_len, self.batch_size,
+                                                   *space2shape(self.action_space)),
             'rews': self.rews[envs, idxes].reshape(self.n_envs, seq_len, self.batch_size, 1),
             'terms': self.terms[envs, idxes].reshape(self.n_envs, seq_len, self.batch_size, 1),
             'truncs': self.truncs[envs, idxes].reshape(self.n_envs, seq_len, self.batch_size, 1),
