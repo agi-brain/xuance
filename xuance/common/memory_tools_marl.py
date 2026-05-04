@@ -471,8 +471,8 @@ class MARL_OnPolicyBuffer_RNN(MARL_OnPolicyBuffer):
             if self.use_gae:
                 for t in reversed(range(step_nums)):
                     if use_value_norm:
-                        vs_t = value_normalizer[key_vn].denormalize(vs[t])
-                        vs_next = value_normalizer[key_vn].denormalize(vs[t + 1])
+                        vs_t = value_normalizer[key_vn].denormalize(vs[t]).item()
+                        vs_next = value_normalizer[key_vn].denormalize(vs[t + 1]).item()
                     else:
                         vs_t, vs_next = vs[t], vs[t + 1]
                     delta = rewards[t] + (1 - dones[t]) * self.gamma * vs_next - vs_t
