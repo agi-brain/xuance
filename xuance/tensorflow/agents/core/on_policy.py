@@ -147,9 +147,7 @@ class OnPolicyAgent(Agent):
             _, logits, values = self.policy(observations)
             policy_dists = self.policy.actor.distribution(logits=logits)
         actions = policy_dists.stochastic_sample()
-        log_pi = policy_dists.log_prob(actions)
-
-        # log_pi = policy_dists.log_prob(actions).numpy() if return_logpi else None
+        log_pi = policy_dists.log_prob(actions).numpy() if return_logpi else None
         dists = split_distributions(policy_dists) if return_dists else None
         actions = actions.numpy()
         if values is None:

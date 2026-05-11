@@ -392,7 +392,7 @@ class GaussianActorNet(Module):
         self.mu = tk.Sequential(layers)
         self.logstd = self.add_weight(name="log_of_std",
                                       shape=(action_dim,),
-                                      initializer=tf.keras.initializers.Constant(0.0),
+                                      initializer=tf.keras.initializers.Constant(-1.0),
                                       trainable=True)
         self.dist = DiagGaussianDistribution(action_dim)
 

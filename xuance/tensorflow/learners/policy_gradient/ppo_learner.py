@@ -15,23 +15,36 @@ class PPO_Learner(Learner):
                  policy: Module,
                  callback):
         super(PPO_Learner, self).__init__(config, policy, callback)
+        self.scheduler = tk.optimizers.schedules.PolynomialDecay(
+            initial_learning_rate=config.learning_rate,
+            decay_steps=self.total_iters,
+            end_learning_rate=config.learning_rate * self.end_factor_lr_decay,
+            power=1.0  # 1.0 indicates linear decay.
+        )
         if ("macOS" in self.os_name) and ("arm" in self.os_name):  # For macOS with Apple's M-series chips.
             if self.distributed_training:
                 with self.policy.mirrored_strategy.scope():
-                    self.optimizer = tk.optimizers.legacy.Adam(config.learning_rate)
+                    self.optimizer = tk.optimizers.legacy.Adam(learning_rate=self.scheduler, epsilon=1e-5)
             else:
-                self.optimizer = tk.optimizers.legacy.Adam(config.learning_rate)
+                self.optimizer = tk.optimizers.legacy.Adam(learning_rate=self.scheduler, epsilon=1e-5)
         else:
             if self.distributed_training:
                 with self.policy.mirrored_strategy.scope():
-                    self.optimizer = tk.optimizers.Adam(config.learning_rate)
+                    self.optimizer = tk.optimizers.Adam(learning_rate=self.scheduler, epsilon=1e-5)
             else:
-                self.optimizer = tk.optimizers.Adam(config.learning_rate)
+                self.optimizer = tk.optimizers.Adam(learning_rate=self.scheduler, epsilon=1e-5)
         self.vf_coef = config.vf_coef
         self.ent_coef = config.ent_coef
         self.clip_range = config.clip_range
         self.mse_loss = tk.losses.MeanSquaredError()
         self.is_continuous = self.policy.is_continuous
+
+    def estimate_total_iterations(self):
+        """Estimated total number of training iterations"""
+        buffer_size = self.config.horizon_size * self.config.parallels
+        update_times = self.config.running_steps // buffer_size
+        total_iters = update_times * self.config.n_epochs * self.config.n_minibatch
+        return total_iters
 
     @tf.function
     def forward_fn(self, obs_batch, act_batch, ret_batch, adv_batch, old_logp):

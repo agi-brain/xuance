@@ -27,14 +27,22 @@ class Learner(ABC):
         self.use_actions_mask = config.use_actions_mask if hasattr(config, 'use_actions_mask') else False
         self.policy = policy
         self.optimizer: Union[dict, list, Optional[tk.optimizers.Optimizer]] = None
+        self.scheduler: Union[dict, list, Optional[tk.optimizers.schedules.LinearLR]] = None
         self.callback = callback
 
         self.use_grad_clip = config.use_grad_clip
         self.grad_clip_norm = config.grad_clip_norm
         self.device = config.device
         self.model_dir = config.model_dir
-        self.running_steps = config.running_steps
+        self.total_iters = self.estimate_total_iterations()
         self.iterations = 0
+
+    def estimate_total_iterations(self):
+        """Estimated total number of training iterations"""
+        start_training = getattr(self.config, "start_training", 0)
+        training_frequency = getattr(self.config, "training_frequency", 1)
+        total_iters = (self.config.running_steps - start_training) // (training_frequency * self.config.parallels)
+        return total_iters
 
     def save_model(self, model_path):
         self.policy.save_weights(model_path)

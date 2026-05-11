@@ -13,6 +13,7 @@ def mlp_block(input_dim: int,
     linear = tk.layers.Dense(input_shape=(input_dim,),
                              units=output_dim,
                              kernel_initializer=initializer,
+                             bias_initializer='zeros',
                              activation=activation)
     block.append(linear)
     if normalize is not None:

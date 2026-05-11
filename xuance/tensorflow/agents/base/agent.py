@@ -10,8 +10,8 @@ from gymnasium.spaces import Dict, Space
 from torch.utils.tensorboard import SummaryWriter
 from xuance.common import get_time_string, create_directory, RunningMeanStd, EPS, Optional, BaseCallback
 from xuance.environment import DummyVecEnv, SubprocVecEnv, space2shape
-from xuance.tensorflow import REGISTRY_Representation, REGISTRY_Learners, Module
-from xuance.tensorflow.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions, set_seed, set_device
+from xuance.tensorflow import REGISTRY_Representation, REGISTRY_Learners, Module, tk
+from xuance.tensorflow.utils import NormalizeFunctions, ActivationFunctions, set_seed, set_device
 
 
 class Agent(ABC):
@@ -71,7 +71,7 @@ class Agent(ABC):
         self.start_training = getattr(config, "start_training", 1)
         self.training_frequency = getattr(config, "training_frequency", 1)
         self.n_epochs = getattr(config, "n_epochs", 1)
-        self.device = self.config.device = set_device(self.config.dl_toolbox, self.config.device)
+        self.device = self.config.device = set_device(self.config.device)
 
         # Environment attributes.
         self.train_envs = envs
@@ -248,7 +248,7 @@ class Agent(ABC):
             input_shape=space2shape(input_space),
             hidden_sizes=config.representation_hidden_size if hasattr(config, "representation_hidden_size") else None,
             normalize=NormalizeFunctions[config.normalize] if hasattr(config, "normalize") else None,
-            initialize=InitializeFunctions[config.initialize] if hasattr(self.config, "initialize") else None,
+            initialize=tk.initializers.Orthogonal(gain=1.0),
             activation=ActivationFunctions[config.activation],
             kernels=config.kernels if hasattr(config, "kernels") else None,
             strides=config.strides if hasattr(config, "strides") else None,
