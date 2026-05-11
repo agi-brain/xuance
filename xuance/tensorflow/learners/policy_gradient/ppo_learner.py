@@ -3,7 +3,6 @@ Proximal Policy Optimization (PPO) with clip trick
 Paper link: https://arxiv.org/pdf/1707.06347.pdf
 Implementation: TensorFlow2
 """
-import numpy as np
 from argparse import Namespace
 from xuance.tensorflow import tf, tk, Module
 from xuance.tensorflow.learners import Learner
@@ -36,7 +35,6 @@ class PPO_Learner(Learner):
         self.vf_coef = config.vf_coef
         self.ent_coef = config.ent_coef
         self.clip_range = config.clip_range
-        self.mse_loss = tk.losses.MeanSquaredError()
         self.is_continuous = self.policy.is_continuous
 
     def estimate_total_iterations(self):
@@ -51,27 +49,25 @@ class PPO_Learner(Learner):
         with tf.GradientTape() as tape:
             if self.is_continuous:
                 outputs, mu, std, v_pred = self.policy(obs_batch)
-                # calculate log prob
-                log_std = tf.math.log(std + 1e-8)
-                log_prob = -0.5 * (((act_batch - mu) / (std + 1e-8)) ** 2 + 2.0 * log_std + tf.math.log(2.0 * np.pi))
-                log_prob_a = tf.reduce_sum(log_prob, axis=-1, keepdims=True)
-                # calculate entropy
-                entropy = tf.reduce_sum(0.5 + 0.5 * tf.math.log(2.0 * np.pi) + log_std, axis=-1, keepdims=True)
+                a_dist = self.policy.actor.distribution(mu=mu, std=std)
+                log_prob = a_dist.log_prob(act_batch)
+                log_prob = tf.reshape(log_prob, [-1, 1])
+                entropy = a_dist.entropy()
             else:
                 outputs, logits, v_pred = self.policy(obs_batch)
                 # calculate log prob
-                log_prob = tf.nn.log_softmax(logits, axis=-1)
-                log_prob_a = tf.gather(log_prob, act_batch, axis=-1, batch_dims=-1)
+                log_prob_ = tf.nn.log_softmax(logits, axis=-1)
+                log_prob = tf.gather(log_prob_, act_batch, axis=-1, batch_dims=-1)
                 # calculate entropy
-                probs = tf.exp(log_prob)
-                entropy = -tf.reduce_sum(probs * log_prob, axis=-1, keepdims=True)
+                probs = tf.exp(log_prob_)
+                entropy = -tf.reduce_sum(probs * log_prob_, axis=-1, keepdims=True)
 
             # ppo-clip core implementations
-            ratio = tf.math.exp(log_prob_a - old_logp)
+            ratio = tf.math.exp(log_prob - old_logp)
             surrogate1 = tf.clip_by_value(ratio, 1.0 - self.clip_range, 1.0 + self.clip_range) * adv_batch
             surrogate2 = adv_batch * ratio
             a_loss = -tf.reduce_mean(tf.math.minimum(surrogate1, surrogate2))
-            c_loss = self.mse_loss(ret_batch, v_pred)
+            c_loss = tf.reduce_mean(tf.square(v_pred - ret_batch))
             e_loss = tf.reduce_mean(entropy)
             loss = a_loss - self.ent_coef * e_loss + self.vf_coef * c_loss
             gradients = tape.gradient(loss, self.policy.trainable_variables)

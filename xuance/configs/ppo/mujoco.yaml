@@ -5,12 +5,12 @@ env_seed: 1  # The random seed of the environment.
 vectorize: "DummyVecEnv"
 learner: "PPO_Learner"
 policy: "Gaussian_AC"  # choice: Gaussian_AC for continuous actions, Categorical_AC for discrete actions.
-representation: "Basic_MLP"
+representation: "Basic_Identical"
 runner: "DRL"
 
-representation_hidden_size: [256,]
-actor_hidden_size: [256,]
-critic_hidden_size: [256,]
+representation_hidden_size:  # If you choose Basic_Identical representation, then ignore this value
+actor_hidden_size: [256, 256]
+critic_hidden_size: [256, 256]
 activation: "leaky_relu"
 activation_action: 'tanh'
 

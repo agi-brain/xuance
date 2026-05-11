@@ -1,3 +1,4 @@
+import tensorflow as tf
 from .device import set_device, collect_device_info
 from .layers import tk, ModuleType, mlp_block, cnn_block, pooling_block, gru_block, lstm_block
 from .distributions import (merge_distributions, split_distributions,
@@ -7,12 +8,12 @@ from .operations import update_linear_decay, set_seed, get_flat_params, assign_f
 from .value_norm import ValueNorm
 
 ActivationFunctions = {
-    "relu": tk.layers.Activation('relu'),
-    "leaky_relu": tk.layers.Activation('leaky_relu'),
-    "tanh": tk.layers.Activation('tanh'),
-    "sigmoid": tk.layers.Activation('sigmoid'),
-    "softmax": tk.layers.Activation('softmax'),
-    "elu": tk.layers.Activation('elu'),
+    "relu": tf.nn.relu,
+    "leaky_relu": lambda x: tf.nn.leaky_relu(x, alpha=0.01),
+    "tanh": tf.nn.tanh,
+    "sigmoid": tf.nn.sigmoid,
+    "softmax": tf.nn.softmax,
+    "elu": tf.nn.elu,
 }
 
 NormalizeFunctions = {
@@ -22,5 +23,5 @@ NormalizeFunctions = {
 }
 
 InitializeFunctions = {
-    "orthogonal": tk.initializers.orthogonal
+    "orthogonal": tk.initializers.Orthogonal
 }
