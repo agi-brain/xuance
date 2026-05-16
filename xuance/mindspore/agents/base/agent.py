@@ -72,7 +72,7 @@ class Agent(ABC):
         self.training_frequency = config.training_frequency if hasattr(config, "start_training") else 1
         self.n_epochs = config.n_epochs if hasattr(config, "n_epochs") else 1
         self.static_graph = getattr(config, "static_graph", True)
-        self.device = self.config.device = set_device(self.config.dl_toolbox, self.config.device)
+        self.device = self.config.device = set_device(self.config.device)
 
         # Environment attributes.
         self.train_envs = envs
