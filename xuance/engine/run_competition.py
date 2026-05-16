@@ -4,7 +4,6 @@ from copy import deepcopy
 import numpy as np
 from tqdm import tqdm
 from operator import itemgetter
-from xuance.torch.agents import REGISTRY_Agents
 from xuance.environment import make_envs
 from xuance.environment.vector_envs import combine_actions
 
@@ -33,6 +32,7 @@ class RunnerCompetition(object):
                              observation_space=self.obs_space_groups[group],
                              action_space=self.act_space_groups[group],
                              max_episode_steps=self.envs.max_episode_steps)
+            from xuance.torch.agents import REGISTRY_Agents
             self.agents.append(REGISTRY_Agents[self.configs[group].agent](self.configs[group], _env))
 
         self.distributed_training = self.agents[0].distributed_training

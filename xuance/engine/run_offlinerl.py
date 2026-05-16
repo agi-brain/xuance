@@ -4,7 +4,6 @@ from copy import deepcopy
 
 from xuance.environment import make_envs
 from xuance.engine import RunnerBase
-from xuance.torch.agents import REGISTRY_Agents
 try:
     from xuance.common import load_d4rl_dataset
 except:
@@ -29,6 +28,7 @@ class RunnerOfflineRL(RunnerBase):
         self.config.state_mean = state_mean
         self.config.state_std = state_std
 
+        from xuance.torch.agents import REGISTRY_Agents
         self.agent = REGISTRY_Agents[self.config.agent](self.config, self.envs)
         self.agent.load_dataset(dataset=dataset)
         if self.agent.distributed_training:

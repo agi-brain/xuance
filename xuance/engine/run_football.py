@@ -1,13 +1,13 @@
 import time
 import numpy as np
 from .run_sc2 import RunnerSC2
-from xuance.torch.agents import REGISTRY_Agents
 
 
 class RunnerFootball(RunnerSC2):
     def __init__(self, config):
         super(RunnerFootball, self).__init__(config)
         config.n_agents = self.envs.num_agents
+        from xuance.torch.agents import REGISTRY_Agents
         self.agents = REGISTRY_Agents[config.agent](config, self.envs)
         self.config = config
         self.running_steps = config.running_steps
