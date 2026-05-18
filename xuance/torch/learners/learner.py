@@ -6,7 +6,7 @@ from abc import ABC, abstractmethod
 from xuance.common import Optional, List, Union
 from argparse import Namespace
 from operator import itemgetter
-from xuance.torch import Tensor
+from xuance.torch import Tensor, Module
 
 MAX_GPUs = torch.cuda.device_count()
 
@@ -14,7 +14,7 @@ MAX_GPUs = torch.cuda.device_count()
 class Learner(ABC):
     def __init__(self,
                  config: Namespace,
-                 policy: torch.nn.Module,
+                 policy: Module,
                  callback):
         self.value_normalizer = None
         self.config = config
@@ -47,6 +47,7 @@ class Learner(ABC):
             self.world_size = 1
             self.rank = 0
             self.device = config.device
+
         self.use_grad_clip = config.use_grad_clip
         self.grad_clip_norm = config.grad_clip_norm
         self.device = config.device
@@ -205,7 +206,7 @@ class LearnerMAS(Learner):
                  config: Namespace,
                  model_keys: List[str],
                  agent_keys: List[str],
-                 policy: torch.nn.Module,
+                 policy: Module,
                  callback):
         self.value_normalizer = None
         self.config = config

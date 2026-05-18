@@ -16,9 +16,13 @@ from .operations import (update_linear_decay, set_seed, get_flat_grad, get_flat_
                          assign_from_flat_params, clip_grads)
 from .value_norm import ValueNorm
 
+class LeakyReLU_01(nn.LeakyReLU):
+    def __init__(self):
+        super(LeakyReLU_01, self).__init__(alpha=0.01)
+
 ActivationFunctions = {
     "relu": nn.ReLU,
-    "leaky_relu": nn.LeakyReLU,
+    "leaky_relu": LeakyReLU_01,  # nn.LeakyReLU,
     "tanh": nn.Tanh,
     "sigmoid": nn.Sigmoid,
     "softmax": nn.Softmax,

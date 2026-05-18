@@ -14,6 +14,7 @@ class Learner(ABC):
                  callback):
         self.value_normalizer = None
         self.config = config
+        self.distributed_training = config.distributed_training
 
         self.episode_length = config.episode_length
         self.learning_rate = config.learning_rate if hasattr(config, 'learning_rate') else None
@@ -27,12 +28,24 @@ class Learner(ABC):
         self.scheduler: Union[dict, list, Optional[optim.lr_scheduler.LRScheduler]] = None
         self.callback = callback
 
+        if self.distributed_training:
+            pass
+        else:
+            pass
+
         self.use_grad_clip = config.use_grad_clip
         self.grad_clip_norm = config.grad_clip_norm
         self.device = config.device
         self.model_dir = config.model_dir
-        self.running_steps = config.running_steps
+        self.total_iters = self.estimate_total_iterations()
         self.iterations = 0
+
+    def estimate_total_iterations(self):
+        """Estimated total number of training iterations"""
+        start_training = getattr(self.config, "start_training", 0)
+        training_frequency = getattr(self.config, "training_frequency", 1)
+        total_iters = (self.config.running_steps - start_training) // (training_frequency * self.config.parallels)
+        return total_iters
 
     def save_model(self, model_path):
         ms.save_checkpoint(self.policy, model_path)

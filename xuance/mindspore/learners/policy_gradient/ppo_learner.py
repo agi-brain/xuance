@@ -16,19 +16,28 @@ class PPO_Learner(Learner):
                  callback):
         super(PPO_Learner, self).__init__(config, policy, callback)
         self.optimizer = optim.Adam(params=self.policy.trainable_params(), lr=self.config.learning_rate, eps=1e-5)
-        self.scheduler = optim.lr_scheduler.LinearLR(self.optimizer, start_factor=1.0, end_factor=self.end_factor_lr_decay,
-                                                     total_iters=self.config.running_steps)
+        self.scheduler = optim.lr_scheduler.LinearLR(self.optimizer,
+                                                     start_factor=1.0,
+                                                     end_factor=self.end_factor_lr_decay,
+                                                     total_iters=self.total_iters)
         # Parameters
+        self.mse_loss = nn.MSELoss()
         self.vf_coef = config.vf_coef
         self.ent_coef = config.ent_coef
         self.clip_range = config.clip_range
-        self.mse_loss = nn.MSELoss()
         self.softmax = nn.Softmax(axis=-1)
         self.is_continuous = self.policy.is_continuous
         self.a_dist = msd.Normal(dtype=ms.float32) if self.is_continuous else msd.Categorical()
         # Get gradient function
         self.grad_fn = ms.value_and_grad(self.forward_fn, None, self.optimizer.parameters, has_aux=True)
         self.policy.set_train()
+
+    def estimate_total_iterations(self):
+        """Estimated total number of training iterations"""
+        buffer_size = self.config.horizon_size * self.config.parallels
+        update_times = self.config.running_steps // buffer_size
+        total_iters = update_times * self.config.n_epochs * self.config.n_minibatch
+        return total_iters
 
     def forward_fn(self, obs_batch, act_batch, ret_batch, adv_batch, old_log_prob_batch):
         if self.is_continuous:
