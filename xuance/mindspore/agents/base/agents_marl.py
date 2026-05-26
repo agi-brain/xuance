@@ -9,9 +9,10 @@ from argparse import Namespace
 from operator import itemgetter
 from gymnasium.spaces import Space
 from torch.utils.tensorboard import SummaryWriter
+from mindspore.communication import init, get_rank, get_group_size
 from xuance.common import get_time_string, create_directory, Optional, List, Dict, Union, MultiAgentBaseCallback
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv, space2shape
-from xuance.mindspore import Tensor, Module, ModuleDict, REGISTRY_Representation, REGISTRY_Learners, ops
+from xuance.mindspore import ms, Tensor, Module, ModuleDict, REGISTRY_Representation, REGISTRY_Learners, ops
 from xuance.mindspore.learners import learner
 from xuance.mindspore.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions, set_seed, set_device
 
@@ -74,6 +75,25 @@ class MARLAgents(ABC):
         self.use_actions_mask = config.use_actions_mask if hasattr(config, "use_actions_mask") else False
         self.use_global_state = config.use_global_state if hasattr(config, "use_global_state") else False
         self.distributed_training = getattr(config, "distributed_training", False)
+        self.static_graph = getattr(config, "static_graph", True)
+        if self.static_graph:
+            ms.set_context(mode=ms.GRAPH_MODE)  # Static graph mode (accelerating the calculation)
+            print("Running mode: Static Graph. (Also known as Graph mode)")
+        else:
+            ms.set_context(mode=ms.PYNATIVE_MODE)  # Dynamic graph mode (default mode)
+            print("Running mode: Dynamic Graph.")
+        if self.distributed_training:
+            print("Running mode: Static Graph. (Also known as Graph mode)")
+            init()
+            self.world_size = get_group_size()
+            self.rank = get_rank()
+            ms.context.set_auto_parallel_context(
+                parallel_mode=ms.ParallelMode.DATA_PARALLEL,
+                gradients_mean=True  # Calculate mean gradient automatically (like DDP).
+            )
+        else:
+            self.world_size = 1
+            self.rank = 0
 
         self.gamma = config.gamma
         self.start_training = config.start_training if hasattr(config, "start_training") else 1
@@ -116,7 +136,23 @@ class MARLAgents(ABC):
         self.current_episode = np.zeros((self.n_envs,), np.int32)
 
         # Prepare directories.
-        time_string = get_time_string()
+        if self.distributed_training and self.world_size > 1:
+            if self.rank == 0:
+                time_string = get_time_string()
+                time_bytes = list(time_string.encode('utf-8'))
+                time_array = np.zeros(32, dtype=np.int32)
+                time_array[:len(time_bytes)] = time_bytes
+                time_string = Tensor(time_array, dtype=ms.int32)
+            else:
+                time_string = Tensor(np.zeros(32, dtype=np.int32), dtype=ms.int32)
+
+            broadcast_op = ops.Broadcast(root_rank=0)
+            time_tensor = broadcast_op((time_string,))[0]
+
+            time_bytes_list = [int(x) for x in time_tensor.asnumpy().tolist() if x != 0]
+            time_string = bytes(time_bytes_list).decode('utf-8')
+        else:
+            time_string = get_time_string()
         seed = f"seed_{config.seed}_"
         self.model_dir_load = config.model_dir
         self.model_dir_save = os.path.join(os.getcwd(), config.model_dir, seed + time_string)
@@ -327,7 +363,12 @@ class MARLAgents(ABC):
             wandb.finish()
         else:
             self.writer.close()
-        self.train_envs.close()
+        if self.distributed_training:
+            if self.rank == 0:
+                if os.path.exists(self.learner.snapshot_path):
+                    if os.path.exists(os.path.join(self.learner.snapshot_path, "snapshot.pt")):
+                        os.remove(os.path.join(self.learner.snapshot_path, "snapshot.pt"))
+                    os.removedirs(self.learner.snapshot_path)
 
 
 class RandomAgents(object):

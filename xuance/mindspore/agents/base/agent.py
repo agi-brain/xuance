@@ -3,11 +3,14 @@ import wandb
 import socket
 import xuance
 import numpy as np
+import mindspore.ops as ops
 from abc import ABC, abstractmethod
 from pathlib import Path
 from argparse import Namespace
 from gymnasium.spaces import Dict, Space
 from torch.utils.tensorboard import SummaryWriter
+from mindspore import Tensor
+from mindspore.communication import init, get_rank, get_group_size
 from xuance.common import get_time_string, create_directory, RunningMeanStd, EPS, Optional, BaseCallback
 from xuance.environment import DummyVecEnv, SubprocVecEnv, space2shape
 from xuance.mindspore import REGISTRY_Representation, REGISTRY_Learners, Module, ms
@@ -66,12 +69,30 @@ class Agent(ABC):
         self.use_rnn = config.use_rnn if hasattr(config, "use_rnn") else False
         self.use_actions_mask = config.use_actions_mask if hasattr(config, "use_actions_mask") else False
         self.distributed_training = getattr(config, "distributed_training", False)
+        self.static_graph = getattr(config, "static_graph", True)
+        if self.static_graph:
+            ms.set_context(mode=ms.GRAPH_MODE)  # Static graph mode (accelerating the calculation)
+            print("Running mode: Static Graph. (Also known as Graph mode)")
+        else:
+            ms.set_context(mode=ms.PYNATIVE_MODE)  # Dynamic graph mode (default mode)
+            print("Running mode: Dynamic Graph.")
+        if self.distributed_training:
+            print("Running mode: Static Graph. (Also known as Graph mode)")
+            init()
+            self.world_size = get_group_size()
+            self.rank = get_rank()
+            ms.context.set_auto_parallel_context(
+                parallel_mode=ms.ParallelMode.DATA_PARALLEL,
+                gradients_mean=True  # Calculate mean gradient automatically (like DDP).
+            )
+        else:
+            self.world_size = 1
+            self.rank = 0
 
         self.gamma = config.gamma
         self.start_training = config.start_training if hasattr(config, "start_training") else 1
         self.training_frequency = config.training_frequency if hasattr(config, "start_training") else 1
         self.n_epochs = config.n_epochs if hasattr(config, "n_epochs") else 1
-        self.static_graph = getattr(config, "static_graph", True)
         self.device = self.config.device = set_device(self.config.device)
 
         # Environment attributes.
@@ -106,7 +127,23 @@ class Agent(ABC):
         self.returns = np.zeros((self.train_envs.num_envs,), np.float32)
 
         # Prepare directories.
-        time_string = get_time_string()
+        if self.distributed_training and self.world_size > 1:
+            if self.rank == 0:
+                time_string = get_time_string()
+                time_bytes = list(time_string.encode('utf-8'))
+                time_array = np.zeros(32, dtype=np.int32)
+                time_array[:len(time_bytes)] = time_bytes
+                time_string = Tensor(time_array, dtype=ms.int32)
+            else:
+                time_string = Tensor(np.zeros(32, dtype=np.int32), dtype=ms.int32)
+
+            broadcast_op = ops.Broadcast(root_rank=0)
+            time_tensor = broadcast_op((time_string,))[0]
+
+            time_bytes_list = [int(x) for x in time_tensor.asnumpy().tolist() if x != 0]
+            time_string = bytes(time_bytes_list).decode('utf-8')
+        else:
+            time_string = get_time_string()
         seed = f"seed_{self.config.seed}_"
         self.model_dir_load = config.model_dir
         self.model_dir_save = os.path.join(os.getcwd(), config.model_dir, seed + time_string)
@@ -140,12 +177,6 @@ class Agent(ABC):
         self.log_dir = log_dir
 
         # Prepare necessary components.
-        if self.static_graph:
-            ms.set_context(mode=ms.GRAPH_MODE)  # Static graph mode (accelerating the calculation)
-            print("Running mode: Static Graph. (Also known as Graph mode)")
-        else:
-            ms.set_context(mode=ms.PYNATIVE_MODE)  # Dynamic graph mode (default mode)
-            print("Running mode: Dynamic Graph.")
         self.policy: Optional[Module] = None
         self.learner: Optional[Module] = None
         self.memory: Optional[object] = None
@@ -291,4 +322,10 @@ class Agent(ABC):
             wandb.finish()
         else:
             self.writer.close()
-        self.train_envs.close()
+        if self.distributed_training:
+            if self.rank == 0:
+                if os.path.exists(self.learner.snapshot_path):
+                    if os.path.exists(os.path.join(self.learner.snapshot_path, "snapshot.pt")):
+                        os.remove(os.path.join(self.learner.snapshot_path, "snapshot.pt"))
+                    os.removedirs(self.learner.snapshot_path)
+                    
