@@ -67,7 +67,6 @@ class MARLAgents(ABC):
             action_space: Optional[Space] = None,
             callback: Optional[MultiAgentBaseCallback] = None
     ):
-        set_seed(config.seed)
         # Training settings.
         self.config = config
         self.use_rnn = config.use_rnn if hasattr(config, "use_rnn") else False
@@ -94,6 +93,7 @@ class MARLAgents(ABC):
         else:
             self.world_size = 1
             self.rank = 0
+        set_seed(config.seed + self.rank * 1000)
 
         self.gamma = config.gamma
         self.start_training = config.start_training if hasattr(config, "start_training") else 1

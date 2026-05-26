@@ -26,6 +26,7 @@ class DQN_Learner(Learner):
         # Get gradient function
         self.grad_fn = ms.value_and_grad(self.forward_fn, None, self.optimizer.parameters, has_aux=True)
         self.policy.set_train()
+        self.grad_reducer = self.get_grad_reducer(self.optimizer)
 
     def forward_fn(self, obs_batch, act_batch, next_batch, rew_batch, ter_batch):
         _, _, evalQ = self.policy(obs_batch)
@@ -51,6 +52,8 @@ class DQN_Learner(Learner):
                                              next_obs=next_batch, rew=rew_batch, termination=ter_batch)
 
         (loss, evalQ, targetQ, predictQ), grads = self.grad_fn(obs_batch, act_batch, next_batch, rew_batch, ter_batch)
+        if self.distributed_training:
+            grads = self.grad_reducer(grads)
         self.optimizer(grads)
 
         # hard update for target network

@@ -28,17 +28,21 @@ class Learner(ABC):
         self.scheduler: Union[dict, list, Optional[optim.lr_scheduler.LRScheduler]] = None
         self.callback = callback
 
-        if self.distributed_training:
-            pass
-        else:
-            pass
-
         self.use_grad_clip = config.use_grad_clip
         self.grad_clip_norm = config.grad_clip_norm
         self.device = config.device
         self.model_dir = config.model_dir
         self.total_iters = self.estimate_total_iterations()
         self.iterations = 0
+
+    def get_grad_reducer(self,
+                         optimizer: Union[dict, list, Optional[nn.Optimizer]]
+                         ) -> Optional[nn.DistributedGradReducer]:
+        if self.distributed_training:
+            mean = ms.context.get_auto_parallel_context("gradients_mean")
+            return nn.DistributedGradReducer(optimizer.parameters, mean)
+        else:
+            return None
 
     def estimate_total_iterations(self):
         """Estimated total number of training iterations"""
