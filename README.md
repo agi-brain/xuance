@@ -5,7 +5,7 @@
 # XuanCe: A Comprehensive and Unified Deep Reinforcement Learning Library
 
 [![PyPI](https://img.shields.io/pypi/v/xuance)](https://pypi.org/project/xuance/)
-[![Documentation Status](https://readthedocs.org/projects/xuance/badge/?version=latest)](https://xuance.readthedocs.io)
+[![Documentation Status](https://readthedocs.org/projects/xuance/badge/?version=latest)](https://xuance.org)
 [![GitHub](https://img.shields.io/github/license/agi-brain/xuance)](https://github.com/agi-brain/xuance/blob/master/LICENSE.txt)
 [![Downloads](https://static.pepy.tech/badge/xuance)](https://pepy.tech/project/xuance)
 [![GitHub Repo stars](https://img.shields.io/github/stars/agi-brain/xuance?style=social)](https://github.com/agi-brain/xuance/stargazers)
@@ -56,9 +56,9 @@ and hope it can really become a zoo full of DRL algorithms.
 ## Features
 
 - :school_satchel: Highly modularized.
-- :thumbsup: Easy to [learn](https://xuance.readthedocs.io/en/latest/), easy for [installation](https://xuance.readthedocs.io/en/latest/documents/usage/installation.html), and easy for [usage](https://xuance.readthedocs.io/en/latest/documents/usage/basic_usage.html).
+- :thumbsup: Easy to [learn](https://xuance.org), easy for [installation](https://xuance.org/documents/usage/installation.html), and easy for [usage](https://xuance.org/documents/usage/basic_usage.html).
 - :twisted_rightwards_arrows: Flexible for model combination.
-- :tada: Abundant [algorithms](https://xuance.readthedocs.io/en/latest/#list-of-algorithms) with various tasks.
+- :tada: Abundant [algorithms](https://xuance.org/#list-of-algorithms) with various tasks.
 - :couple: Supports both DRL and MARL tasks.
 - :key: High compatibility for different users. (PyTorch, TensorFlow2, MindSpore, CPU, GPU, Linux, Windows, MacOS, etc.)
 - :zap: Fast running speed with parallel environments.
@@ -129,7 +129,7 @@ and hope it can really become a zoo full of DRL algorithms.
 
 ## Environments
 
-### [Classic Control](https://xuance.readthedocs.io/en/latest/documents/api/environments/single_agent_env/gym.html#classic-control)
+### [Classic Control](https://xuance.org/documents/api/environments/single_agent_env/gym.html#classic-control)
 
 <table rules="none" align="center"><tr>
 <td> <center>
@@ -146,7 +146,7 @@ and hope it can really become a zoo full of DRL algorithms.
 </center> </td>
 </table>
 
-### [Box2D](https://xuance.readthedocs.io/en/latest/documents/api/environments/single_agent_env/gym.html#box2d)
+### [Box2D](https://xuance.org/documents/api/environments/single_agent_env/gym.html#box2d)
 
 <table rules="none" align="center"><tr>
 <td> <center>
@@ -161,7 +161,7 @@ and hope it can really become a zoo full of DRL algorithms.
 </tr>
 </table>
 
-### [MuJoCo Environments](https://xuance.readthedocs.io/en/latest/documents/api/environments/single_agent_env/gym.html#mujoco)
+### [MuJoCo Environments](https://xuance.org/documents/api/environments/single_agent_env/gym.html#mujoco)
 
 <table rules="none" align="center"><tr>
 <td> <center>
@@ -188,7 +188,7 @@ and hope it can really become a zoo full of DRL algorithms.
 </tr>
 </table>
 
-### [Atari Environments](https://xuance.readthedocs.io/en/latest/documents/api/environments/single_agent_env/gym.html#atari)
+### [Atari Environments](https://xuance.org/documents/api/environments/single_agent_env/gym.html#atari)
 
 <table rules="none" align="center"><tr>
 <td> <center>
@@ -218,7 +218,7 @@ and hope it can really become a zoo full of DRL algorithms.
 </tr>
 </table>
 
-### [Minigrid Environments](https://xuance.readthedocs.io/en/latest/documents/api/environments/single_agent_env/minigrid.html)
+### [Minigrid Environments](https://xuance.org/documents/api/environments/single_agent_env/minigrid.html)
 
 <table rules="none" align="center"><tr>
 <td> <center>
@@ -239,7 +239,7 @@ and hope it can really become a zoo full of DRL algorithms.
 </tr>
 </table>
 
-### [Drones Environments](https://xuance.readthedocs.io/en/latest/documents/api/environments/multi_agent_env/drones.html)
+### [Drones Environments](https://xuance.org/documents/api/environments/multi_agent_env/drones.html)
 
 <table rules="none" align="center"><tr>
 <td> <center>
@@ -257,13 +257,13 @@ and hope it can really become a zoo full of DRL algorithms.
 </tr>
 </table>
 
-### [MetaDrive](https://xuance.readthedocs.io/en/latest/documents/api/environments/single_agent_env/metadrive.html)
+### [MetaDrive](https://xuance.org/documents/api/environments/single_agent_env/metadrive.html)
 
 <div align="center">
 <img src="docs/source/_static/figures/metadrive/metadeive_teaser_1.gif" width="auto" height="120" align=center />
 </div>
 
-### [MPE Environments](https://xuance.readthedocs.io/en/latest/documents/api/environments/multi_agent_env/mpe.html)
+### [MPE Environments](https://xuance.org/documents/api/environments/multi_agent_env/mpe.html)
 
 <table rules="none" align="center"><tr>
 <td> <center>
@@ -284,7 +284,7 @@ and hope it can really become a zoo full of DRL algorithms.
 </tr>
 </table>
 
-### [Robotic Warehouse](https://xuance.readthedocs.io/en/latest/documents/api/environments/multi_agent_env/robotic_warehouse.html)
+### [Robotic Warehouse](https://xuance.org/documents/api/environments/multi_agent_env/robotic_warehouse.html)
 
 <table rules="none" align="center"><tr>
 <td> <center>
@@ -305,13 +305,13 @@ and hope it can really become a zoo full of DRL algorithms.
 </tr>
 </table>
 
-### [SMAC](https://xuance.readthedocs.io/en/latest/documents/api/environments/multi_agent_env/smac.html)
+### [SMAC](https://xuance.org/documents/api/environments/multi_agent_env/smac.html)
 
 <div align="center">
 <img src="docs/source/_static/figures/smac/smac.png" width="715" height="auto" align=center />
 </div>
 
-### [Google Research Football](https://xuance.readthedocs.io/en/latest/documents/api/environments/multi_agent_env/football.html)
+### [Google Research Football](https://xuance.org/documents/api/environments/multi_agent_env/football.html)
 
 <div align="center">
 <img src="docs/source/_static/figures/football/gfootball.png" width="720" height="auto" align=center />
@@ -345,7 +345,7 @@ deep learning tools, you can type `pip install xuance[torch]` for [PyTorch](http
 and `pip install xuance[all]` for all dependencies.
 
 Note: Some extra packages should be installed manually for further usage.
-Click [**here**](https://xuance.readthedocs.io/en/latest/documents/usage/installation.html) to see more details for installation.
+Click [**here**](https://xuance.org/documents/usage/installation.html) to see more details for installation.
 
 ## :point_right: Quickly Start
 

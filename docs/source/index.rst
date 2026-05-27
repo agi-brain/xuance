@@ -16,7 +16,7 @@ XuanCe: A Comprehensive and Unified Deep Reinforcement Learning Library
    <a href="https://pypi.org/project/xuance/">
         <img alt="pypi" src="https://img.shields.io/pypi/v/xuance">
    </a>
-   <a href="https://xuance.readthedocs.io">
+   <a href="https://xuance.org">
         <img alt="docs" src="https://readthedocs.org/projects/xuance/badge/?version=latest">
    </a>
    <a href="https://github.com/agi-brain/xuance/blob/master/LICENSE.txt">

@@ -83,7 +83,7 @@ Method 2: Installing from GitHub repository.
 .. attention::
 
     All python packages including ``gfootball`` environment should be installed in a same conda environment.
-    See `https://xuance.readthedocs.io/en/latest/documents/usage/installation.html#install-via-pypi <https://xuance.readthedocs.io/en/latest/documents/usage/installation.html#install-via-pypi>`_.
+    See `https://xuance.org/documents/usage/installation.html#install-via-pypi <https://xuance.org/documents/usage/installation.html#install-via-pypi>`_.
 
 Test installation
 ...................

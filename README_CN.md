@@ -5,7 +5,7 @@
 # XuanCe: 一个全面且统一的深度强化学习库
 
 [![PyPI](https://img.shields.io/pypi/v/xuance)](https://pypi.org/project/xuance/)
-[![Documentation Status](https://readthedocs.org/projects/xuance/badge/?version=latest)](https://xuance.readthedocs.io)
+[![Documentation Status](https://readthedocs.org/projects/xuance/badge/?version=latest)](https://cn.xuance.org)
 [![GitHub](https://img.shields.io/github/license/agi-brain/xuance)](https://github.com/agi-brain/xuance/blob/master/LICENSE.txt)
 [![Downloads](https://static.pepy.tech/badge/xuance)](https://pepy.tech/project/xuance)
 [![GitHub Repo stars](https://img.shields.io/github/stars/agi-brain/xuance?style=social)](https://github.com/agi-brain/xuance/stargazers)
@@ -50,9 +50,9 @@
 ### XuanCe 的特性
 
 - :school_satchel: 高度模块化设计。
-- :thumbsup: 易于[学习](https://xuance.readthedocs.io/en/latest/)，易于[安装](https://xuance.readthedocs.io/en/latest/documents/usage/installation.html)，易于[使用](https://xuance.readthedocs.io/en/latest/documents/usage/basic_usage.html)。
+- :thumbsup: 易于[学习](https://cn.xuance.org)，易于[安装](https://cn.xuance.org/documents/usage/installation.html)，易于[使用](https://cn.xuance.org/documents/usage/basic_usage.html)。
 - :twisted_rightwards_arrows: 模型组合灵活。
-- :tada: 提供大量[算法](https://xuance.readthedocs.io/en/latest/#list-of-algorithms)及多种任务支持。
+- :tada: 提供大量[算法](https://cn.xuance.org/#list-of-algorithms)及多种任务支持。
 - :couple: 同时支持 DRL 和 MARL（多智能体强化学习）任务。
 - :key: 高度兼容不同用户需求。（PyTorch、TensorFlow2、MindSpore、CPU、GPU、Linux、Windows、MacOS 等）
 - :zap: 支持环境并行，运行速度快。
@@ -246,7 +246,7 @@
 
 ### [无人机环境（Drones Environments）](https://github.com/utiasDSL/gym-pybullet-drones)
 
-可参考 [XuanCe 文档中关于 gym-pybullet-drones 的安装与使用说明](https://xuance.readthedocs.io/en/latest/documents/api/environments/drones.html)。
+可参考 [XuanCe 文档中关于 gym-pybullet-drones 的安装与使用说明](https://cn.xuance.org/documents/api/environments/drones.html)。
 
 <details open>
 <summary>（点击收起/展开）</summary>
