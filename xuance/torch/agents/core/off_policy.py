@@ -100,7 +100,7 @@ class OffPolicyAgent(Agent):
                             n_envs=self.n_envs,
                             buffer_size=self.buffer_size,
                             batch_size=self.batch_size)
-        if self.is_tensor_env:
+        if self.is_tensor_memory:
             from xuance.torch.utils import TensorOffPolicyBuffer as Buffer
             input_buffer['device'] = self.device
         else:
