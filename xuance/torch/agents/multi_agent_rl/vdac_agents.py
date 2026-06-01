@@ -131,7 +131,7 @@ class VDAC_Agents(OnPolicyMARLAgents):
                                                 for k in self.agent_keys}
         self.memory.store(**experience_data)
 
-    def action(self,
+    def get_actions(self,
                obs_dict: List[dict],
                state: Optional[np.ndarray] = None,
                avail_actions_dict: Optional[List[dict]] = None,

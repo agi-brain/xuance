@@ -102,7 +102,7 @@ class DreamerV3Agent(OffPolicyAgent):
     def _build_policy(self) -> DreamerV3Policy:
         return REGISTRY_Policy["DreamerV3Policy"](self.model, self.config)
 
-    def action(self,
+    def get_actions(self,
                obs: np.ndarray,
                test_mode: Optional[bool] = False,
                player: Optional[PlayerDV3] = None) -> np.ndarray:
@@ -159,7 +159,7 @@ class DreamerV3Agent(OffPolicyAgent):
             if self.current_step < self.start_training:  # ramdom_sample before training
                 acts = np.array([self.train_envs.action_space.sample() for _ in range(self.train_envs.num_envs)])
             else:
-                acts = self.action(obs)
+                acts = self.get_actions(obs)
             if self.atari:  # use truncs to train in xc_atari
                 terms = deepcopy(truncs)
             """(o1, a1, r1, term1, trunc1, is_first1), acts: real_acts"""
@@ -270,7 +270,7 @@ class DreamerV3Agent(OffPolicyAgent):
         while is_done.sum() < test_episodes:
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
-            acts = self.action(obs, test_mode=True, player=test_player)
+            acts = self.get_actions(obs, test_mode=True, player=test_player)
             next_obs, rews, terms, truncs, infos = test_envs.step(acts)
             if self.config.render_mode == "rgb_array" and self.render:
                 images = test_envs.render(self.config.render_mode)

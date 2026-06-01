@@ -60,7 +60,7 @@ class OfflineAgent(Agent):
             self.current_step += 1
         return train_info
 
-    def action(self, observations: np.ndarray):
+    def get_actions(self, observations: np.ndarray):
         raise NotImplementedError
 
     def test(self, env_fn, steps):

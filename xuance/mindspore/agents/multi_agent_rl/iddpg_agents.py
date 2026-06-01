@@ -108,7 +108,7 @@ class IDDPG_Agents(OffPolicyMARLAgents):
             rnn_hidden[key] = self.policy.actor_representation[key].init_hidden_item(batch_index, *rnn_hidden[key])
         return rnn_hidden
 
-    def action(self,
+    def get_actions(self,
                obs_dict: List[dict],
                avail_actions_dict: Optional[List[dict]] = None,
                rnn_hidden: Optional[dict] = None,

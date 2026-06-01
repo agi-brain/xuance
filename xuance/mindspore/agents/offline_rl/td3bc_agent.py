@@ -64,7 +64,7 @@ class TD3_BC_Agent(OfflineAgent):
 
         return policy
 
-    def action(self, observations: np.ndarray):
+    def get_actions(self, observations: np.ndarray):
         with torch.no_grad():
             _, actions = self.policy(observations)
             actions = actions.cpu().numpy()
@@ -86,7 +86,7 @@ class TD3_BC_Agent(OfflineAgent):
 
         while current_episode < test_episodes:
             self.obs_rms.update(obs)
-            actions = self.action(obs)
+            actions = self.get_actions(obs)
             next_obs, rewards, terminated, truncated, infos = test_envs.step(actions['actions'])
             if self.config.render_mode == "rgb_array" and self.render:
                 images = test_envs.render(self.config.render_mode)

@@ -115,9 +115,9 @@ class Buffer(ABC):
         self.terminals: Optional[np.ndarray] = None
         self.returns: Optional[np.ndarray] = None
         self.values: Optional[np.ndarray] = None
-        self.num_envs = num_envs
+        self.n_envs = num_envs
         self.buffer_size = buffer_size
-        self.n_size = self.buffer_size // self.num_envs
+        self.n_size = self.buffer_size // self.n_envs
         self.advantages: Optional[np.ndarray] = None
         self.ptr = 0  # last data pointer
         self.size = 0  # current buffer size per environment.
@@ -207,7 +207,7 @@ class DummyOnPolicyBuffer(Buffer):
                  gae_lam: float = 0.95):
         self.buffer_size = horizon_size * n_envs
         super(DummyOnPolicyBuffer, self).__init__(observation_space, action_space, auxiliary_shape, n_envs, self.buffer_size)
-        self.n_envs, self.horizon_size = n_envs, horizon_size
+        self.horizon_size = horizon_size
         self.n_size = self.horizon_size
         self.use_gae, self.use_advnorm = use_gae, use_advnorm
         self.gamma, self.gae_lam = gamma, gae_lam
@@ -349,7 +349,7 @@ class DummyOffPolicyBuffer(Buffer):
                  buffer_size: int,
                  batch_size: int):
         super(DummyOffPolicyBuffer, self).__init__(observation_space, action_space, auxiliary_shape, n_envs, buffer_size)
-        self.n_envs, self.batch_size = n_envs, batch_size
+        self.batch_size = batch_size
         assert buffer_size % self.n_envs == 0, "buffer_size must be divisible by the number of envs (parallels)"
         self.n_size = buffer_size // self.n_envs
         self.clear()
@@ -413,7 +413,7 @@ class RecurrentOffPolicyBuffer(Buffer):
                  lookup_length: int):
         super(RecurrentOffPolicyBuffer, self).__init__(observation_space, action_space, auxiliary_shape,
                                                        n_envs, buffer_size)
-        self.n_envs, self.buffer_size, self.episode_length, self.batch_size = n_envs, buffer_size, episode_length, batch_size
+        self.episode_length, self.batch_size = episode_length, batch_size
         assert buffer_size % self.n_envs == 0, "buffer_size must be divisible by the number of envs (parallels)"
         self.n_size = self.buffer_size // self.n_envs
         self.lookup_length = lookup_length
@@ -491,7 +491,7 @@ class PerOffPolicyBuffer(Buffer):
                  batch_size: int,
                  alpha: float = 0.6):
         super(PerOffPolicyBuffer, self).__init__(observation_space, action_space, auxiliary_shape, n_envs, buffer_size)
-        self.n_envs, self.batch_size = n_envs, batch_size
+        self.batch_size = batch_size
         assert buffer_size % self.n_envs == 0, "buffer_size must be divisible by the number of envs (parallels)"
         self.n_size = buffer_size // self.n_envs
         self.observations = create_memory(space2shape(self.observation_space), self.n_envs, self.n_size)
@@ -651,7 +651,7 @@ class SequentialReplayBuffer(Buffer):
                  buffer_size: int,
                  batch_size: int):
         super(SequentialReplayBuffer, self).__init__(observation_space, action_space, auxiliary_shape)
-        self.n_envs, self.batch_size = n_envs, batch_size
+        self.batch_size = batch_size
         assert buffer_size % self.n_envs == 0, "buffer_size must be divisible by the number of envs (parallels)"
         self.n_size = buffer_size // self.n_envs
         self.obs = create_memory(space2shape(self.observation_space), self.n_envs, self.n_size)

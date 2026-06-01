@@ -308,7 +308,7 @@ class Agent(ABC):
         return REGISTRY_Learners[self.config.learner](*args)
 
     @abstractmethod
-    def action(self, observations):
+    def get_actions(self, observations):
         raise NotImplementedError
 
     @abstractmethod

@@ -88,7 +88,7 @@ class CommNet_Agents(MAPPO_Agents):
             raise AttributeError(f"{agent} currently does not support the policy named {self.config.policy}.")
         return policy
 
-    def action(self,
+    def get_actions(self,
                obs_dict: List[dict],
                state: Optional[np.ndarray] = None,
                avail_actions_dict: Optional[List[dict]] = None,
@@ -177,7 +177,7 @@ class CommNet_Agents(MAPPO_Agents):
         while episode_count < n_episodes:
             step_info = {}
             obs_dict = [self.pad_observation(obs) for obs in obs_dict]
-            policy_out = self.action(obs_dict=obs_dict, state=state, avail_actions_dict=avail_actions,
+            policy_out = self.get_actions(obs_dict=obs_dict, state=state, avail_actions_dict=avail_actions,
                                      rnn_hidden_actor=rnn_hidden_actor, rnn_hidden_critic=rnn_hidden_critic,
                                      test_mode=test_mode, info=info)
             rnn_hidden_actor, rnn_hidden_critic = policy_out['rnn_hidden_actor'], policy_out['rnn_hidden_critic']

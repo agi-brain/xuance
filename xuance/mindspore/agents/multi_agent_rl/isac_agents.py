@@ -80,7 +80,7 @@ class ISAC_Agents(OffPolicyMARLAgents):
 
         return policy
 
-    def action(self,
+    def get_actions(self,
                obs_dict: List[dict],
                avail_actions_dict: Optional[List[dict]] = None,
                rnn_hidden: Optional[dict] = None,

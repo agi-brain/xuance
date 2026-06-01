@@ -158,7 +158,7 @@ class MFQ_Agents(OffPolicyMARLAgents):
                                                 for k in self.agent_keys}
         self.memory.store(**experience_data)
 
-    def action(self,
+    def get_actions(self,
                obs_dict: List[dict],
                agent_mask: Optional[List[dict]] = None,
                act_mean_dict: Optional[List[dict]] = None,
@@ -223,7 +223,7 @@ class MFQ_Agents(OffPolicyMARLAgents):
         avail_actions = self.train_envs.buf_avail_actions if self.use_actions_mask else None
         state = self.train_envs.buf_state.copy() if self.use_global_state else None
         for _ in tqdm(range(train_steps)):
-            policy_out = self.action(obs_dict=obs_dict, agent_mask=agent_mask_dict, act_mean_dict=actions_mean_dict,
+            policy_out = self.get_actions(obs_dict=obs_dict, agent_mask=agent_mask_dict, act_mean_dict=actions_mean_dict,
                                      avail_actions_dict=avail_actions, test_mode=False)
             actions_dict = policy_out['actions']
             actions_mean_next_dict = policy_out['actions_mean']
@@ -324,7 +324,7 @@ class MFQ_Agents(OffPolicyMARLAgents):
         rnn_hidden = self.init_rnn_hidden(num_envs)
 
         while current_episode < n_episodes:
-            policy_out = self.action(obs_dict=obs_dict,
+            policy_out = self.get_actions(obs_dict=obs_dict,
                                      agent_mask=agent_mask_dict,
                                      act_mean_dict=actions_mean_dict,
                                      avail_actions_dict=avail_actions,

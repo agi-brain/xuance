@@ -95,7 +95,7 @@ class PDQN_Agent(Agent):
 
         return policy
 
-    def action(self, obs):
+    def get_actions(self, obs):
         with torch.no_grad():
             obs = torch.as_tensor(obs, device=self.device).float()
             con_actions = self.policy.con_action(obs)
@@ -132,7 +132,7 @@ class PDQN_Agent(Agent):
         scores = np.zeros((self.nenvs,), np.float32)
         obs, _ = self.train_envs.reset()
         for _ in tqdm(range(train_steps)):
-            disaction, conaction, con_actions = self.action(obs)
+            disaction, conaction, con_actions = self.get_actions(obs)
             action = self.pad_action(disaction, conaction)
             action[1][disaction] = self.action_range[disaction] * (action[1][disaction] + 1) / 2. + self.action_low[
                 disaction]
@@ -194,7 +194,7 @@ class PDQN_Agent(Agent):
         obs, _ = self.train_envs.reset()
 
         while current_episode < test_episodes:
-            disaction, conaction, con_actions = self.action(obs)
+            disaction, conaction, con_actions = self.get_actions(obs)
             action = self.pad_action(disaction, conaction)
             action[1][disaction] = self.action_range[disaction] * (action[1][disaction] + 1) / 2. + self.action_low[
                 disaction]

@@ -129,7 +129,7 @@ class OffPolicyAgent(Agent):
             explore_actions = pi_actions
         return explore_actions
 
-    def action(self, observations: np.ndarray,
+    def get_actions(self, observations: np.ndarray,
                test_mode: Optional[bool] = False) -> dict:
         """Returns actions and values.
 
@@ -193,7 +193,7 @@ class OffPolicyAgent(Agent):
         for _ in tqdm(range(train_steps)):
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
-            policy_out = self.action(obs, test_mode=False)
+            policy_out = self.get_actions(obs, test_mode=False)
             acts = policy_out['actions']
             next_obs, rewards, terminals, truncations, infos = self.train_envs.step(acts)
 
@@ -289,7 +289,7 @@ class OffPolicyAgent(Agent):
         while current_episode < test_episodes:
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
-            policy_out = self.action(obs, test_mode=True)
+            policy_out = self.get_actions(obs, test_mode=True)
             next_obs, rewards, terminals, truncations, infos = test_envs.step(policy_out['actions'])
             if self.config.render_mode == "rgb_array" and self.render:
                 images = test_envs.render(self.config.render_mode)

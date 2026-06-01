@@ -58,7 +58,7 @@ class DDPG_Agent(OffPolicyAgent):
 
         return policy
 
-    def action(self, observations: np.ndarray,
+    def get_actions(self, observations: np.ndarray,
                test_mode: Optional[bool] = False):
         """Returns actions and values.
 

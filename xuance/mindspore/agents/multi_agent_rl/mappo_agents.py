@@ -110,7 +110,7 @@ class MAPPO_Agents(IPPO_Agents):
             critic_input = {k: Tensor(joint_obs) for k in self.model_keys}
         return critic_input
 
-    def action(self,
+    def get_actions(self,
                obs_dict: List[dict],
                state: Optional[np.ndarray] = None,
                avail_actions_dict: Optional[List[dict]] = None,

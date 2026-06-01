@@ -79,7 +79,7 @@ class PPOKL_Agent(OnPolicyAgent):
         for _ in tqdm(range(train_steps)):
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
-            policy_out = self.action(obs, return_dists=True, return_logpi=False)
+            policy_out = self.get_actions(obs, return_dists=True, return_logpi=False)
             acts, vals = policy_out['actions'], policy_out['values']
             next_obs, rewards, terminals, truncations, infos = self.train_envs.step(acts)
             aux_info = self.get_aux_info(policy_out)

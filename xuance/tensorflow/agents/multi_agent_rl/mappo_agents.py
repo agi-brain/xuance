@@ -108,7 +108,7 @@ class MAPPO_Agents(IPPO_Agents):
         critic_input_dict = {k: critic_input for k in self.model_keys}
         return critic_input_dict
 
-    def action(self,
+    def get_actions(self,
                obs_dict: List[dict],
                state: Optional[np.ndarray] = None,
                avail_actions_dict: Optional[List[dict]] = None,

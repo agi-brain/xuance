@@ -33,15 +33,15 @@ class BaseBuffer(ABC):
         self.state_space = state_space
         self.observation_space = observation_space
         self.action_space = action_space
-        self.num_envs = num_envs
+        self.n_envs = num_envs
         self.buffer_size = buffer_size
-        self.per_env_buffer_size = self.buffer_size // self.num_envs
+        self.n_size = self.buffer_size // self.n_envs  # Buffer size per env
         self.ptr = 0  # last data pointer
         self.size = 0  # current buffer size per environment.
 
     @property
     def full(self):
-        return self.size >= self.per_env_buffer_size
+        return self.size >= self.n_size
 
     @abstractmethod
     def store(self, *args, **kwargs):
@@ -150,8 +150,8 @@ class MARL_OnPolicyBuffer(BaseBuffer):
                 }
         """
         self.data = {
-            'obs': create_memory(space2shape(self.obs_space), self.n_envs, self.n_size),
-            'actions': create_memory(space2shape(self.act_space), self.n_envs, self.n_size),
+            'obs': create_memory(space2shape(self.observation_space), self.n_envs, self.n_size),
+            'actions': create_memory(space2shape(self.action_space), self.n_envs, self.n_size),
             'rewards': create_memory(self.reward_space, self.n_envs, self.n_size),
             'returns': create_memory(self.reward_space, self.n_envs, self.n_size),
             'values': create_memory(self.reward_space, self.n_envs, self.n_size),
@@ -712,9 +712,9 @@ class MARL_OffPolicyBuffer(BaseBuffer):
         agent_mask_space = {key: () for key in self.agent_keys}
 
         self.data = {
-            'obs': create_memory(space2shape(self.obs_space), self.n_envs, self.n_size),
-            'actions': create_memory(space2shape(self.act_space), self.n_envs, self.n_size),
-            'obs_next': create_memory(space2shape(self.obs_space), self.n_envs, self.n_size),
+            'obs': create_memory(space2shape(self.observation_space), self.n_envs, self.n_size),
+            'actions': create_memory(space2shape(self.action_space), self.n_envs, self.n_size),
+            'obs_next': create_memory(space2shape(self.observation_space), self.n_envs, self.n_size),
             'rewards': create_memory(reward_space, self.n_envs, self.n_size),
             'terminals': create_memory(terminal_space, self.n_envs, self.n_size, np.bool_),
             'agent_mask': create_memory(agent_mask_space, self.n_envs, self.n_size, np.bool_),

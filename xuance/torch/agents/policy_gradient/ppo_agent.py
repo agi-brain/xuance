@@ -80,7 +80,7 @@ class PPO_Agent(OnPolicyAgent):
         for _ in tqdm(range(train_steps)):
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
-            policy_out = self.action(obs, return_dists=False, return_logpi=True)
+            policy_out = self.get_actions(obs, return_dists=False, return_logpi=True)
             acts, value, logps = policy_out['actions'], policy_out['values'], policy_out['log_pi']
             next_obs, rewards, terminals, truncations, infos = self.train_envs.step(acts)
             aux_info = self.get_aux_info(policy_out)

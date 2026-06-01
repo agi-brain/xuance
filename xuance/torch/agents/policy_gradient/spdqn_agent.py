@@ -98,7 +98,7 @@ class SPDQN_Agent(PDQN_Agent, Agent):
         obs, _ = self.train_envs.reset()
         for _ in tqdm(range(train_steps)):
             step_info = {}
-            disaction, conaction, con_actions = self.action(obs)
+            disaction, conaction, con_actions = self.get_actions(obs)
             action = self.pad_action(disaction, conaction)
             action[1][disaction] = self.action_range[disaction] * (action[1][disaction] + 1) / 2. + self.action_low[
                 disaction]

@@ -263,7 +263,7 @@ class OffPolicyMARLAgents(MARLAgents):
             explore_actions = pi_actions_dict
         return explore_actions
 
-    def action(self,
+    def get_actions(self,
                obs_dict: List[dict],
                avail_actions_dict: Optional[List[dict]] = None,
                rnn_hidden: Optional[dict] = None,
@@ -362,7 +362,7 @@ class OffPolicyMARLAgents(MARLAgents):
         avail_actions = self.train_envs.buf_avail_actions if self.use_actions_mask else None
         state = self.train_envs.buf_state.copy() if self.use_global_state else None
         for _ in tqdm(range(train_steps)):
-            policy_out = self.action(obs_dict=obs_dict, avail_actions_dict=avail_actions, test_mode=False)
+            policy_out = self.get_actions(obs_dict=obs_dict, avail_actions_dict=avail_actions, test_mode=False)
             actions_dict = policy_out['actions']
             next_obs_dict, rewards_dict, terminated_dict, truncated, info = self.train_envs.step(actions_dict)
             next_state = self.train_envs.buf_state.copy() if self.use_global_state else None
@@ -470,7 +470,7 @@ class OffPolicyMARLAgents(MARLAgents):
         rnn_hidden = self.init_rnn_hidden(num_envs)
 
         while _current_episode < n_episodes:
-            policy_out = self.action(obs_dict=obs_dict,
+            policy_out = self.get_actions(obs_dict=obs_dict,
                                      avail_actions_dict=avail_actions,
                                      rnn_hidden=rnn_hidden,
                                      test_mode=test_mode)

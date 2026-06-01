@@ -114,11 +114,11 @@ class OnPolicyAgent(Agent):
         Returns:
             np.ndarray: Value estimates for the provided terminal observations.
         """
-        policy_out = self.action(self._process_observation(observations_next))
+        policy_out = self.get_actions(self._process_observation(observations_next))
         values_next = policy_out['values']
         return values_next
 
-    def action(self, observations: np.ndarray,
+    def get_actions(self, observations: np.ndarray,
                return_dists: bool = False, return_logpi: bool = False) -> dict:
         """Compute actions and value estimates for a batch of observations.
 
@@ -216,7 +216,7 @@ class OnPolicyAgent(Agent):
         for _ in tqdm(range(train_steps)):
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
-            policy_out = self.action(obs, return_dists=False, return_logpi=False)
+            policy_out = self.get_actions(obs, return_dists=False, return_logpi=False)
             acts, vals = policy_out['actions'], policy_out['values']
             next_obs, rewards, terminals, truncations, infos = self.train_envs.step(acts)
             aux_info = self.get_aux_info()
@@ -324,7 +324,7 @@ class OnPolicyAgent(Agent):
         while current_episode < test_episodes:
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
-            policy_out = self.action(obs)
+            policy_out = self.get_actions(obs)
             next_obs, rewards, terminals, truncations, infos = test_envs.step(policy_out['actions'])
             if self.config.render_mode == "rgb_array" and self.render:
                 images = test_envs.render(self.config.render_mode)

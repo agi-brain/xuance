@@ -262,12 +262,12 @@ class OffPolicyMARLAgents(MARLAgents):
             explore_actions = pi_actions_dict
         return explore_actions
 
-    def action(self,
-               obs_dict: List[dict],
-               avail_actions_dict: Optional[List[dict]] = None,
-               rnn_hidden: Optional[dict] = None,
-               test_mode: Optional[bool] = False,
-               **kwargs) -> dict:
+    def get_actions(self,
+                    obs_dict: List[dict],
+                    avail_actions_dict: Optional[List[dict]] = None,
+                    rnn_hidden: Optional[dict] = None,
+                    test_mode: Optional[bool] = False,
+                    **kwargs) -> dict:
         """Compute actions for all agents given vectorized observations.
 
         This method performs a forward pass through the current multi-agent policy to obtain actions for each agent in
@@ -363,7 +363,7 @@ class OffPolicyMARLAgents(MARLAgents):
         avail_actions = self.train_envs.buf_avail_actions if self.use_actions_mask else None
         state = self.train_envs.buf_state.copy() if self.use_global_state else None
         for _ in tqdm(range(train_steps)):
-            policy_out = self.action(obs_dict=obs_dict, avail_actions_dict=avail_actions, test_mode=False)
+            policy_out = self.get_actions(obs_dict=obs_dict, avail_actions_dict=avail_actions, test_mode=False)
             actions_dict = policy_out['actions']
             next_obs_dict, rewards_dict, terminated_dict, truncated, info = self.train_envs.step(actions_dict)
             next_state = self.train_envs.buf_state.copy() if self.use_global_state else None
@@ -429,8 +429,8 @@ class OffPolicyMARLAgents(MARLAgents):
                                             train_steps=train_steps, train_info=train_info)
         return train_info
 
-    def run_episodes(self, 
-                     n_episodes: int = 1, 
+    def run_episodes(self,
+                     n_episodes: int = 1,
                      run_envs: Optional[DummyVecMultiAgentEnv | SubprocVecMultiAgentEnv] = None,
                      test_mode: bool = False,
                      close_envs: bool = True) -> list:
@@ -471,10 +471,10 @@ class OffPolicyMARLAgents(MARLAgents):
         rnn_hidden = self.init_rnn_hidden(num_envs)
 
         while _current_episode < n_episodes:
-            policy_out = self.action(obs_dict=obs_dict,
-                                     avail_actions_dict=avail_actions,
-                                     rnn_hidden=rnn_hidden,
-                                     test_mode=test_mode)
+            policy_out = self.get_actions(obs_dict=obs_dict,
+                                          avail_actions_dict=avail_actions,
+                                          rnn_hidden=rnn_hidden,
+                                          test_mode=test_mode)
             rnn_hidden, actions_dict = policy_out['hidden_state'], policy_out['actions']
             next_obs_dict, rewards_dict, terminated_dict, truncated, info = envs.step(actions_dict)
             next_state = envs.buf_state.copy() if self.use_global_state else None

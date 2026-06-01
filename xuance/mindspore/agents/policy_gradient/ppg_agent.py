@@ -67,7 +67,7 @@ class PPG_Agent(OnPolicyAgent):
 
         return policy
 
-    def action(self, observations: np.ndarray,
+    def get_actions(self, observations: np.ndarray,
                return_dists: bool = False, return_logpi: bool = False):
         """Returns actions and values.
 
@@ -114,7 +114,7 @@ class PPG_Agent(OnPolicyAgent):
         for _ in tqdm(range(train_steps)):
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
-            policy_out = self.action(obs, return_dists=True, return_logpi=False)
+            policy_out = self.get_actions(obs, return_dists=True, return_logpi=False)
             acts, rets = policy_out['actions'], policy_out['values']
             next_obs, rewards, terminals, truncations, infos = self.train_envs.step(acts)
             aux_info = self.get_aux_info(policy_out)
@@ -155,7 +155,7 @@ class PPG_Agent(OnPolicyAgent):
                 # update old_prob
                 buffer_obs = self.memory.observations
                 buffer_act = self.memory.actions
-                new_policy_out = self.action(buffer_obs, return_dists=True)
+                new_policy_out = self.get_actions(buffer_obs, return_dists=True)
                 aux_info = self.get_aux_info(new_policy_out)
                 self.memory.auxiliary_infos.update(aux_info)
                 for _ in range(self.aux_nepoch):

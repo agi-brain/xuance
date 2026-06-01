@@ -152,7 +152,7 @@ class MFAC_Agents(OnPolicyMARLAgents):
                                            for k in self.agent_keys}
         self.memory.store(**experience_data)
 
-    def action(self,
+    def get_actions(self,
                obs_dict: List[dict],
                agent_mask: Optional[List[dict]] = None,
                act_mean_dict: Optional[List[dict]] = None,
@@ -333,7 +333,7 @@ class MFAC_Agents(OnPolicyMARLAgents):
         avail_actions = self.train_envs.buf_avail_actions if self.use_actions_mask else None
         state = self.train_envs.buf_state if self.use_global_state else None
         for _ in tqdm(range(train_steps)):
-            policy_out = self.action(obs_dict=obs_dict, state=state,
+            policy_out = self.get_actions(obs_dict=obs_dict, state=state,
                                      agent_mask=agent_mask_dict, act_mean_dict=actions_mean_dict,
                                      avail_actions_dict=avail_actions, test_mode=False)
             actions_dict, log_pi_a_dict = policy_out['actions'], policy_out['log_pi']
@@ -446,7 +446,7 @@ class MFAC_Agents(OnPolicyMARLAgents):
         rnn_hidden_actor, rnn_hidden_critic = self.init_rnn_hidden(num_envs)
 
         while current_episode < n_episodes:
-            policy_out = self.action(obs_dict=obs_dict, state=state, avail_actions_dict=avail_actions,
+            policy_out = self.get_actions(obs_dict=obs_dict, state=state, avail_actions_dict=avail_actions,
                                      agent_mask=agent_mask_dict, act_mean_dict=actions_mean_dict,
                                      rnn_hidden_actor=rnn_hidden_actor, rnn_hidden_critic=rnn_hidden_critic,
                                      test_mode=test_mode)

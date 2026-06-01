@@ -143,8 +143,8 @@ class OffPolicyAgent(Agent):
             explore_actions = pi_actions.detach().cpu().numpy()
         return explore_actions
 
-    def action(self, observations: np.ndarray,
-               test_mode: Optional[bool] = False) -> dict:
+    def get_actions(self, observations: np.ndarray,
+                    test_mode: Optional[bool] = False) -> dict:
         """Returns actions and values.
 
         Parameters:
@@ -207,16 +207,17 @@ class OffPolicyAgent(Agent):
         for _ in tqdm(range(train_steps)):
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
-            policy_out = self.action(obs, test_mode=False)
-            acts = policy_out['actions']
-            next_obs, rewards, terminals, truncations, infos = self.train_envs.step(acts)
+            policy_out = self.get_actions(obs, test_mode=False)
+            actions = policy_out['actions']
+            next_obs, rewards, terminals, truncations, infos = self.train_envs.step(actions)
 
             self.callback.on_train_step(self.current_step, envs=self.train_envs, policy=self.policy,
-                                        obs=obs, policy_out=policy_out, acts=acts, next_obs=next_obs, rewards=rewards,
+                                        obs=obs, policy_out=policy_out, next_obs=next_obs, rewards=rewards,
                                         terminals=terminals, truncations=truncations, infos=infos,
                                         train_steps=train_steps)
 
-            self.memory.store(obs, acts, self._process_reward(rewards), terminals, self._process_observation(next_obs))
+            self.memory.store(obs, actions, self._process_reward(rewards), terminals,
+                              self._process_observation(next_obs))
             if self.current_step > self.start_training and self.current_step % self.training_frequency == 0:
                 update_info = self.train_epochs(n_epochs=self.n_epochs)
                 self.log_infos(update_info, self.current_step)
@@ -303,7 +304,7 @@ class OffPolicyAgent(Agent):
         while current_episode < test_episodes:
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
-            policy_out = self.action(obs, test_mode=True)
+            policy_out = self.get_actions(obs, test_mode=True)
             next_obs, rewards, terminals, truncations, infos = test_envs.step(policy_out['actions'])
             if self.config.render_mode == "rgb_array" and self.render:
                 images = test_envs.render(self.config.render_mode)

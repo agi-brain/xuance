@@ -66,7 +66,7 @@ class DRQN_Agent(OffPolicyAgent):
 
         return policy
 
-    def action(self, obs, egreedy=0.0, rnn_hidden=None):
+    def get_actions(self, obs, egreedy=0.0, rnn_hidden=None):
         if self.lstm:
             rnn_hidden = (Tensor(rnn_hidden[0]), Tensor(rnn_hidden[1]))
         else:
@@ -94,7 +94,7 @@ class DRQN_Agent(OffPolicyAgent):
         for _ in tqdm(range(train_steps)):
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
-            policy_out = self.action(obs, self.egreedy, self.rnn_hidden)
+            policy_out = self.get_actions(obs, self.egreedy, self.rnn_hidden)
             acts, self.rnn_hidden = policy_out['actions'], policy_out['rnn_hidden_next']
             next_obs, rewards, terminals, truncations, infos = self.train_envs.step(acts)
 
@@ -171,7 +171,7 @@ class DRQN_Agent(OffPolicyAgent):
         while current_episode < test_episodes:
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
-            policy_out = self.action(obs, egreedy=0.0, rnn_hidden=rnn_hidden)
+            policy_out = self.get_actions(obs, egreedy=0.0, rnn_hidden=rnn_hidden)
             acts, rnn_hidden = policy_out['actions'], policy_out['rnn_hidden_next']
             next_obs, rewards, terminals, truncations, infos = test_envs.step(acts)
             if self.config.render_mode == "rgb_array" and self.render:

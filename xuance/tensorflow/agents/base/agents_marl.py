@@ -303,7 +303,7 @@ class MARLAgents(ABC):
         return obs_input, agents_id, avail_actions_input
 
     @abstractmethod
-    def action(self, **kwargs):
+    def get_actions(self, **kwargs):
         raise NotImplementedError
 
     @abstractmethod
@@ -334,7 +334,7 @@ class RandomAgents(object):
         self.action_space = self.args.action_space
         self.nenvs = envs.num_envs
 
-    def action(self, obs_n, episode, test_mode, noise=False):
+    def get_actions(self, obs_n, episode, test_mode, noise=False):
         rand_a = [[self.action_space[agent].sample() for agent in self.agent_keys] for e in range(self.nenvs)]
         random_actions = np.array(rand_a)
         return random_actions

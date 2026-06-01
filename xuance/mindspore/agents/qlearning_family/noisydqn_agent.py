@@ -61,7 +61,7 @@ class NoisyDQN_Agent(Agent):
 
         return policy
 
-    def action(self, obs):
+    def get_actions(self, obs):
         self.policy.noise_scale = self.noise_scale
         _, argmax_action, _ = self.policy(Tensor(obs))
         action = argmax_action.numpy()
@@ -81,7 +81,7 @@ class NoisyDQN_Agent(Agent):
         for _ in tqdm(range(train_steps)):
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
-            acts = self.action(obs)
+            acts = self.get_actions(obs)
             next_obs, rewards, terminals, truncations, infos = self.train_envs.step(acts)
 
             self.callback.on_train_step(self.current_step, envs=self.train_envs, policy=self.policy,
@@ -153,7 +153,7 @@ class NoisyDQN_Agent(Agent):
         while current_episode < test_episodes:
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
-            acts = self.action(obs)
+            acts = self.get_actions(obs)
             next_obs, rewards, terminals, truncations, infos = test_envs.step(acts)
             if self.config.render_mode == "rgb_array" and self.render:
                 images = test_envs.render(self.config.render_mode)

@@ -201,7 +201,7 @@ class OnPolicyMARLAgents(MARLAgents):
             rnn_hidden_critic[k] = self.policy.critic_representation[k].init_hidden_item(b_index, *rnn_hidden_critic[k])
         return rnn_hidden_actor, rnn_hidden_critic
 
-    def action(self,
+    def get_actions(self,
                obs_dict: List[dict],
                state: Optional[np.ndarray] = None,
                avail_actions_dict: Optional[List[dict]] = None,
@@ -413,7 +413,7 @@ class OnPolicyMARLAgents(MARLAgents):
         avail_actions = self.train_envs.buf_avail_actions if self.use_actions_mask else None
         state = self.train_envs.buf_state if self.use_global_state else None
         for _ in tqdm(range(train_steps)):
-            policy_out = self.action(obs_dict=obs_dict, state=state, avail_actions_dict=avail_actions, test_mode=False)
+            policy_out = self.get_actions(obs_dict=obs_dict, state=state, avail_actions_dict=avail_actions, test_mode=False)
             actions_dict, log_pi_a_dict = policy_out['actions'], policy_out['log_pi']
             values_dict = policy_out['values']
             next_obs_dict, rewards_dict, terminated_dict, truncated, info = self.train_envs.step(actions_dict)
@@ -529,7 +529,7 @@ class OnPolicyMARLAgents(MARLAgents):
         rnn_hidden_actor, rnn_hidden_critic = self.init_rnn_hidden(num_envs)
 
         while _current_episode < n_episodes:
-            policy_out = self.action(obs_dict=obs_dict, state=state, avail_actions_dict=avail_actions,
+            policy_out = self.get_actions(obs_dict=obs_dict, state=state, avail_actions_dict=avail_actions,
                                      rnn_hidden_actor=rnn_hidden_actor, rnn_hidden_critic=rnn_hidden_critic,
                                      test_mode=test_mode)
             rnn_hidden_actor, rnn_hidden_critic = policy_out['rnn_hidden_actor'], policy_out['rnn_hidden_critic']
