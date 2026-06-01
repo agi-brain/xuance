@@ -1,11 +1,10 @@
 import os
 import torch
 import numpy as np
-import torch.nn as nn
 from xuance.common import Sequence, Optional, Callable, Union
 from copy import deepcopy
 from gymnasium.spaces import Space, Discrete
-from xuance.torch import Module, Tensor, DistributedDataParallel
+from xuance.torch import nn, Module, Tensor, DistributedDataParallel
 from xuance.torch.utils import ModuleType
 from .core import BasicQhead, BasicRecurrent, DuelQhead, C51Qhead, QRDQNhead, ActorNet, CriticNet
 
@@ -51,7 +50,7 @@ class BasicQnetwork(Module):
                 self.representation = DistributedDataParallel(module=self.representation, device_ids=[self.rank])
             self.eval_Qhead = DistributedDataParallel(module=self.eval_Qhead, device_ids=[self.rank])
 
-    def forward(self, observation: Union[np.ndarray, dict]):
+    def forward(self, observation: Union[Tensor, dict]) -> tuple:
         """
         Returns the output of the representation, greedy actions, and the evaluated Q-values.
 
@@ -68,7 +67,7 @@ class BasicQnetwork(Module):
         argmax_action = evalQ.argmax(dim=-1)
         return outputs, argmax_action, evalQ
 
-    def target(self, observation: Union[np.ndarray, dict]):
+    def target(self, observation: Union[Tensor, dict]) -> tuple:
         """
         Returns the output of the representation, greedy actions, and the evaluated Q-values via target networks.
 
@@ -132,7 +131,7 @@ class DuelQnetwork(Module):
                 self.representation = DistributedDataParallel(module=self.representation, device_ids=[self.rank])
             self.eval_Qhead = DistributedDataParallel(module=self.eval_Qhead, device_ids=[self.rank])
 
-    def forward(self, observation: Union[np.ndarray, dict]):
+    def forward(self, observation: Union[Tensor, dict]):
         """
         Returns the output of the representation, greedy actions, and the evaluated Q-values.
 
@@ -149,7 +148,7 @@ class DuelQnetwork(Module):
         argmax_action = evalQ.argmax(dim=-1)
         return outputs, argmax_action, evalQ
 
-    def target(self, observation: Union[np.ndarray, dict]):
+    def target(self, observation: Union[Tensor, dict]):
         """
         Returns the output of the representation, greedy actions, and the evaluated Q-values via target networks.
 
@@ -224,7 +223,7 @@ class NoisyQnetwork(Module):
             self.eval_noise_parameter.append(torch.randn_like(parameter) * noisy_bound)
             self.target_noise_parameter.append(torch.randn_like(parameter) * noisy_bound)
 
-    def forward(self, observation: Union[np.ndarray, dict]):
+    def forward(self, observation: Union[Tensor, dict]):
         """
         Returns the output of the representation, greedy actions, and the evaluated Q-values.
 
@@ -244,7 +243,7 @@ class NoisyQnetwork(Module):
         argmax_action = evalQ.argmax(dim=-1)
         return outputs, argmax_action, evalQ
 
-    def target(self, observation: Union[np.ndarray, dict]):
+    def target(self, observation: Union[Tensor, dict]):
         """
         Returns the output of the representation, greedy actions, and the evaluated Q-values via target networks.
 
@@ -323,7 +322,7 @@ class C51Qnetwork(Module):
                 self.representation = DistributedDataParallel(module=self.representation, device_ids=[self.rank])
             self.eval_Zhead = DistributedDataParallel(module=self.eval_Zhead, device_ids=[self.rank])
 
-    def forward(self, observation: Union[np.ndarray, dict]):
+    def forward(self, observation: Union[Tensor, dict]):
         """
         Returns the output of the representation, greedy actions, and the evaluated Z-values.
 
@@ -341,7 +340,7 @@ class C51Qnetwork(Module):
         argmax_action = eval_Q.argmax(dim=-1)
         return outputs, argmax_action, eval_Z
 
-    def target(self, observation: Union[np.ndarray, dict]):
+    def target(self, observation: Union[Tensor, dict]):
         """
         Returns the output of the representation, greedy actions, and the evaluated Z-values via target networks.
 
@@ -409,7 +408,7 @@ class QRDQN_Network(Module):
                 self.representation = DistributedDataParallel(module=self.representation, device_ids=[self.rank])
             self.eval_Zhead = DistributedDataParallel(module=self.eval_Zhead, device_ids=[self.rank])
 
-    def forward(self, observation: Union[np.ndarray, dict]):
+    def forward(self, observation: Union[Tensor, dict]):
         """
         Returns the output of the representation, greedy actions, and the evaluated Z-values.
 
@@ -427,7 +426,7 @@ class QRDQN_Network(Module):
         argmax_action = eval_Q.argmax(dim=-1)
         return outputs, argmax_action, eval_Z
 
-    def target(self, observation: Union[np.ndarray, dict]):
+    def target(self, observation: Union[Tensor, dict]):
         """
         Returns the output of the representation, greedy actions, and the evaluated Z-values via target networks.
 
@@ -511,7 +510,7 @@ class DDPGPolicy(Module):
             self.actor = DistributedDataParallel(module=self.actor, device_ids=[self.rank])
             self.critic = DistributedDataParallel(module=self.critic, device_ids=[self.rank])
 
-    def forward(self, observation: Union[np.ndarray, dict]):
+    def forward(self, observation: Union[Tensor, dict]):
         """
         Returns the output of the actor representations, and the actions.
 
@@ -526,7 +525,7 @@ class DDPGPolicy(Module):
         act = self.actor(outputs['state'])
         return outputs, act
 
-    def Qtarget(self, observation: Union[np.ndarray, dict]):
+    def Qtarget(self, observation: Union[Tensor, dict]):
         """Returns the evaluated Q-values via target networks."""
         outputs_actor = self.target_actor_representation(observation)
         outputs_critic = self.target_critic_representation(observation)
@@ -534,13 +533,13 @@ class DDPGPolicy(Module):
         q_ = self.target_critic(torch.concat([outputs_critic['state'], act], dim=-1))
         return q_[:, 0]
 
-    def Qaction(self, observation: Union[np.ndarray, dict], action: Tensor):
+    def Qaction(self, observation: Union[Tensor, dict], action: Tensor):
         """Returns the evaluated Q-values of state-action pairs."""
         outputs = self.critic_representation(observation)
         q = self.critic(torch.concat([outputs['state'], action], dim=-1))
         return q[:, 0]
 
-    def Qpolicy(self, observation: Union[np.ndarray, dict]):
+    def Qpolicy(self, observation: Union[Tensor, dict]):
         """Returns the evaluated Q-values by calculating actions via actor networks."""
         outputs_actor = self.actor_representation(observation)
         act = self.actor(outputs_actor['state'])
@@ -635,7 +634,7 @@ class TD3Policy(Module):
             self.critic_A = DistributedDataParallel(module=self.critic_A, device_ids=[self.rank])
             self.critic_B = DistributedDataParallel(module=self.critic_B, device_ids=[self.rank])
 
-    def forward(self, observation: Union[np.ndarray, dict]):
+    def forward(self, observation: Union[Tensor, dict]):
         """
         Returns the output of the actor representations, and the actions.
 
@@ -650,7 +649,7 @@ class TD3Policy(Module):
         act = self.actor(outputs['state'])
         return outputs, act
 
-    def Qtarget(self, observation: Union[np.ndarray, dict]):
+    def Qtarget(self, observation: Union[Tensor, dict]):
         """Returns the evaluated Q-values via target networks."""
         outputs_actor = self.target_actor_representation(observation)
         outputs_critic_A = self.target_critic_A_representation(observation)
@@ -664,7 +663,7 @@ class TD3Policy(Module):
         min_q = torch.min(qa, qb)
         return min_q[:, 0]
 
-    def Qaction(self, observation: Union[np.ndarray, dict], action: Tensor):
+    def Qaction(self, observation: Union[Tensor, dict], action: Tensor):
         """Returns the evaluated Q-values of state-action pairs."""
         outputs_critic_A = self.critic_A_representation(observation)
         outputs_critic_B = self.critic_B_representation(observation)
@@ -672,7 +671,7 @@ class TD3Policy(Module):
         q_eval_b = self.critic_B(torch.concat([outputs_critic_B['state'], action], dim=-1))
         return q_eval_a[:, 0], q_eval_b[:, 0]
 
-    def Qpolicy(self, observation: Union[np.ndarray, dict]):
+    def Qpolicy(self, observation: Union[Tensor, dict]):
         """Returns the evaluated Q-values by calculating actions via actor networks."""
         outputs_actor = self.actor_representation(observation)
         outputs_critic_A = self.critic_A_representation(observation)
@@ -1010,7 +1009,7 @@ class DRQNPolicy(Module):
                 self.representation = DistributedDataParallel(module=self.representation, device_ids=[self.rank])
             self.eval_Qhead = DistributedDataParallel(module=self.eval_Qhead, device_ids=[self.rank])
 
-    def forward(self, observation: Union[np.ndarray, dict], *rnn_hidden: Tensor):
+    def forward(self, observation: Union[Tensor, dict], *rnn_hidden: Tensor):
         """
         Returns the output of the representation, greedy actions, the evaluated Q-values and the RNN hidden states.
 
@@ -1038,7 +1037,7 @@ class DRQNPolicy(Module):
         argmax_action = evalQ[:, -1].argmax(dim=-1)
         return outputs, argmax_action, evalQ, (hidden_states, cell_states)
 
-    def target(self, observation: Union[np.ndarray, dict], *rnn_hidden: Tensor):
+    def target(self, observation: Union[Tensor, dict], *rnn_hidden: Tensor):
         if self.cnn:
             obs_shape = observation.shape
             outputs = self.target_representation(observation.reshape((-1,) + obs_shape[-3:]))

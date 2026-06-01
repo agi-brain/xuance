@@ -1,8 +1,7 @@
 import torch
-import torch.nn as nn
 import numpy as np
 from xuance.common import Optional, Union
-from xuance.torch import Tensor
+from xuance.torch import nn, Tensor
 try:
     import torch_scatter
 except ImportError:

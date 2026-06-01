@@ -57,7 +57,7 @@ class ActorPolicy(Module):
                 self.representation = DistributedDataParallel(module=self.representation, device_ids=[self.rank])
             self.actor = DistributedDataParallel(module=self.actor, device_ids=[self.rank])
 
-    def forward(self, observation: Union[np.ndarray, dict]):
+    def forward(self, observation: Union[Tensor, dict]):
         """
         Returns the hidden states, action distribution.
 
@@ -117,7 +117,7 @@ class ActorCriticPolicy(Module):
             self.actor = DistributedDataParallel(module=self.actor, device_ids=[self.rank])
             self.critic = DistributedDataParallel(module=self.critic, device_ids=[self.rank])
 
-    def forward(self, observation: Union[np.ndarray, dict]):
+    def forward(self, observation: Union[Tensor, dict]):
         """
         Returns the hidden states, action distribution, and values.
 
@@ -189,7 +189,7 @@ class PPGActorCritic(Module):
             self.critic = DistributedDataParallel(self.critic, device_ids=[self.rank])
             self.aux_critic = DistributedDataParallel(self.aux_critic, device_ids=[self.rank])
 
-    def forward(self, observation: Union[np.ndarray, dict]):
+    def forward(self, observation: Union[Tensor, dict]):
         """
         Returns the actors representation output, action distribution, values, and auxiliary values.
 
@@ -277,7 +277,7 @@ class SACDISPolicy(Module):
             self.critic_1 = DistributedDataParallel(module=self.critic_1, device_ids=[self.rank])
             self.critic_2 = DistributedDataParallel(module=self.critic_2, device_ids=[self.rank])
 
-    def forward(self, observation: Union[np.ndarray, dict]):
+    def forward(self, observation: Union[Tensor, dict]):
         """
         Returns the output of actor representation and samples of actions.
 
@@ -293,7 +293,7 @@ class SACDISPolicy(Module):
         act_samples = act_dist.stochastic_sample()
         return outputs, act_samples
 
-    def Qpolicy(self, observation: Union[np.ndarray, dict]):
+    def Qpolicy(self, observation: Union[Tensor, dict]):
         """
         Feedforward and calculate the action probabilities, log of action probabilities, and Q-values.
 
@@ -320,7 +320,7 @@ class SACDISPolicy(Module):
         q_2 = self.critic_2(outputs_critic_2['state'])
         return act_prob, log_action_prob, q_1, q_2
 
-    def Qtarget(self, observation: Union[np.ndarray, dict]):
+    def Qtarget(self, observation: Union[Tensor, dict]):
         """
         Calculate the action probabilities, log of action probabilities, and Q-values with target networks.
 
@@ -347,7 +347,7 @@ class SACDISPolicy(Module):
         target_q = torch.min(target_q_1, target_q_2)
         return new_act_prob, log_action_prob, target_q
 
-    def Qaction(self, observation: Union[np.ndarray, dict]):
+    def Qaction(self, observation: Union[Tensor, dict]):
         """
         Returns the evaluated Q-values for current observations.
 

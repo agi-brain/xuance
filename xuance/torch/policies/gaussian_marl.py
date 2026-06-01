@@ -1,6 +1,5 @@
 import os
 import torch
-import numpy as np
 from copy import deepcopy
 from gymnasium.spaces import Box
 from xuance.common import Sequence, Optional, Callable, Union, Dict, List

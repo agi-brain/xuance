@@ -39,7 +39,7 @@ class Basic_CNN(Module):
         layers.append(nn.Flatten())
         return nn.Sequential(*layers)
 
-    def forward(self, observations: np.ndarray):
+    def forward(self, observations: Tensor):
         observations = observations / 255.0
         tensor_observation = torch.as_tensor(observations, dtype=torch.float32,
                                              device=self.device).permute((0, 3, 1, 2))
@@ -91,7 +91,7 @@ class AC_CNN_Atari(Module):
             layers.extend(mlp)
         return nn.Sequential(*layers)
 
-    def forward(self, observations: np.ndarray):
+    def forward(self, observations: Tensor):
         observations = observations / 255.0
         tensor_observation = torch.as_tensor(observations, dtype=torch.float32,
                                              device=self.device).permute((0, 3, 1, 2))

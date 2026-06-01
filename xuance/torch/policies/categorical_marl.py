@@ -1,7 +1,5 @@
 import os
 import torch
-import numpy as np
-import torch.nn as nn
 from copy import deepcopy
 from operator import itemgetter
 from gymnasium.spaces import Discrete
@@ -12,7 +10,7 @@ from xuance.torch.policies import CategoricalActorNet, ActorNet
 from xuance.torch.policies.core import CriticNet, BasicQhead
 from xuance.torch.utils import ModuleType
 from xuance.torch.representations import Basic_MLP
-from xuance.torch import Tensor, Module, ModuleDict, DistributedDataParallel
+from xuance.torch import nn, Tensor, Module, ModuleDict, DistributedDataParallel
 from .core import CategoricalActorNet_SAC as Actor_SAC
 
 
@@ -1353,7 +1351,7 @@ class Basic_ISAC_Policy(Module):
         return (rnn_hidden_actor_new, rnn_hidden_critic_new_1, rnn_hidden_critic_new_2,
                 new_act_prob_dict, log_action_prob_dict, target_q)
 
-    def Qaction(self, observation: Union[np.ndarray, dict],
+    def Qaction(self, observation: Union[Tensor, dict],
                 agent_ids: Tensor, agent_key: str = None,
                 rnn_hidden_critic_1: Optional[Dict[str, List[Tensor]]] = None,
                 rnn_hidden_critic_2: Optional[Dict[str, List[Tensor]]] = None):
@@ -1361,7 +1359,7 @@ class Basic_ISAC_Policy(Module):
         Returns the evaluated Q-values for current observation-action pairs.
 
         Parameters:
-            observation (Union[np.ndarray, dict]): The original observation.
+            observation (Union[Tensor, dict]): The original observation.
             agent_ids (Tensor): The agents' ids (for parameter sharing).
             agent_key (str): Calculate actions for specified agent.
             rnn_hidden_critic_1 (Optional[Dict[str, List[Tensor]]]): The RNN hidden states for critic_1 representation.

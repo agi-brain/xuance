@@ -1,4 +1,3 @@
-import numpy as np
 from xuance.common import Sequence, Optional, Union, Callable
 from xuance.torch import Module, Tensor
 from xuance.torch.utils import torch, nn, mlp_block, ModuleType
@@ -15,9 +14,10 @@ class Basic_Identical(Module):
         self.output_shapes = {'state': (input_shape[0],)}
         self.device = device
 
-    def forward(self, observations: np.ndarray):
-        state = torch.as_tensor(observations, dtype=torch.float32, device=self.device)
-        return {'state': state}
+    def forward(self, observations: Tensor) -> dict[str, Tensor]:
+        return {
+            'state': torch.as_tensor(observations, dtype=torch.float32, device=self.device)
+        }
 
 
 # process the input observations with stacks of MLP layers
@@ -49,6 +49,6 @@ class Basic_MLP(Module):
             layers.extend(mlp)
         return nn.Sequential(*layers)
 
-    def forward(self, observations: np.ndarray):
+    def forward(self, observations: Tensor) -> dict[str, Tensor]:
         tensor_observation = torch.as_tensor(observations, dtype=torch.float32, device=self.device)
         return {'state': self.model(tensor_observation)}

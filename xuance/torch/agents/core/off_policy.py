@@ -5,7 +5,7 @@ from argparse import Namespace
 from gymnasium.spaces import Space
 from xuance.common import Optional, DummyOffPolicyBuffer, DummyOffPolicyBuffer_Atari, BaseCallback
 from xuance.environment import DummyVecEnv, SubprocVecEnv
-from xuance.torch import Module
+from xuance.torch import Module, Tensor
 from xuance.torch.agents.base import Agent
 
 
@@ -94,14 +94,18 @@ class OffPolicyAgent(Agent):
             - The replay buffer is shared across all parallel environments and
               supports batched sampling for off-policy updates.
         """
-        self.atari = self.config.env_name == "Atari"
-        Buffer = DummyOffPolicyBuffer_Atari if self.atari else DummyOffPolicyBuffer
         input_buffer = dict(observation_space=self.observation_space,
                             action_space=self.action_space,
                             auxiliary_shape=auxiliary_info_shape,
                             n_envs=self.n_envs,
                             buffer_size=self.buffer_size,
                             batch_size=self.batch_size)
+        if self.is_tensor_env:
+            from xuance.torch.utils import TensorOffPolicyBuffer as Buffer
+            input_buffer['device'] = self.device
+        else:
+            self.atari = self.config.env_name == "Atari"
+            Buffer = DummyOffPolicyBuffer_Atari if self.atari else DummyOffPolicyBuffer
         return Buffer(**input_buffer)
 
     def _build_policy(self) -> Module:
@@ -117,7 +121,7 @@ class OffPolicyAgent(Agent):
         else:
             return
 
-    def exploration(self, pi_actions):
+    def exploration(self, pi_actions: Tensor) -> Tensor:
         """Returns the actions for exploration.
 
         Parameters:

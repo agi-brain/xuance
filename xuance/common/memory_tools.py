@@ -411,7 +411,8 @@ class RecurrentOffPolicyBuffer(Buffer):
                  batch_size: int,
                  episode_length: int,
                  lookup_length: int):
-        super(RecurrentOffPolicyBuffer, self).__init__(observation_space, action_space, auxiliary_shape)
+        super(RecurrentOffPolicyBuffer, self).__init__(observation_space, action_space, auxiliary_shape,
+                                                       n_envs, buffer_size)
         self.n_envs, self.buffer_size, self.episode_length, self.batch_size = n_envs, buffer_size, episode_length, batch_size
         assert buffer_size % self.n_envs == 0, "buffer_size must be divisible by the number of envs (parallels)"
         self.n_size = self.buffer_size // self.n_envs
@@ -489,7 +490,7 @@ class PerOffPolicyBuffer(Buffer):
                  buffer_size: int,
                  batch_size: int,
                  alpha: float = 0.6):
-        super(PerOffPolicyBuffer, self).__init__(observation_space, action_space, auxiliary_shape)
+        super(PerOffPolicyBuffer, self).__init__(observation_space, action_space, auxiliary_shape, n_envs, buffer_size)
         self.n_envs, self.batch_size = n_envs, batch_size
         assert buffer_size % self.n_envs == 0, "buffer_size must be divisible by the number of envs (parallels)"
         self.n_size = buffer_size // self.n_envs

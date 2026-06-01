@@ -87,6 +87,7 @@ class Agent(ABC):
         # Environment attributes.
         self.train_envs = envs
         self.render = config.render
+        self.is_tensor_env = getattr(self.config, "use_tensor_env", False)
         self.fps = config.fps
         if self.train_envs is None:
             if observation_space is None or action_space is None:

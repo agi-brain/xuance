@@ -47,7 +47,7 @@ class Basic_RNN(Module):
                                                self.dropout, self.initialize, self.device)
         return nn.Sequential(*layers), rnn_layer, input_shape
 
-    def forward(self, x: Tensor, h: Tensor, c: Tensor = None):
+    def forward(self, x: Tensor, h: Tensor, c: Tensor = None) -> dict[str, Tensor]:
         if self.use_normalize:
             tensor_x = self.input_norm(torch.as_tensor(x, dtype=torch.float32, device=self.device))
         else:
