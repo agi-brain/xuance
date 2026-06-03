@@ -308,9 +308,9 @@ class TensorOffPolicyBuffer(TensorBuffer):
         self.size = min(self.size + 1, self.n_size)
 
     def sample(self, batch_size=None):
-        bs = self.batch_size if batch_size is None else batch_size
-        env_choices = torch.random.choice(self.n_envs, bs)
-        step_choices = torch.random.choice(self.size, bs)
+        bs = batch_size or self.batch_size
+        env_choices = torch.randint(0, self.n_envs, (bs, ))
+        step_choices = torch.randint(0, self.size, (bs, ))
 
         samples_dict = {
             'obs': sample_batch(self.observations, tuple([env_choices, step_choices])),

@@ -14,7 +14,9 @@ from torch.distributed import destroy_process_group
 from xuance.common import get_time_string, create_directory, RunningMeanStd, EPS, Optional, BaseCallback
 from xuance.environment import DummyVecEnv, SubprocVecEnv, space2shape
 from xuance.torch import REGISTRY_Representation, REGISTRY_Learners, Module
-from xuance.torch.utils import nn, NormalizeFunctions, ActivationFunctions, init_distributed_mode, set_seed, set_device
+from xuance.torch.utils import (nn, NormalizeFunctions, ActivationFunctions, init_distributed_mode, set_seed,
+                                set_device,
+                                TensorEnvWrapper, TensorRunningMeanStd)
 
 
 class Agent(ABC):
@@ -68,6 +70,7 @@ class Agent(ABC):
         self.config = config
         self.use_rnn = getattr(config, "use_rnn", False)
         self.use_actions_mask = getattr(config, "use_actions_mask", False)
+        self.is_tensor_memory = getattr(self.config, "use_tensor_memory", False)
         self.distributed_training = getattr(config, "distributed_training", False)
         if self.distributed_training:
             self.world_size = int(os.environ['WORLD_SIZE'])
@@ -85,9 +88,11 @@ class Agent(ABC):
         self.device = self.config.device = set_device(self.config.device)
 
         # Environment attributes.
-        self.train_envs = envs
+        if self.is_tensor_memory:
+            self.train_envs = TensorEnvWrapper(envs, self.device)
+        else:
+            self.train_envs = envs
         self.render = config.render
-        self.is_tensor_memory = getattr(self.config, "use_tensor_memory", False)
         self.fps = config.fps
         if self.train_envs is None:
             if observation_space is None or action_space is None:
@@ -108,13 +113,19 @@ class Agent(ABC):
         self.current_episode = np.zeros((self.n_envs,), np.int32)
 
         # Set normalizations for observations and rewards.
-        self.obs_rms = RunningMeanStd(shape=space2shape(self.observation_space))
-        self.ret_rms = RunningMeanStd(shape=())
+        if self.is_tensor_memory:
+            self.obs_rms = TensorRunningMeanStd(shape=space2shape(self.observation_space),
+                                                device=self.device, distributed=self.distributed_training)
+            self.ret_rms = TensorRunningMeanStd(shape=(), device=self.device, distributed=self.distributed_training)
+            self.returns = torch.zeros(size=(self.n_envs,), dtype=torch.float32, device=self.device)
+        else:
+            self.obs_rms = RunningMeanStd(shape=space2shape(self.observation_space))
+            self.ret_rms = RunningMeanStd(shape=())
+            self.returns = np.zeros((self.n_envs,), np.float32)
         self.use_obsnorm = config.use_obsnorm
         self.use_rewnorm = config.use_rewnorm
         self.obsnorm_range = config.obsnorm_range
         self.rewnorm_range = config.rewnorm_range
-        self.returns = np.zeros((self.n_envs,), np.float32)
 
         # Prepare directories.
         if self.distributed_training and self.world_size > 1:
@@ -246,22 +257,38 @@ class Agent(ABC):
         if self.use_obsnorm:
             if isinstance(self.observation_space, Dict):
                 for key in self.observation_space.spaces.keys():
-                    observations[key] = np.clip(
-                        (observations[key] - self.obs_rms.mean[key]) / (self.obs_rms.std[key] + EPS),
-                        -self.obsnorm_range, self.obsnorm_range)
+                    if self.is_tensor_memory:
+                        observations[key] = torch.clip(
+                            (observations[key] - self.obs_rms.mean[key]) / (self.obs_rms.std[key] + EPS),
+                            -self.obsnorm_range, self.obsnorm_range)
+                    else:
+                        observations[key] = np.clip(
+                            (observations[key] - self.obs_rms.mean[key]) / (self.obs_rms.std[key] + EPS),
+                            -self.obsnorm_range, self.obsnorm_range)
             else:
-                observations = np.clip((observations - self.obs_rms.mean) / (self.obs_rms.std + EPS),
-                                       -self.obsnorm_range, self.obsnorm_range)
+                if self.is_tensor_memory:
+                    observations = torch.clip((observations - self.obs_rms.mean) / (self.obs_rms.std + EPS),
+                                              -self.obsnorm_range, self.obsnorm_range)
+                else:
+                    observations = np.clip((observations - self.obs_rms.mean) / (self.obs_rms.std + EPS),
+                                           -self.obsnorm_range, self.obsnorm_range)
             return observations
         else:
             return observations
 
     def _process_reward(self, rewards):
         if self.use_rewnorm:
-            std = np.clip(self.ret_rms.std, 0.1, 100)
-            return np.clip(rewards / std, -self.rewnorm_range, self.rewnorm_range)
+            if self.is_tensor_memory:
+                std = torch.clip(self.ret_rms.std, 0.1, 100)
+                return torch.clip(rewards / std, -self.rewnorm_range, self.rewnorm_range)
+            else:
+                std = np.clip(self.ret_rms.std, 0.1, 100)
+                return np.clip(rewards / std, -self.rewnorm_range, self.rewnorm_range)
         else:
             return rewards
+
+    def _to_tensor(self, x):
+        return None if x is None else torch.as_tensor(x, device=self.device)
 
     def _build_representation(self, representation_key: str,
                               input_space: Optional[Space],

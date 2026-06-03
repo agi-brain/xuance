@@ -1,3 +1,4 @@
+import torch
 import numpy as np
 from tqdm import tqdm
 from copy import deepcopy
@@ -66,6 +67,8 @@ class OffPolicyAgent(Agent):
             self.delta_noise = None
         self.actions_low = getattr(self.action_space, "low", None)
         self.actions_high = getattr(self.action_space, "high", None)
+        self.actions_low_tensor = self._to_tensor(self.actions_low)
+        self.actions_high_tensor = self._to_tensor(self.actions_high)
 
         self.auxiliary_info_shape = None
         self.memory: Optional[DummyOffPolicyBuffer] = None
@@ -73,7 +76,7 @@ class OffPolicyAgent(Agent):
         self.buffer_size = self.config.buffer_size
         self.batch_size = self.config.batch_size
 
-    def _build_memory(self, auxiliary_info_shape=None) -> DummyOffPolicyBuffer:
+    def _build_memory(self, auxiliary_info_shape=None):
         """Build and initialize the replay buffer for off-policy training.
 
         This method creates a replay buffer instance based on the environment type and agent configuration.
@@ -100,11 +103,11 @@ class OffPolicyAgent(Agent):
                             n_envs=self.n_envs,
                             buffer_size=self.buffer_size,
                             batch_size=self.batch_size)
+        self.atari = self.config.env_name == "Atari"
         if self.is_tensor_memory:
             from xuance.torch.utils import TensorOffPolicyBuffer as Buffer
             input_buffer['device'] = self.device
         else:
-            self.atari = self.config.env_name == "Atari"
             Buffer = DummyOffPolicyBuffer_Atari if self.atari else DummyOffPolicyBuffer
         return Buffer(**input_buffer)
 
@@ -121,7 +124,7 @@ class OffPolicyAgent(Agent):
         else:
             return
 
-    def exploration(self, pi_actions: Tensor) -> Tensor:
+    def exploration(self, pi_actions):
         """Returns the actions for exploration.
 
         Parameters:
@@ -130,18 +133,30 @@ class OffPolicyAgent(Agent):
         Returns:
             explore_actions: The actions with noisy values.
         """
-        if self.e_greedy is not None:
-            random_actions = np.random.choice(self.action_space.n, self.n_envs)
-            if np.random.rand() < self.e_greedy:
-                explore_actions = random_actions
+        if self.is_tensor_memory:
+            if self.e_greedy is not None:
+                explore_mask = torch.rand(self.n_envs, device=self.device) < self.e_greedy
+                random_actions = torch.randint(0, self.action_space.n, size=(self.n_envs,), device=self.device)
+                explore_actions = torch.where(explore_mask, random_actions, pi_actions)
+            elif self.noise_scale is not None:
+                explore_actions = pi_actions + torch.randn_like(pi_actions) * self.noise_scale
+                explore_actions = torch.clamp(explore_actions, self.actions_low_tensor, self.actions_high_tensor)
+            else:
+                explore_actions = pi_actions.detach()
+            return explore_actions
+        else:
+            if self.e_greedy is not None:
+                random_actions = np.random.choice(self.action_space.n, self.n_envs)
+                if np.random.rand() < self.e_greedy:
+                    explore_actions = random_actions
+                else:
+                    explore_actions = pi_actions.detach().cpu().numpy()
+            elif self.noise_scale is not None:
+                explore_actions = pi_actions + np.random.normal(size=pi_actions.shape) * self.noise_scale
+                explore_actions = np.clip(explore_actions, self.actions_low, self.actions_high)
             else:
                 explore_actions = pi_actions.detach().cpu().numpy()
-        elif self.noise_scale is not None:
-            explore_actions = pi_actions + np.random.normal(size=pi_actions.shape) * self.noise_scale
-            explore_actions = np.clip(explore_actions, self.actions_low, self.actions_high)
-        else:
-            explore_actions = pi_actions.detach().cpu().numpy()
-        return explore_actions
+            return explore_actions
 
     def get_actions(self, observations: np.ndarray,
                     test_mode: Optional[bool] = False) -> dict:
@@ -159,7 +174,10 @@ class OffPolicyAgent(Agent):
         """
         _, actions_output, _ = self.policy(observations)
         if test_mode:
-            actions = actions_output.detach().cpu().numpy()
+            if self.is_tensor_memory:
+                actions = actions_output.detach()
+            else:
+                actions = actions_output.detach().cpu().numpy()
         else:
             actions = self.exploration(actions_output)
         return {"actions": actions}

@@ -22,6 +22,8 @@ from .operations import (init_distributed_mode, update_linear_decay, set_seed,
                          dotdict)
 from .value_norm import ValueNorm
 from .tensor_memory import TensorOnPolicyBuffer, TensorOffPolicyBuffer
+from .tensor_env import TensorEnvWrapper, TensorMultiAgentEnvWrapper
+from .tensor_statistics import TensorRunningMeanStd
 
 ActivationFunctions = {
     "relu": nn.ReLU,
