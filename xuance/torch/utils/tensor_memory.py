@@ -258,6 +258,24 @@ class TensorOnPolicyBuffer(TensorBuffer):
         return samples_dict
 
 
+class TensorOnPolicyBufferAtari(TensorOnPolicyBuffer):
+    def __init__(self, *args, **kwargs):
+        super(TensorOnPolicyBufferAtari, self).__init__(*args, **kwargs)
+
+    def clear(self):
+        self.ptr, self.size = 0, 0
+        self.observations = create_tensor_memory(space2shape(self.observation_space), self.n_envs, self.n_size,
+                                                 dtype=torch.int8, device=self.device)
+        self.actions = create_tensor_memory(space2shape(self.action_space), self.n_envs, self.n_size,
+                                            device=self.device)
+        self.rewards = create_tensor_memory((), self.n_envs, self.n_size, device=self.device)
+        self.returns = create_tensor_memory((), self.n_envs, self.n_size, device=self.device)
+        self.values = create_tensor_memory((), self.n_envs, self.n_size, device=self.device)
+        self.terminals = create_tensor_memory((), self.n_envs, self.n_size, device=self.device)
+        self.advantages = create_tensor_memory((), self.n_envs, self.n_size, device=self.device)
+        self.auxiliary_infos = create_tensor_memory(self.auxiliary_shape, self.n_envs, self.n_size, device=self.device)
+
+
 class TensorOffPolicyBuffer(TensorBuffer):
     """
     Replay buffer for off-policy DRL algorithms.
@@ -321,3 +339,19 @@ class TensorOffPolicyBuffer(TensorBuffer):
             'batch_size': bs,
         }
         return samples_dict
+
+
+class TensorOffPolicyBufferAtari(TensorOffPolicyBuffer):
+    def __init__(self, *args, **kwargs):
+        super(TensorOffPolicyBufferAtari, self).__init__(*args, **kwargs)
+
+    def clear(self):
+        self.observations = create_tensor_memory(space2shape(self.observation_space), self.n_envs, self.n_size,
+                                                 dtype=torch.int8, device=self.device)
+        self.next_observations = create_tensor_memory(space2shape(self.observation_space), self.n_envs, self.n_size,
+                                                      dtype=torch.int8, device=self.device)
+        self.actions = create_tensor_memory(space2shape(self.action_space), self.n_envs, self.n_size,
+                                            device=self.device)
+        self.auxiliary_infos = create_tensor_memory(self.auxiliary_shape, self.n_envs, self.n_size, device=self.device)
+        self.rewards = create_tensor_memory((), self.n_envs, self.n_size, device=self.device)
+        self.terminals = create_tensor_memory((), self.n_envs, self.n_size, device=self.device)

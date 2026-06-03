@@ -6,8 +6,9 @@ from argparse import Namespace
 from gymnasium.spaces import Space
 from xuance.common import Optional, DummyOffPolicyBuffer, DummyOffPolicyBuffer_Atari, BaseCallback
 from xuance.environment import DummyVecEnv, SubprocVecEnv
-from xuance.torch import Module, Tensor
+from xuance.torch import Module
 from xuance.torch.agents.base import Agent
+from xuance.torch.utils import TensorOffPolicyBuffer, TensorOffPolicyBufferAtari, TensorEnvWrapper
 
 
 class OffPolicyAgent(Agent):
@@ -105,7 +106,7 @@ class OffPolicyAgent(Agent):
                             batch_size=self.batch_size)
         self.atari = self.config.env_name == "Atari"
         if self.is_tensor_memory:
-            from xuance.torch.utils import TensorOffPolicyBuffer as Buffer
+            Buffer = TensorOffPolicyBufferAtari if self.atari else TensorOffPolicyBuffer
             input_buffer['device'] = self.device
         else:
             Buffer = DummyOffPolicyBuffer_Atari if self.atari else DummyOffPolicyBuffer
@@ -248,7 +249,7 @@ class OffPolicyAgent(Agent):
             obs = deepcopy(next_obs)
             for i in range(self.n_envs):
                 if terminals[i] or truncations[i]:
-                    if self.atari and (~truncations[i]):
+                    if self.atari and (not truncations[i]):
                         pass
                     else:
                         obs[i] = infos[i]["reset_obs"]
@@ -310,6 +311,8 @@ class OffPolicyAgent(Agent):
         """
         if test_envs is None:
             raise ValueError("`test_envs` must be provided for evaluation.")
+        if self.is_tensor_memory:
+            test_envs = TensorEnvWrapper(test_envs, device=self.device)
         num_envs = test_envs.num_envs
         videos, episode_videos, images = [[] for _ in range(num_envs)], [], None
         current_episode, current_step, scores, best_score = 0, 0, [], -np.inf
@@ -338,7 +341,7 @@ class OffPolicyAgent(Agent):
             obs = deepcopy(next_obs)
             for i in range(num_envs):
                 if terminals[i] or truncations[i]:
-                    if self.atari and (~truncations[i]):
+                    if self.atari and (not truncations[i]):
                         pass
                     else:
                         obs[i] = infos[i]["reset_obs"]

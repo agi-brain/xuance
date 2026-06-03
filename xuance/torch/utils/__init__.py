@@ -21,7 +21,8 @@ from .operations import (init_distributed_mode, update_linear_decay, set_seed,
                          two_hot_encoder, two_hot_decoder, compute_stochastic_state, compute_lambda_values,
                          dotdict)
 from .value_norm import ValueNorm
-from .tensor_memory import TensorOnPolicyBuffer, TensorOffPolicyBuffer
+from .tensor_memory import (TensorOnPolicyBuffer, TensorOnPolicyBufferAtari,
+                            TensorOffPolicyBuffer, TensorOffPolicyBufferAtari)
 from .tensor_env import TensorEnvWrapper, TensorMultiAgentEnvWrapper
 from .tensor_statistics import TensorRunningMeanStd
 

@@ -20,9 +20,8 @@ class TensorEnvWrapper:
     def _to_tensor(self, data, dtype=torch.float32):
         if isinstance(data, dict):
             return {k: self._to_tensor(v) for k, v in data.items()}
-        elif isinstance(data, np.ndarray):
+        else:
             return torch.as_tensor(data, dtype=dtype, device=self.device)
-        return data
 
     @property
     def max_episode_steps(self):
@@ -44,12 +43,15 @@ class TensorEnvWrapper:
         next_obs, rewards, terminals, truncations, infos = self.envs.step(actions_np)
         for e in range(self.num_envs):
             if terminals[e] or truncations[e]:
-                infos[e]["reset_obs"] = self._to_tensor(infos[e]["reset_obs"])
+                infos[e]["reset_obs"] = self._to_tensor(np.array(infos[e]["reset_obs"]))
         return (self._to_tensor(next_obs),
                 self._to_tensor(rewards),
                 self._to_tensor(terminals),
                 self._to_tensor(truncations),
                 infos)
+
+    def render(self, *args, **kwargs):
+        return self.envs.render(*args, **kwargs)
 
 
 class TensorMultiAgentEnvWrapper:
