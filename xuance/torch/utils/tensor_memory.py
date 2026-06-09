@@ -215,7 +215,7 @@ class TensorOnPolicyBuffer(TensorBuffer):
             path_slice = torch.arange(self.start_ids[i], self.n_size, dtype=torch.int32)
         else:
             path_slice = torch.arange(self.start_ids[i], self.ptr, dtype=torch.int32)
-        vs = torch.cat(Tensor(self.values[i, path_slice]), [val], axis=0)
+        vs = torch.cat([self.values[i, path_slice], Tensor([val])], axis=0)
         if self.use_gae:  # use gae
             rewards = Tensor(self.rewards[i, path_slice])
             advantages = torch.zeros_like(rewards)

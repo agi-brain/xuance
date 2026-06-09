@@ -8,6 +8,7 @@ from xuance.environment import DummyVecEnv, SubprocVecEnv
 from xuance.torch import Module
 from xuance.torch.utils import split_distributions
 from xuance.torch.agents.base import Agent
+from xuance.torch.utils import TensorOnPolicyBuffer, TensorOnPolicyBufferAtari, TensorEnvWrapper
 
 
 class OnPolicyAgent(Agent):
@@ -81,10 +82,6 @@ class OnPolicyAgent(Agent):
             - When `use_gae` is enabled, the buffer computes advantages using `gamma` and `gae_lam`;
                 when `use_advnorm` is enabled, advantages are normalized before updates.
         """
-        self.atari = self.config.env_name == "Atari"
-        Buffer = DummyOnPolicyBuffer_Atari if self.atari else DummyOnPolicyBuffer
-        self.buffer_size = self.n_envs * self.horizon_size
-        self.batch_size = self.buffer_size // self.n_minibatch
         input_buffer = dict(observation_space=self.observation_space,
                             action_space=self.action_space,
                             auxiliary_shape=auxiliary_info_shape,
@@ -94,6 +91,14 @@ class OnPolicyAgent(Agent):
                             use_advnorm=self.config.use_advnorm,
                             gamma=self.gamma,
                             gae_lam=self.gae_lam)
+        self.atari = self.config.env_name == "Atari"
+        if self.is_tensor_memory:
+            Buffer = TensorOnPolicyBufferAtari if self.atari else TensorOnPolicyBuffer
+            input_buffer['device'] = self.device
+        else:
+            Buffer = DummyOnPolicyBuffer_Atari if self.atari else DummyOnPolicyBuffer
+        self.buffer_size = self.n_envs * self.horizon_size
+        self.batch_size = self.buffer_size // self.n_minibatch
         return Buffer(**input_buffer)
 
     def _build_policy(self) -> Module:
@@ -142,13 +147,15 @@ class OnPolicyAgent(Agent):
         """
         _, policy_dists, values = self.policy(observations)
         actions = policy_dists.stochastic_sample()
-        log_pi = policy_dists.log_prob(actions).detach().cpu().numpy() if return_logpi else None
         dists = split_distributions(policy_dists) if return_dists else None
-        actions = actions.detach().cpu().numpy()
-        if values is None:
-            values = 0
+        if self.is_tensor_memory:
+            log_pi = policy_dists.log_prob(actions).detach() if return_logpi else None
+            actions = actions.detach()
+            values = 0 if values is None else values.detach()
         else:
-            values = values.detach().cpu().numpy()
+            log_pi = policy_dists.log_prob(actions).detach().cpu().numpy() if return_logpi else None
+            actions = actions.detach().cpu().numpy()
+            values = 0 if values is None else values.detach().cpu().numpy()
         return {"actions": actions, "values": values, "dists": dists, "log_pi": log_pi}
 
     def get_aux_info(self, policy_output: dict = None) -> dict:
@@ -312,6 +319,8 @@ class OnPolicyAgent(Agent):
         """
         if test_envs is None:
             raise ValueError("`test_envs` must be provided for evaluation.")
+        if self.is_tensor_memory:
+            test_envs = TensorEnvWrapper(test_envs, device=self.device)
         num_envs = test_envs.num_envs
         videos, episode_videos, images = [[] for _ in range(num_envs)], [], None
         current_episode, current_step, scores, best_score = 0, 0, [], -np.inf
