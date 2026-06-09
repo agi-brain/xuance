@@ -1,0 +1,68 @@
+dl_toolbox: "torch"
+project_name: "XuanCe_Benchmark"
+logger: "tensorboard"
+wandb_user_name: "your_user_name"
+render: True
+render_mode: 'rgb_array'
+fps: 15
+test_mode: False
+device: "cuda:0"
+distributed_training: False
+master_port: '12355'
+
+agent: "ExpoComm"
+env_name: "mpe"
+env_id: "simple_spread_v3"
+env_seed: 1
+continuous_action: False
+learner: "ExpoComm_Learner"
+policy: "ExpoComm_Q_network"
+representation: "Basic_RNN"
+vectorize: "SubprocVecMultiAgentEnv"
+runner: "MARL"
+
+use_rnn: True
+rnn: "GRU"
+N_recurrent_layers: 1
+fc_hidden_sizes: [64, ]
+recurrent_hidden_size: 64
+dropout: 0
+
+representation_hidden_size: [64, ]
+q_hidden_size: [64, ]
+activation: "relu"
+use_parameter_sharing: True
+use_actions_mask: False
+
+hidden_dim_mixing_net: 128
+hidden_dim_hyper_net: 128
+
+seed: 1
+parallels: 16
+buffer_size: 100000
+batch_size: 256
+learning_rate: 0.001
+gamma: 0.99
+double_q: True
+td_lambda: 0.4  
+
+topk: 3
+aux_coef: 0.01
+one_peer: True
+attention_dim: 32
+
+start_greedy: 1.0
+end_greedy: 0.05
+decay_step_greedy: 2500000
+start_training: 1000
+running_steps: 10000000
+training_frequency: 25
+sync_frequency: 100
+
+use_grad_clip: False
+grad_clip_norm: 0.5
+
+eval_interval: 100000
+test_episode: 5
+log_dir: "logs/qmix_mpe/"
+model_dir: "models/qmix_mpe/"
