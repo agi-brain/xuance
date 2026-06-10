@@ -31,6 +31,16 @@ except Exception as error:
     REGISTRY_MULTI_AGENT_ENV["StarCraft2"] = str(error)
 
 try:
+    import sys
+    for module_name in list(sys.modules.keys()):
+        if 'smac.env.starcraft2' in module_name or 'smac.maps' in module_name:
+            del sys.modules[module_name]
+    from xuance.environment.multi_agent_env.smacv2 import SMACv2_Env
+    REGISTRY_MULTI_AGENT_ENV['SMACv2'] = SMACv2_Env
+except Exception as error:
+    REGISTRY_MULTI_AGENT_ENV["SMACv2"] = str(error)
+
+try:
     from xuance.environment.multi_agent_env.atari import AtariMultiAgentEnv
     REGISTRY_MULTI_AGENT_ENV['atari'] = AtariMultiAgentEnv
 except Exception as error:

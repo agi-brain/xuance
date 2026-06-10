@@ -1,0 +1,67 @@
+agent: "ExpoComm"
+env_name: "SMACv2"
+env_id: "10gen_protoss"
+env_seed: 1
+fps: 15
+device: "cuda:0"
+learner: "ExpoComm_Learner"
+policy: "ExpoComm_Q_network"
+representation: "Basic_RNN"
+vectorize: "Subproc_StarCraft2"
+runner: "RunnerStarCraft2"
+
+n_units: 10
+n_enemies: 11
+unit_types: ["zealot", "stalker", "colossus"]
+unit_weights: [0.6, 0.3, 0.1]
+exception_unit_types: ["colossus"]
+start_dist_type: "reflect_position"
+start_p: 1.0
+map_x: 32
+map_y: 32
+
+use_rnn: True
+rnn: "GRU"
+N_recurrent_layers: 1
+fc_hidden_sizes: [64, ]
+recurrent_hidden_size: 64
+dropout: 0
+
+representation_hidden_size: [64, ]
+q_hidden_size: [64, ]
+activation: "relu"
+use_parameter_sharing: True
+use_actions_mask: True
+
+hidden_dim_mixing_net: 32
+hidden_dim_hyper_net: 64
+
+seed: 1
+parallels: 8
+buffer_size: 5000
+batch_size: 64
+learning_rate: 0.001
+gamma: 0.99
+double_q: True
+
+topk: 8
+aux_coef: 0.1
+attention_dim: 32
+one_peer: False
+
+start_greedy: 1.0
+end_greedy: 0.05
+decay_step_greedy: 50000
+start_training: 1000
+running_steps: 5000000
+n_epochs: 4
+sync_frequency: 200
+
+use_grad_clip: True
+grad_clip_norm: 10.0
+
+eval_interval: 50000
+test_episode: 32
+
+log_dir: "logs/expocomm_smacv2/"
+model_dir: "models/expocomm_smacv2/"

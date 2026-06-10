@@ -1,0 +1,80 @@
+dl_toolbox: "torch"
+project_name: "QMIX_Benchmark"
+logger: "tensorboard"
+wandb_user_name: "your_user_name"
+render: True
+render_mode: "rgb_array"
+fps: 15
+test_mode: False
+device: "cuda:3"
+distributed_training: False
+master_port: "12355"
+
+agent: "ExpoComm"
+env_name: "SMACv2"
+env_id: "10gen_protoss"
+env_seed: 1
+learner: "ExpoComm_Learner"
+policy: "ExpoComm_Q_network"
+representation: "Basic_RNN"
+vectorize: "Subproc_StarCraft2"
+runner: "RunnerStarCraft2"
+
+n_units: 20
+n_enemies: 20
+unit_types: ["zealot", "stalker", "colossus"]
+unit_weights: [0.45, 0.45, 0.1]
+exception_unit_types: ["colossus"]
+start_dist_type: "surrounded_and_reflect"
+start_p: 0.5
+map_x: 32
+map_y: 32
+
+use_rnn: True
+rnn: "GRU"
+N_recurrent_layers: 1
+fc_hidden_sizes: [64, 64, 64]
+recurrent_hidden_size: 64
+dropout: 0
+
+representation_hidden_size: [64, ]
+q_hidden_size: [64, ]
+activation: "relu"
+use_parameter_sharing: True
+use_actions_mask: True
+
+topk: 7
+aux_coef: 0.01
+attention_dim: 32
+one_peer: True
+
+
+hidden_dim_mixing_net: 64
+hidden_dim_hyper_net: 64
+
+seed: 1
+parallels: 8
+buffer_size: 5000
+batch_size: 32
+learning_rate: 0.0005
+gamma: 0.99
+double_q: True
+
+start_greedy: 1.0
+end_greedy: 0.05
+decay_step_greedy: 200000
+start_training: 1000 
+running_steps: 10000000
+n_epochs: 8
+sync_frequency: 200
+
+td_lambda: 0.4
+
+use_grad_clip: False
+grad_clip_norm: 0.5
+
+eval_interval: 100000
+test_episode: 16
+
+log_dir: "logs/qmix_smacv2/"
+model_dir: "models/qmix_smacv2/"
