@@ -154,7 +154,7 @@ class CategoricalDistribution(Distribution):
         return self.distribution.sample()
 
     def deterministic_sample(self):
-        return torch.argmax(self.distribution.probs, dim=1)
+        return torch.argmax(self.distribution.probs, dim=-1)
 
     def kl_divergence(self, other: Distribution):
         assert isinstance(other,

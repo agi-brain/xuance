@@ -204,13 +204,14 @@ class OnPolicyMARLAgents(MARLAgents):
         return rnn_hidden_actor, rnn_hidden_critic
 
     def get_actions(self,
-               obs_dict: List[dict],
-               state: Optional[np.ndarray] = None,
-               avail_actions_dict: Optional[List[dict]] = None,
-               rnn_hidden_actor: Optional[dict] = None,
-               rnn_hidden_critic: Optional[dict] = None,
-               test_mode: Optional[bool] = False,
-               **kwargs) -> dict:
+                    obs_dict: List[dict],
+                    state: Optional[np.ndarray] = None,
+                    avail_actions_dict: Optional[List[dict]] = None,
+                    rnn_hidden_actor: Optional[dict] = None,
+                    rnn_hidden_critic: Optional[dict] = None,
+                    test_mode: Optional[bool] = False,
+                    deterministic: bool = False,
+                    **kwargs) -> dict:
         """Compute actions (and optional value/log-prob outputs) for multi-agent execution.
 
         This method performs a forward pass through the current multi-agent actor-critic policy to produce actions for
@@ -233,6 +234,7 @@ class OnPolicyMARLAgents(MARLAgents):
                 Required when `self.use_rnn` is True and values are requested.
             test_mode (bool): Whether to run in evaluation mode. When True, only actions are produced and
                 training-specific outputs (values/log_pi) are omitted.
+            deterministic (bool): True for deterministic policy and False for stochastic policy.
 
         Returns:
             dict: A dictionary containing:
@@ -261,7 +263,10 @@ class OnPolicyMARLAgents(MARLAgents):
 
         if self.use_parameter_sharing:
             key = self.agent_keys[0]
-            actions_sample = pi_dists[key].stochastic_sample()
+            if deterministic:
+                actions_sample = pi_dists[key].deterministic_sample()
+            else:
+                actions_sample = pi_dists[key].stochastic_sample()
             if self.continuous_control:
                 actions_out = actions_sample.reshape(n_env, self.n_agents, -1)
             else:
@@ -274,7 +279,10 @@ class OnPolicyMARLAgents(MARLAgents):
                 values_out[key] = values_out[key].reshape(n_env, self.n_agents)
                 values_dict = {k: values_out[key][:, i].cpu().detach().numpy() for i, k in enumerate(self.agent_keys)}
         else:
-            actions_sample = {k: pi_dists[k].stochastic_sample() for k in self.agent_keys}
+            actions_sample = {
+                k: pi_dists[k].deterministic_sample() if deterministic else pi_dists[k].stochastic_sample()
+                for k in self.agent_keys
+            }
             if self.continuous_control:
                 actions_dict = [{k: actions_sample[k].cpu().detach().numpy()[e].reshape([-1]) for k in self.agent_keys}
                                 for e in range(n_env)]
@@ -414,7 +422,8 @@ class OnPolicyMARLAgents(MARLAgents):
         avail_actions = self.train_envs.buf_avail_actions if self.use_actions_mask else None
         state = self.train_envs.buf_state if self.use_global_state else None
         for _ in tqdm(range(train_steps)):
-            policy_out = self.get_actions(obs_dict=obs_dict, state=state, avail_actions_dict=avail_actions, test_mode=False)
+            policy_out = self.get_actions(obs_dict=obs_dict, state=state, avail_actions_dict=avail_actions,
+                                          test_mode=False)
             actions_dict, log_pi_a_dict = policy_out['actions'], policy_out['log_pi']
             values_dict = policy_out['values']
             next_obs_dict, rewards_dict, terminated_dict, truncated, info = self.train_envs.step(actions_dict)
@@ -489,6 +498,7 @@ class OnPolicyMARLAgents(MARLAgents):
 
     def run_episodes(self,
                      n_episodes: int = 1,
+                     deterministic_policy: bool = False,
                      run_envs: Optional[DummyVecMultiAgentEnv | SubprocVecMultiAgentEnv] = None,
                      test_mode: bool = False,
                      close_envs: bool = True) -> list:
@@ -502,6 +512,8 @@ class OnPolicyMARLAgents(MARLAgents):
 
         Args:
             n_episodes (int): Number of completed episodes to run across all parallel environments.
+            deterministic_policy (bool): True for evaluating the deterministic policy,
+                and False for evaluating the stochastic policy.
             run_envs (Optional[DummyVecMultiAgentEnv | SubprocVecMultiAgentEnv]): Vectorized environments to run.
                 If None, `self.train_envs` is used.
             test_mode (bool): Whether to run in evaluation mode. When True, the trajectory buffer is not written and
@@ -531,8 +543,8 @@ class OnPolicyMARLAgents(MARLAgents):
 
         while _current_episode < n_episodes:
             policy_out = self.get_actions(obs_dict=obs_dict, state=state, avail_actions_dict=avail_actions,
-                                     rnn_hidden_actor=rnn_hidden_actor, rnn_hidden_critic=rnn_hidden_critic,
-                                     test_mode=test_mode)
+                                          rnn_hidden_actor=rnn_hidden_actor, rnn_hidden_critic=rnn_hidden_critic,
+                                          test_mode=test_mode, deterministic=deterministic_policy)
             rnn_hidden_actor, rnn_hidden_critic = policy_out['rnn_hidden_actor'], policy_out['rnn_hidden_critic']
             actions_dict, log_pi_a_dict = policy_out['actions'], policy_out['log_pi']
             values_dict = policy_out['values']
@@ -662,6 +674,7 @@ class OnPolicyMARLAgents(MARLAgents):
 
     def test(self,
              test_episodes: int,
+             deterministic_policy: bool = True,
              test_envs: Optional[DummyVecMultiAgentEnv | SubprocVecMultiAgentEnv] = None,
              close_envs: bool = True) -> list:
         """Evaluate the current multi-agent policy for a number of episodes.
@@ -672,6 +685,8 @@ class OnPolicyMARLAgents(MARLAgents):
 
         Args:
             test_episodes (int): Number of completed episodes to evaluate across all parallel environments.
+            deterministic_policy (bool): True for evaluating the deterministic policy,
+                and False for evaluating the stochastic policy.
             test_envs (Optional[DummyVecMultiAgentEnv | SubprocVecMultiAgentEnv]): Vectorized multi-agent environments
                 used for evaluation. If None, `self.train_envs` is used.
             close_envs (bool): Whether to close `test_envs` before returning. Set this to False if `test_envs` is
@@ -684,6 +699,7 @@ class OnPolicyMARLAgents(MARLAgents):
             n_episodes=test_episodes,
             run_envs=test_envs,
             test_mode=True,
+            deterministic_policy=deterministic_policy,
             close_envs=close_envs
         )
         return scores

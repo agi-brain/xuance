@@ -132,13 +132,14 @@ class VDAC_Agents(OnPolicyMARLAgents):
         self.memory.store(**experience_data)
 
     def get_actions(self,
-               obs_dict: List[dict],
-               state: Optional[np.ndarray] = None,
-               avail_actions_dict: Optional[List[dict]] = None,
-               rnn_hidden_actor: Optional[dict] = None,
-               rnn_hidden_critic: Optional[dict] = None,
-               test_mode: Optional[bool] = False,
-               **kwargs):
+                    obs_dict: List[dict],
+                    state: Optional[np.ndarray] = None,
+                    avail_actions_dict: Optional[List[dict]] = None,
+                    rnn_hidden_actor: Optional[dict] = None,
+                    rnn_hidden_critic: Optional[dict] = None,
+                    test_mode: Optional[bool] = False,
+                    deterministic: Optional[bool] = False,
+                    **kwargs):
         """
         Returns actions for agents.
 
@@ -149,6 +150,7 @@ class VDAC_Agents(OnPolicyMARLAgents):
             rnn_hidden_actor (Optional[dict]): The RNN hidden states of actor representation.
             rnn_hidden_critic (Optional[dict]): The RNN hidden states of critic representation.
             test_mode (Optional[bool]): True for testing without noises.
+            deterministic (bool): True for deterministic policy and False for stochastic policy.
 
         Returns:
             rnn_hidden_actor_new (dict): The new RNN hidden states of actor representation (if self.use_rnn=True).
@@ -183,7 +185,10 @@ class VDAC_Agents(OnPolicyMARLAgents):
 
         if self.use_parameter_sharing:
             key = self.agent_keys[0]
-            actions_sample = pi_dists[key].stochastic_sample()
+            if deterministic:
+                actions_sample = pi_dists[key].deterministic_sample()
+            else:
+                actions_sample = pi_dists[key].stochastic_sample()
             if self.continuous_control:
                 actions_out = actions_sample.reshape(n_env, self.n_agents, -1)
             else:
@@ -191,7 +196,10 @@ class VDAC_Agents(OnPolicyMARLAgents):
             actions_dict = [{k: actions_out[e, i].cpu().detach().numpy() for i, k in enumerate(self.agent_keys)}
                             for e in range(n_env)]
         else:
-            actions_sample = {k: pi_dists[k].stochastic_sample() for k in self.agent_keys}
+            actions_sample = {
+                k: pi_dists[k].deterministic_sample() if deterministic else pi_dists[k].stochastic_sample()
+                for k in self.agent_keys
+            }
             if self.continuous_control:
                 actions_dict = [{k: actions_sample[k].cpu().detach().numpy()[e].reshape([-1]) for k in self.agent_keys}
                                 for e in range(n_env)]

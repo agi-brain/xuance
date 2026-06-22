@@ -155,15 +155,16 @@ class MFAC_Agents(OnPolicyMARLAgents):
         self.memory.store(**experience_data)
 
     def get_actions(self,
-               obs_dict: List[dict],
-               agent_mask: Optional[List[dict]] = None,
-               act_mean_dict: Optional[List[dict]] = None,
-               state: Optional[np.ndarray] = None,
-               avail_actions_dict: Optional[List[dict]] = None,
-               rnn_hidden_actor: Optional[dict] = None,
-               rnn_hidden_critic: Optional[dict] = None,
-               test_mode: Optional[bool] = False,
-               **kwargs):
+                    obs_dict: List[dict],
+                    agent_mask: Optional[List[dict]] = None,
+                    act_mean_dict: Optional[List[dict]] = None,
+                    state: Optional[np.ndarray] = None,
+                    avail_actions_dict: Optional[List[dict]] = None,
+                    rnn_hidden_actor: Optional[dict] = None,
+                    rnn_hidden_critic: Optional[dict] = None,
+                    test_mode: Optional[bool] = False,
+                    deterministic: bool = False,
+                    **kwargs):
         """
         Returns actions for agents.
 
@@ -176,6 +177,7 @@ class MFAC_Agents(OnPolicyMARLAgents):
             rnn_hidden_actor (Optional[dict]): The RNN hidden states of actor representation.
             rnn_hidden_critic (Optional[dict]): The RNN hidden states of critic representation.
             test_mode (Optional[bool]): True for testing without noises.
+            deterministic (bool): True for deterministic policy and False for stochastic policy.
 
         Returns:
             rnn_hidden_actor_new (dict): The new RNN hidden states of actor representation (if self.use_rnn=True).
@@ -336,8 +338,8 @@ class MFAC_Agents(OnPolicyMARLAgents):
         state = self.train_envs.buf_state if self.use_global_state else None
         for _ in tqdm(range(train_steps)):
             policy_out = self.get_actions(obs_dict=obs_dict, state=state,
-                                     agent_mask=agent_mask_dict, act_mean_dict=actions_mean_dict,
-                                     avail_actions_dict=avail_actions, test_mode=False)
+                                          agent_mask=agent_mask_dict, act_mean_dict=actions_mean_dict,
+                                          avail_actions_dict=avail_actions, test_mode=False)
             actions_dict, log_pi_a_dict = policy_out['actions'], policy_out['log_pi']
             actions_mean_next_dict = policy_out['actions_mean']
             values_dict = policy_out['values']
@@ -425,6 +427,7 @@ class MFAC_Agents(OnPolicyMARLAgents):
 
     def run_episodes(self,
                      n_episodes: int = 1,
+                     deterministic_policy: bool = False,
                      run_envs: Optional[DummyVecMultiAgentEnv | SubprocVecMultiAgentEnv] = None,
                      test_mode: bool = False,
                      close_envs: bool = True) -> list:
@@ -449,9 +452,9 @@ class MFAC_Agents(OnPolicyMARLAgents):
 
         while current_episode < n_episodes:
             policy_out = self.get_actions(obs_dict=obs_dict, state=state, avail_actions_dict=avail_actions,
-                                     agent_mask=agent_mask_dict, act_mean_dict=actions_mean_dict,
-                                     rnn_hidden_actor=rnn_hidden_actor, rnn_hidden_critic=rnn_hidden_critic,
-                                     test_mode=test_mode)
+                                          agent_mask=agent_mask_dict, act_mean_dict=actions_mean_dict,
+                                          rnn_hidden_actor=rnn_hidden_actor, rnn_hidden_critic=rnn_hidden_critic,
+                                          test_mode=test_mode, deterministic=deterministic_policy)
             rnn_hidden_actor, rnn_hidden_critic = policy_out['rnn_hidden_actor'], policy_out['rnn_hidden_critic']
             actions_dict, log_pi_a_dict = policy_out['actions'], policy_out['log_pi']
             actions_mean_next_dict = policy_out['actions_mean']

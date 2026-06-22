@@ -84,7 +84,7 @@ class IC3Net_Agents(CommNet_Agents):
         agent = self.config.agent
         max_length = max(space.shape[0] for space in self.observation_space.values())
         self.observation_space = {agent: gym.spaces.Box(-np.inf, np.inf, (max_length,), dtype=np.float32)
-                          for agent in self.observation_space}
+                                  for agent in self.observation_space}
         # build representations
         communicator = self._build_communicator(self.observation_space)
         space_actor_in = {agent: gym.spaces.Box(-np.inf, np.inf, (self.config.recurrent_hidden_size,), dtype=np.float32)
@@ -107,31 +107,33 @@ class IC3Net_Agents(CommNet_Agents):
                 device=device, use_distributed_training=self.distributed_training,
                 use_parameter_sharing=self.use_parameter_sharing, model_keys=self.model_keys,
                 use_rnn=self.use_rnn, rnn=self.config.rnn if self.use_rnn else None,
-                communicator=communicator, agent_keys=self.agent_keys, comm_passes=self.config.comm_passes, config=self.config)
+                communicator=communicator, agent_keys=self.agent_keys, comm_passes=self.config.comm_passes,
+                config=self.config)
             self.continuous_control = False
         else:
             raise AttributeError(f"{agent} currently does not support the policy named {self.config.policy}.")
         return policy
 
     def get_actions(self,
-               obs_dict: List[dict],
-               state: Optional[np.ndarray] = None,
-               avail_actions_dict: Optional[List[dict]] = None,
-               rnn_hidden_actor: Optional[dict] = None,
-               rnn_hidden_critic: Optional[dict] = None,
-               test_mode: Optional[bool] = False,
-               info: dict = None,
-               **kwargs):
+                    obs_dict: List[dict],
+                    state: Optional[np.ndarray] = None,
+                    avail_actions_dict: Optional[List[dict]] = None,
+                    rnn_hidden_actor: Optional[dict] = None,
+                    rnn_hidden_critic: Optional[dict] = None,
+                    test_mode: Optional[bool] = False,
+                    deterministic: bool = False,
+                    info: dict = None,
+                    **kwargs):
         n_env = len(obs_dict)
         rnn_hidden_critic_new, values_out, log_pi_a_dict, values_dict, log_pi_gate_dict = {}, {}, {}, {}, {}
         obs_input, agents_id, avail_actions_input = self._build_inputs(obs_dict, avail_actions_dict)
         alive_ally = {k: np.stack([int(data['agent_mask'][k]) for data in info]).reshape([n_env, 1, -1]) for k in
-                            self.agent_keys}
+                      self.agent_keys}
         rnn_hidden_actor_new, pi_dists, gate_log_prob = self.policy(observation=obs_input,
-                                                     agent_ids=agents_id,
-                                                     avail_actions=avail_actions_input,
-                                                     rnn_hidden=rnn_hidden_actor,
-                                                     alive_ally=alive_ally)
+                                                                    agent_ids=agents_id,
+                                                                    avail_actions=avail_actions_input,
+                                                                    rnn_hidden=rnn_hidden_actor,
+                                                                    alive_ally=alive_ally)
         if not test_mode:
             critic_input = self._build_critic_inputs(batch_size=n_env, obs_batch=obs_input, state=state)
             rnn_hidden_critic_new, values_out = self.policy.get_values(observation=critic_input,
@@ -140,7 +142,10 @@ class IC3Net_Agents(CommNet_Agents):
 
         if self.use_parameter_sharing:
             key = self.agent_keys[0]
-            actions_sample = pi_dists[key].stochastic_sample()
+            if deterministic:
+                actions_sample = pi_dists[key].deterministic_sample()
+            else:
+                actions_sample = pi_dists[key].stochastic_sample()
             if self.continuous_control:
                 actions_out = actions_sample.reshape(n_env, self.n_agents, -1)
             else:
@@ -150,14 +155,16 @@ class IC3Net_Agents(CommNet_Agents):
             if not test_mode:
                 log_pi_a = pi_dists[key].log_prob(actions_sample).cpu().detach().numpy()
                 log_pi_a = log_pi_a.reshape(n_env, self.n_agents)
-                key = self.model_keys[0]
                 gate_log_prob = gate_log_prob[key].reshape(n_env, self.n_agents).cpu().detach().numpy()
                 log_pi_a_dict = {k: log_pi_a[:, i] for i, k in enumerate(self.agent_keys)}
                 log_pi_gate_dict = {k: gate_log_prob[:, i] for i, k in enumerate(self.agent_keys)}
                 values_out[key] = values_out[key].reshape(n_env, self.n_agents)
                 values_dict = {k: values_out[key][:, i].cpu().detach().numpy() for i, k in enumerate(self.agent_keys)}
         else:
-            actions_sample = {k: pi_dists[k].stochastic_sample() for k in self.agent_keys}
+            actions_sample = {
+                k: pi_dists[k].deterministic_sample() if deterministic else pi_dists[k].stochastic_sample()
+                for k in self.agent_keys
+            }
             if self.continuous_control:
                 actions_dict = [{k: actions_sample[k].cpu().detach().numpy()[e].reshape([-1]) for k in self.agent_keys}
                                 for e in range(n_env)]
@@ -172,7 +179,8 @@ class IC3Net_Agents(CommNet_Agents):
                 values_dict = {k: values_out[k].cpu().detach().numpy().reshape([n_env]) for k in self.agent_keys}
 
         return {"rnn_hidden_actor": rnn_hidden_actor_new, "rnn_hidden_critic": rnn_hidden_critic_new,
-                "actions": actions_dict, "log_pi": log_pi_a_dict, "gate_log_pi": log_pi_gate_dict ,"values": values_dict}
+                "actions": actions_dict, "log_pi": log_pi_a_dict, "gate_log_pi": log_pi_gate_dict,
+                "values": values_dict}
 
     def store_experience(self, obs_dict, avail_actions, actions_dict, log_pi_a, rewards_dict, values_dict,
                          terminals_dict, info, **kwargs):
@@ -198,6 +206,7 @@ class IC3Net_Agents(CommNet_Agents):
 
     def run_episodes(self,
                      n_episodes: int = 1,
+                     deterministic_policy: bool = False,
                      run_envs: Optional[DummyVecMultiAgentEnv | SubprocVecMultiAgentEnv] = None,
                      test_mode: bool = False,
                      close_envs: bool = True) -> list:
@@ -222,10 +231,11 @@ class IC3Net_Agents(CommNet_Agents):
             step_info = {}
             obs_dict = [self.pad_observation(obs) for obs in obs_dict]
             policy_out = self.get_actions(obs_dict=obs_dict, state=state, avail_actions_dict=avail_actions,
-                                     rnn_hidden_actor=rnn_hidden_actor, rnn_hidden_critic=rnn_hidden_critic,
-                                     test_mode=test_mode, info=info)
+                                          rnn_hidden_actor=rnn_hidden_actor, rnn_hidden_critic=rnn_hidden_critic,
+                                          test_mode=test_mode, deterministic=deterministic_policy, info=info)
             rnn_hidden_actor, rnn_hidden_critic = policy_out['rnn_hidden_actor'], policy_out['rnn_hidden_critic']
-            actions_dict, log_pi_a_dict, log_pi_gate_dict = policy_out['actions'], policy_out['log_pi'], policy_out['gate_log_pi']
+            actions_dict, log_pi_a_dict, log_pi_gate_dict = policy_out['actions'], policy_out['log_pi'], policy_out[
+                'gate_log_pi']
             values_dict = policy_out['values']
             next_obs_dict, rewards_dict, terminated_dict, truncated, info = envs.step(actions_dict)
             next_state = envs.buf_state if self.use_global_state else None

@@ -59,7 +59,7 @@ class CommNet_Agents(MAPPO_Agents):
         agent = self.config.agent
         max_length = max(space.shape[0] for space in self.observation_space.values())
         self.observation_space = {agent: gym.spaces.Box(-np.inf, np.inf, (max_length,), dtype=np.float32)
-                          for agent in self.observation_space}
+                                  for agent in self.observation_space}
         # build representations
         communicator = self._build_communicator(self.observation_space)
         space_actor_in = {agent: gym.spaces.Box(-np.inf, np.inf, (self.config.recurrent_hidden_size,), dtype=np.float32)
@@ -89,19 +89,20 @@ class CommNet_Agents(MAPPO_Agents):
         return policy
 
     def get_actions(self,
-               obs_dict: List[dict],
-               state: Optional[np.ndarray] = None,
-               avail_actions_dict: Optional[List[dict]] = None,
-               rnn_hidden_actor: Optional[dict] = None,
-               rnn_hidden_critic: Optional[dict] = None,
-               test_mode: Optional[bool] = False,
-               info: dict = None,
-               **kwargs):
+                    obs_dict: List[dict],
+                    state: Optional[np.ndarray] = None,
+                    avail_actions_dict: Optional[List[dict]] = None,
+                    rnn_hidden_actor: Optional[dict] = None,
+                    rnn_hidden_critic: Optional[dict] = None,
+                    test_mode: Optional[bool] = False,
+                    deterministic: bool = False,
+                    info: dict = None,
+                    **kwargs):
         n_env = len(obs_dict)
         rnn_hidden_critic_new, values_out, log_pi_a_dict, values_dict = {}, {}, {}, {}
         obs_input, agents_id, avail_actions_input = self._build_inputs(obs_dict, avail_actions_dict)
         alive_ally = {k: np.stack([int(data['agent_mask'][k]) for data in info]).reshape([n_env, 1, -1]) for k in
-                            self.agent_keys}
+                      self.agent_keys}
         rnn_hidden_actor_new, pi_dists = self.policy(observation=obs_input,
                                                      agent_ids=agents_id,
                                                      avail_actions=avail_actions_input,
@@ -115,7 +116,10 @@ class CommNet_Agents(MAPPO_Agents):
 
         if self.use_parameter_sharing:
             key = self.agent_keys[0]
-            actions_sample = pi_dists[key].stochastic_sample()
+            if deterministic:
+                actions_sample = pi_dists[key].deterministic_sample()
+            else:
+                actions_sample = pi_dists[key].stochastic_sample()
             if self.continuous_control:
                 actions_out = actions_sample.reshape(n_env, self.n_agents, -1)
             else:
@@ -129,7 +133,10 @@ class CommNet_Agents(MAPPO_Agents):
                 values_out[key] = values_out[key].reshape(n_env, self.n_agents)
                 values_dict = {k: values_out[key][:, i].cpu().detach().numpy() for i, k in enumerate(self.agent_keys)}
         else:
-            actions_sample = {k: pi_dists[k].stochastic_sample() for k in self.agent_keys}
+            actions_sample = {
+                k: pi_dists[k].deterministic_sample() if deterministic else pi_dists[k].stochastic_sample()
+                for k in self.agent_keys
+            }
             if self.continuous_control:
                 actions_dict = [{k: actions_sample[k].cpu().detach().numpy()[e].reshape([-1]) for k in self.agent_keys}
                                 for e in range(n_env)]
@@ -154,6 +161,7 @@ class CommNet_Agents(MAPPO_Agents):
 
     def run_episodes(self,
                      n_episodes: int = 1,
+                     deterministic_policy: bool = False,
                      run_envs: Optional[DummyVecMultiAgentEnv | SubprocVecMultiAgentEnv] = None,
                      test_mode: bool = False,
                      close_envs: bool = True) -> list:
@@ -178,8 +186,8 @@ class CommNet_Agents(MAPPO_Agents):
             step_info = {}
             obs_dict = [self.pad_observation(obs) for obs in obs_dict]
             policy_out = self.get_actions(obs_dict=obs_dict, state=state, avail_actions_dict=avail_actions,
-                                     rnn_hidden_actor=rnn_hidden_actor, rnn_hidden_critic=rnn_hidden_critic,
-                                     test_mode=test_mode, info=info)
+                                          rnn_hidden_actor=rnn_hidden_actor, rnn_hidden_critic=rnn_hidden_critic,
+                                          test_mode=test_mode, deterministic=deterministic_policy, info=info)
             rnn_hidden_actor, rnn_hidden_critic = policy_out['rnn_hidden_actor'], policy_out['rnn_hidden_critic']
             actions_dict, log_pi_a_dict = policy_out['actions'], policy_out['log_pi']
             values_dict = policy_out['values']

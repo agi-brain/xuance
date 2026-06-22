@@ -66,12 +66,13 @@ class PPG_Agent(OnPolicyAgent):
 
         return policy
 
-    def get_actions(self, observations: np.ndarray,
+    def get_actions(self, observations: np.ndarray, deterministic: bool = False,
                return_dists: bool = False, return_logpi: bool = False):
         """Returns actions and values.
 
         Parameters:
             observations (np.ndarray): The observation.
+            deterministic (bool): True for deterministic policy and False for stochastic policy.
             return_dists (bool): Whether to return dists.
             return_logpi (bool): Whether to return log_pi.
 
@@ -82,7 +83,7 @@ class PPG_Agent(OnPolicyAgent):
             log_pi: Log of stochastic actions.
         """
         _, policy_dists, values, _ = self.policy(observations)
-        actions = policy_dists.stochastic_sample()
+        actions = policy_dists.deterministic_sample() if deterministic else policy_dists.stochastic_sample()
         log_pi = policy_dists.log_prob(actions) if return_logpi else None
         dists = split_distributions(policy_dists) if return_dists else None
         actions = actions.detach().cpu().numpy()

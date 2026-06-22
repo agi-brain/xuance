@@ -124,13 +124,14 @@ class COMA_Agents(OnPolicyMARLAgents):
         self.memory.store(**experience_data)
 
     def get_actions(self,
-               obs_dict: List[dict],
-               state: Optional[np.ndarray] = None,
-               avail_actions_dict: Optional[List[dict]] = None,
-               rnn_hidden_actor: Optional[dict] = None,
-               rnn_hidden_critic: Optional[dict] = None,
-               test_mode: Optional[bool] = False,
-               **kwargs):
+                    obs_dict: List[dict],
+                    state: Optional[np.ndarray] = None,
+                    avail_actions_dict: Optional[List[dict]] = None,
+                    rnn_hidden_actor: Optional[dict] = None,
+                    rnn_hidden_critic: Optional[dict] = None,
+                    test_mode: Optional[bool] = False,
+                    deterministic: Optional[bool] = False,
+                    **kwargs):
         """Compute actions (and optional value/log-prob outputs) for multi-agent execution.
 
         This method performs a forward pass through the current multi-agent actor-critic policy to produce actions for
@@ -153,6 +154,7 @@ class COMA_Agents(OnPolicyMARLAgents):
                 Required when `self.use_rnn` is True and values are requested.
             test_mode (bool): Whether to run in evaluation mode. When True, only actions are produced and
                 training-specific outputs (values/log_pi) are omitted.
+            deterministic (bool): True for deterministic policy and False for stochastic policy.
 
         Returns:
             dict: A dictionary containing:
@@ -181,7 +183,7 @@ class COMA_Agents(OnPolicyMARLAgents):
             key = self.agent_keys[0]
             if self.use_actions_mask:
                 pi_probs[key][Tensor(avail_actions_input[key]) == 0] = 0.0
-            if test_mode:
+            if test_mode or deterministic:
                 actions_sample = pi_probs[key].max(dim=-1)[1]
             else:
                 pi_dists = Categorical(probs=pi_probs[key])
@@ -197,7 +199,7 @@ class COMA_Agents(OnPolicyMARLAgents):
             if self.use_actions_mask:
                 for k in self.agent_keys:
                     pi_probs[k][Tensor(avail_actions_input[k]) == 0] = 0.0
-            if test_mode:
+            if test_mode or deterministic:
                 actions_sample = {k: pi_probs[k].max(dim=-1)[1] for k in self.agent_keys}
             else:
                 pi_dists = {k: Categorical(probs=pi_probs[k]) for k in self.agent_keys}
@@ -361,7 +363,8 @@ class COMA_Agents(OnPolicyMARLAgents):
         avail_actions = self.train_envs.buf_avail_actions if self.use_actions_mask else None
         state = self.train_envs.buf_state if self.use_global_state else None
         for _ in tqdm(range(train_steps)):
-            policy_out = self.get_actions(obs_dict=obs_dict, state=state, avail_actions_dict=avail_actions, test_mode=False)
+            policy_out = self.get_actions(obs_dict=obs_dict, state=state, avail_actions_dict=avail_actions,
+                                          test_mode=False)
             actions_dict, log_pi_a_dict = policy_out['actions'], policy_out['log_pi']
             values_dict = policy_out['values']
             next_obs_dict, rewards_dict, terminated_dict, truncated, info = self.train_envs.step(actions_dict)
@@ -439,6 +442,7 @@ class COMA_Agents(OnPolicyMARLAgents):
                      n_episodes: int = 1,
                      run_envs: Optional[DummyVecMultiAgentEnv | SubprocVecMultiAgentEnv] = None,
                      test_mode: bool = False,
+                     deterministic_policy: bool = False,
                      close_envs: bool = True) -> list:
         """Run vectorized multi-agent episodes for rollout collection or evaluation.
 
@@ -454,6 +458,8 @@ class COMA_Agents(OnPolicyMARLAgents):
                 If None, `self.train_envs` is used.
             test_mode (bool): Whether to run in evaluation mode. When True, the trajectory buffer is not written and
                 only episode scores are collected.
+            deterministic_policy (bool): True for evaluating the deterministic policy,
+                and False for evaluating the stochastic policy.
             close_envs (bool): Whether to close `run_envs` before returning when `test_mode` is True.
                 Set this to False if the caller manages the environment lifecycle externally.
 
@@ -479,8 +485,8 @@ class COMA_Agents(OnPolicyMARLAgents):
 
         while current_episode < n_episodes:
             policy_out = self.get_actions(obs_dict=obs_dict, state=state, avail_actions_dict=avail_actions,
-                                     rnn_hidden_actor=rnn_hidden_actor, rnn_hidden_critic=rnn_hidden_critic,
-                                     test_mode=test_mode)
+                                          rnn_hidden_actor=rnn_hidden_actor, rnn_hidden_critic=rnn_hidden_critic,
+                                          test_mode=test_mode, deterministic=deterministic_policy)
             rnn_hidden_actor, rnn_hidden_critic = policy_out['rnn_hidden_actor'], policy_out['rnn_hidden_critic']
             actions_dict, log_pi_a_dict = policy_out['actions'], policy_out['log_pi']
             values_dict = policy_out['values']

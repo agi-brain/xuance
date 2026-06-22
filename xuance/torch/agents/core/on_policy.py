@@ -44,6 +44,7 @@ class OnPolicyAgent(Agent):
         - In evaluation mode, actions are sampled without exploration schedules specific to training
             (e.g., no epsilon-greedy / action noise).
     """
+
     def __init__(
             self,
             config: Namespace,
@@ -123,8 +124,8 @@ class OnPolicyAgent(Agent):
         values_next = policy_out['values']
         return values_next
 
-    def get_actions(self, observations: np.ndarray,
-               return_dists: bool = False, return_logpi: bool = False) -> dict:
+    def get_actions(self, observations: np.ndarray, deterministic: bool = False,
+                    return_dists: bool = False, return_logpi: bool = False) -> dict:
         """Compute actions and value estimates for a batch of observations.
 
         This method performs a forward pass through the current policy to obtain action distributions
@@ -133,6 +134,7 @@ class OnPolicyAgent(Agent):
         Args:
             observations (np.ndarray): Batch of observations. The array is expected to have shape compatible with
                 the underlying policy.
+            deterministic (bool): True for deterministic policy and False for stochastic policy.
             return_dists (bool): Whether to return the action distributions (split into a Python-friendly structure).
             return_logpi (bool): Whether to return the log-probabilities of the sampled actions.
 
@@ -146,7 +148,7 @@ class OnPolicyAgent(Agent):
                     otherwise None.
         """
         _, policy_dists, values = self.policy(observations)
-        actions = policy_dists.stochastic_sample()
+        actions = policy_dists.deterministic_sample() if deterministic else policy_dists.stochastic_sample()
         dists = split_distributions(policy_dists) if return_dists else None
         if self.is_tensor_memory:
             log_pi = policy_dists.log_prob(actions).detach() if return_logpi else None
@@ -291,6 +293,7 @@ class OnPolicyAgent(Agent):
 
     def test(self,
              test_episodes: int,
+             deterministic_policy: bool = True,
              test_envs: Optional[DummyVecEnv | SubprocVecEnv] = None,
              close_envs: bool = True) -> list:
         """Evaluate the current policy in a vectorized environment.
@@ -301,6 +304,8 @@ class OnPolicyAgent(Agent):
 
         Args:
             test_episodes (int): Total number of evaluation episodes to run across all vectorized environments.
+            deterministic_policy (bool): True for evaluating the deterministic policy,
+                and False for evaluating the stochastic policy.
             test_envs (Optional[DummyVecEnv | SubprocVecEnv]): Vectorized environments used for evaluation.
                 Must not be None.
             close_envs (bool): Whether to close `test_envs` before returning.
@@ -333,7 +338,7 @@ class OnPolicyAgent(Agent):
         while current_episode < test_episodes:
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
-            policy_out = self.get_actions(obs)
+            policy_out = self.get_actions(obs, deterministic=deterministic_policy)
             next_obs, rewards, terminals, truncations, infos = test_envs.step(policy_out['actions'])
             if self.config.render_mode == "rgb_array" and self.render:
                 images = test_envs.render(self.config.render_mode)
