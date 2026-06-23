@@ -180,7 +180,7 @@ class TensorOnPolicyBuffer(TensorBuffer):
         self.n_size = self.horizon_size
         self.use_gae, self.use_advnorm = use_gae, use_advnorm
         self.gamma, self.gae_lam = gamma, gae_lam
-        self.start_ids = torch.zeros(self.n_envs, dtype=torch.int64)
+        self.start_ids = [0 for _ in range(self.n_envs)]
         self.clear()
 
     @property
@@ -211,15 +211,16 @@ class TensorOnPolicyBuffer(TensorBuffer):
         self.size = min(self.size + 1, self.n_size)
 
     def finish_path(self, val, i):
+        val = torch.as_tensor([val], device=self.device)
         if self.full:
-            path_slice = torch.arange(self.start_ids[i], self.n_size, dtype=torch.int32)
+            path_slice = range(self.start_ids[i], self.n_size)
         else:
-            path_slice = torch.arange(self.start_ids[i], self.ptr, dtype=torch.int32)
-        vs = torch.cat([self.values[i, path_slice], Tensor([val])], axis=0)
+            path_slice = range(self.start_ids[i], self.ptr)
+        vs = torch.cat([self.values[i, path_slice], val], axis=0)
         if self.use_gae:  # use gae
-            rewards = Tensor(self.rewards[i, path_slice])
+            rewards = self.rewards[i, path_slice]
             advantages = torch.zeros_like(rewards)
-            dones = Tensor(self.terminals[i, path_slice])
+            dones = self.terminals[i, path_slice]
             last_gae_lam = 0
             step_nums = len(path_slice)
             for t in reversed(range(step_nums)):
@@ -227,7 +228,7 @@ class TensorOnPolicyBuffer(TensorBuffer):
                 advantages[t] = last_gae_lam = delta + (1 - dones[t]) * self.gamma * self.gae_lam * last_gae_lam
             returns = advantages + vs[:-1]
         else:
-            rewards = torch.cat(Tensor(self.rewards[i, path_slice]), [val], axis=0)
+            rewards = torch.cat(self.rewards[i, path_slice], val, axis=0)
             returns = discount_cumsum(rewards, self.gamma)[:-1]
             advantages = rewards[:-1] + self.gamma * vs[1:] - vs[:-1]
 

@@ -253,7 +253,7 @@ class OnPolicyAgent(Agent):
                 if terminals[i] or truncations[i]:
                     self.ret_rms.update(self.returns[i:i + 1])
                     self.returns[i] = 0.0
-                    if self.atari and (~truncations[i]):
+                    if self.atari and (not truncations[i]):
                         pass
                     else:
                         if terminals[i]:
@@ -345,7 +345,7 @@ class OnPolicyAgent(Agent):
             obs = deepcopy(next_obs)
             for i in range(num_envs):
                 if terminals[i] or truncations[i]:
-                    if self.atari and (~truncations[i]):
+                    if self.atari and (not truncations[i]):
                         pass
                     else:
                         obs[i] = infos[i]["reset_obs"]

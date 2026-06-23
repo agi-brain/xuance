@@ -185,7 +185,7 @@ class OffPolicyAgent(Agent):
             obs = deepcopy(next_obs)
             for i in range(self.n_envs):
                 if terminals[i] or truncations[i]:
-                    if self.atari and (~truncations[i]):
+                    if self.atari and (not truncations[i]):
                         pass
                     else:
                         obs[i] = infos[i]["reset_obs"]
@@ -275,7 +275,7 @@ class OffPolicyAgent(Agent):
             obs = deepcopy(next_obs)
             for i in range(num_envs):
                 if terminals[i] or truncations[i]:
-                    if self.atari and (~truncations[i]):
+                    if self.atari and (not truncations[i]):
                         pass
                     else:
                         obs[i] = infos[i]["reset_obs"]

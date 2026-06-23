@@ -110,7 +110,7 @@ class DRQN_Agent(OffPolicyAgent):
                 episode_data[i].put(
                     [self._process_observation(obs[i]), acts[i], self._process_reward(rewards[i]), terminals[i]])
                 if terminals[i] or truncations[i]:
-                    if self.atari and (~truncations[i]):
+                    if self.atari and (not truncations[i]):
                         pass
                     else:
                         self.rnn_hidden = self.policy.init_hidden_item(self.rnn_hidden, i)
@@ -184,7 +184,7 @@ class DRQN_Agent(OffPolicyAgent):
             obs = deepcopy(next_obs)
             for i in range(num_envs):
                 if terminals[i] or truncations[i]:
-                    if self.atari and (~truncations[i]):
+                    if self.atari and (not truncations[i]):
                         pass
                     else:
                         obs[i] = infos[i]["reset_obs"]

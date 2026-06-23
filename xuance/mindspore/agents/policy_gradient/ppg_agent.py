@@ -179,7 +179,7 @@ class PPG_Agent(OnPolicyAgent):
                 if terminals[i] or truncations[i]:
                     self.ret_rms.update(self.returns[i:i + 1])
                     self.returns[i] = 0.0
-                    if self.atari and (~truncations[i]):
+                    if self.atari and (not truncations[i]):
                         pass
                     else:
                         if terminals[i]:
