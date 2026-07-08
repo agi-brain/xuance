@@ -446,7 +446,10 @@ class LearnerMAS(Learner):
                         break
                     model_path = str(model_names)
 
-        checkpoint = torch.load(str(model_path), map_location={f"cuda:{i}": self.device
+        if self.device.upper() == "CPU":
+            checkpoint = torch.load(str(model_path), map_location = {'cuda:0': 'cpu'})
+        else:
+            checkpoint = torch.load(str(model_path), map_location={f"cuda:{i}": self.device
                                                                     for i in range(MAX_GPUs)}, weights_only=True)
         self.policy.load_state_dict(checkpoint['policy'], strict=False)
 
@@ -456,12 +459,14 @@ class LearnerMAS(Learner):
                     for k_a, v_a in self.optimizer.items():  # agent-wise
                         for k, v in v_a.items():
                             v.load_state_dict(checkpoint['optimizer'][k_a][k])
+                    current_lr = list(self.optimizer.values())[0][list(self.optimizer.values())[0].keys().__iter__().__next__()].param_groups[0]['lr']
                 else:
                     for k, v in self.optimizer.items():
                         v.load_state_dict(checkpoint['optimizer'][k])
+                    current_lr = list(self.optimizer.values())[0].param_groups[0]['lr']
             else:
                 self.optimizer.load_state_dict(checkpoint['optimizer'])
-            current_lr = self.optimizer.param_groups[0]['lr']
+                current_lr = self.optimizer.param_groups[0]['lr']
             self.learning_rate = current_lr
 
         if 'rng_state' in checkpoint:
