@@ -126,9 +126,14 @@ class Learner(ABC):
             if type(self.optimizer) is dict:
                 for k, v in self.optimizer.items():
                     v.load_state_dict(checkpoint['optimizer'][k])
+                current_lr = next(iter(self.optimizer.values())).param_groups[0]['lr']
+            elif type(self.optimizer) is list:  # e.g. PDQN-family learners keep [actor, qnet] optimizers.
+                for opt, opt_state in zip(self.optimizer, checkpoint['optimizer']):
+                    opt.load_state_dict(opt_state)
+                current_lr = self.optimizer[0].param_groups[0]['lr']
             else:
                 self.optimizer.load_state_dict(checkpoint['optimizer'])
-            current_lr = self.optimizer.param_groups[0]['lr']
+                current_lr = self.optimizer.param_groups[0]['lr']
             self.learning_rate = current_lr
 
         if 'rng_state' in checkpoint:
