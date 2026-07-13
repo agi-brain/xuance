@@ -72,6 +72,15 @@ class Learner(ABC):
                     'cuda_rng_state': torch.cuda.get_rng_state_all(),
                 },
                 model_path)
+        elif type(self.optimizer) is list:  # e.g. PDQN-family learners keep [actor, qnet] optimizers.
+            torch.save(
+                {
+                    'policy': self.policy.state_dict(),
+                    'optimizer': [opt.state_dict() for opt in self.optimizer],
+                    'rng_state': torch.get_rng_state(),
+                    'cuda_rng_state': torch.cuda.get_rng_state_all(),
+                },
+                model_path)
         else:
             torch.save(
                 {

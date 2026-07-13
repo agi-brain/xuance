@@ -25,7 +25,7 @@ class PDQN_Agent(Agent):
                  config: Namespace,
                  envs: Gym_Env,
                  callback: Optional[BaseCallback] = None):
-        super(PDQN_Agent, self).__init__(config, envs, observation_space, action_space, callback)
+        super(PDQN_Agent, self).__init__(config, envs, callback)
 
         self.start_greedy, self.end_greedy = config.start_greedy, config.end_greedy
         self.egreedy = config.start_greedy
