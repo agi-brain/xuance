@@ -26,7 +26,7 @@ class SPDQN_Agent(PDQN_Agent, Agent):
                  config: Namespace,
                  envs: Gym_Env,
                  callback: Optional[BaseCallback] = None):
-        Agent.__init__(self, config, envs, callback)
+        Agent.__init__(self, config, envs, callback=callback)
         self.start_noise, self.end_noise = config.start_noise, config.end_noise
         self.noise_scale = config.start_noise
         self.delta_noise = (self.start_noise - self.end_noise) / (config.running_steps / self.n_envs)

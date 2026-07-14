@@ -17,7 +17,7 @@ class PDQN_Learner(Learner):
         super(PDQN_Learner, self).__init__(config, policy, callback)
         conactor_optimizer = torch.optim.Adam(self.policy.conactor.parameters(), self.config.learning_rate)
         qnetwork_optimizer = torch.optim.Adam(self.policy.qnetwork.parameters(), self.config.learning_rate)
-        self.optimizers = [conactor_optimizer, qnetwork_optimizer]
+        self.optimizer = [conactor_optimizer, qnetwork_optimizer]
         conactor_lr_scheduler = torch.optim.lr_scheduler.LinearLR(conactor_optimizer,
                                                                   start_factor=1.0,
                                                                   end_factor=self.end_factor_lr_decay,
