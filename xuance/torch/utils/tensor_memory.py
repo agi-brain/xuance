@@ -266,7 +266,7 @@ class TensorOnPolicyBufferAtari(TensorOnPolicyBuffer):
     def clear(self):
         self.ptr, self.size = 0, 0
         self.observations = create_tensor_memory(space2shape(self.observation_space), self.n_envs, self.n_size,
-                                                 dtype=torch.int8, device=self.device)
+                                                 dtype=torch.uint8, device=self.device)
         self.actions = create_tensor_memory(space2shape(self.action_space), self.n_envs, self.n_size,
                                             device=self.device)
         self.rewards = create_tensor_memory((), self.n_envs, self.n_size, device=self.device)
@@ -348,9 +348,9 @@ class TensorOffPolicyBufferAtari(TensorOffPolicyBuffer):
 
     def clear(self):
         self.observations = create_tensor_memory(space2shape(self.observation_space), self.n_envs, self.n_size,
-                                                 dtype=torch.int8, device=self.device)
+                                                 dtype=torch.uint8, device=self.device)
         self.next_observations = create_tensor_memory(space2shape(self.observation_space), self.n_envs, self.n_size,
-                                                      dtype=torch.int8, device=self.device)
+                                                      dtype=torch.uint8, device=self.device)
         self.actions = create_tensor_memory(space2shape(self.action_space), self.n_envs, self.n_size,
                                             device=self.device)
         self.auxiliary_infos = create_tensor_memory(self.auxiliary_shape, self.n_envs, self.n_size, device=self.device)
