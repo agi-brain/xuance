@@ -9,12 +9,19 @@ representation: "Basic_Identical"
 vectorize: "DummyVecMultiAgentEnv"
 runner: "MARL"  # Runner
 
+use_rnn: False  # Whether to use recurrent neural networks.
+rnn: "GRU"  # Choice of recurrent networks: GRU or LSTM.
+N_recurrent_layers: 1  # Number of recurrent layers.
+fc_hidden_sizes: [64, ]
+recurrent_hidden_size: 64
+dropout: 0  # dropout should be a number in range [0, 1], the probability of an element being zeroed.
+
 representation_hidden_size: []  # the units for each hidden layer
 actor_hidden_size: [64, 64]
 critic_hidden_size: [64, 64]
 activation: 'leaky_relu'
 activation_action: 'sigmoid'
-use_parameter_sharing: True
+use_parameter_sharing: False
 use_actions_mask: False
 
 seed: 1
