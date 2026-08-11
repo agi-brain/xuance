@@ -2,7 +2,7 @@ import numpy as np
 from abc import ABC, abstractmethod
 from gymnasium.spaces import Space
 from typing import List, Dict, Optional
-from xuance.common import create_memory
+from xuance.common import create_memory, AgentGrouping
 from xuance.environment.utils import space2shape
 
 
@@ -185,6 +185,7 @@ class MARL_OnPolicyBuffer(BaseBuffer):
 
     def finish_path(self,
                     i_env: Optional[int] = None,
+                    agent_grouping: Optional[AgentGrouping] = None,
                     value_next: Optional[dict] = None,
                     value_normalizer=None):
         """
@@ -192,6 +193,7 @@ class MARL_OnPolicyBuffer(BaseBuffer):
 
         Parameters:
             i_env (int): The index of environment.
+            agent_grouping (AgentGrouping): The grouping information of the agents in the environment.
             value_next (dict): The critic values of the terminal state.
             value_normalizer: The value normalizer method, default is None.
         """
@@ -204,10 +206,6 @@ class MARL_OnPolicyBuffer(BaseBuffer):
 
         # calculate advantages and returns
         use_value_norm = False if (value_normalizer is None) else True
-        use_parameter_sharing = False
-        if use_value_norm:
-            if value_normalizer.keys() != set(self.agent_keys):
-                use_parameter_sharing = True
         for key in self.agent_keys:
             rewards = self.data['rewards'][key][i_env, path_slice]
             vs = np.append(self.data['values'][key][i_env, path_slice], [value_next[key]], axis=0)
@@ -215,7 +213,7 @@ class MARL_OnPolicyBuffer(BaseBuffer):
             returns = np.zeros_like(rewards)
             last_gae_lam = 0
             step_nums = len(path_slice)
-            key_vn = self.agent_keys[0] if use_parameter_sharing else key
+            key_vn = agent_grouping.group_of(key)
 
             if self.use_gae:
                 for t in reversed(range(step_nums)):
@@ -439,6 +437,7 @@ class MARL_OnPolicyBuffer_RNN(MARL_OnPolicyBuffer):
     def finish_path(self,
                     i_env: Optional[int] = None,
                     i_step: Optional[int] = None,
+                    agent_grouping: Optional[AgentGrouping] = None,
                     value_next: Optional[dict] = None,
                     value_normalizer: Optional[dict] = None):
         """
@@ -447,6 +446,7 @@ class MARL_OnPolicyBuffer_RNN(MARL_OnPolicyBuffer):
         Parameters:
             i_env (int): The index of environment.
             i_step (int): The index of step for current environment.
+            agent_grouping (AgentGrouping): The grouping information of the agents in the environment.
             value_next (Optional[dict]): The critic values of the terminal state.
             value_normalizer (Optional[dict]): The value normalizer method, default is None.
         """
@@ -455,10 +455,7 @@ class MARL_OnPolicyBuffer_RNN(MARL_OnPolicyBuffer):
 
         # calculate advantages and returns
         use_value_norm = False if (value_normalizer is None) else True
-        use_parameter_sharing = False
-        if use_value_norm:
-            if value_normalizer.keys() != set(self.agent_keys):
-                use_parameter_sharing = True
+
         for key in self.agent_keys:
             rewards = np.array(self.episode_data['rewards'][key][i_env, path_slice])
             vs = np.append(np.array(self.episode_data['values'][key][i_env, path_slice]), [value_next[key]], axis=0)
@@ -466,7 +463,7 @@ class MARL_OnPolicyBuffer_RNN(MARL_OnPolicyBuffer):
             returns = np.zeros_like(rewards)
             last_gae_lam = 0
             step_nums = len(path_slice)
-            key_vn = self.agent_keys[0] if use_parameter_sharing else key
+            key_vn = agent_grouping.group_of(key)
 
             if self.use_gae:
                 for t in reversed(range(step_nums)):

@@ -15,6 +15,9 @@ args = Namespace(dl_toolbox='torch', device=device,
 env_name = "mpe"
 env_id = "simple_spread_v3"
 
+args.use_rnn = True
+args.representation = "Basic_RNN"
+
 
 class TestValueBaseAlgo(unittest.TestCase):
     def test_coma(self):
@@ -25,9 +28,9 @@ class TestValueBaseAlgo(unittest.TestCase):
         runner = get_runner(algo="commnet", env=env_name, env_id=env_id, parser_args=args)
         runner.run(mode=run_mode, running_steps=running_steps, eval_interval=eval_interval)
 
-    # def test_dcg(self):
-    #     runner = get_runner(algo="dcg", env=env_name, env_id=env_id, parser_args=args)
-    #     runner.run(mode=run_mode, running_steps=running_steps, eval_interval=eval_interval)
+    def test_dcg(self):
+        runner = get_runner(algo="dcg", env=env_name, env_id=env_id, parser_args=args)
+        runner.run(mode=run_mode, running_steps=running_steps, eval_interval=eval_interval)
 
     def test_iac_continuous(self):
         args_continuous = deepcopy(args)

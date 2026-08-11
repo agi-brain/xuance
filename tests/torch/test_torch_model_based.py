@@ -9,7 +9,7 @@ device = 'cuda:0'
 test_mode = False
 
 
-class TestValueBaseAlgo(unittest.TestCase):
+class TestModelBaseAlgo(unittest.TestCase):
 
     def test_dreamer_v2(self):
         args = Namespace(dl_toolbox='torch', device=device, running_steps=running_steps, test_mode=test_mode)

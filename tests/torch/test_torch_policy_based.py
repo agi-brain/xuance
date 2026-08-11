@@ -32,8 +32,22 @@ class TestValueBaseAlgo(unittest.TestCase):
     def test_ddpg(self):
         runner = get_runner(algo="ddpg", env=env_name, env_id=env_id_continuous, parser_args=args)
         runner.run(mode=run_mode, running_steps=running_steps, eval_interval=eval_interval)
-        
+
+    """P-DQN"""
+    def test_pdqn(self):
+        runner = get_runner(algo="pdqn", env='platform', env_id='Platform-v1', parser_args=args)
+        runner.run(mode=run_mode, running_steps=running_steps, eval_interval=eval_interval)
+
     """MP-DQN"""
+    def test_mpdqn(self):
+        runner = get_runner(algo="mpdqn", env='platform', env_id='Platform-v1', parser_args=args)
+        runner.run(mode=run_mode, running_steps=running_steps, eval_interval=eval_interval)
+
+    """SP-DQN"""
+    def test_spdqn(self):
+        runner = get_runner(algo="spdqn", env='platform', env_id='Platform-v1', parser_args=args)
+        runner.run(mode=run_mode, running_steps=running_steps, eval_interval=eval_interval)
+
     
     """NPG"""
     # def test_npg_continuous(self):
@@ -47,8 +61,6 @@ class TestValueBaseAlgo(unittest.TestCase):
     #     args_npg.running_steps = 1000
     #     runner = get_runner(algo="npg", env=env_name, env_id=env_id_discrete, parser_args=args_npg)
     #     runner.run(mode=run_mode, running_steps=running_steps, eval_interval=eval_interval)
-
-    """P-DQN"""
 
     """PG"""
     def test_pg_continuous(self):
@@ -86,8 +98,6 @@ class TestValueBaseAlgo(unittest.TestCase):
         runner = get_runner(algo="sac", env=env_name, env_id=env_id_discrete, parser_args=args)
         runner.run(mode=run_mode, running_steps=running_steps, eval_interval=eval_interval)
 
-    """SP-DQN"""
-    
     """TD3"""
     def test_td3(self):
         runner = get_runner(algo="td3", env=env_name, env_id=env_id_continuous, parser_args=args)

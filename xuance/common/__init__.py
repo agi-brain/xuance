@@ -1,4 +1,5 @@
 from typing import Optional, Union, List, Dict, Sequence, Callable, Any, Tuple, SupportsFloat, Type, Mapping
+from xuance.common.agent_grouping import AgentGrouping
 from xuance.common.callback import BaseCallback, MultiAgentBaseCallback
 from xuance.common.common_tools import EPS, recursive_dict_update, load_yaml, get_arguments, \
     create_directory, discount_cumsum, get_time_string
@@ -14,6 +15,8 @@ from xuance.common.memory_offline import OfflineBuffer_D4RL
 from xuance.common.segtree_tool import SegmentTree, SumSegmentTree, MinSegmentTree
 
 __all__ = [
+    # multi-agent grouping
+    "AgentGrouping",
     # typing
     "Optional", "Union", "List", "Dict", "Sequence", "Callable", "Any", "Tuple", "SupportsFloat", "Type", "Mapping",
     # callbacks
