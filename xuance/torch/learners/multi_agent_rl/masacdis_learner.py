@@ -4,7 +4,7 @@ Implementation: Pytorch
 """
 import torch
 from torch import nn
-from xuance.common import List
+from xuance.common import AgentGrouping
 from argparse import Namespace
 from xuance.torch.learners.multi_agent_rl.isac_learner import ISAC_Learner
 from operator import itemgetter
@@ -13,11 +13,10 @@ from operator import itemgetter
 class MASACDIS_Learner(ISAC_Learner):
     def __init__(self,
                  config: Namespace,
-                 model_keys: List[str],
-                 agent_keys: List[str],
-                 policy: nn.Module,
+                 agent_grouping: AgentGrouping,
+                 model: nn.Module,
                  callback):
-        super(MASACDIS_Learner, self).__init__(config, model_keys, agent_keys, policy, callback)
+        super(MASACDIS_Learner, self).__init__(config, agent_grouping, model, callback)
 
     def update(self, sample):
         self.iterations += 1

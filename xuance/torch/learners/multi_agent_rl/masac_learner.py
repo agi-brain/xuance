@@ -4,7 +4,7 @@ Implementation: Pytorch
 """
 import torch
 from torch import nn
-from xuance.common import List
+from xuance.common import AgentGrouping
 from argparse import Namespace
 from xuance.torch.learners.multi_agent_rl.isac_learner import ISAC_Learner
 
@@ -12,11 +12,10 @@ from xuance.torch.learners.multi_agent_rl.isac_learner import ISAC_Learner
 class MASAC_Learner(ISAC_Learner):
     def __init__(self,
                  config: Namespace,
-                 model_keys: List[str],
-                 agent_keys: List[str],
-                 policy: nn.Module,
+                 agent_grouping: AgentGrouping,
+                 model: nn.Module,
                  callback):
-        super(MASAC_Learner, self).__init__(config, model_keys, agent_keys, policy, callback)
+        super(MASAC_Learner, self).__init__(config, agent_grouping, model, callback)
 
     def update(self, sample):
         self.iterations += 1
@@ -32,103 +31,108 @@ class MASAC_Learner(ISAC_Learner):
         rewards = sample_Tensor['rewards']
         terminals = sample_Tensor['terminals']
         agent_mask = sample_Tensor['agent_mask']
-        IDs = sample_Tensor['agent_ids']
-        if self.use_parameter_sharing:
-            key = self.model_keys[0]
-            bs = batch_size * self.n_agents
-            obs_joint = obs[key].reshape(batch_size, -1)
-            next_obs_joint = obs_next[key].reshape(batch_size, -1)
-            actions_joint = actions[key].reshape(batch_size, -1)
-            rewards[key] = rewards[key].reshape(batch_size * self.n_agents)
-            terminals[key] = terminals[key].reshape(batch_size * self.n_agents)
-        else:
-            bs = batch_size
-            obs_joint = self.get_joint_input(obs, (batch_size, -1))
-            next_obs_joint = self.get_joint_input(obs_next, (batch_size, -1))
-            actions_joint = self.get_joint_input(actions, (batch_size, -1))
+        agent_indices = sample_Tensor['agent_indices']
 
-        info = self.callback.on_update_start(self.iterations, method="update", policy=self.policy,
-                                             sample_Tensor=sample_Tensor, bs=bs, obs_joint=obs_joint,
+        obs_joint = self.get_joint_input(obs, (batch_size, -1))
+        next_obs_joint = self.get_joint_input(obs_next, (batch_size, -1))
+        actions_joint = self.get_joint_input(actions, (batch_size, -1))
+
+        if not self.agent_grouping.full_independent:
+            obs = self.packed_tensor(obs)
+            obs_next = self.packed_tensor(obs_next)
+            agent_mask = self.packed_tensor(agent_mask)
+            rewards = self.packed_tensor(rewards)
+            terminals = self.packed_tensor(terminals)
+
+        info = self.callback.on_update_start(self.iterations, method="update", model=self.model,
+                                             sample_Tensor=sample_Tensor, obs_joint=obs_joint,
                                              next_obs_joint=next_obs_joint, actions_joint=actions_joint)
 
-        # train the model
-        _, actions_eval, log_pi_eval = self.policy(observation=obs, agent_ids=IDs)
-        _, actions_next, log_pi_next = self.policy(observation=obs_next, agent_ids=IDs)
-        if self.use_parameter_sharing:
-            key = self.model_keys[0]
-            actions_next_joint = actions_next[key].reshape(batch_size, self.n_agents, -1).reshape(batch_size, -1)
-        else:
-            actions_next_joint = self.get_joint_input(actions_next, (batch_size, -1))
-        _, _, action_q_1, action_q_2 = self.policy.Qpolicy(joint_observation=obs_joint, joint_actions=actions_joint,
-                                                           agent_ids=IDs)
-        _, _, target_q = self.policy.Qtarget(joint_observation=next_obs_joint, joint_actions=actions_next_joint,
-                                             agent_ids=IDs)
-        for key in self.model_keys:
-            mask_values = agent_mask[key]
+        # feedforward
+        model_output = self.model(observations=obs, agent_indices=agent_indices)
+        actions_eval, log_pi_eval = model_output.actions, model_output.log_probs
+
+        next_model_output = self.model(observations=obs_next, agent_indices=agent_indices)
+        actions_next, log_pi_next = next_model_output.actions, next_model_output.log_probs
+
+        actions_next_joint = self.get_joint_input(actions_next, (batch_size, -1))
+        actions_eval_joint = self.get_joint_input(actions_eval, (batch_size, -1))
+
+        action_q_1, action_q_2 = self.model.Qpolicy(joint_observations=obs_joint, joint_actions=actions_joint,
+                                                    agent_indices=agent_indices)
+        next_q = self.model.Qtarget(joint_observations=next_obs_joint, joint_actions=actions_next_joint,
+                                    agent_indices=agent_indices)
+
+        if not self.agent_grouping.full_independent:
+            action_q_1 = self.packed_tensor(action_q_1)
+            action_q_2 = self.packed_tensor(action_q_2)
+            next_q = self.packed_tensor(next_q)
+            log_pi_next = self.packed_tensor(log_pi_next)
+            log_pi_eval = self.packed_tensor(log_pi_eval)
+
+        for group, agent_keys in self.groups.items():
+            bs = batch_size * self.n_group_agents[group]
+            mask_values = agent_mask[group]
             # critic update
-            action_q_1_i = action_q_1[key].reshape(bs)
-            action_q_2_i = action_q_2[key].reshape(bs)
-            log_pi_next_eval = log_pi_next[key].reshape(bs)
-            target_value = target_q[key].reshape(bs) - self.alpha[key] * log_pi_next_eval
-            backup = rewards[key] + (1 - terminals[key]) * self.gamma * target_value
+            action_q_1_i = action_q_1[group].reshape(bs)
+            action_q_2_i = action_q_2[group].reshape(bs)
+            log_pi_next_eval = log_pi_next[group].reshape(bs)
+            target_value = next_q[group].reshape(bs) - self.alpha[group] * log_pi_next_eval
+            backup = rewards[group] + (1 - terminals[group]) * self.gamma * target_value
             td_error_1, td_error_2 = action_q_1_i - backup.detach(), action_q_2_i - backup.detach()
             td_error_1 *= mask_values
             td_error_2 *= mask_values
             loss_c = ((td_error_1 ** 2).sum() + (td_error_2 ** 2).sum()) / mask_values.sum()
-            self.optimizer[key]['critic'].zero_grad()
+            self.optimizer[group]['critic'].zero_grad()
             loss_c.backward()
             if self.use_grad_clip:
-                torch.nn.utils.clip_grad_norm_(self.policy.parameters_critic[key], self.grad_clip_norm)
-            self.optimizer[key]['critic'].step()
-            if self.scheduler[key]['critic'] is not None:
-                self.scheduler[key]['critic'].step()
+                torch.nn.utils.clip_grad_norm_(self.model.parameters_critic[group], self.grad_clip_norm)
+            self.optimizer[group]['critic'].step()
+            if self.scheduler[group]['critic'] is not None:
+                self.scheduler[group]['critic'].step()
 
             # actor update
-            if self.use_parameter_sharing:
-                actions_eval_joint = actions_eval[key].reshape(batch_size, self.n_agents, -1).reshape(batch_size, -1)
-            else:
-                actions_eval_detach_others = {k: actions_eval[k] if k == key else actions_eval[k].detach()
-                                              for k in self.model_keys}
-                actions_eval_joint = self.get_joint_input(actions_eval_detach_others, (batch_size, -1))
-            _, _, policy_q_1, policy_q_2 = self.policy.Qpolicy(joint_observation=obs_joint,
-                                                               joint_actions=actions_eval_joint,
-                                                               agent_ids=IDs, agent_key=key)
-            log_pi_eval_i = log_pi_eval[key].reshape(bs)
-            policy_q = torch.min(policy_q_1[key], policy_q_2[key]).reshape(bs)
-            loss_a = ((self.alpha[key] * log_pi_eval_i - policy_q) * mask_values).sum() / mask_values.sum()
-            self.optimizer[key]['actor'].zero_grad()
+            policy_q_1, policy_q_2 = self.model.Qpolicy(joint_observations=obs_joint,
+                                                        joint_actions=actions_eval_joint,
+                                                        agent_indices=agent_indices, group_key=group)
+            if not self.agent_grouping.full_independent:
+                policy_q_1, policy_q_2 = self.packed_tensor(policy_q_1), self.packed_tensor(policy_q_2)
+            log_pi_eval_i = log_pi_eval[group].reshape(bs)
+            policy_q = torch.min(policy_q_1[group], policy_q_2[group]).reshape(bs)
+            loss_a = ((self.alpha[group] * log_pi_eval_i - policy_q) * mask_values).sum() / mask_values.sum()
+            self.optimizer[group]['actor'].zero_grad()
             loss_a.backward()
             if self.use_grad_clip:
-                torch.nn.utils.clip_grad_norm_(self.policy.parameters_actor[key], self.grad_clip_norm)
-            self.optimizer[key]['actor'].step()
-            if self.scheduler[key]['actor'] is not None:
-                self.scheduler[key]['actor'].step()
+                torch.nn.utils.clip_grad_norm_(self.model.parameters_actor[group], self.grad_clip_norm)
+            self.optimizer[group]['actor'].step()
+            if self.scheduler[group]['actor'] is not None:
+                self.scheduler[group]['actor'].step()
 
             # automatic entropy tuning
             if self.use_automatic_entropy_tuning:
-                alpha_loss = -(self.log_alpha[key] * (log_pi_eval_i + self.target_entropy[key]).detach()).mean()
-                self.alpha_optimizer[key].zero_grad()
+                alpha_loss = -(self.log_alpha[group] * (log_pi_eval_i + self.target_entropy[group]).detach()).mean()
+                self.alpha_optimizer[group].zero_grad()
                 alpha_loss.backward()
-                self.alpha_optimizer[key].step()
-                self.alpha[key] = self.log_alpha[key].exp()
+                self.alpha_optimizer[group].step()
+                self.alpha[group] = self.log_alpha[group].exp()
             else:
                 alpha_loss = 0
 
-            learning_rate_actor = self.optimizer[key]['actor'].state_dict()['param_groups'][0]['lr']
-            learning_rate_critic = self.optimizer[key]['critic'].state_dict()['param_groups'][0]['lr']
+            learning_rate_actor = self.optimizer[group]['actor'].state_dict()['param_groups'][0]['lr']
+            learning_rate_critic = self.optimizer[group]['critic'].state_dict()['param_groups'][0]['lr']
 
             info.update({
-                f"{key}/learning_rate_actor": learning_rate_actor,
-                f"{key}/learning_rate_critic": learning_rate_critic,
-                f"{key}/loss_actor": loss_a.item(),
-                f"{key}/loss_critic": loss_c.item(),
-                f"{key}/predictQ": policy_q.mean().item(),
+                f"{group}/learning_rate_actor": learning_rate_actor,
+                f"{group}/learning_rate_critic": learning_rate_critic,
+                f"{group}/loss_actor": loss_a.item(),
+                f"{group}/loss_critic": loss_c.item(),
+                f"{group}/predictQ": policy_q.mean().item(),
             })
             if self.use_automatic_entropy_tuning:
-                info.update({f"{key}/alpha_loss": alpha_loss.item(),
-                             f"{key}/alpha": self.alpha[key].item()})
+                info.update({f"{group}/alpha_loss": alpha_loss.item(),
+                             f"{group}/alpha": self.alpha[group].item()})
 
-            info.update(self.callback.on_update_agent_wise(self.iterations, key, info=info, method="update",
+            info.update(self.callback.on_update_agent_wise(self.iterations, group, info=info, method="update",
                                                            mask_values=mask_values,
                                                            action_q_1_i=action_q_1_i, action_q_2_i=action_q_2_i,
                                                            log_pi_next_eval=log_pi_next_eval,
@@ -137,8 +141,8 @@ class MASAC_Learner(ISAC_Learner):
                                                            policy_q_1=policy_q_1, policy_q_2=policy_q_2,
                                                            log_pi_eval_i=log_pi_eval_i, policy_q=policy_q))
 
-        self.policy.soft_update(self.tau)
-        info.update(self.callback.on_update_end(self.iterations, method="update", policy=self.policy, info=info))
+        self.model.soft_update(self.tau)
+        info.update(self.callback.on_update_end(self.iterations, method="update", model=self.model, info=info))
         return info
 
     def update_rnn(self, sample):
@@ -156,117 +160,125 @@ class MASAC_Learner(ISAC_Learner):
         terminals = sample_Tensor['terminals']
         agent_mask = sample_Tensor['agent_mask']
         filled = sample_Tensor['filled']
-        IDs = sample_Tensor['agent_ids']
+        agent_indices = sample_Tensor['agent_indices']
 
-        if self.use_parameter_sharing:
-            key = self.model_keys[0]
-            bs_rnn = batch_size * self.n_agents
-            filled = filled.unsqueeze(1).expand(-1, self.n_agents, -1).reshape(bs_rnn, seq_len)
-            obs_joint = obs[key].reshape(batch_size, self.n_agents, seq_len + 1, -1).transpose(
-                1, 2).reshape(batch_size, seq_len + 1, -1)
-            actions_joint = actions[key].reshape(batch_size, self.n_agents, seq_len, -1).transpose(
-                1, 2).reshape(batch_size, seq_len, -1)
-            rewards[key] = rewards[key].reshape(bs_rnn, seq_len)
-            terminals[key] = terminals[key].reshape(bs_rnn, seq_len)
-            IDs_t = IDs[:, :-1]
-        else:
-            bs_rnn, IDs_t = batch_size, None
-            obs_joint = self.get_joint_input(obs, (batch_size, seq_len + 1, -1))
-            actions_joint = self.get_joint_input(actions, (batch_size, seq_len, -1))
+        obs_joint = self.get_joint_input(obs, (batch_size, seq_len + 1, -1))
+        actions_joint = self.get_joint_input(actions, (batch_size, seq_len, -1))
 
-        info = self.callback.on_update_start(self.iterations, method="update_rnn", policy=self.policy,
-                                             sample_Tensor=sample_Tensor, bs_rnn=bs_rnn,
+        if not self.agent_grouping.full_independent:
+            obs = self.packed_tensor(obs)
+            rewards = self.packed_tensor(rewards)
+            agent_mask = self.packed_tensor(agent_mask)
+            terminals = self.packed_tensor(terminals)
+
+        info = self.callback.on_update_start(self.iterations, method="update_rnn", model=self.model,
+                                             sample_Tensor=sample_Tensor,
                                              obs_joint=obs_joint, actions_joint=actions_joint)
 
         # initial hidden states for rnn
-        rnn_hidden_actor = {k: self.policy.actor_representation[k].init_hidden(bs_rnn) for k in self.model_keys}
-        rnn_hidden_critic = {k: self.policy.critic_1_representation[k].init_hidden(batch_size) for k in self.model_keys}
+        rnn_states_actor = self.model.init_actor_rnn_states(batch_size)
+        rnn_states_critic_1, rnn_states_critic_2 = self.model.init_critic_rnn_states(batch_size)
 
-        _, actions_eval, log_pi_eval = self.policy(observation=obs, agent_ids=IDs, rnn_hidden=rnn_hidden_actor)
-        if self.use_parameter_sharing:
-            key = self.model_keys[0]
-            actions_eval_joint = actions_eval[key].reshape(batch_size, self.n_agents, seq_len + 1, -1).transpose(
-                1, 2).reshape(batch_size, seq_len + 1, -1)
-        else:
-            actions_eval_joint = self.get_joint_input(actions_eval, (batch_size, seq_len + 1, -1))
-        _, _, action_q_1, action_q_2 = self.policy.Qpolicy(joint_observation=obs_joint[:, :-1],
-                                                           joint_actions=actions_joint,
-                                                           agent_ids=IDs_t,
-                                                           rnn_hidden_critic_1=rnn_hidden_critic,
-                                                           rnn_hidden_critic_2=rnn_hidden_critic)
-        _, _, target_q = self.policy.Qtarget(joint_observation=obs_joint, joint_actions=actions_eval_joint,
-                                             agent_ids=IDs,
-                                             rnn_hidden_critic_1=rnn_hidden_critic,
-                                             rnn_hidden_critic_2=rnn_hidden_critic)
-        for key in self.model_keys:
-            mask_values = agent_mask[key] * filled
+        # feedforward
+        model_output = self.model(observations=obs, agent_indices=agent_indices, rnn_states=rnn_states_actor)
+        actions_eval, log_pi_eval = model_output.actions, model_output.log_probs
+
+        actions_eval_joint = self.get_joint_input(actions_eval, (batch_size, seq_len + 1, -1))
+
+        agent_indices_t = {k: v[:, :-1] for k, v in agent_indices.items()}
+        action_q_1, action_q_2 = self.model.Qpolicy(joint_observations=obs_joint[:, :-1],
+                                                    joint_actions=actions_joint,
+                                                    agent_indices=agent_indices_t,
+                                                    rnn_states_1=rnn_states_critic_1,
+                                                    rnn_states_2=rnn_states_critic_2)
+
+        next_q = self.model.Qtarget(joint_observations=obs_joint,
+                                    joint_actions=actions_eval_joint,
+                                    agent_indices=agent_indices,
+                                    rnn_states_1=rnn_states_critic_1,
+                                    rnn_states_2=rnn_states_critic_2)
+
+        if not self.agent_grouping.full_independent:
+            next_q = self.packed_tensor(next_q)
+            action_q_1 = self.packed_tensor(action_q_1)
+            action_q_2 = self.packed_tensor(action_q_2)
+            log_pi_eval = self.packed_tensor(log_pi_eval)
+
+        for group, agent_keys in self.groups.items():
+            n_agents = len(agent_keys)
+            bs = batch_size * n_agents
+            group_filled = filled.unsqueeze(1).expand(batch_size, n_agents, seq_len).reshape([bs, seq_len])
+            mask_values = agent_mask[group] * group_filled
             # critic update
-            action_q_1_i = action_q_1[key].reshape(bs_rnn, seq_len)
-            action_q_2_i = action_q_2[key].reshape(bs_rnn, seq_len)
-            log_pi_next_eval = log_pi_eval[key][:, 1:].reshape(bs_rnn, seq_len)
-            target_value = target_q[key][:, 1:].reshape(bs_rnn, seq_len) - self.alpha[key] * log_pi_next_eval
-            backup = rewards[key] + (1 - terminals[key]) * self.gamma * target_value
+            action_q_1_i = action_q_1[group].reshape(bs, seq_len)
+            action_q_2_i = action_q_2[group].reshape(bs, seq_len)
+            log_pi_next_eval = log_pi_eval[group][:, 1:].reshape(bs, seq_len)
+            target_value = next_q[group][:, 1:].reshape(bs, seq_len) - self.alpha[group] * log_pi_next_eval
+            backup = rewards[group] + (1 - terminals[group]) * self.gamma * target_value
             td_error_1, td_error_2 = action_q_1_i - backup.detach(), action_q_2_i - backup.detach()
             td_error_1 *= mask_values
             td_error_2 *= mask_values
             loss_c = ((td_error_1 ** 2).sum() + (td_error_2 ** 2).sum()) / mask_values.sum()
-            self.optimizer[key]['critic'].zero_grad()
+            self.optimizer[group]['critic'].zero_grad()
             loss_c.backward()
             if self.use_grad_clip:
-                torch.nn.utils.clip_grad_norm_(self.policy.parameters_critic[key], self.grad_clip_norm)
-            self.optimizer[key]['critic'].step()
-            if self.scheduler[key]['critic'] is not None:
-                self.scheduler[key]['critic'].step()
+                torch.nn.utils.clip_grad_norm_(self.model.critics[group].parameters(), self.grad_clip_norm)
+            self.optimizer[group]['critic'].step()
+            if self.scheduler[group]['critic'] is not None:
+                self.scheduler[group]['critic'].step()
 
             # actor update
             if self.use_parameter_sharing:
                 actions_eval_joint = actions_eval_joint[:, :-1]
             else:
-                actions_eval_detach_others = {k: actions_eval[k] if k == key else actions_eval[k].detach()
-                                              for k in self.model_keys}
+                actions_eval_detach_others = {k: actions_eval[k] if k == group else actions_eval[k].detach()
+                                              for k in self.group_keys}
                 actions_eval_joint = self.get_joint_input(actions_eval_detach_others,
                                                           (batch_size, seq_len + 1, -1))[:, :-1]
-            _, _, policy_q_1, policy_q_2 = self.policy.Qpolicy(joint_observation=obs_joint[:, :-1],
-                                                               joint_actions=actions_eval_joint,
-                                                               agent_ids=IDs_t, agent_key=key,
-                                                               rnn_hidden_critic_1=rnn_hidden_critic,
-                                                               rnn_hidden_critic_2=rnn_hidden_critic)
-            log_pi_eval_i = log_pi_eval[key][:, :-1].reshape(bs_rnn, seq_len)
-            policy_q = torch.min(policy_q_1[key], policy_q_2[key]).reshape(bs_rnn, seq_len)
-            loss_a = ((self.alpha[key] * log_pi_eval_i - policy_q) * mask_values).sum() / mask_values.sum()
-            self.optimizer[key]['actor'].zero_grad()
+            policy_q_1, policy_q_2 = self.model.Qpolicy(joint_observations=obs_joint[:, :-1],
+                                                        joint_actions=actions_eval_joint,
+                                                        agent_indices=agent_indices_t, grou_key=group,
+                                                        rnn_states_1=rnn_states_critic_1,
+                                                        rnn_states_2=rnn_states_critic_2)
+            if not self.agent_grouping.full_independent:
+                policy_q_1 = self.packed_tensor(policy_q_1)
+                policy_q_2 = self.packed_tensor(policy_q_2)
+            log_pi_eval_i = log_pi_eval[group][:, :-1].reshape(bs, seq_len)
+            policy_q = torch.min(policy_q_1[group], policy_q_2[group]).reshape(bs, seq_len)
+            loss_a = ((self.alpha[group] * log_pi_eval_i - policy_q) * mask_values).sum() / mask_values.sum()
+            self.optimizer[group]['actor'].zero_grad()
             loss_a.backward()
             if self.use_grad_clip:
-                torch.nn.utils.clip_grad_norm_(self.policy.parameters_actor[key], self.grad_clip_norm)
-            self.optimizer[key]['actor'].step()
-            if self.scheduler[key]['actor'] is not None:
-                self.scheduler[key]['actor'].step()
+                torch.nn.utils.clip_grad_norm_(self.model.actors[group].parameters(), self.grad_clip_norm)
+            self.optimizer[group]['actor'].step()
+            if self.scheduler[group]['actor'] is not None:
+                self.scheduler[group]['actor'].step()
 
             # automatic entropy tuning
             if self.use_automatic_entropy_tuning:
-                alpha_loss = -(self.log_alpha[key] * (log_pi_eval_i + self.target_entropy[key]).detach()).mean()
-                self.alpha_optimizer[key].zero_grad()
+                alpha_loss = -(self.log_alpha[group] * (log_pi_eval_i + self.target_entropy[group]).detach()).mean()
+                self.alpha_optimizer[group].zero_grad()
                 alpha_loss.backward()
-                self.alpha_optimizer[key].step()
-                self.alpha[key] = self.log_alpha[key].exp()
+                self.alpha_optimizer[group].step()
+                self.alpha[group] = self.log_alpha[group].exp()
             else:
                 alpha_loss = 0
 
-            learning_rate_actor = self.optimizer[key]['actor'].state_dict()['param_groups'][0]['lr']
-            learning_rate_critic = self.optimizer[key]['critic'].state_dict()['param_groups'][0]['lr']
+            learning_rate_actor = self.optimizer[group]['actor'].state_dict()['param_groups'][0]['lr']
+            learning_rate_critic = self.optimizer[group]['critic'].state_dict()['param_groups'][0]['lr']
 
             info.update({
-                f"{key}/learning_rate_actor": learning_rate_actor,
-                f"{key}/learning_rate_critic": learning_rate_critic,
-                f"{key}/loss_actor": loss_a.item(),
-                f"{key}/loss_critic": loss_c.item(),
-                f"{key}/predictQ": policy_q.mean().item(),
+                f"{group}/learning_rate_actor": learning_rate_actor,
+                f"{group}/learning_rate_critic": learning_rate_critic,
+                f"{group}/loss_actor": loss_a.item(),
+                f"{group}/loss_critic": loss_c.item(),
+                f"{group}/predictQ": policy_q.mean().item(),
             })
             if self.use_automatic_entropy_tuning:
-                info.update({f"{key}/alpha_loss": alpha_loss.item(),
-                             f"{key}/alpha": self.alpha[key].item()})
+                info.update({f"{group}/alpha_loss": alpha_loss.item(),
+                             f"{group}/alpha": self.alpha[group].item()})
 
-            info.update(self.callback.on_update_agent_wise(self.iterations, key, info=info, method="update_rnn",
+            info.update(self.callback.on_update_agent_wise(self.iterations, group, info=info, method="update_rnn",
                                                            mask_values=mask_values,
                                                            action_q_1_i=action_q_1_i, action_q_2_i=action_q_2_i,
                                                            log_pi_next_eval=log_pi_next_eval,
@@ -275,6 +287,6 @@ class MASAC_Learner(ISAC_Learner):
                                                            policy_q_1=policy_q_1, policy_q_2=policy_q_2,
                                                            log_pi_eval_i=log_pi_eval_i, policy_q=policy_q))
 
-        self.policy.soft_update(self.tau)
-        info.update(self.callback.on_update_end(self.iterations, method="update_rnn", policy=self.policy, info=info))
+        self.model.soft_update(self.tau)
+        info.update(self.callback.on_update_end(self.iterations, method="update_rnn", model=self.model, info=info))
         return info

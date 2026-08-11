@@ -1,5 +1,5 @@
 from argparse import Namespace
-from typing import List
+from xuance.common import AgentGrouping
 
 import torch
 from torch import nn
@@ -10,11 +10,10 @@ from xuance.torch.learners.multi_agent_rl.ippo_learner import IPPO_Learner
 class CommNet_Learner(IPPO_Learner):
     def __init__(self,
                  config: Namespace,
-                 model_keys: List[str],
-                 agent_keys: List[str],
-                 policy: nn.Module,
+                 agent_grouping: AgentGrouping,
+                 model: nn.Module,
                  callback):
-        super(CommNet_Learner, self).__init__(config, model_keys, agent_keys, policy, callback)
+        super(CommNet_Learner, self).__init__(config, agent_grouping, model, callback)
 
     def build_optimizer(self):
         self.optimizer = torch.optim.Adam(self.policy.parameters_model, lr=self.learning_rate, eps=1e-5,
@@ -64,13 +63,13 @@ class CommNet_Learner(IPPO_Learner):
             joint_obs = self.get_joint_input(obs, (batch_size, seq_len, -1))
             critic_input = {k: joint_obs for k in self.agent_keys}
         # feedfowrd
-        rnn_hidden_actor = {k: self.policy.actor_representation[k].init_hidden(bs_rnn) for k in self.model_keys}
-        rnn_hidden_critic = {k: self.policy.critic_representation[k].init_hidden(bs_rnn) for k in self.model_keys}
+        rnn_states_actor = {k: self.policy.actor_representation[k].init_rnn_states(bs_rnn) for k in self.model_keys}
+        rnn_states_critic = {k: self.policy.critic_representation[k].init_rnn_states(bs_rnn) for k in self.model_keys}
 
         # feedforward
-        _, pi_dist_dict = self.policy(obs, agent_ids=IDs, avail_actions=avail_actions, rnn_hidden=rnn_hidden_actor,
+        _, pi_dist_dict = self.policy(obs, agent_ids=IDs, avail_actions=avail_actions, rnn_states=rnn_states_actor,
                                       alive_ally=alive_ally)
-        _, value_pred_dict = self.policy.get_values(critic_input, agent_ids=IDs, rnn_hidden=rnn_hidden_critic)
+        _, value_pred_dict = self.policy.get_values(critic_input, agent_ids=IDs, rnn_states=rnn_states_critic)
 
         # calculate losses for each agent
         loss_a, loss_e, loss_c = [], [], []

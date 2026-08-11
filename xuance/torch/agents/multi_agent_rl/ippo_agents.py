@@ -1,12 +1,14 @@
-import torch
+import gymnasium
 from argparse import Namespace
 from gymnasium.spaces import Space
 from xuance.common import List, Optional, MultiAgentBaseCallback
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
-from xuance.torch import Module
-from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
-from xuance.torch.policies import REGISTRY_Policy
+from xuance.torch import Module, ModuleDict
+from xuance.torch.utils import ActivationFunctions
 from xuance.torch.agents import OnPolicyMARLAgents
+from xuance.torch.rl_models import CategoricalActor, GaussianActor
+from xuance.torch.rl_models import StateValueCritic as Critic
+from xuance.torch.rl_models.architectures import IndependentActorCritic
 
 
 class IPPO_Agents(OnPolicyMARLAgents):
@@ -33,47 +35,72 @@ class IPPO_Agents(OnPolicyMARLAgents):
             config, envs, num_agents, agent_keys, state_space, observation_space, action_space, callback
         )
 
-        self.policy = self._build_policy()  # build policy
+        self.model = self._build_model()  # build the MARL model
         self.memory = self._build_memory()  # build memory
-        self.learner = self._build_learner(self.config, self.model_keys, self.agent_keys, self.policy, self.callback)
+        self.learner = self._build_learner(self.config, self.agent_grouping, self.model, self.callback)
 
-    def _build_policy(self) -> Module:
+    def _build_model(self) -> Module:
         """
-        Build representation(s) and policy(ies) for agent(s)
+        Build the MARL model.
 
         Returns:
-            policy (torch.nn.Module): A dict of policies.
+            model (torch.nn.Module): The MARL model.
         """
-        normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None
-        initializer = torch.nn.init.orthogonal_
-        activation = ActivationFunctions[self.config.activation]
-        device = self.device
-        agent = self.config.agent
-        # build representations
-        A_representation = self._build_representation(self.config.representation, self.observation_space, self.config)
-        C_representation = self._build_representation(self.config.representation, self.observation_space, self.config)
-        # build policies
-        if self.config.policy == "Categorical_MAAC_Policy":
-            policy = REGISTRY_Policy["Categorical_MAAC_Policy"](
-                action_space=self.action_space, n_agents=self.n_agents,
-                representation_actor=A_representation, representation_critic=C_representation,
-                actor_hidden_size=self.config.actor_hidden_size, critic_hidden_size=self.config.critic_hidden_size,
-                normalize=normalize_fn, initialize=initializer, activation=activation,
-                device=device, use_distributed_training=self.distributed_training,
-                use_parameter_sharing=self.use_parameter_sharing, model_keys=self.model_keys,
-                use_rnn=self.use_rnn, rnn=self.config.rnn if self.use_rnn else None)
-            self.continuous_control = False
-        elif self.config.policy == "Gaussian_MAAC_Policy":
-            policy = REGISTRY_Policy["Gaussian_MAAC_Policy"](
-                action_space=self.action_space, n_agents=self.n_agents,
-                representation_actor=A_representation, representation_critic=C_representation,
-                actor_hidden_size=self.config.actor_hidden_size, critic_hidden_size=self.config.critic_hidden_size,
-                normalize=normalize_fn, initialize=initializer, activation=activation,
-                activation_action=ActivationFunctions[self.config.activation_action],
-                device=device, use_distributed_training=self.distributed_training,
-                use_parameter_sharing=self.use_parameter_sharing, model_keys=self.model_keys,
-                use_rnn=self.use_rnn, rnn=self.config.rnn if self.use_rnn else None)
+        actor_input = dict(
+            actor_hidden_size=self.config.actor_hidden_size,
+            normalizer=self.normalize_fn,
+            initializer=self.initializer,
+            activation=self.activation,
+            device=self.device
+        )
+        if isinstance(self.action_space[self.agent_keys[0]], gymnasium.spaces.Box):
+            Actor = GaussianActor
+            actor_input['activation_action'] = ActivationFunctions[self.config.activation_action]
             self.continuous_control = True
+        elif isinstance(self.action_space[self.agent_keys[0]], gymnasium.spaces.Discrete):
+            Actor = CategoricalActor
+            self.continuous_control = False
         else:
-            raise AttributeError(f"{agent} currently does not support the policy named {self.config.policy}.")
-        return policy
+            raise NotImplementedError
+
+        actor_networks = ModuleDict()
+        critic_networks = ModuleDict()
+        for group_key, group_agents in self.groups.items():
+            reference_agent = group_agents[0]
+            # build agent feature encoder as actor representations
+            actor_feature_encoder = self._build_agent_feature_encoder(
+                representation_choice=self.config.representation,
+                group_agents=group_agents,
+                input_space=self.observation_space[reference_agent]
+            )
+            actor_input['representation'] = actor_feature_encoder
+            actor_input['action_space'] = self.action_space[reference_agent]
+            # build inner-group shared actor-network
+            actor_networks[group_key] = Actor(**actor_input)
+            # build critic feature encoder as critic representations
+            critic_feature_encoder = self._build_agent_feature_encoder(
+                representation_choice=self.config.representation,
+                group_agents=group_agents,
+                input_space=self.observation_space[reference_agent]
+            )
+            # build inner-group shared critic-network
+            critic_networks[group_key] = Critic(
+                representation=critic_feature_encoder,
+                critic_hidden_size=self.config.critic_hidden_size,
+                normalizer=self.normalize_fn,
+                initializer=self.initializer,
+                activation=self.activation,
+                device=self.device
+            )
+
+        # build the RL model
+        model = IndependentActorCritic(
+            grouping=self.agent_grouping,
+            actors=actor_networks,
+            critics=critic_networks,
+            use_rnn=self.use_rnn,
+            device=self.device,
+            use_distributed_training=self.distributed_training
+        )
+
+        return model

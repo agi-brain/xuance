@@ -1,12 +1,13 @@
-import torch
+import gymnasium
 from argparse import Namespace
 from gymnasium.spaces import Space
 from xuance.common import List, Optional, MultiAgentBaseCallback
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
-from xuance.torch import Module
-from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
-from xuance.torch.policies import REGISTRY_Policy
+from xuance.torch import Module, ModuleDict
+from xuance.torch.utils import ActivationFunctions
 from xuance.torch.agents.multi_agent_rl.isac_agents import ISAC_Agents
+from xuance.torch.rl_models import CategoricalActor, SAC_GaussianActor, TwinCentralizedActionValueCritic
+from xuance.torch.rl_models.architectures import MultiAgentSoftActorCritic
 
 
 class MASAC_Agents(ISAC_Agents):
@@ -17,6 +18,7 @@ class MASAC_Agents(ISAC_Agents):
         envs: the vectorized environments.
         callback: A user-defined callback function object to inject custom logic during training.
     """
+
     def __init__(
             self,
             config: Namespace,
@@ -32,73 +34,70 @@ class MASAC_Agents(ISAC_Agents):
             config, envs, num_agents, agent_keys, state_space, observation_space, action_space, callback
         )
 
-    def _build_policy(self) -> Module:
+    def _build_model(self) -> Module:
         """
-        Build representation(s) and policy(ies) for agent(s)
+        Build the MARL model.
 
         Returns:
-            policy (torch.nn.Module): A dict of policies.
+            model (torch.nn.Module): The MARL model.
         """
-        normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None
-        initializer = torch.nn.init.orthogonal_
-        activation = ActivationFunctions[self.config.activation]
-        device = self.device
-        agent = self.config.agent
-
-        # build representations
-        A_representation = self._build_representation(self.config.representation, self.observation_space, self.config)
-        critic_in = [sum(self.observation_space[k].shape) + sum(self.action_space[k].shape) for k in self.agent_keys]
-        space_critic_in = {k: (sum(critic_in),) for k in self.agent_keys}
-        C_representation = self._build_representation(self.config.representation, space_critic_in, self.config)
-
-        # build policies
-        if self.config.policy == "Gaussian_MASAC_Policy":
-            policy = REGISTRY_Policy["Gaussian_MASAC_Policy"](
-                action_space=self.action_space, n_agents=self.n_agents,
-                actor_representation=A_representation, critic_representation=C_representation,
-                actor_hidden_size=self.config.actor_hidden_size,
-                critic_hidden_size=self.config.critic_hidden_size,
-                normalize=normalize_fn, initialize=initializer, activation=activation,
-                activation_action=ActivationFunctions[self.config.activation_action],
-                device=device, use_distributed_training=self.distributed_training,
-                use_parameter_sharing=self.use_parameter_sharing, model_keys=self.model_keys,
-                use_rnn=self.use_rnn, rnn=self.config.rnn if self.use_rnn else None)
+        actor_input = dict(
+            actor_hidden_size=self.config.actor_hidden_size,
+            normalizer=self.normalize_fn,
+            initializer=self.initializer,
+            activation=self.activation,
+            device=self.device
+        )
+        if isinstance(self.action_space[self.agent_keys[0]], gymnasium.spaces.Box):
+            Actor = SAC_GaussianActor
+            actor_input['activation_action'] = ActivationFunctions[self.config.activation_action]
             self.continuous_control = True
+        elif isinstance(self.action_space[self.agent_keys[0]], gymnasium.spaces.Discrete):
+            Actor = CategoricalActor
+            self.continuous_control = False
         else:
-            raise AttributeError(f"{agent} currently does not support the policy named {self.config.policy}.")
+            raise NotImplementedError
 
-        return policy
+        actor_networks = ModuleDict()
+        critic_networks = ModuleDict()
+        joint_obs_space = (sum([sum(self.observation_space[k].shape) for k in self.agent_keys]),)
+        for group_key, group_agents in self.groups.items():
+            reference_agent = group_agents[0]
+            # build agent feature encoder as actor representations
+            actor_feature_encoder = self._build_agent_feature_encoder(
+                representation_choice=self.config.representation,
+                group_agents=group_agents,
+                input_space=self.observation_space[reference_agent]
+            )
+            # build inner-group shared actor-network
+            actor_input['representation'] = actor_feature_encoder
+            actor_input['action_space'] = self.action_space[reference_agent]
+            actor_networks[group_key] = Actor(**actor_input)
+            # build critic feature encoder as critic representations
+            critic_feature_encoder = self._build_agent_feature_encoder(
+                representation_choice=self.config.representation,
+                group_agents=group_agents,
+                input_space=joint_obs_space
+            )
+            # build inner-group shared critic-network
+            critic_networks[group_key] = TwinCentralizedActionValueCritic(
+                representation=critic_feature_encoder,
+                action_space=self.action_space,
+                critic_hidden_size=self.config.critic_hidden_size,
+                normalizer=self.normalize_fn,
+                initializer=self.initializer,
+                activation=self.activation,
+                device=self.device
+            )
 
-    def init_rnn_hidden(self, n_envs):
-        """
-        Returns initialized hidden states of RNN if use RNN-based representations.
+        # build the RL model
+        model = MultiAgentSoftActorCritic(
+            grouping=self.agent_grouping,
+            actors=actor_networks,
+            critics=critic_networks,
+            use_rnn=self.use_rnn,
+            device=self.device,
+            use_distributed_training=self.distributed_training
+        )
 
-        Parameters:
-            n_envs (int): The number of parallel environments.
-
-        Returns:
-            rnn_hidden_states: The hidden states for RNN.
-        """
-        rnn_hidden_states = None
-        if self.use_rnn:
-            batch = n_envs * self.n_agents if self.use_parameter_sharing else n_envs
-            rnn_hidden_states = {k: self.policy.actor_representation[k].init_hidden(batch) for k in self.model_keys}
-        return rnn_hidden_states
-
-    def init_hidden_item(self, i_env: int,
-                         rnn_hidden: Optional[dict] = None):
-        """
-        Returns initialized hidden states of RNN for i-th environment.
-
-        Parameters:
-            i_env (int): The index of environment that to be selected.
-            rnn_hidden (Optional[dict]): The RNN hidden states of actor representation.
-        """
-        assert self.use_rnn is True, "This method cannot be called when self.use_rnn is False."
-        if self.use_parameter_sharing:
-            batch_index = list(range(i_env * self.n_agents, (i_env + 1) * self.n_agents))
-        else:
-            batch_index = [i_env, ]
-        for key in self.model_keys:
-            rnn_hidden[key] = self.policy.actor_representation[key].init_hidden_item(batch_index, *rnn_hidden[key])
-        return rnn_hidden
+        return model

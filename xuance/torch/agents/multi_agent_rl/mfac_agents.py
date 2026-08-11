@@ -1,16 +1,19 @@
-import numpy as np
 import torch
+import numpy as np
 from tqdm import tqdm
 from copy import deepcopy
 from argparse import Namespace
 from operator import itemgetter
 from gymnasium.spaces import Space
+from typing import List, Optional, Dict, Tuple
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
-from xuance.common import List, Optional, MeanField_OnPolicyBuffer, MeanField_OnPolicyBuffer_RNN, \
-    MultiAgentBaseCallback
-from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
-from xuance.torch.policies import REGISTRY_Policy
+from xuance.common import MeanField_OnPolicyBuffer, MeanField_OnPolicyBuffer_RNN, MultiAgentBaseCallback
+from xuance.torch import Module, ModuleDict
 from xuance.torch.agents import OnPolicyMARLAgents
+from xuance.torch.rl_models import CategoricalActor as Actor
+from xuance.torch.rl_models import MeanFieldStateValueCritic as Critic
+from xuance.torch.rl_models.modules import RNN_State
+from xuance.torch.rl_models.architectures import MeanFiledActorCritic
 
 
 class MFAC_Agents(OnPolicyMARLAgents):
@@ -33,11 +36,11 @@ class MFAC_Agents(OnPolicyMARLAgents):
         self.n_actions_max = max(self.n_actions_list)
         self.actions_mean = [{k: np.zeros(self.n_actions_max) for k in self.agent_keys} for _ in range(self.n_envs)]
 
-        self.policy = self._build_policy()  # build policy
+        self.model = self._build_model()  # build the MARL model
         self.memory = self._build_memory()  # build memory
-        self.learner = self._build_learner(self.config, self.model_keys, self.agent_keys, self.policy, self.callback)
+        self.learner = self._build_learner(self.config, self.agent_grouping, self.model, self.callback)
 
-    def _build_memory(self):
+    def _build_memory(self) -> MeanField_OnPolicyBuffer | MeanField_OnPolicyBuffer_RNN:
         """Build replay buffer for models training
         """
         if self.use_actions_mask:
@@ -62,60 +65,84 @@ class MFAC_Agents(OnPolicyMARLAgents):
         Buffer = MeanField_OnPolicyBuffer_RNN if self.use_rnn else MeanField_OnPolicyBuffer
         return Buffer(**input_dict)
 
-    def _build_policy(self):
+    def _build_model(self) -> Module:
         """
-        Build representation(s) and policy(ies) for agent(s)
+        Build the MARL model.
 
         Returns:
-            policy (torch.nn.Module): A dict of policies.
+            model (torch.nn.Module): The MARL model.
         """
-        normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None
-        initializer = torch.nn.init.orthogonal_
-        activation = ActivationFunctions[self.config.activation]
-        device = self.device
-        agent = self.config.agent
+        actor_networks = ModuleDict()
+        critic_networks = ModuleDict()
+        for group_key, group_agents in self.groups.items():
+            reference_agent = group_agents[0]
+            # build agent feature encoder as actor representations
+            actor_feature_encoder = self._build_agent_feature_encoder(
+                representation_choice=self.config.representation,
+                group_agents=group_agents,
+                input_space=self.observation_space[reference_agent]
+            )
+            # build inner-group shared actor-network
+            actor_networks[group_key] = Actor(
+                representation=actor_feature_encoder,
+                action_space=self.action_space[reference_agent],
+                actor_hidden_size=self.config.actor_hidden_size,
+                normalizer=self.normalize_fn,
+                initializer=self.initializer,
+                activation=self.activation,
+                device=self.device
+            )
+            # build mean actions embedding network
+            mean_actions_encoder = self._build_agent_feature_encoder(
+                representation_choice="Basic_MLP",
+                group_agents=group_agents,
+                input_space=(self.n_actions_max,)
+            )
+            # build critic feature encoder as critic representations
+            critic_feature_encoder = self._build_agent_feature_encoder(
+                representation_choice=self.config.representation,
+                group_agents=group_agents,
+                input_space=self.observation_space[reference_agent]
+            )
+            # build inner-group shared critic-network
+            critic_networks[group_key] = Critic(
+                representation=critic_feature_encoder,
+                mean_actions_encoder=mean_actions_encoder,
+                critic_hidden_size=self.config.critic_hidden_size,
+                normalizer=self.normalize_fn,
+                initializer=self.initializer,
+                activation=self.activation,
+                device=self.device
+            )
 
-        # build representations
-        A_representation = self._build_representation(self.config.representation, self.observation_space, self.config)
-        C_representation = self._build_representation(self.config.representation, self.observation_space, self.config)
+        model = MeanFiledActorCritic(
+            grouping=self.agent_grouping,
+            actors=actor_networks,
+            critics=critic_networks,
+            use_rnn=self.use_rnn,
+            device=self.device,
+            use_distributed_training=self.distributed_training,
+            temperature=self.config.temperature,
+            n_actions_max=self.n_actions_max
+        )
 
-        # build policies
-        if self.config.policy == "Categorical_MFAC_Policy":
-            policy = REGISTRY_Policy["Categorical_MFAC_Policy"](
-                action_space=self.action_space, n_agents=self.n_agents,
-                representation_actor=A_representation, representation_critic=C_representation,
-                actor_hidden_size=self.config.actor_hidden_size, critic_hidden_size=self.config.critic_hidden_size,
-                normalize=normalize_fn, initialize=initializer, activation=activation,
-                device=device, use_distributed_training=self.distributed_training,
-                use_parameter_sharing=self.use_parameter_sharing, model_keys=self.model_keys,
-                use_rnn=self.use_rnn, rnn=self.config.rnn if self.use_rnn else None,
-                temperature=self.config.temperature,
-                action_embedding_hidden_size=self.config.action_embedding_hidden_size)
-            self.continuous_control = False
-        else:
-            raise AttributeError(f"{agent} currently does not support the policy named {self.config.policy}.")
-        return policy
+        return model
 
     def _build_inputs_mean_mask(self,
                                 agent_mask: Optional[dict] = None,
                                 act_mean_dict=None):
         batch_size = len(act_mean_dict)
+        mean_actions_input = {}
         agent_mask_array = np.array([itemgetter(*self.agent_keys)(data) for data in agent_mask])
         # get mean actions as input
-        if self.use_parameter_sharing:
-            key = self.agent_keys[0]
+        for group, group_agents in self.groups.items():
+            bs = batch_size * len(group_agents)
             mean_actions_array = np.array([itemgetter(*self.agent_keys)(data) for data in act_mean_dict])
             if self.use_rnn:
-                mean_actions_input = {key: mean_actions_array.reshape([batch_size * self.n_agents, 1, -1])}
+                mean_actions_input[group] = mean_actions_array.reshape([bs, 1, -1])
             else:
-                mean_actions_input = {key: mean_actions_array.reshape([batch_size * self.n_agents, -1])}
-        else:
-            if self.use_rnn:
-                mean_actions_input = {k: np.stack([data[k] for data in act_mean_dict]).reshape([batch_size, 1, -1])
-                                      for k in self.agent_keys}
-            else:
-                mean_actions_input = {k: np.stack([data[k] for data in act_mean_dict]).reshape(batch_size, -1)
-                                      for k in self.agent_keys}
+                mean_actions_input[group] = mean_actions_array.reshape([bs, -1])
+
         return mean_actions_input, agent_mask_array
 
     def store_experience(self, obs_dict, avail_actions, actions_dict, log_pi_a, rewards_dict, values_dict,
@@ -160,8 +187,8 @@ class MFAC_Agents(OnPolicyMARLAgents):
                     act_mean_dict: Optional[List[dict]] = None,
                     state: Optional[np.ndarray] = None,
                     avail_actions_dict: Optional[List[dict]] = None,
-                    rnn_hidden_actor: Optional[dict] = None,
-                    rnn_hidden_critic: Optional[dict] = None,
+                    rnn_states_actor: Optional[Dict[str, RNN_State]] = None,
+                    rnn_states_critic: Optional[Dict[str, RNN_State]] = None,
                     test_mode: Optional[bool] = False,
                     deterministic: bool = False,
                     **kwargs):
@@ -174,83 +201,71 @@ class MFAC_Agents(OnPolicyMARLAgents):
             state (Optional[np.ndarray]): The global state.
             act_mean_dict (Optional[List[dict]]): Mean actions of each agent's neighbors.
             avail_actions_dict (Optional[List[dict]]): Actions mask values, default is None.
-            rnn_hidden_actor (Optional[dict]): The RNN hidden states of actor representation.
-            rnn_hidden_critic (Optional[dict]): The RNN hidden states of critic representation.
+            rnn_states_actor (Optional[dict]): The RNN hidden states of actor representation.
+            rnn_states_critic (Optional[dict]): The RNN hidden states of critic representation.
             test_mode (Optional[bool]): True for testing without noises.
             deterministic (bool): True for deterministic policy and False for stochastic policy.
 
         Returns:
-            rnn_hidden_actor_new (dict): The new RNN hidden states of actor representation (if self.use_rnn=True).
-            rnn_hidden_critic_new (dict): The new RNN hidden states of critic representation (if self.use_rnn=True).
+            rnn_states_actor_new (dict): The new RNN hidden states of actor representation (if self.use_rnn=True).
+            rnn_states_critic_new (dict): The new RNN hidden states of critic representation (if self.use_rnn=True).
             actions_dict (dict): The output actions.
             log_pi_a (dict): The log of pi.
             values_dict (dict): The evaluated critic values (when test_mode is False).
         """
         n_env = len(obs_dict)
-        rnn_hidden_critic_new, values_out, log_pi_a_dict, values_dict = {}, {}, {}, {}
+        rnn_states_critic_new, values_out, log_pi_a_dict, values_dict = {}, {}, {}, {}
 
         mean_actions_input, agent_mask_array = self._build_inputs_mean_mask(agent_mask, act_mean_dict)
-        obs_input, agents_id, avail_actions_input = self._build_inputs(obs_dict, avail_actions_dict)
+        obs_input, agent_indices, avail_actions_input = self._build_inputs(obs_dict, avail_actions_dict)
         agent_mask_tensor = torch.tensor(agent_mask_array, dtype=torch.float32, device=self.device)
-        rnn_hidden_actor_new, pi_dists = self.policy(observation=obs_input,
-                                                     agent_ids=agents_id,
-                                                     avail_actions=avail_actions_input,
-                                                     rnn_hidden=rnn_hidden_actor)
+        model_output = self.model(observations=obs_input,
+                                  agent_indices=agent_indices,
+                                  avail_actions=avail_actions_input,
+                                  rnn_states=rnn_states_actor,
+                                  deterministic=deterministic)
+        rnn_states_actor_new = model_output.actor_rnn_states
+        actions = model_output.actions
+
+        actions_out = {k: actions[k].reshape(n_env).cpu().detach().numpy() for k in self.agent_keys}
+        actions_dict = [{k: actions_out[k][i] for k in self.agent_keys} for i in range(n_env)]
+        actions_mean_masked = self.model.get_mean_actions(actions=actions, agent_mask_tensor=agent_mask_tensor,
+                                                          batch_size=n_env)
+        actions_mean_masked = {k: v.cpu().detach().numpy() for k, v in actions_mean_masked.items()}
+        actions_mean_dict = [{k: v[e] for k, v in actions_mean_masked.items()} for e in range(n_env)]
 
         if not test_mode:
-            rnn_hidden_critic_new, values_out = self.policy.get_values(observation=obs_input,
-                                                                       actions_mean=mean_actions_input,
-                                                                       agent_ids=agents_id,
-                                                                       rnn_hidden=rnn_hidden_critic)
+            for group, agent_keys in self.groups.items():
+                n_agents = self.n_group_agents[group]
+                actions_group = torch.stack([model_output.actions[k] for k in agent_keys], dim=1)
+                if self.use_rnn:
+                    actions_group = actions_group.reshape([n_env * n_agents, -1])
+                else:
+                    actions_group = actions_group.reshape([n_env * n_agents])
+                log_pi_a = model_output.distributions[group].log_prob(actions_group).reshape(n_env, n_agents)
+                for i, agent in enumerate(agent_keys):
+                    log_pi_a_dict[agent] = log_pi_a[:, i].detach().cpu().numpy()
 
-        if self.use_parameter_sharing:
-            key = self.agent_keys[0]
-            actions_sample = pi_dists[key].sample()
-            actions_mean_masked = self.policy.get_mean_actions(actions={key: actions_sample},
-                                                               agent_mask_tensor=agent_mask_tensor,
-                                                               batch_size=n_env)
-            if self.continuous_control:
-                actions_out = actions_sample.reshape(n_env, self.n_agents, -1)
-            else:
-                actions_out = actions_sample.reshape(n_env, self.n_agents)
-            actions_dict = [{k: actions_out[e, i].cpu().detach().numpy() for i, k in enumerate(self.agent_keys)}
-                            for e in range(n_env)]
-            if not test_mode:
-                log_pi_a = pi_dists[key].log_prob(actions_sample).cpu().detach().numpy().reshape(n_env, self.n_agents)
-                log_pi_a_dict = {k: log_pi_a[:, i] for i, k in enumerate(self.agent_keys)}
-                values_out[key] = values_out[key].reshape(n_env, self.n_agents)
-                values_dict = {k: values_out[key][:, i].cpu().detach().numpy() for i, k in enumerate(self.agent_keys)}
-        else:
-            actions_sample = {k: pi_dists[k].sample() for k in self.agent_keys}
-            if self.continuous_control:
-                actions_dict = [{k: actions_sample[k].cpu().detach().numpy()[e].reshape([-1]) for k in self.agent_keys}
-                                for e in range(n_env)]
-            else:
-                actions_dict = [{k: actions_sample[k].cpu().detach().numpy()[e].reshape([]) for k in self.agent_keys}
-                                for e in range(n_env)]
-            actions_mean_masked = self.policy.get_mean_actions(actions=actions_sample,
-                                                               agent_mask_tensor=agent_mask_tensor,
-                                                               batch_size=n_env)
-            if not test_mode:
-                log_pi_a = {k: pi_dists[k].log_prob(actions_sample[k]).cpu().detach().numpy() for k in self.agent_keys}
-                log_pi_a_dict = {k: log_pi_a[k].reshape([n_env]) for i, k in enumerate(self.agent_keys)}
-                values_dict = {k: values_out[k].cpu().detach().numpy().reshape([n_env]) for k in self.agent_keys}
+            values_model_output = self.model.get_values(observations=obs_input,
+                                                        mean_actions=mean_actions_input,
+                                                        agent_indices=agent_indices,
+                                                        rnn_states=rnn_states_critic)
+            rnn_states_critic_new = values_model_output.critic_rnn_states
+            values_dict = {k: v.detach().cpu().numpy().reshape(n_env) for k, v in values_model_output.values.items()}
 
-        actions_mean_masked = actions_mean_masked.cpu().detach().numpy()
-        actions_mean_dict = [{k: actions_mean_masked[e, i] for i, k in enumerate(self.agent_keys)}
-                             for e in range(n_env)]
-
-        return {"rnn_hidden_actor": rnn_hidden_actor_new, "rnn_hidden_critic": rnn_hidden_critic_new,
+        return {"rnn_states_actor": rnn_states_actor_new, "rnn_states_critic": rnn_states_critic_new,
                 "actions": actions_dict, "actions_mean": actions_mean_dict,
                 "log_pi": log_pi_a_dict, "values": values_dict}
 
-    def values_next(self,
-                    i_env: int,
-                    obs_dict: dict,
-                    state: Optional[np.ndarray] = None,
-                    agent_mask: dict = None,
-                    act_mean_dict: dict = None,
-                    rnn_hidden_critic: Optional[dict] = None):
+    def values_next(
+            self,
+            i_env: int,
+            obs_dict: dict,
+            state: Optional[np.ndarray] = None,
+            agent_mask: dict = None,
+            act_mean_dict: dict = None,
+            rnn_states_critic: Dict[str, RNN_State] = None
+    ) -> Tuple[Dict[str, RNN_State], Dict[str, np.ndarray]]:
         """
         Returns critic values of one environment that finished an episode.
 
@@ -260,53 +275,34 @@ class MFAC_Agents(OnPolicyMARLAgents):
             state (Optional[np.ndarray]): The global state.
             agent_mask (dict): Mask the agents that are alive.
             act_mean_dict (dict): The mean actions of each agent's neighbors.
-            rnn_hidden_critic (Optional[dict]): The RNN hidden states of critic representation.
+            rnn_states_critic (Optional[dict]): The RNN hidden states of critic representation.
 
         Returns:
-            rnn_hidden_critic_new (dict): The new RNN hidden states of critic representation (if self.use_rnn=True).
+            rnn_states_critic_new (dict): The new RNN hidden states of critic representation (if self.use_rnn=True).
             values_dict: The critic values.
         """
-        n_env = 1
-        rnn_hidden_critic_i = None
-        if self.use_parameter_sharing:
-            key = self.agent_keys[0]
-            if self.use_rnn:
-                hidden_item_index = np.arange(i_env * self.n_agents, (i_env + 1) * self.n_agents)
-                rnn_hidden_critic_i = {key: self.policy.critic_representation[key].get_hidden_item(
-                    hidden_item_index, *rnn_hidden_critic[key])}
-                batch_size = n_env * self.n_agents
-                obs_array = np.array(itemgetter(*self.agent_keys)(obs_dict))
-                obs_input = {key: obs_array.reshape([batch_size, 1, -1])}
-                action_mean_array = np.array(itemgetter(*self.agent_keys)(act_mean_dict))
-                action_mean_input = {key: action_mean_array.reshape([batch_size, 1, -1])}
-                agents_id = torch.eye(self.n_agents).unsqueeze(0).expand(n_env, -1, -1).reshape(batch_size, 1, -1).to(
-                    self.device)
-            else:
-                obs_input = {key: np.array([itemgetter(*self.agent_keys)(obs_dict)])}
-                action_mean_input = {key: np.array([itemgetter(*self.agent_keys)(act_mean_dict)])}
-                agents_id = torch.eye(self.n_agents).unsqueeze(0).expand(n_env, -1, -1).to(self.device)
-
-            rnn_hidden_critic_new, values_out = self.policy.get_values(observation=obs_input,
-                                                                       actions_mean=action_mean_input,
-                                                                       agent_ids=agents_id,
-                                                                       rnn_hidden=rnn_hidden_critic_i)
-            values_out = values_out[key].reshape(self.n_agents)
-            values_dict = {k: values_out[i].cpu().detach().numpy() for i, k in enumerate(self.agent_keys)}
-
+        if self.use_rnn:
+            rnn_states_critic_i = {}
+            for group, n_agents in self.n_group_agents.items():
+                hidden_item_index = np.arange(i_env * n_agents, (i_env + 1) * n_agents)
+                rnn_states_critic_i[group] = self.model.critics[
+                    group].representation.obs_representation.get_rnn_states_item(
+                    hidden_item_index, rnn_states_critic[group])
         else:
-            if self.use_rnn:
-                rnn_hidden_critic_i = {k: self.policy.critic_representation[k].get_hidden_item(
-                    [i_env, ], *rnn_hidden_critic[k]) for k in self.agent_keys}
-            obs_input = {k: obs_dict[k][None, :] for k in self.agent_keys} if self.use_rnn else obs_dict
-            action_mean_input = {k: act_mean_dict[k][None, :]
-                                 for k in self.agent_keys} if self.use_rnn else act_mean_dict
+            rnn_states_critic_i = None
 
-            rnn_hidden_critic_new, values_out = self.policy.get_values(observation=obs_input,
-                                                                       actions_mean=action_mean_input,
-                                                                       rnn_hidden=rnn_hidden_critic_i)
-            values_dict = {k: values_out[k].cpu().detach().numpy().reshape([]) for k in self.agent_keys}
+        mean_actions_input, _ = self._build_inputs_mean_mask([agent_mask], [act_mean_dict])
+        obs_input, agent_indices, _ = self._build_inputs([obs_dict])
 
-        return rnn_hidden_critic_new, values_dict
+        values_model_output = self.model.get_values(state=state if self.use_global_state else None,
+                                                    observations=obs_input,
+                                                    agent_indices=agent_indices,
+                                                    mean_actions=mean_actions_input,
+                                                    rnn_states=rnn_states_critic_i)
+        rnn_states_critic_new_i = values_model_output.critic_rnn_states
+        values_dict = {k: v.detach().cpu().numpy().reshape([]) for k, v in values_model_output.values.items()}
+
+        return rnn_states_critic_new_i, values_dict
 
     def train(self, train_steps: int) -> dict:
         train_info = {}
@@ -320,14 +316,14 @@ class MFAC_Agents(OnPolicyMARLAgents):
                     self.log_infos(update_info, self.current_step)
                     train_info.update(update_info)
 
-                    self.callback.on_train_epochs_end(self.current_step, policy=self.policy, memory=self.memory,
+                    self.callback.on_train_epochs_end(self.current_step, model=self.model, memory=self.memory,
                                                       current_episode=self.current_episode, train_steps=train_steps,
                                                       update_info=update_info)
 
                     process_bar.update((self.current_step - step_last) // self.n_envs)
                     step_last = deepcopy(self.current_step)
                 process_bar.update(train_steps - process_bar.last_print_n)
-                self.callback.on_train_step_end(self.current_step, envs=self.train_envs, policy=self.policy,
+                self.callback.on_train_step_end(self.current_step, envs=self.train_envs, model=self.model,
                                                 n_steps=train_steps, train_info=train_info)
             return train_info
 
@@ -347,7 +343,7 @@ class MFAC_Agents(OnPolicyMARLAgents):
             next_state = self.train_envs.buf_state if self.use_global_state else None
             next_avail_actions = self.train_envs.buf_avail_actions if self.use_actions_mask else None
 
-            self.callback.on_train_step(self.current_step, envs=self.train_envs, policy=self.policy,
+            self.callback.on_train_step(self.current_step, envs=self.train_envs, model=self.model,
                                         obs=obs_dict, policy_out=policy_out, acts=actions_dict, next_obs=next_obs_dict,
                                         rewards=rewards_dict, state=state, next_state=next_state,
                                         avail_actions=avail_actions, next_avail_actions=next_avail_actions,
@@ -367,7 +363,7 @@ class MFAC_Agents(OnPolicyMARLAgents):
                         _, value_next = self.values_next(i_env=i, obs_dict=next_obs_dict[i], state=next_state_i,
                                                          act_mean_dict=actions_mean_dict[i],
                                                          agent_mask=agent_mask_dict[i])
-                    self.memory.finish_path(i_env=i, value_next=value_next,
+                    self.memory.finish_path(i_env=i, agent_grouping=self.agent_grouping, value_next=value_next,
                                             value_normalizer=self.learner.value_normalizer)
             update_info = self.train_epochs(n_epochs=self.n_epochs)
             self.log_infos(update_info, self.current_step)
@@ -386,7 +382,7 @@ class MFAC_Agents(OnPolicyMARLAgents):
                         _, value_next = self.values_next(i_env=i, obs_dict=obs_dict[i], state=state_i,
                                                          act_mean_dict=actions_mean_dict[i],
                                                          agent_mask=agent_mask_dict[i])
-                    self.memory.finish_path(i_env=i, value_next=value_next,
+                    self.memory.finish_path(i_env=i, agent_grouping=self.agent_grouping, value_next=value_next,
                                             value_normalizer=self.learner.value_normalizer)
                     obs_dict[i] = info[i]["reset_obs"]
                     self.train_envs.buf_obs[i] = info[i]["reset_obs"]
@@ -413,7 +409,7 @@ class MFAC_Agents(OnPolicyMARLAgents):
                         }
                     self.log_infos(episode_info, self.current_step)
                     train_info.update(episode_info)
-                    self.callback.on_train_episode_info(envs=self.train_envs, policy=self.policy, env_id=i,
+                    self.callback.on_train_episode_info(envs=self.train_envs, model=self.model, env_id=i,
                                                         infos=info, rank=self.rank, use_wandb=self.use_wandb,
                                                         current_step=self.current_step,
                                                         current_episode=self.current_episode,
@@ -421,7 +417,7 @@ class MFAC_Agents(OnPolicyMARLAgents):
 
             self.current_step += self.n_envs
             self.actions_mean = deepcopy(actions_mean_dict)
-            self.callback.on_train_step_end(self.current_step, envs=self.train_envs, policy=self.policy,
+            self.callback.on_train_step_end(self.current_step, envs=self.train_envs, model=self.model,
                                             train_steps=train_steps, train_info=train_info)
         return train_info
 
@@ -448,14 +444,14 @@ class MFAC_Agents(OnPolicyMARLAgents):
         else:
             if self.use_rnn:
                 self.memory.clear_episodes()
-        rnn_hidden_actor, rnn_hidden_critic = self.init_rnn_hidden(num_envs)
+        rnn_states_actor, rnn_states_critic = self.init_rnn_states(num_envs)
 
         while current_episode < n_episodes:
             policy_out = self.get_actions(obs_dict=obs_dict, state=state, avail_actions_dict=avail_actions,
                                           agent_mask=agent_mask_dict, act_mean_dict=actions_mean_dict,
-                                          rnn_hidden_actor=rnn_hidden_actor, rnn_hidden_critic=rnn_hidden_critic,
+                                          rnn_states_actor=rnn_states_actor, rnn_states_critic=rnn_states_critic,
                                           test_mode=test_mode, deterministic=deterministic_policy)
-            rnn_hidden_actor, rnn_hidden_critic = policy_out['rnn_hidden_actor'], policy_out['rnn_hidden_critic']
+            rnn_states_actor, rnn_states_critic = policy_out['rnn_states_actor'], policy_out['rnn_states_critic']
             actions_dict, log_pi_a_dict = policy_out['actions'], policy_out['log_pi']
             actions_mean_next_dict = policy_out['actions_mean']
             values_dict = policy_out['values']
@@ -471,7 +467,7 @@ class MFAC_Agents(OnPolicyMARLAgents):
                 self.store_experience(obs_dict, avail_actions, actions_dict, log_pi_a_dict, rewards_dict, values_dict,
                                       terminated_dict, info, **{'state': state, 'actions_mean': actions_mean_dict})
 
-            self.callback.on_test_step(envs=envs, policy=self.policy, images=images, test_mode=test_mode,
+            self.callback.on_test_step(envs=envs, model=self.model, images=images, test_mode=test_mode,
                                        obs=obs_dict, policy_out=policy_out, acts=actions_dict,
                                        actions_mean_dict=actions_mean_dict,
                                        next_obs=next_obs_dict, rewards=rewards_dict,
@@ -492,7 +488,7 @@ class MFAC_Agents(OnPolicyMARLAgents):
                     scores.append(episode_score)
                     if test_mode:
                         if self.use_rnn:
-                            rnn_hidden_actor, _ = self.init_hidden_item(i, rnn_hidden_actor)
+                            rnn_states_actor, _ = self.init_rnn_states_item(i, rnn_states_actor)
                         if best_score < episode_score:
                             best_score = episode_score
                             episode_videos = videos[i].copy()
@@ -504,12 +500,13 @@ class MFAC_Agents(OnPolicyMARLAgents):
                                                              state=None if state is None else state[i],
                                                              act_mean_dict=actions_mean_dict[i],
                                                              agent_mask=agent_mask_dict[i],
-                                                             rnn_hidden_critic=rnn_hidden_critic)
-                        self.memory.finish_path(i_env=i, i_step=info[i]['episode_step'], value_next=value_next,
+                                                             rnn_states_critic=rnn_states_critic)
+                        self.memory.finish_path(i_env=i, i_step=info[i]['episode_step'],
+                                                agent_grouping=self.agent_grouping, value_next=value_next,
                                                 value_normalizer=self.learner.value_normalizer)
                         if self.use_rnn:
-                            rnn_hidden_actor, rnn_hidden_critic = self.init_hidden_item(i, rnn_hidden_actor,
-                                                                                        rnn_hidden_critic)
+                            rnn_states_actor, rnn_states_critic = self.init_rnn_states_item(i, rnn_states_actor,
+                                                                                            rnn_states_critic)
                         if self.use_wandb:
                             episode_info = {
                                 "Train-Results/Episode-Steps/env-%d" % i: info[i]["episode_step"],
@@ -523,7 +520,7 @@ class MFAC_Agents(OnPolicyMARLAgents):
                             }
                         self.current_step += info[i]["episode_step"]
                         self.log_infos(episode_info, self.current_step)
-                        self.callback.on_train_episode_info(envs=self.train_envs, policy=self.policy, env_id=i,
+                        self.callback.on_train_episode_info(envs=self.train_envs, model=self.model, env_id=i,
                                                             infos=info, rank=self.rank, use_wandb=self.use_wandb,
                                                             current_step=self.current_step,
                                                             current_episode=self.current_episode,
@@ -550,7 +547,7 @@ class MFAC_Agents(OnPolicyMARLAgents):
             }
             self.log_infos(test_info, self.current_step)
 
-            self.callback.on_test_end(envs=envs, policy=self.policy,
+            self.callback.on_test_end(envs=envs, model=self.model,
                                       current_train_step=self.current_step,
                                       current_step=current_step, current_episode=current_episode,
                                       scores=scores, best_score=best_score)

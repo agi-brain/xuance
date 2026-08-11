@@ -3,10 +3,10 @@ from copy import deepcopy
 from xuance.common import List, Union, SequentialReplayBuffer, BaseCallback
 from xuance.environment import DummyVecEnv, SubprocVecEnv
 from xuance.torch.agents import OffPolicyAgent
-from xuance.torch import REGISTRY_Representation, REGISTRY_Policy
+from xuance.torch import REGISTRY_Representation
 
-from xuance.torch.representations.world_model_v2 import DreamerV2WorldModel, PlayerDV2
-from xuance.torch.policies import DreamerV2Policy
+from xuance.torch.rl_models.representations.world_model_v2 import DreamerV2WorldModel, PlayerDV2
+# from xuance.torch.policies import DreamerV2Policy
 
 import numpy as np
 from tqdm import tqdm
@@ -96,8 +96,8 @@ class DreamerV2Agent(OffPolicyAgent):
                             batch_size=self.batch_size)
         return SequentialReplayBuffer(**input_buffer)
 
-    def _build_policy(self) -> DreamerV2Policy:
-        return REGISTRY_Policy["DreamerV2Policy"](self.model, self.config)
+    def _build_policy(self): # -> DreamerV2Policy:
+        return None # REGISTRY_Policy["DreamerV2Policy"](self.model, self.config)
 
     def get_actions(self,
                obs: np.ndarray,

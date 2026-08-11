@@ -1,12 +1,13 @@
-import torch
+from copy import deepcopy
 from argparse import Namespace
 from gymnasium.spaces import Space
 from xuance.common import Optional, BaseCallback
 from xuance.environment import DummyVecEnv, SubprocVecEnv
 from xuance.torch import Module
-from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
-from xuance.torch.policies import REGISTRY_Policy
+from xuance.torch.utils import ActivationFunctions
 from xuance.torch.agents.policy_gradient.ddpg_agent import DDPG_Agent
+from xuance.torch.rl_models import DeterministicActor, TwinActionValueCritic
+from xuance.torch.rl_models.architectures import TwinDelayedActorCritic
 
 
 class TD3_Agent(DDPG_Agent):
@@ -27,24 +28,39 @@ class TD3_Agent(DDPG_Agent):
     ):
         super(TD3_Agent, self).__init__(config, envs, observation_space, action_space, callback)
 
-    def _build_policy(self) -> Module:
-        normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None
-        initializer = torch.nn.init.orthogonal_
-        activation = ActivationFunctions[self.config.activation]
-        device = self.device
-
+    def _build_model(self) -> Module:
         # build representations.
         representation = self._build_representation(self.config.representation, self.observation_space, self.config)
 
-        # build policy
-        if self.config.policy == "TD3_Policy":
-            policy = REGISTRY_Policy["TD3_Policy"](
-                action_space=self.action_space, representation=representation,
-                actor_hidden_size=self.config.actor_hidden_size, critic_hidden_size=self.config.critic_hidden_size,
-                normalize=normalize_fn, initialize=initializer, device=device,
-                use_distributed_training=self.distributed_training,
-                activation=activation, activation_action=ActivationFunctions[self.config.activation_action])
-        else:
-            raise AttributeError(f"TD3 currently does not support the policy named {self.config.policy}.")
+        # build actor network
+        actor = DeterministicActor(
+            representation=representation,
+            actor_hidden_size=self.config.actor_hidden_size,
+            action_space=self.action_space,
+            normalizer=self.normalize_fn,
+            initializer=self.initializer,
+            activation=self.activation,
+            activation_action=ActivationFunctions[self.config.activation_action],
+            device=self.device
+        )
 
-        return policy
+        # build critic network
+        critic = TwinActionValueCritic(
+            representation=deepcopy(representation),
+            action_space=self.action_space,
+            critic_hidden_size=self.config.critic_hidden_size,
+            normalizer=self.normalize_fn,
+            initializer=self.initializer,
+            activation=self.activation,
+            device=self.device
+        )
+
+        # build the RL model
+        model = TwinDelayedActorCritic(
+            actor=actor,
+            critic=critic,
+            target_policy_noise=getattr(self.config, "target_policy_noise", 0.2),
+            target_noise_clip=getattr(self.config, "target_noise_clip", 0.5)
+        )
+
+        return model

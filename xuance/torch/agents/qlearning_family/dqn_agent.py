@@ -1,12 +1,10 @@
-import torch
 from argparse import Namespace
 from gymnasium.spaces import Space
 from xuance.common import Optional, BaseCallback
 from xuance.environment import DummyVecEnv, SubprocVecEnv
 from xuance.torch import Module
-from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
-from xuance.torch.policies import REGISTRY_Policy
 from xuance.torch.agents import OffPolicyAgent
+from xuance.torch.rl_models.architectures import DeepQNetwork
 
 
 class DQN_Agent(OffPolicyAgent):
@@ -31,26 +29,24 @@ class DQN_Agent(OffPolicyAgent):
         self.e_greedy = config.start_greedy
         self.delta_egreedy = (self.start_greedy - self.end_greedy) / (config.decay_step_greedy / self.n_envs)
 
-        self.policy = self._build_policy()  # build policy
+        self.model = self._build_model()  # build RL model
         self.memory = self._build_memory()  # build memory
-        self.learner = self._build_learner(self.config, self.policy, self.callback)  # build learner
+        self.learner = self._build_learner(self.config, self.model, self.callback)  # build learner
 
-    def _build_policy(self) -> Module:
-        normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None
-        initializer = torch.nn.init.orthogonal_
-        activation = ActivationFunctions[self.config.activation]
-        device = self.device
-
+    def _build_model(self) -> Module:
         # build representation.
         representation = self._build_representation(self.config.representation, self.observation_space, self.config)
 
-        # build policy.
-        if self.config.policy == "Basic_Q_network":
-            policy = REGISTRY_Policy["Basic_Q_network"](
-                action_space=self.action_space, representation=representation, hidden_size=self.config.q_hidden_size,
-                normalize=normalize_fn, initialize=initializer, activation=activation, device=device,
-                use_distributed_training=self.distributed_training)
-        else:
-            raise AttributeError(f"{self.config.agent} does not support the policy named {self.config.policy}.")
+        # build the RL model.
+        model = DeepQNetwork(
+            representation=representation,
+            hidden_size=self.config.q_hidden_size,
+            action_space=self.action_space,
+            normalizer=self.normalize_fn,
+            initializer=self.initializer,
+            activation=self.activation,
+            device=self.device,
+            use_distributed_training=self.distributed_training
+        )
 
-        return policy
+        return model

@@ -6,7 +6,7 @@ from xuance.common import Union, Optional, BaseCallback
 from xuance.environment import DummyVecEnv, SubprocVecEnv
 from xuance.torch import Module, REGISTRY_Learners
 from xuance.torch.agents import OfflineAgent
-from xuance.torch.policies import REGISTRY_Policy
+# from xuance.torch.policies import REGISTRY_Policy
 from xuance.torch.learners import TD3_BC_Learner
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
 try:
@@ -37,7 +37,7 @@ class TD3_BC_Agent(OfflineAgent):
         self.dataset = dataset
         self.memory.d4rl2buffer(dataset=self.dataset)
 
-    def _build_policy(self) -> Module:
+    def _build_model(self) -> Module:
         normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None
         initializer = torch.nn.init.orthogonal_
         activation = ActivationFunctions[self.config.activation]

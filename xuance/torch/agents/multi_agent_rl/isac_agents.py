@@ -1,12 +1,16 @@
-import torch
+import gymnasium
 from argparse import Namespace
 from gymnasium.spaces import Space
-from xuance.common import List, Optional, MultiAgentBaseCallback
+from typing import List, Optional, Dict
+from xuance.common import MultiAgentBaseCallback
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
-from xuance.torch import Module
-from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
-from xuance.torch.policies import REGISTRY_Policy
+from xuance.torch import Module, ModuleDict
+from xuance.torch.utils import ActivationFunctions
 from xuance.torch.agents import OffPolicyMARLAgents
+from xuance.torch.rl_models import CategoricalActor, SAC_GaussianActor, TwinActionValueCritic, \
+    TwinDiscreteActionValueCritic
+from xuance.torch.rl_models.modules import RNN_State
+from xuance.torch.rl_models.architectures import IndependentSoftActorCritic
 
 
 class ISAC_Agents(OffPolicyMARLAgents):
@@ -33,60 +37,85 @@ class ISAC_Agents(OffPolicyMARLAgents):
             config, envs, num_agents, agent_keys, state_space, observation_space, action_space, callback
         )
         # build policy, optimizers, schedulers
-        self.policy = self._build_policy()  # build policy
+        self.model = self._build_model()  # build the MARL model
         self.memory = self._build_memory()  # build memory
-        self.learner = self._build_learner(self.config, self.model_keys, self.agent_keys, self.policy, self.callback)
+        self.learner = self._build_learner(self.config, self.agent_grouping, self.model, self.callback)
 
-    def _build_policy(self) -> Module:
+    def _build_model(self) -> Module:
         """
-        Build representation(s) and policy(ies) for agent(s)
+        Build the MARL model.
 
         Returns:
-            policy (torch.nn.Module): A dict of policies.
+            model (torch.nn.Module): The MARL model.
         """
-        normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None
-        initializer = torch.nn.init.orthogonal_
-        activation = ActivationFunctions[self.config.activation]
-        device = self.device
-        agent = self.config.agent
-
-        # build representations
-        A_representation = self._build_representation(self.config.representation, self.observation_space, self.config)
-        C_representation = self._build_representation(self.config.representation, self.observation_space, self.config)
-
-        # build policies
-        if self.config.policy == "Gaussian_ISAC_Policy":
-            policy = REGISTRY_Policy["Gaussian_ISAC_Policy"](
-                action_space=self.action_space, n_agents=self.n_agents,
-                actor_representation=A_representation, critic_representation=C_representation,
-                actor_hidden_size=self.config.actor_hidden_size,
-                critic_hidden_size=self.config.critic_hidden_size,
-                normalize=normalize_fn, initialize=initializer, activation=activation,
-                activation_action=ActivationFunctions[self.config.activation_action],
-                device=device, use_distributed_training=self.distributed_training,
-                use_parameter_sharing=self.use_parameter_sharing, model_keys=self.model_keys,
-                use_rnn=self.use_rnn, rnn=self.config.rnn if self.use_rnn else None)
+        actor_input = dict(
+            actor_hidden_size=self.config.actor_hidden_size,
+            normalizer=self.normalize_fn,
+            initializer=self.initializer,
+            activation=self.activation,
+            device=self.device
+        )
+        if isinstance(self.action_space[self.agent_keys[0]], gymnasium.spaces.Box):
+            Actor = SAC_GaussianActor
+            actor_input['activation_action'] = ActivationFunctions[self.config.activation_action]
+            Critic = TwinActionValueCritic
+            Architecture = IndependentSoftActorCritic
             self.continuous_control = True
-        elif self.config.policy == "Categorical_ISAC_Policy":
-            policy = REGISTRY_Policy["Categorical_ISAC_Policy"](
-                action_space=self.action_space, n_agents=self.n_agents,
-                actor_representation=A_representation, critic_representation=C_representation,
-                actor_hidden_size=self.config.actor_hidden_size,
-                critic_hidden_size=self.config.critic_hidden_size,
-                normalize=normalize_fn, initialize=initializer, activation=activation,
-                device=device, use_distributed_training=self.distributed_training,
-                use_parameter_sharing=self.use_parameter_sharing, model_keys=self.model_keys,
-                use_rnn=self.use_rnn, rnn=self.config.rnn if self.use_rnn else None)
+        elif isinstance(self.action_space[self.agent_keys[0]], gymnasium.spaces.Discrete):
+            Actor = CategoricalActor
+            Critic = TwinDiscreteActionValueCritic
+            # Architecture = IndependentSoftActorCriticDiscrete
             self.continuous_control = False
         else:
-            raise AttributeError(f"{agent} currently does not support the policy named {self.config.policy}.")
+            raise NotImplementedError
 
-        return policy
+        actor_networks = ModuleDict()
+        critic_networks = ModuleDict()
+        for group_key, group_agents in self.groups.items():
+            reference_agent = group_agents[0]
+            # build agent feature encoder as actor representations
+            actor_feature_encoder = self._build_agent_feature_encoder(
+                representation_choice=self.config.representation,
+                group_agents=group_agents,
+                input_space=self.observation_space[reference_agent]
+            )
+            # build inner-group shared actor-network
+            actor_input['representation'] = actor_feature_encoder
+            actor_input['action_space'] = self.action_space[reference_agent]
+            actor_networks[group_key] = Actor(**actor_input)
+            # build critic feature encoder as critic representations
+            critic_feature_encoder = self._build_agent_feature_encoder(
+                representation_choice=self.config.representation,
+                group_agents=group_agents,
+                input_space=self.observation_space[reference_agent]
+            )
+            # build inner-group shared critic-network
+            critic_networks[group_key] = Critic(
+                representation=critic_feature_encoder,
+                action_space=self.action_space[reference_agent],
+                critic_hidden_size=self.config.critic_hidden_size,
+                normalizer=self.normalize_fn,
+                initializer=self.initializer,
+                activation=self.activation,
+                device=self.device
+            )
+
+        # build the RL model
+        model = Architecture(
+            grouping=self.agent_grouping,
+            actors=actor_networks,
+            critics=critic_networks,
+            use_rnn=self.use_rnn,
+            device=self.device,
+            use_distributed_training=self.distributed_training
+        )
+
+        return model
 
     def get_actions(self,
                     obs_dict: List[dict],
                     avail_actions_dict: Optional[List[dict]] = None,
-                    rnn_hidden: Optional[dict] = None,
+                    rnn_states: Optional[Dict[str, RNN_State]] = None,
                     test_mode: Optional[bool] = False,
                     **kwargs):
         """
@@ -95,32 +124,29 @@ class ISAC_Agents(OffPolicyMARLAgents):
         Parameters:
             obs_dict (List[dict]): Observations for each agent in self.agent_keys.
             avail_actions_dict (Optional[List[dict]]): Actions mask values, default is None.
-            rnn_hidden (Optional[dict]): The hidden variables of the RNN.
+            rnn_states (Optional[Dict[str, RNN_State]]): The hidden variables of the RNN.
             test_mode (Optional[bool]): True for testing without noises.
 
         Returns:
-            rnn_hidden_state (dict): The new hidden states for RNN (if self.use_rnn=True).
+            rnn_states (dict): The new hidden states for RNN (if self.use_rnn=True).
             actions_dict (dict): The output actions.
         """
         batch_size = len(obs_dict)
 
-        obs_input, agents_id, avail_actions_input = self._build_inputs(obs_dict)
-        hidden_state, actions, _ = self.policy(observation=obs_input, agent_ids=agents_id,
-                                               avail_actions=avail_actions_input, rnn_hidden=rnn_hidden)
+        obs_input, agent_indices, avail_actions_input = self._build_inputs(obs_dict, avail_actions_dict)
+        model_output = self.model(observations=obs_input,
+                                  agent_indices=agent_indices,
+                                  avail_actions=avail_actions_input,
+                                  rnn_states=rnn_states)
+        rnn_states_new = model_output.actor_rnn_states
+        actions = model_output.actions
 
-        if self.use_parameter_sharing:
-            key = self.model_keys[0]
+        for key in self.agent_keys:
             if self.continuous_control:
-                actions[key] = actions[key].reshape(batch_size, self.n_agents, -1).cpu().detach().numpy()
+                actions[key] = actions[key].reshape(batch_size, -1).cpu().detach().numpy()
             else:
-                actions[key] = actions[key].reshape(batch_size, self.n_agents).cpu().detach().numpy()
-            actions_dict = [{k: actions[key][e, i] for i, k in enumerate(self.agent_keys)} for e in range(batch_size)]
-        else:
-            for key in self.agent_keys:
-                if self.continuous_control:
-                    actions[key] = actions[key].reshape(batch_size, -1).cpu().detach().numpy()
-                else:
-                    actions[key] = actions[key].reshape(batch_size).cpu().detach().numpy()
-            actions_dict = [{k: actions[k][i] for k in self.agent_keys} for i in range(batch_size)]
+                actions[key] = actions[key].reshape(batch_size).cpu().detach().numpy()
 
-        return {"hidden_state": hidden_state, "actions": actions_dict}
+        actions_dict = [{k: actions[k][i] for k in self.agent_keys} for i in range(batch_size)]
+
+        return {"rnn_states": rnn_states_new, "actions": actions_dict}

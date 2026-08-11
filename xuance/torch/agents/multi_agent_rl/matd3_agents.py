@@ -1,15 +1,16 @@
-import torch
+import gymnasium
 from argparse import Namespace
 from gymnasium.spaces import Space
 from xuance.common import List, Optional, MultiAgentBaseCallback
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
-from xuance.torch import Module
-from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
-from xuance.torch.policies import REGISTRY_Policy
-from xuance.torch.agents.multi_agent_rl.iddpg_agents import IDDPG_Agents
+from xuance.torch import Module, ModuleDict
+from xuance.torch.utils import ActivationFunctions
+from xuance.torch.agents.multi_agent_rl.itd3_agents import ITD3_Agents
+from xuance.torch.rl_models import DeterministicActor, TwinCentralizedActionValueCritic
+from xuance.torch.rl_models.architectures import MultiAgentTwinDelayedActorCritic
 
 
-class MATD3_Agents(IDDPG_Agents):
+class MATD3_Agents(ITD3_Agents):
     """The implementation of MATD3 agents.
 
     Args:
@@ -33,37 +34,60 @@ class MATD3_Agents(IDDPG_Agents):
             config, envs, num_agents, agent_keys, state_space, observation_space, action_space, callback
         )
 
-    def _build_policy(self) -> Module:
+    def _build_model(self) -> Module:
         """
-        Build representation(s) and policy(ies) for agent(s)
+        Build the MARL model.
 
         Returns:
-            policy (torch.nn.Module): A dict of policies.
+            model (torch.nn.Module): The MARL model.
         """
-        normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None
-        initializer = torch.nn.init.orthogonal_
-        activation = ActivationFunctions[self.config.activation]
-        device = self.device
-
-        # build representations
-        A_representation = self._build_representation(self.config.representation, self.observation_space, self.config)
-        critic_in = [sum(self.observation_space[k].shape) + sum(self.action_space[k].shape) for k in self.agent_keys]
-        space_critic_in = {k: (sum(critic_in),) for k in self.agent_keys}
-        C_representation = self._build_representation(self.config.representation, space_critic_in, self.config)
-
-        # build policies
-        if self.config.policy == "MATD3_Policy":
-            policy = REGISTRY_Policy["MATD3_Policy"](
-                action_space=self.action_space, n_agents=self.n_agents,
-                actor_representation=A_representation, critic_representation=C_representation,
+        actor_networks = ModuleDict()
+        critic_networks = ModuleDict()
+        joint_obs_space = (sum([sum(self.observation_space[k].shape) for k in self.agent_keys]),)
+        for group_key, group_agents in self.groups.items():
+            reference_agent = group_agents[0]
+            # build agent feature encoder as actor representations
+            actor_feature_encoder = self._build_agent_feature_encoder(
+                representation_choice=self.config.representation,
+                group_agents=group_agents,
+                input_space=self.observation_space[reference_agent]
+            )
+            # build inner-group shared actor-network
+            actor_networks[group_key] = DeterministicActor(
+                representation=actor_feature_encoder,
                 actor_hidden_size=self.config.actor_hidden_size,
-                critic_hidden_size=self.config.critic_hidden_size,
-                normalize=normalize_fn, initialize=initializer, activation=activation, device=device,
-                use_distributed_training=self.distributed_training,
+                action_space=self.action_space[reference_agent],
+                normalizer=self.normalize_fn,
+                initializer=self.initializer,
+                activation=self.activation,
                 activation_action=ActivationFunctions[self.config.activation_action],
-                use_parameter_sharing=self.use_parameter_sharing, model_keys=self.model_keys,
-                use_rnn=self.use_rnn, rnn=self.config.rnn if self.use_rnn else None)
-        else:
-            raise AttributeError(f"MATD3 currently does not support the policy named {self.config.policy}.")
+                device=self.device
+            )
+            # build critic feature encoder as critic representations
+            critic_feature_encoder = self._build_agent_feature_encoder(
+                representation_choice=self.config.representation,
+                group_agents=group_agents,
+                input_space=joint_obs_space
+            )
+            # build inner-group shared critic-network
+            critic_networks[group_key] = TwinCentralizedActionValueCritic(
+                representation=critic_feature_encoder,
+                action_space=self.action_space,
+                critic_hidden_size=self.config.critic_hidden_size,
+                normalizer=self.normalize_fn,
+                initializer=self.initializer,
+                activation=self.activation,
+                device=self.device
+            )
 
-        return policy
+        # build the RL model
+        model = MultiAgentTwinDelayedActorCritic(
+            grouping=self.agent_grouping,
+            actors=actor_networks,
+            critics=critic_networks,
+            use_rnn=self.use_rnn,
+            device=self.device,
+            use_distributed_training=self.distributed_training
+        )
+
+        return model

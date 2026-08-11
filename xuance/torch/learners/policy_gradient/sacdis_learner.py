@@ -12,12 +12,12 @@ from argparse import Namespace
 class SACDIS_Learner(Learner):
     def __init__(self,
                  config: Namespace,
-                 policy: nn.Module,
+                 model: nn.Module,
                  callback):
-        super(SACDIS_Learner, self).__init__(config, policy, callback)
+        super(SACDIS_Learner, self).__init__(config, model, callback)
         self.optimizer = {
-            'actor': torch.optim.Adam(self.policy.actor_parameters, self.config.learning_rate_actor),
-            'critic': torch.optim.Adam(self.policy.critic_parameters, self.config.learning_rate_critic)}
+            'actor': torch.optim.Adam(self.model.actor.parameters(), self.config.learning_rate_actor),
+            'critic': torch.optim.Adam(self.model.critic.parameters(), self.config.learning_rate_critic)}
         self.scheduler = {
             'actor': torch.optim.lr_scheduler.LinearLR(self.optimizer['actor'],
                                                        start_factor=1.0,
@@ -33,7 +33,7 @@ class SACDIS_Learner(Learner):
         self.alpha = config.alpha
         self.use_automatic_entropy_tuning = config.use_automatic_entropy_tuning
         if self.use_automatic_entropy_tuning:
-            self.target_entropy = -float(policy.action_space.n)
+            self.target_entropy = -float(model.action_space.n)
             self.log_alpha = nn.Parameter(torch.zeros(1, requires_grad=True, device=self.device))
             self.alpha = self.log_alpha.exp()
             self.alpha_optimizer = torch.optim.Adam([self.log_alpha], lr=config.learning_rate_actor)
@@ -46,24 +46,24 @@ class SACDIS_Learner(Learner):
         rew_batch = torch.as_tensor(samples['rewards'], device=self.device).unsqueeze(-1)
         ter_batch = torch.as_tensor(samples['terminals'], dtype=torch.float, device=self.device).reshape([-1, 1])
         info = self.callback.on_update_start(self.iterations,
-                                             policy=self.policy, obs=obs_batch, act=act_batch,
+                                             model=self.model, obs=obs_batch, act=act_batch,
                                              next_obs=next_batch, rew=rew_batch, termination=ter_batch)
 
         # actor update
-        action_prob, log_pi, policy_q_1, policy_q_2 = self.policy.Qpolicy(obs_batch)
-        policy_q = torch.min(policy_q_1, policy_q_2)
-        p_loss = (action_prob * (self.alpha * log_pi - policy_q)).sum(dim=1).mean()
+        action_prob, log_pi, model_q_1, model_q_2 = self.model.Qpolicy(obs_batch)
+        model_q = torch.min(model_q_1, model_q_2)
+        p_loss = (action_prob * (self.alpha * log_pi - model_q)).sum(dim=1).mean()
         self.optimizer['actor'].zero_grad()
         p_loss.backward()
         if self.use_grad_clip:
-            torch.nn.utils.clip_grad_norm_(self.policy.actor_parameters, self.grad_clip_norm)
+            torch.nn.utils.clip_grad_norm_(self.model.actor.parameters(), self.grad_clip_norm)
         self.optimizer['actor'].step()
 
         # critic update
-        action_q_1, action_q_2 = self.policy.Qaction(obs_batch)
+        action_q_1, action_q_2 = self.model.Qaction(obs_batch)
         action_q_1 = action_q_1.gather(1, act_batch.long())
         action_q_2 = action_q_2.gather(1, act_batch.long())
-        action_prob_next, log_pi_next, target_q = self.policy.Qtarget(next_batch)
+        action_prob_next, log_pi_next, target_q = self.model.Qtarget(next_batch)
         target_q = action_prob_next * (target_q - self.alpha * log_pi_next)
         target_q = target_q.sum(dim=1).unsqueeze(-1)
         backup = rew_batch + (1 - ter_batch) * self.gamma * target_q
@@ -71,7 +71,7 @@ class SACDIS_Learner(Learner):
         self.optimizer['critic'].zero_grad()
         q_loss.backward()
         if self.use_grad_clip:
-            torch.nn.utils.clip_grad_norm_(self.policy.critic_parameters, self.grad_clip_norm)
+            torch.nn.utils.clip_grad_norm_(self.model.critic.parameters(), self.grad_clip_norm)
         self.optimizer['critic'].step()
 
         # automatic entropy tuning
@@ -88,7 +88,7 @@ class SACDIS_Learner(Learner):
             self.scheduler['actor'].step()
             self.scheduler['critic'].step()
 
-        self.policy.soft_update(self.tau)
+        self.model.soft_update(self.tau)
 
         actor_lr = self.optimizer['actor'].state_dict()['param_groups'][0]['lr']
         critic_lr = self.optimizer['critic'].state_dict()['param_groups'][0]['lr']
@@ -97,7 +97,7 @@ class SACDIS_Learner(Learner):
             info.update({
                 f"Qloss/rank_{self.rank}": q_loss.item(),
                 f"Ploss/rank_{self.rank}": p_loss.item(),
-                f"Qvalue/rank_{self.rank}": policy_q.mean().item(),
+                f"Qvalue/rank_{self.rank}": model_q.mean().item(),
                 f"actor_lr/rank_{self.rank}": actor_lr,
                 f"critic_lr/rank_{self.rank}": critic_lr,
             })
@@ -105,7 +105,7 @@ class SACDIS_Learner(Learner):
             info.update({
                 "Qloss": q_loss.item(),
                 "Ploss": p_loss.item(),
-                "Qvalue": policy_q.mean().item(),
+                "Qvalue": model_q.mean().item(),
                 "actor_lr": actor_lr,
                 "critic_lr": critic_lr,
             })
@@ -118,10 +118,10 @@ class SACDIS_Learner(Learner):
                              "alpha": self.alpha.item()})
 
         info.update(self.callback.on_update_end(self.iterations,
-                                                policy=self.policy, info=info,
+                                                model=self.model, info=info,
                                                 action_prob=action_prob, log_pi=log_pi,
-                                                policy_q_1=policy_q_1, policy_q_2=policy_q_2,
-                                                policy_q=policy_q, p_loss=p_loss,
+                                                model_q_1=model_q_1, model_q_2=model_q_2,
+                                                model_q=model_q, p_loss=p_loss,
                                                 action_q_1=action_q_1, action_q_2=action_q_2,
                                                 action_prob_next=action_prob_next, log_pi_next=log_pi_next,
                                                 target_q=target_q, backup=backup, q_loss=q_loss,

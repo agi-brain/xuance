@@ -1,19 +1,5 @@
+import torch.nn as nn
 from .device import set_device, collect_device_info
-from .layers import (
-    torch, nn,
-    ModuleType,
-    mlp_block, cnn_block, pooling_block, gru_block, lstm_block,
-    Moments,
-)
-from .distributions import (
-    kl_div,
-    split_distributions, merge_distributions,
-    Distribution,
-    CategoricalDistribution,
-    DiagGaussianDistribution,
-    ActivatedDiagGaussianDistribution,
-    SymLogDistribution,
-)
 from .operations import (init_distributed_mode, update_linear_decay, set_seed,
                          get_flat_grad, get_flat_params, assign_from_flat_grads,
                          assign_from_flat_params,
@@ -25,6 +11,9 @@ from .tensor_memory import (TensorOnPolicyBuffer, TensorOnPolicyBufferAtari,
                             TensorOffPolicyBuffer, TensorOffPolicyBufferAtari)
 from .tensor_env import TensorEnvWrapper, TensorMultiAgentEnvWrapper
 from .tensor_statistics import TensorRunningMeanStd
+
+from typing import Type
+ModuleType = Type[nn.Module]
 
 ActivationFunctions = {
     "relu": nn.ReLU,
@@ -45,8 +34,8 @@ NormalizeFunctions = {
 }
 
 InitializeFunctions = {
-    "orthogonal": torch.nn.init.orthogonal_,
-    "normal": torch.nn.init.normal_,
-    "zeros": torch.nn.init.zeros_,
-    "ones": torch.nn.init.ones_,
+    "orthogonal": nn.init.orthogonal_,
+    "normal": nn.init.normal_,
+    "zeros": nn.init.zeros_,
+    "ones": nn.init.ones_,
 }

@@ -3,7 +3,7 @@ from argparse import Namespace
 from torch import nn
 from xuance.common import Union, Optional, BaseCallback
 from xuance.environment import DummyVecEnv, SubprocVecEnv
-from xuance.torch import REGISTRY_Policy
+# from xuance.torch import REGISTRY_Policy
 from xuance.torch.learners import CURL_Learner
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
 from xuance.torch.agents import OffPolicyAgent

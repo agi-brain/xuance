@@ -1,13 +1,14 @@
-import torch
+import gymnasium
 import numpy as np
 from argparse import Namespace
 from gymnasium.spaces import Space
 from xuance.common import Optional, BaseCallback
 from xuance.environment import DummyVecEnv, SubprocVecEnv
 from xuance.torch import Module
-from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
-from xuance.torch.policies import REGISTRY_Policy
+from xuance.torch.utils import ActivationFunctions
 from xuance.torch.agents import OnPolicyAgent
+from xuance.torch.rl_models import CategoricalActor, GaussianActor
+from xuance.torch.rl_models.architectures import VanillaPolicyGradient
 
 
 class PG_Agent(OnPolicyAgent):
@@ -28,37 +29,36 @@ class PG_Agent(OnPolicyAgent):
             callback: Optional[BaseCallback] = None
     ):
         super(PG_Agent, self).__init__(config, envs, observation_space, action_space, callback)
+        self.model = self._build_model()  # build RL model
         self.memory = self._build_memory()  # build memory
-        self.policy = self._build_policy()  # build policy
-        self.learner = self._build_learner(self.config, self.policy, self.callback)  # build learner
+        self.learner = self._build_learner(self.config, self.model, self.callback)  # build learner
 
-    def _build_policy(self) -> Module:
-        normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None
-        initializer = torch.nn.init.orthogonal_
-        activation = ActivationFunctions[self.config.activation]
-        device = self.device
-
+    def _build_model(self) -> Module:
         # build representation.
         representation = self._build_representation(self.config.representation, self.observation_space, self.config)
 
-        # build policy.
-        if self.config.policy == "Categorical_Actor":
-            policy = REGISTRY_Policy["Categorical_Actor"](
-                action_space=self.action_space, representation=representation,
-                actor_hidden_size=self.config.actor_hidden_size,
-                normalize=normalize_fn, initialize=initializer, activation=activation, device=device,
-                use_distributed_training=self.distributed_training)
-        elif self.config.policy == "Gaussian_Actor":
-            policy = REGISTRY_Policy["Gaussian_Actor"](
-                action_space=self.action_space, representation=representation,
-                actor_hidden_size=self.config.actor_hidden_size,
-                normalize=normalize_fn, initialize=initializer, activation=activation, device=device,
-                use_distributed_training=self.distributed_training,
-                activation_action=ActivationFunctions[self.config.activation_action])
+        # build actor network
+        actor_input = dict(
+            representation=representation,
+            actor_hidden_size=self.config.actor_hidden_size,
+            action_space=self.action_space,
+            normalizer=self.normalize_fn,
+            initializer=self.initializer,
+            activation=self.activation,
+            device=self.device
+        )
+        if isinstance(self.action_space, gymnasium.spaces.Box):
+            Actor = GaussianActor
+            actor_input['activation_action'] = ActivationFunctions[self.config.activation_action]
+        elif isinstance(self.action_space, gymnasium.spaces.Discrete):
+            Actor = CategoricalActor
         else:
-            raise AttributeError(f"PG currently does not support the policy named {self.config.policy}.")
+            raise NotImplementedError
+        actor = Actor(**actor_input)
+        # build the RL model
+        model = VanillaPolicyGradient(actor=actor)
 
-        return policy
+        return model
 
     def get_terminated_values(self, observations_next: np.ndarray, rewards: np.ndarray = None):
         """Returns values for terminated states.

@@ -38,7 +38,7 @@ class OfflineAgent(Agent):
                             batch_size=self.batch_size)
         return Buffer(**input_buffer)
 
-    def _build_policy(self) -> Module:
+    def _build_model(self) -> Module:
         raise NotImplementedError
 
     def train_epochs(self, n_epochs=1):

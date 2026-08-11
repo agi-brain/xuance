@@ -11,10 +11,11 @@ from argparse import Namespace
 from gymnasium.spaces import Dict, Space
 from torch.utils.tensorboard import SummaryWriter
 from torch.distributed import destroy_process_group
-from xuance.common import get_time_string, create_directory, RunningMeanStd, EPS, Optional, BaseCallback
+from xuance.common import get_time_string, create_directory, RunningMeanStd, EPS, Optional, Any, BaseCallback
 from xuance.environment import DummyVecEnv, SubprocVecEnv, space2shape
 from xuance.torch import REGISTRY_Representation, REGISTRY_Learners, Module
-from xuance.torch.utils import (nn, NormalizeFunctions, ActivationFunctions, init_distributed_mode, set_seed,
+from xuance.torch.utils import (nn, NormalizeFunctions, InitializeFunctions, ActivationFunctions,
+                                init_distributed_mode, set_seed,
                                 set_device,
                                 TensorEnvWrapper, TensorRunningMeanStd)
 
@@ -127,6 +128,11 @@ class Agent(ABC):
         self.obsnorm_range = config.obsnorm_range
         self.rewnorm_range = config.rewnorm_range
 
+        # Set network's normalizer, initializer, activation.
+        self.normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None
+        self.initializer = InitializeFunctions[getattr(self.config, "initializer", "orthogonal")]
+        self.activation = ActivationFunctions[self.config.activation]
+
         # Prepare directories.
         if self.distributed_training and self.world_size > 1:
             if self.rank == 0:
@@ -181,7 +187,7 @@ class Agent(ABC):
         self.log_dir = log_dir
 
         # Prepare necessary components.
-        self.policy: Optional[Module] = None
+        self.model: Optional[Module] = None
         self.learner: Optional[Module] = None
         self.memory: Optional[object] = None
         self.callback = callback or BaseCallback()
@@ -291,7 +297,7 @@ class Agent(ABC):
         return None if x is None else torch.as_tensor(x, device=self.device)
 
     def _build_representation(self, representation_key: str,
-                              input_space: Optional[Space],
+                              input_space: Space[Any],
                               config: Namespace) -> Module:
         """
         Build representation for policies.
@@ -328,7 +334,7 @@ class Agent(ABC):
         return representation
 
     @abstractmethod
-    def _build_policy(self) -> Module:
+    def _build_model(self) -> Module:
         raise NotImplementedError
 
     def _build_learner(self, *args):

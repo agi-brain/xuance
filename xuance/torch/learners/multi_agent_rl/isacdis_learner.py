@@ -5,18 +5,17 @@ Implementation: Pytorch
 import torch
 from torch import nn
 from xuance.torch.learners import LearnerMAS
-from xuance.common import List
+from xuance.common import AgentGrouping
 from argparse import Namespace
 
 
 class ISACDIS_Learner(LearnerMAS):
     def __init__(self,
                  config: Namespace,
-                 model_keys: List[str],
-                 agent_keys: List[str],
-                 policy: nn.Module,
+                 agent_grouping: AgentGrouping,
+                 model: nn.Module,
                  callback):
-        super(ISACDIS_Learner, self).__init__(config, model_keys, agent_keys, policy, callback)
+        super(ISACDIS_Learner, self).__init__(config, agent_grouping, model, callback)
         self.optimizer = {
             key: {'actor': torch.optim.Adam(self.policy.parameters_actor[key], self.config.learning_rate_actor, eps=1e-5),
                   'critic': torch.optim.Adam(self.policy.parameters_critic[key], self.config.learning_rate_critic, eps=1e-5)}

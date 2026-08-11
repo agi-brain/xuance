@@ -38,7 +38,7 @@ class PerDQN_Agent(DQN_Agent):
                                          buffer_size=config.buffer_size,
                                          batch_size=config.batch_size,
                                          alpha=config.PER_alpha)
-        self.learner = self._build_learner(self.config, self.policy, self.callback)
+        self.learner = self._build_learner(self.config, self.model, self.callback)
 
     def train_epochs(self, n_epochs=1):
         train_info = {}
@@ -59,7 +59,7 @@ class PerDQN_Agent(DQN_Agent):
             acts = policy_out['actions']
             next_obs, rewards, terminals, truncations, infos = self.train_envs.step(acts)
 
-            self.callback.on_train_step(self.current_step, envs=self.train_envs, policy=self.policy,
+            self.callback.on_train_step(self.current_step, envs=self.train_envs, model=self.model,
                                         obs=obs, policy_out=policy_out, acts=acts, next_obs=next_obs, rewards=rewards,
                                         terminals=terminals, truncations=truncations, infos=infos,
                                         train_steps=train_steps)
@@ -70,7 +70,7 @@ class PerDQN_Agent(DQN_Agent):
                 self.log_infos(update_info, self.current_step)
                 train_info.update(update_info)
                 self.PER_beta += (1 - self.PER_beta0) / train_steps
-                self.callback.on_train_epochs_end(self.current_step, policy=self.policy, memory=self.memory,
+                self.callback.on_train_epochs_end(self.current_step, model=self.model, memory=self.memory,
                                                   current_episode=self.current_episode, train_steps=train_steps,
                                                   update_info=update_info, per_beta=self.PER_beta)
 
@@ -95,7 +95,7 @@ class PerDQN_Agent(DQN_Agent):
                             }
                         self.log_infos(episode_info, self.current_step)
                         train_info.update(episode_info)
-                        self.callback.on_train_episode_info(envs=self.train_envs, policy=self.policy, env_id=i,
+                        self.callback.on_train_episode_info(envs=self.train_envs, model=self.model, env_id=i,
                                                             infos=infos, rank=self.rank, use_wandb=self.use_wandb,
                                                             current_step=self.current_step,
                                                             current_episode=self.current_episode,
@@ -104,6 +104,6 @@ class PerDQN_Agent(DQN_Agent):
             self.current_step += self.n_envs
             if self.e_greedy > self.end_greedy:
                 self.e_greedy -= self.delta_egreedy
-            self.callback.on_train_step_end(self.current_step, envs=self.train_envs, policy=self.policy,
+            self.callback.on_train_step_end(self.current_step, envs=self.train_envs, model=self.model,
                                             train_steps=train_steps, train_info=train_info)
         return train_info

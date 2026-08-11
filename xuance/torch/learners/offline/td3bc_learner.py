@@ -7,7 +7,7 @@ from xuance.torch.learners import Learner
 class TD3_BC_Learner(Learner):
     def __init__(self,
                  config: Namespace,
-                 policy: nn.Module,
+                 model: nn.Module,
                  callback):
         super(TD3_BC_Learner, self).__init__(config, policy, callback)
         self.optimizer = {

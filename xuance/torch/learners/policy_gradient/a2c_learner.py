@@ -11,10 +11,10 @@ from xuance.torch.learners import Learner
 class A2C_Learner(Learner):
     def __init__(self,
                  config: Namespace,
-                 policy: nn.Module,
+                 model: nn.Module,
                  callback):
-        super(A2C_Learner, self).__init__(config, policy, callback)
-        self.optimizer = torch.optim.Adam(self.policy.parameters(), config.learning_rate, eps=1e-5)
+        super(A2C_Learner, self).__init__(config, model, callback)
+        self.optimizer = torch.optim.Adam(self.model.parameters(), config.learning_rate, eps=1e-5)
         self.scheduler = torch.optim.lr_scheduler.LinearLR(self.optimizer,
                                                            start_factor=1.0,
                                                            end_factor=self.end_factor_lr_decay,
@@ -37,10 +37,12 @@ class A2C_Learner(Learner):
         ret_batch = torch.as_tensor(samples['returns'], device=self.device)
         adv_batch = torch.as_tensor(samples['advantages'], device=self.device)
         info = self.callback.on_update_start(self.iterations,
-                                             policy=self.policy, obs=obs_batch, act=act_batch,
+                                             model=self.model, obs=obs_batch, act=act_batch,
                                              returns=ret_batch, advantages=adv_batch)
 
-        outputs, a_dist, v_pred = self.policy(obs_batch)
+        model_output = self.model(obs_batch)
+        a_dist = model_output.distributions
+        v_pred = model_output.values
         log_prob = a_dist.log_prob(act_batch)
 
         a_loss = -(adv_batch * log_prob).mean()
@@ -51,7 +53,7 @@ class A2C_Learner(Learner):
         self.optimizer.zero_grad()
         loss.backward()
         if self.use_grad_clip:
-            torch.nn.utils.clip_grad_norm_(self.policy.parameters(), self.grad_clip_norm)
+            torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.grad_clip_norm)
         self.optimizer.step()
         if self.scheduler is not None:
             self.scheduler.step()
@@ -76,7 +78,7 @@ class A2C_Learner(Learner):
                 "predict_value": v_pred.mean().item()
             })
         info.update(self.callback.on_update_end(self.iterations,
-                                                policy=self.policy, info=info, rep_output=outputs,
+                                                model=self.model, info=info,
                                                 a_dist=a_dist, v_pred=v_pred, log_prob=log_prob,
                                                 a_loss=a_loss, c_loss=c_loss, e_loss=e_loss, loss=loss))
         return info

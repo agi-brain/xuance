@@ -6,7 +6,7 @@ from gymnasium.spaces import Space
 from xuance.common import Optional, DummyOnPolicyBuffer, DummyOnPolicyBuffer_Atari, BaseCallback
 from xuance.environment import DummyVecEnv, SubprocVecEnv
 from xuance.torch import Module
-from xuance.torch.utils import split_distributions
+from xuance.torch.rl_models.modules import split_distributions
 from xuance.torch.agents.base import Agent
 from xuance.torch.utils import TensorOnPolicyBuffer, TensorOnPolicyBufferAtari, TensorEnvWrapper
 
@@ -58,7 +58,6 @@ class OnPolicyAgent(Agent):
         self.n_epochs = config.n_epochs
         self.n_minibatch = config.n_minibatch
         self.gae_lam = config.gae_lambda
-        self.auxiliary_info_shape = None
         self.memory: Optional[DummyOnPolicyBuffer] = None
 
     def _build_memory(self, auxiliary_info_shape=None) -> DummyOnPolicyBuffer:
@@ -102,7 +101,7 @@ class OnPolicyAgent(Agent):
         self.batch_size = self.buffer_size // self.n_minibatch
         return Buffer(**input_buffer)
 
-    def _build_policy(self) -> Module:
+    def _build_model(self) -> Module:
         raise NotImplementedError
 
     def get_terminated_values(self, observations_next: np.ndarray, rewards: np.ndarray = None) -> np.ndarray:
@@ -147,7 +146,9 @@ class OnPolicyAgent(Agent):
                 - log_pi (Optional[np.ndarray]): Log-probabilities of sampled actions (when `return_logpi=True`);
                     otherwise None.
         """
-        _, policy_dists, values = self.policy(observations)
+        model_output = self.model(observations)
+        policy_dists = model_output.distributions
+        values = model_output.values
         actions = policy_dists.deterministic_sample() if deterministic else policy_dists.stochastic_sample()
         dists = split_distributions(policy_dists) if return_dists else None
         if self.is_tensor_memory:
@@ -230,7 +231,7 @@ class OnPolicyAgent(Agent):
             next_obs, rewards, terminals, truncations, infos = self.train_envs.step(acts)
             aux_info = self.get_aux_info()
 
-            self.callback.on_train_step(self.current_step, envs=self.train_envs, policy=self.policy,
+            self.callback.on_train_step(self.current_step, envs=self.train_envs, model=self.model,
                                         obs=obs, policy_out=policy_out, acts=acts, vals=vals, next_obs=next_obs,
                                         rewards=rewards, terminals=terminals, truncations=truncations,
                                         infos=infos, aux_info=aux_info, train_steps=train_steps)
@@ -246,7 +247,7 @@ class OnPolicyAgent(Agent):
                 update_info = self.train_epochs(self.n_epochs)
                 self.log_infos(update_info, self.current_step)
                 train_info.update(update_info)
-                self.callback.on_train_epochs_end(self.current_step, policy=self.policy, memory=self.memory,
+                self.callback.on_train_epochs_end(self.current_step, model=self.model, memory=self.memory,
                                                   current_episode=self.current_episode, train_steps=train_steps,
                                                   update_info=update_info)
                 self.memory.clear()
@@ -280,14 +281,14 @@ class OnPolicyAgent(Agent):
                             }
                         self.log_infos(episode_info, self.current_step)
                         train_info.update(episode_info)
-                        self.callback.on_train_episode_info(envs=self.train_envs, policy=self.policy, env_id=i,
+                        self.callback.on_train_episode_info(envs=self.train_envs, model=self.model, env_id=i,
                                                             infos=infos, rank=self.rank, use_wandb=self.use_wandb,
                                                             current_step=self.current_step,
                                                             current_episode=self.current_episode,
                                                             train_steps=train_steps)
 
             self.current_step += self.n_envs
-            self.callback.on_train_step_end(self.current_step, envs=self.train_envs, policy=self.policy,
+            self.callback.on_train_step_end(self.current_step, envs=self.train_envs, model=self.model,
                                             train_steps=train_steps, train_info=train_info)
         return train_info
 
@@ -345,7 +346,7 @@ class OnPolicyAgent(Agent):
                 for idx, img in enumerate(images):
                     videos[idx].append(img)
 
-            self.callback.on_test_step(envs=test_envs, policy=self.policy, images=images,
+            self.callback.on_test_step(envs=test_envs, model=self.model, images=images,
                                        obs=obs, policy_out=policy_out, next_obs=next_obs, rewards=rewards,
                                        terminals=terminals, truncations=truncations, infos=infos,
                                        current_train_step=self.current_step,
@@ -376,7 +377,7 @@ class OnPolicyAgent(Agent):
         }
         self.log_infos(test_info, self.current_step)
 
-        self.callback.on_test_end(envs=test_envs, policy=self.policy,
+        self.callback.on_test_end(envs=test_envs, model=self.model,
                                   current_train_step=self.current_step,
                                   current_step=current_step, current_episode=current_episode,
                                   scores=scores, best_score=best_score)

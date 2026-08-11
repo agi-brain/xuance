@@ -8,9 +8,10 @@ from gymnasium import spaces
 from xuance.common import Optional, DummyOffPolicyBuffer, BaseCallback
 from xuance.environment.single_agent_env import Gym_Env
 from xuance.torch import Module
-from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
-from xuance.torch.policies import REGISTRY_Policy
+from xuance.torch.utils import ActivationFunctions
 from xuance.torch.agents import Agent
+from xuance.torch.rl_models import DeterministicActor, HybridActionValueCritic
+from xuance.torch.rl_models.architectures import ParameterizedDQN
 
 
 class PDQN_Agent(Agent):
@@ -55,8 +56,12 @@ class PDQN_Agent(Agent):
         self.epsilon_final = 0.1
         self.buffer_action_space = spaces.Box(np.zeros(4), np.ones(4), dtype=np.float64)
 
-        # Build policy, optimizer, scheduler.
-        self.policy = self._build_policy()
+        self.num_disact = self.action_space.spaces[0].n
+        self.conact_sizes = np.array([self.action_space.spaces[i].shape[0] for i in range(1, self.num_disact + 1)])
+        self.conact_size = int(self.conact_sizes.sum())
+
+        # Build RL model, optimizer, scheduler.
+        self.model = self._build_model()
 
         self.memory = DummyOffPolicyBuffer(observation_space=self.observation_space,
                                            action_space=self.buffer_action_space,
@@ -64,46 +69,50 @@ class PDQN_Agent(Agent):
                                            n_envs=self.n_envs,
                                            buffer_size=config.buffer_size,
                                            batch_size=config.batch_size)
-        self.learner = self._build_learner(self.config, self.policy, self.callback)
+        self.learner = self._build_learner(self.config, self.model, self.callback)
 
-        self.num_disact = self.action_space.spaces[0].n
-        self.conact_sizes = np.array([self.action_space.spaces[i].shape[0] for i in range(1, self.num_disact + 1)])
-        self.conact_size = int(self.conact_sizes.sum())
-
-    def _build_policy(self) -> Module:
-        normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None
-        initializer = torch.nn.init.orthogonal_
-        activation = ActivationFunctions[self.config.activation]
-        device = self.device
-
+    def _build_model(self) -> Module:
         # build representation.
         representation = self._build_representation(self.config.representation, self.observation_space, self.config)
 
-        # build policy.
-        if self.config.policy == "PDQN_Policy":
-            policy = REGISTRY_Policy["PDQN_Policy"](
-                observation_space=self.observation_space, action_space=self.action_space,
-                representation=representation,
-                conactor_hidden_size=self.config.conactor_hidden_size,
-                qnetwork_hidden_size=self.config.qnetwork_hidden_size,
-                normalize=normalize_fn, initialize=initializer, activation=activation, device=device,
-                use_distributed_training=self.distributed_training,
-                activation_action=ActivationFunctions[self.config.activation_action])
-        else:
-            raise AttributeError(
-                f"{self.config.agent} currently does not support the policy named {self.config.policy}.")
+        # build the RL model.
+        continuous_actor = DeterministicActor(
+            representation=representation,
+            actor_hidden_size=self.config.conactor_hidden_size,
+            action_space=spaces.Box(low=-np.inf, high=np.inf, shape=(self.conact_size,)),
+            normalizer=self.normalize_fn,
+            initializer=self.initializer,
+            activation=self.activation,
+            activation_action=ActivationFunctions[self.config.activation_action],
+            device=self.device
+        )
 
-        return policy
+        q_network = HybridActionValueCritic(
+            representation=deepcopy(representation),
+            action_space=self.action_space,
+            critic_hidden_size=self.config.qnetwork_hidden_size,
+            normalizer=self.normalize_fn,
+            initializer=self.initializer,
+            activation=self.activation,
+            device=self.device
+        )
+
+        model = ParameterizedDQN(
+            continuous_actor=continuous_actor,
+            q_network=q_network
+        )
+
+        return model
 
     def get_actions(self, obs):
         with torch.no_grad():
             obs = torch.as_tensor(obs, device=self.device).float()
-            con_actions = self.policy.con_action(obs)
+            con_actions = self.model.con_action(obs)
             rnd = np.random.rand()
             if rnd < self.epsilon:
                 disaction = np.random.choice(self.num_disact)
             else:
-                q = self.policy.Qeval(obs.unsqueeze(0), con_actions.unsqueeze(0))
+                q = self.model.Qeval(obs.unsqueeze(0), con_actions.unsqueeze(0))
                 q = q.detach().cpu().data.numpy()
                 disaction = np.argmax(q)
 
@@ -140,7 +149,7 @@ class PDQN_Agent(Agent):
             if self.render: self.train_envs.render("human")
             acts = np.concatenate(([disaction], con_actions), axis=0).ravel()
 
-            self.callback.on_train_step(self.current_step, envs=self.train_envs, policy=self.policy,
+            self.callback.on_train_step(self.current_step, envs=self.train_envs, model=self.model,
                                         obs=obs, next_obs=next_obs, rewards=rewards, terminals=terminal,
                                         action=action, acts=acts, steps=steps,
                                         disaction=disaction, conaction=conaction, con_actions=con_actions,
@@ -151,7 +160,7 @@ class PDQN_Agent(Agent):
                 update_info = self.train_epochs(n_epochs=self.n_epochs)
                 self.log_infos(update_info, self.current_step)
                 train_info.update(update_info)
-                self.callback.on_train_epochs_end(self.current_step, policy=self.policy, memory=self.memory,
+                self.callback.on_train_epochs_end(self.current_step, model=self.model, memory=self.memory,
                                                   current_episode=self.current_episode, train_steps=train_steps,
                                                   update_info=update_info)
 
@@ -167,7 +176,7 @@ class PDQN_Agent(Agent):
                 obs, _ = self.train_envs.reset()
                 self.log_infos(episode_info, self.current_step)
                 train_info.update(episode_info)
-                self.callback.on_train_episode_info(envs=self.train_envs, policy=self.policy,
+                self.callback.on_train_episode_info(envs=self.train_envs, model=self.model,
                                                     rank=self.rank, use_wandb=self.use_wandb,
                                                     current_step=self.current_step,
                                                     current_episode=self.current_episode,
@@ -181,27 +190,31 @@ class PDQN_Agent(Agent):
             if self.noise_scale >= self.end_noise:
                 self.noise_scale -= self.delta_noise
 
-            self.callback.on_train_step_end(self.current_step, envs=self.train_envs, policy=self.policy,
+            self.callback.on_train_step_end(self.current_step, envs=self.train_envs, model=self.model,
                                             train_steps=train_steps, train_info=train_info)
 
         return train_info
 
-
-    def test(self, env_fn, test_episodes):
-        test_envs = env_fn()
+    def test(self,
+             test_episodes: int,
+             test_envs: Gym_Env = None,
+             close_envs: bool = True) -> list:
+        if test_envs is None:
+            raise ValueError("`test_envs` must be provided for evaluation.")
         episode_score = 0
         current_episode, current_step, scores, best_score = 0, 0, [], -np.inf
-        obs, _ = self.train_envs.reset()
+        obs, _ = test_envs.reset()
 
         while current_episode < test_episodes:
             disaction, conaction, con_actions = self.get_actions(obs)
             action = self.pad_action(disaction, conaction)
             action[1][disaction] = self.action_range[disaction] * (action[1][disaction] + 1) / 2. + self.action_low[
                 disaction]
-            (next_obs, steps), rewards, terminal, _ = self.train_envs.step(action)
-            self.train_envs.render("human")
+            (next_obs, steps), rewards, terminal, _ = test_envs.step(action)
+            if self.config.render:
+                test_envs.render("human")
 
-            self.callback.on_test_step(envs=test_envs, policy=self.policy,
+            self.callback.on_test_step(envs=test_envs, model=self.model,
                                        disaction=disaction, conaction=conaction, con_actions=con_actions,
                                        action=action, steps=steps, rewards=rewards, terminals=terminal,
                                        obs=obs, next_obs=next_obs,
@@ -212,7 +225,7 @@ class PDQN_Agent(Agent):
             obs = deepcopy(next_obs)
             if terminal:
                 scores.append(episode_score)
-                obs, _ = self.train_envs.reset()
+                obs, _ = test_envs.reset()
                 current_episode += 1
                 if best_score < episode_score:
                     best_score = episode_score
@@ -226,7 +239,7 @@ class PDQN_Agent(Agent):
         }
         self.log_infos(test_info, self.current_step)
 
-        self.callback.on_test_end(envs=test_envs, policy=self.policy,
+        self.callback.on_test_end(envs=test_envs, model=self.model,
                                   current_train_step=self.current_step,
                                   current_step=current_step, current_episode=current_episode,
                                   scores=scores, best_score=best_score)

@@ -1,12 +1,12 @@
-import torch
 from argparse import Namespace
 from gymnasium.spaces import Space
 from xuance.common import List, Optional, MultiAgentBaseCallback
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
-from xuance.torch import Module
-from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
-from xuance.torch.policies import REGISTRY_Policy, QTRAN_base, QTRAN_alt, VDN_mixer
+from xuance.torch import Module, ModuleDict
 from xuance.torch.agents import OffPolicyMARLAgents
+from xuance.torch.rl_models import DiscreteActionValueCritic
+from xuance.torch.rl_models.heads import VDN_Mixer, QTRAN_Base, QTRAN_Alt
+from xuance.torch.rl_models.architectures import QTranMixingNetwork
 
 
 class QTRAN_Agents(OffPolicyMARLAgents):
@@ -40,86 +40,64 @@ class QTRAN_Agents(OffPolicyMARLAgents):
         self.delta_egreedy = (self.start_greedy - self.end_greedy) / (config.decay_step_greedy / self.n_envs)
 
         # build policy, optimizers, schedulers
-        self.policy = self._build_policy()  # build policy
+        self.model = self._build_model()  # build the MARL model
         self.memory = self._build_memory()  # build memory
-        self.learner = self._build_learner(self.config, self.model_keys, self.agent_keys, self.policy, self.callback)
+        self.learner = self._build_learner(self.config, self.agent_grouping, self.model, self.callback)
 
-    def _build_policy(self) -> Module:
+    def _build_model(self) -> Module:
         """
-        Build representation(s) and policy(ies) for agent(s)
+        Build the MARL model.
 
         Returns:
-            policy (torch.nn.Module): A dict of policies.
+            model (torch.nn.Module): The MARL model.
         """
-        normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None
-        initializer = torch.nn.init.orthogonal_
-        activation = ActivationFunctions[self.config.activation]
-        device = self.device
+        q_networks = ModuleDict()
+        for group_key, group_agents in self.groups.items():
+            reference_agent = group_agents[0]
+            # build agent feature encoder as representations
+            agent_feature_encoder = self._build_agent_feature_encoder(
+                representation_choice=self.config.representation,
+                group_agents=group_agents,
+                input_space=self.observation_space[reference_agent]
+            )
+            # build inner-group shared q-network
+            q_networks[group_key] = DiscreteActionValueCritic(
+                representation=agent_feature_encoder,
+                action_space=self.action_space[reference_agent],
+                critic_hidden_size=self.config.q_hidden_size,
+                normalizer=self.normalize_fn,
+                initializer=self.initializer,
+                activation=self.activation,
+                device=self.device
+            )
 
-        # build representations
-        representation = self._build_representation(self.config.representation, self.observation_space, self.config)
+        # build mixers
+        mixer = VDN_Mixer()
 
-        # build policies
-        dim_state = self.state_space.shape[-1]
-        action_space = self.action_space
-        mixer = VDN_mixer()
+        input_qtran_mixer = dict(
+            dim_state=self.state_space.shape[-1],
+            action_space=self.action_space,
+            dim_hidden=self.config.qtran_net_hidden_dim,
+            n_agents=self.config.n_agents,
+            dim_utility_hidden=self.config.q_hidden_size[0],
+            use_parameter_sharing=self.use_parameter_sharing,
+            device=self.device
+        )
         if self.config.agent == "QTRAN_base":
-            qtran_mixer = QTRAN_base(dim_state, action_space, self.config.qtran_net_hidden_dim, self.config.n_agents,
-                                     self.config.q_hidden_size[0], self.use_parameter_sharing, device)
+            qtran_mixer = QTRAN_Base(**input_qtran_mixer)
         elif self.config.agent == "QTRAN_alt":
-            qtran_mixer = QTRAN_alt(dim_state, action_space, self.config.qtran_net_hidden_dim, self.config.n_agents,
-                                    self.config.q_hidden_size[0], self.use_parameter_sharing, device)
+            qtran_mixer = QTRAN_Alt(**input_qtran_mixer)
         else:
             raise ValueError("Mixer {} not recognised.".format(self.config.agent))
 
-        if self.config.policy == "Qtran_Mixing_Q_network":
-            policy = REGISTRY_Policy["Qtran_Mixing_Q_network"](
-                action_space=self.action_space, n_agents=self.n_agents, representation=representation,
-                mixer=mixer, qtran_mixer=qtran_mixer,
-                hidden_size=self.config.q_hidden_size,
-                normalize=normalize_fn, initialize=initializer, activation=activation,
-                device=device, use_distributed_training=self.distributed_training,
-                use_parameter_sharing=self.use_parameter_sharing, model_keys=self.model_keys,
-                use_rnn=self.use_rnn, rnn=self.config.rnn if self.use_rnn else None)
-        else:
-            raise AttributeError(f"QTRAN currently does not support the policy named {self.config.policy}.")
+        model = QTranMixingNetwork(
+            grouping=self.agent_grouping,
+            q_networks=q_networks,
+            mixer=mixer,
+            qtran_mixer=qtran_mixer,
+            use_rnn=self.use_rnn,
+            device=self.device,
+            use_distributed_training=self.distributed_training
+        )
 
-        return policy
-
-    def get_actions(self,
-               obs_dict: List[dict],
-               avail_actions_dict: Optional[List[dict]] = None,
-               rnn_hidden: Optional[dict] = None,
-               test_mode: Optional[bool] = False,
-               **kwargs):
-        """
-        Returns actions for agents.
-
-        Parameters:
-            obs_dict (List[dict]): Observations for each agent in self.agent_keys.
-            avail_actions_dict (Optional[List[dict]]): Actions mask values, default is None.
-            rnn_hidden (Optional[dict]): The hidden variables of the RNN.
-            test_mode (Optional[bool]): True for testing without noises.
-
-        Returns:
-            rnn_hidden_state (dict): The new hidden states for RNN (if self.use_rnn=True).
-            actions_dict (dict): The output actions.
-        """
-        batch_size = len(obs_dict)
-        obs_input, agents_id, avail_actions_input = self._build_inputs(obs_dict, avail_actions_dict)
-        hidden_state, _, actions, _ = self.policy(observation=obs_input,
-                                                  agent_ids=agents_id,
-                                                  avail_actions=avail_actions_input,
-                                                  rnn_hidden=rnn_hidden)
-
-        if self.use_parameter_sharing:
-            key = self.agent_keys[0]
-            actions_out = actions[key].reshape([batch_size, self.n_agents]).cpu().detach().numpy()
-            actions_dict = [{k: actions_out[e, i] for i, k in enumerate(self.agent_keys)} for e in range(batch_size)]
-        else:
-            actions_out = {k: actions[k].reshape(batch_size).cpu().detach().numpy() for k in self.agent_keys}
-            actions_dict = [{k: actions_out[k][i] for k in self.agent_keys} for i in range(batch_size)]
-
-        if not test_mode:  # get random actions
-            actions_dict = self.exploration(batch_size, actions_dict, avail_actions_dict)
-        return {"hidden_state": hidden_state, "actions": actions_dict}
+        return model

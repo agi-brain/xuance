@@ -1,13 +1,14 @@
-import torch
 import numpy as np
+from copy import deepcopy
 from argparse import Namespace
 from gymnasium.spaces import Space
 from xuance.common import Optional, BaseCallback
 from xuance.environment import DummyVecEnv, SubprocVecEnv
 from xuance.torch import Module
-from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
-from xuance.torch.policies import REGISTRY_Policy
+from xuance.torch.utils import ActivationFunctions
 from xuance.torch.agents import OffPolicyAgent
+from xuance.torch.rl_models import DeterministicActor, ActionValueCritic
+from xuance.torch.rl_models.architectures import DeterministicActorCritic
 
 
 class DDPG_Agent(OffPolicyAgent):
@@ -32,34 +33,44 @@ class DDPG_Agent(OffPolicyAgent):
         self.noise_scale = config.start_noise
         self.delta_noise = (self.start_noise - self.end_noise) / (config.running_steps / self.n_envs)
 
-        self.policy = self._build_policy()  # build policy
+        self.model = self._build_model()  # build model
         self.memory = self._build_memory()  # build memory
-        self.learner = self._build_learner(self.config, self.policy, self.callback)  # build learner
+        self.learner = self._build_learner(self.config, self.model, self.callback)  # build learner
 
-    def _build_policy(self) -> Module:
-        normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None
-        initializer = torch.nn.init.orthogonal_
-        activation = ActivationFunctions[self.config.activation]
-        device = self.device
-
+    def _build_model(self) -> Module:
         # build representations.
         representation = self._build_representation(self.config.representation, self.observation_space, self.config)
 
-        # build policy
-        if self.config.policy == "DDPG_Policy":
-            policy = REGISTRY_Policy["DDPG_Policy"](
-                action_space=self.action_space, representation=representation,
-                actor_hidden_size=self.config.actor_hidden_size, critic_hidden_size=self.config.critic_hidden_size,
-                normalize=normalize_fn, initialize=initializer, device=device,
-                use_distributed_training=self.distributed_training,
-                activation=activation, activation_action=ActivationFunctions[self.config.activation_action])
-        else:
-            raise AttributeError(f"DDPG currently does not support the policy named {self.config.policy}.")
+        # build actor network
+        actor = DeterministicActor(
+            representation=representation,
+            actor_hidden_size=self.config.actor_hidden_size,
+            action_space=self.action_space,
+            normalizer=self.normalize_fn,
+            initializer=self.initializer,
+            activation=self.activation,
+            activation_action=ActivationFunctions[self.config.activation_action],
+            device=self.device
+        )
 
-        return policy
+        # build critic network
+        critic = ActionValueCritic(
+            representation=deepcopy(representation),
+            action_space=self.action_space,
+            critic_hidden_size=self.config.critic_hidden_size,
+            normalizer=self.normalize_fn,
+            initializer=self.initializer,
+            activation=self.activation,
+            device=self.device
+        )
+
+        # build the RL model
+        model = DeterministicActorCritic(actor=actor, critic=critic)
+
+        return model
 
     def get_actions(self, observations: np.ndarray,
-               test_mode: Optional[bool] = False):
+                    test_mode: Optional[bool] = False):
         """Returns actions and values.
 
         Parameters:
@@ -69,7 +80,7 @@ class DDPG_Agent(OffPolicyAgent):
         Returns:
             actions: The actions to be executed.
         """
-        _, actions_output = self.policy(observations)
+        actions_output = self.model.act(observations)
         if test_mode:
             actions = actions_output.detach().cpu().numpy()
         else:

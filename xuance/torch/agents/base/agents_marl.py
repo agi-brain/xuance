@@ -9,15 +9,19 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from argparse import Namespace
 from operator import itemgetter
+from typing import Optional, List, Dict, Union, Tuple
 from gymnasium.spaces import Space
 from torch import nn
 from torch.utils.tensorboard import SummaryWriter
 from torch.distributed import destroy_process_group
-from xuance.common import get_time_string, create_directory, Optional, List, Dict, Union, MultiAgentBaseCallback
+from xuance.common import get_time_string, create_directory, MultiAgentBaseCallback, AgentGrouping
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv, space2shape
-from xuance.torch import ModuleDict, REGISTRY_Representation, REGISTRY_Learners, Module
+from xuance.torch import REGISTRY_Representation, REGISTRY_Learners, Module
 from xuance.torch.learners import learner
-from xuance.torch.utils import NormalizeFunctions, ActivationFunctions, init_distributed_mode, set_seed, set_device
+from xuance.torch.utils import (NormalizeFunctions, InitializeFunctions, ActivationFunctions,
+                                init_distributed_mode, set_seed, set_device)
+from xuance.torch.rl_models import AgentFeatureEncoder
+from xuance.torch.rl_models import IdentityFeatureFusion, build_identity_encoder
 
 
 class MARLAgents(ABC):
@@ -58,12 +62,13 @@ class MARLAgents(ABC):
             A user-defined callback object for injecting custom logic during
             training and evaluation (e.g., logging, early stopping, debugging).
     """
+
     def __init__(
             self,
             config: Namespace,
             envs: Optional[DummyVecMultiAgentEnv | SubprocVecMultiAgentEnv] = None,
-            num_agents: Optional[int] = None,
-            agent_keys: Optional[List[str]] = None,
+            num_agents: int = None,
+            agent_keys: List[str] = None,
             state_space: Optional[Space] = None,
             observation_space: Optional[Space] = None,
             action_space: Optional[Space] = None,
@@ -127,6 +132,17 @@ class MARLAgents(ABC):
         self.current_step = 0
         self.current_episode = np.zeros((self.n_envs,), np.int32)
 
+        self.agent_grouping = self.set_agent_group(self.agent_keys)
+        self.groups = self.agent_grouping.groups
+        self.group_keys = self.agent_grouping.group_keys
+        self.n_group_agents = {k: len(self.groups[k]) for k in self.group_keys}
+        self.agent_indices = {k: self.agent_grouping.agent_indices(k) for k in self.group_keys}
+
+        # Set network's normalizer, initializer, activation.
+        self.normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None
+        self.initializer = InitializeFunctions[getattr(self.config, "initializer", "orthogonal")]
+        self.activation = ActivationFunctions[self.config.activation]
+
         # Prepare directories.
         if self.distributed_training and self.world_size > 1:
             if self.rank == 0:
@@ -181,7 +197,7 @@ class MARLAgents(ABC):
 
         # predefine necessary components
         self.model_keys = [self.agent_keys[0]] if self.use_parameter_sharing else self.agent_keys
-        self.policy: Optional[nn.Module] = None
+        self.model: Optional[nn.Module] = None
         self.learner: Optional[learner] = None
         self.memory: Optional[object] = None
         self.callback = callback or MultiAgentBaseCallback()
@@ -189,6 +205,13 @@ class MARLAgents(ABC):
         self.meta_data = dict(algo=self.config.agent, env=self.config.env_name, env_id=self.config.env_id,
                               dl_toolbox=self.config.dl_toolbox, device=self.device, seed=self.config.seed,
                               xuance_version=xuance.__version__)
+
+    def set_agent_group(self, agent_keys):
+        if self.use_parameter_sharing:
+            agent_grouping = AgentGrouping.shared(agent_keys)
+        else:
+            agent_grouping = AgentGrouping.independent(agent_keys)
+        return agent_grouping
 
     @abstractmethod
     def store_experience(self, *args, **kwargs):
@@ -240,49 +263,73 @@ class MARLAgents(ABC):
                     continue
                 self.writer.add_video(k, v, fps=fps, global_step=x_index)
 
-    def _build_representation(self, representation_key: str,
+    def _build_representation(self,
+                              representation_choice: str,
                               input_space: Union[Dict[str, Space], Dict[str, tuple]],
                               config: Namespace) -> Module:
         """
         Build representation for policies.
 
         Parameters:
-            representation_key (str): The selection of representation, e.g., "Basic_MLP", "Basic_RNN", etc.
+            representation_choice (str): The selection of representation, e.g., "Basic_MLP", "Basic_RNN", etc.
             config: The configurations for creating the representation module.
         
         Returns:
             representation (Module): The representation Module. 
         """
-
         # build representations
-        representation = ModuleDict()
-        for key in self.model_keys:
-            if self.use_rnn:
-                hidden_sizes = {'fc_hidden_sizes': self.config.fc_hidden_sizes,
-                                'recurrent_hidden_size': self.config.recurrent_hidden_size}
-            else:
-                hidden_sizes = getattr(config, "representation_hidden_size", None)
-            input_representations = dict(
-                input_shape=space2shape(input_space[key]),
-                hidden_sizes=hidden_sizes,
-                normalize=NormalizeFunctions[config.normalize] if hasattr(config, "normalize") else None,
-                initialize=nn.init.orthogonal_,
-                activation=ActivationFunctions[config.activation],
-                kernels=getattr(config, "kernels", None),
-                strides=getattr(config, "strides", None),
-                filters=getattr(config, "filters", None),
-                fc_hidden_sizes=getattr(config, "fc_hidden_sizes", None),
-                N_recurrent_layers=getattr(config, "N_recurrent_layers", None),
-                rnn=getattr(config, "rnn", None),
-                dropout=getattr(config, "dropout", None),
-                device=self.device)
-            representation[key] = REGISTRY_Representation[representation_key](**input_representations)
-            if representation_key not in REGISTRY_Representation:
-                raise AttributeError(f"{representation_key} is not registered in REGISTRY_Representation.")
+        input_representations = dict(
+            input_shape=space2shape(input_space),
+            hidden_sizes=getattr(config, "representation_hidden_size", None),
+            normalize=NormalizeFunctions[config.normalize] if hasattr(config, "normalize") else None,
+            initialize=nn.init.orthogonal_,
+            activation=ActivationFunctions[config.activation],
+            kernels=getattr(config, "kernels", None),
+            strides=getattr(config, "strides", None),
+            filters=getattr(config, "filters", None),
+            fc_hidden_sizes=getattr(config, "fc_hidden_sizes", None),
+            N_recurrent_layers=getattr(config, "N_recurrent_layers", None),
+            recurrent_hidden_size=getattr(config, "recurrent_hidden_size", None),
+            rnn=getattr(config, "rnn", None),
+            dropout=getattr(config, "dropout", None),
+            device=self.device)
+        representation = REGISTRY_Representation[representation_choice](**input_representations)
+        if representation_choice not in REGISTRY_Representation:
+            raise AttributeError(f"{representation_choice} is not registered in REGISTRY_Representation.")
         return representation
 
+    def _build_agent_feature_encoder(
+            self,
+            representation_choice: str,
+            group_agents: Tuple[str, ...],
+            input_space: Union[Dict[str, Space], Dict[str, tuple], tuple]
+    ) -> AgentFeatureEncoder:
+        # build representations
+        representation = self._build_representation(representation_choice,
+                                                    input_space,
+                                                    self.config)
+        # build identity encoder
+        agent_identity_encoder = build_identity_encoder(
+            num_identities=len(group_agents),
+            mode=getattr(self.config, "identity_embedding_mode", 'none'),
+            embedding_dim=getattr(self.config, "identity_embedding_dim", None),
+            device=self.device,
+        )
+        # build feature fusion
+        identity_feature_fusion = IdentityFeatureFusion(
+            observation_feature_dim=representation.output_shapes['state'][0],
+            identity_feature_dim=agent_identity_encoder.output_dim,
+            mode=getattr(self.config, "identity_feature_fusion_mode", "concat")
+        )
+        # build feature encoder
+        return AgentFeatureEncoder(
+            representation=representation,
+            identity_encoder=agent_identity_encoder,
+            fusion=identity_feature_fusion
+        )
+
     @abstractmethod
-    def _build_policy(self) -> Module:
+    def _build_model(self) -> Module:
         raise NotImplementedError
 
     def _build_learner(self, *args):
@@ -303,50 +350,41 @@ class MARLAgents(ABC):
             agents_id: The agent id (One-Hot variables).
         """
         batch_size = len(obs_dict)
-        bs = batch_size * self.n_agents if self.use_parameter_sharing else batch_size
         obs_input = {}
+        agent_indices = {}
         avail_actions_input = {} if self.use_actions_mask else None
 
-        if self.use_parameter_sharing:
-            key = self.agent_keys[0]
-            obs_array = np.array([itemgetter(*self.agent_keys)(data) for data in obs_dict])
+        for group, group_agents in self.groups.items():
+            bs = batch_size * self.n_group_agents[group]
+            obs_array = np.array([itemgetter(*group_agents)(data) for data in obs_dict])
+
             if self.use_cnn and len(obs_array.shape) > 3:  # batch * n_agent * height * width * channels (images)
                 obs_shape_item = obs_array.shape[2:]
             else:
                 obs_shape_item = (-1,)
-            agents_id = torch.eye(self.n_agents).unsqueeze(0).expand(batch_size, -1, -1).to(self.device)
-            avail_actions_array = np.array([itemgetter(*self.agent_keys)(data)
-                                            for data in avail_actions_dict]) if self.use_actions_mask else None
+
+            agents_id = torch.as_tensor(self.agent_indices[group],
+                                        dtype=torch.int64).repeat(batch_size, 1).reshape([bs, 1]).to(self.device)
+
+            if self.use_actions_mask:
+                avail_actions_array = torch.as_tensor(np.array([itemgetter(*group_agents)(data)
+                                                                for data in avail_actions_dict])).to(self.device)
+            else:
+                avail_actions_array = None
+
             if self.use_rnn:
-                obs_input = {key: obs_array.reshape([bs, 1, *obs_shape_item])}
+                obs_input[group] = obs_array.reshape([bs, 1, *obs_shape_item])
                 agents_id = agents_id.reshape(bs, 1, -1)
                 if self.use_actions_mask:
-                    avail_actions_input = {key: avail_actions_array.reshape([bs, 1, -1])}
+                    avail_actions_input[group] = avail_actions_array.reshape([bs, 1, -1])
             else:
-                obs_input = {key: obs_array.reshape([bs, *obs_shape_item])}
+                obs_input[group] = obs_array.reshape([bs, *obs_shape_item])
                 agents_id = agents_id.reshape(bs, -1)
                 if self.use_actions_mask:
-                    avail_actions_input = {key: avail_actions_array.reshape([bs, -1])}
-        else:
-            agents_id = None
-            for key in self.agent_keys:
-                obs_array = np.stack([data[key] for data in obs_dict])
-                if self.use_cnn and len(obs_array.shape) > 3:  # batch * height * width * channels (images)
-                    obs_shape_item = obs_array.shape[1:]
-                else:
-                    obs_shape_item = (-1,)
-                if self.use_rnn:
-                    obs_input[key] = obs_array.reshape([bs, 1, *obs_shape_item])
-                    if self.use_actions_mask:
-                        avail_actions_input[key] = np.stack(
-                            [data[key] for data in avail_actions_dict]).reshape([bs, 1, -1])
-                else:
-                    obs_input[key] = obs_array.reshape([bs, *obs_shape_item])
-                    if self.use_actions_mask:
-                        avail_actions_input[key] = np.stack(
-                            [data[key] for data in avail_actions_dict]).reshape([bs, -1])
+                    avail_actions_input[group] = avail_actions_array.reshape([bs, -1])
+            agent_indices[group] = agents_id
 
-        return obs_input, agents_id, avail_actions_input
+        return obs_input, agent_indices, avail_actions_input
 
     @abstractmethod
     def get_actions(self, **kwargs):

@@ -1,14 +1,16 @@
-from tqdm import tqdm
 import numpy as np
+from tqdm import tqdm
 from copy import deepcopy
 from argparse import Namespace
 from operator import itemgetter
 from gymnasium.spaces import Space
-from xuance.common import Optional, List, Union, MARL_OffPolicyBuffer, MARL_OffPolicyBuffer_RNN, MultiAgentBaseCallback
+from typing import Optional, List, Union, Dict
+from xuance.common import MARL_OffPolicyBuffer, MARL_OffPolicyBuffer_RNN, MultiAgentBaseCallback
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
 from xuance.torch import Tensor, Module
-from xuance.torch.utils.distributions import Categorical
 from xuance.torch.agents.base import MARLAgents
+from xuance.torch.rl_models.modules import RNN_State
+from xuance.torch.rl_models.modules.distributions import Categorical
 
 
 class OffPolicyMARLAgents(MARLAgents):
@@ -72,6 +74,7 @@ class OffPolicyMARLAgents(MARLAgents):
 
         self.start_noise = getattr(config, "start_noise", None)
         self.end_noise = getattr(config, "end_noise", None)
+        self.sigma = getattr(config, "sigma", None)
         self.delta_noise: Optional[float] = None
         self.noise_scale: Optional[float] = None
         self.actions_low = getattr(self.action_space, "low", None)
@@ -83,9 +86,8 @@ class OffPolicyMARLAgents(MARLAgents):
         self.buffer_size = self.config.buffer_size
         self.batch_size = self.config.batch_size
 
-    def _build_memory(self) -> MARL_OffPolicyBuffer:
-        """Build replay buffer for models training
-        """
+    def _build_memory(self) -> MARL_OffPolicyBuffer | MARL_OffPolicyBuffer_RNN:
+        """Build replay buffer for models training"""
         if self.use_actions_mask:
             avail_actions_shape = {key: (self.action_space[key].n,) for key in self.agent_keys}
         else:
@@ -103,11 +105,11 @@ class OffPolicyMARLAgents(MARLAgents):
         Buffer = MARL_OffPolicyBuffer_RNN if self.use_rnn else MARL_OffPolicyBuffer
         return Buffer(**input_buffer)
 
-    def _build_policy(self) -> Module:
+    def _build_model(self) -> Module:
         raise NotImplementedError
 
     def store_experience(self, obs_dict, avail_actions, actions_dict, obs_next_dict, avail_actions_next,
-                         rewards_dict, terminals_dict, info, **kwargs) -> None:
+                         rewards_dict, terminals_dict, info, **kwargs):
         """Store a batch of multi-agent transitions into the replay buffer.
 
         This method converts per-environment dictionaries (one dict per vector environment) into per-agent batched
@@ -155,7 +157,7 @@ class OffPolicyMARLAgents(MARLAgents):
                                                      for k in self.agent_keys}
         self.memory.store(**experience_data)
 
-    def init_rnn_hidden(self, n_envs) -> Optional[dict]:
+    def init_rnn_states(self, n_envs: int) -> Dict[str, RNN_State]:
         """Initialize RNN hidden states for vectorized multi-agent execution.
 
         This method creates initial hidden states for the RNN-based policy representations
@@ -168,17 +170,13 @@ class OffPolicyMARLAgents(MARLAgents):
             n_envs (int): Number of parallel environments.
 
         Returns:
-            Optional[dict]: A dictionary of initialized hidden states keyed by `self.model_keys`
+            Optional[Dict[str, RNN_State]]: A dictionary of initialized hidden states keyed by `self.group_keys`
                 when `self.use_rnn` is True; otherwise None.
         """
-        rnn_hidden_states = None
-        if self.use_rnn:
-            batch = n_envs * self.n_agents if self.use_parameter_sharing else n_envs
-            rnn_hidden_states = {k: self.policy.representation[k].init_hidden(batch) for k in self.model_keys}
-        return rnn_hidden_states
+        return self.model.init_rnn_states(n_envs)
 
-    def init_hidden_item(self, i_env: int,
-                         rnn_hidden: Optional[dict] = None) -> dict:
+    def init_rnn_states_item(self, i_env: int,
+                             rnn_states: Dict[str, RNN_State] = None) -> Dict[str, RNN_State]:
         """Reset RNN hidden states for a specific environment index.
 
         This method re-initializes the RNN hidden states corresponding to the `i_env`-th vectorized environment.
@@ -188,20 +186,13 @@ class OffPolicyMARLAgents(MARLAgents):
 
         Args:
             i_env (int): Index of the vectorized environment to reset.
-            rnn_hidden (Optional[dict]): Current RNN hidden states keyed by `self.model_keys`.
+            rnn_states (Optional[dict]): Current RNN hidden states keyed by `self.model_keys`.
                 This object is updated in-place.
 
         Returns:
             dict: Updated RNN hidden states with the `i_env` entries reset.
         """
-        assert self.use_rnn is True, "This method cannot be called when self.use_rnn is False."
-        if self.use_parameter_sharing:
-            batch_index = list(range(i_env * self.n_agents, (i_env + 1) * self.n_agents))
-        else:
-            batch_index = [i_env, ]
-        for key in self.model_keys:
-            rnn_hidden[key] = self.policy.representation[key].init_hidden_item(batch_index, *rnn_hidden[key])
-        return rnn_hidden
+        return self.model.init_rnn_states_item(i_env, rnn_states)
 
     def _update_explore_factor(self):
         if self.e_greedy is not None:
@@ -251,12 +242,11 @@ class OffPolicyMARLAgents(MARLAgents):
             else:
                 explore_actions = pi_actions_dict
         elif self.noise_scale is not None:
-            if self.use_parameter_sharing:
-                key = self.agent_keys[0]
-                pi_actions_dict[key] += np.random.normal(0, self.noise_scale, size=pi_actions_dict[key].shape)
-            else:
-                for key in self.agent_keys:
-                    pi_actions_dict[key] += np.random.normal(0, self.noise_scale, size=pi_actions_dict[key].shape)
+            for key, action in pi_actions_dict.items():
+                noise = np.random.normal(0, self.noise_scale * self.sigma, size=action.shape)
+                pi_actions_dict[key] = np.clip(action + noise,
+                                               self.action_space[key].low, self.action_space[key].high,
+                                               dtype=self.action_space[key].dtype)
             explore_actions = pi_actions_dict
         else:
             explore_actions = pi_actions_dict
@@ -265,7 +255,7 @@ class OffPolicyMARLAgents(MARLAgents):
     def get_actions(self,
                     obs_dict: List[dict],
                     avail_actions_dict: Optional[List[dict]] = None,
-                    rnn_hidden: Optional[dict] = None,
+                    rnn_states: Optional[Dict[str, RNN_State]] = None,
                     test_mode: Optional[bool] = False,
                     **kwargs) -> dict:
         """Compute actions for all agents given vectorized observations.
@@ -281,7 +271,7 @@ class OffPolicyMARLAgents(MARLAgents):
             avail_actions_dict (Optional[List[dict]]): Available-action masks for each parallel environment when
                 `use_actions_mask=True`. Each element is a dict keyed by `self.agent_keys`. Can be None when
                 action masking is disabled.
-            rnn_hidden (Optional[dict]): Current RNN hidden states keyed by `self.model_keys`.
+            rnn_states (Optional[Dict[str, RNN_State]]): Current RNN hidden states keyed by `self.group_keys`.
                 Required when `self.use_rnn` is True.
             test_mode (bool): Whether to run in evaluation mode. When True, exploration is disabled and actions are
                 produced deterministically (or without training-time noise).
@@ -294,24 +284,21 @@ class OffPolicyMARLAgents(MARLAgents):
                     Each element is a dict keyed by `self.agent_keys`.
         """
         batch_size = len(obs_dict)
-        obs_input, agents_id, avail_actions_input = self._build_inputs(obs_dict, avail_actions_dict)
-        hidden_state, actions, _ = self.policy(observation=obs_input,
-                                               agent_ids=agents_id,
-                                               avail_actions=avail_actions_input,
-                                               rnn_hidden=rnn_hidden)
+        obs_input, agent_indices, avail_actions_input = self._build_inputs(obs_dict, avail_actions_dict)
+        model_output = self.model(observations=obs_input,
+                                  agent_indices=agent_indices,
+                                  avail_actions=avail_actions_input,
+                                  rnn_states=rnn_states)
+        rnn_states_new = model_output.rnn_states
+        actions = model_output.actions
 
-        if self.use_parameter_sharing:
-            key = self.agent_keys[0]
-            actions_out = actions[key].reshape([batch_size, self.n_agents]).cpu().detach().numpy()
-            actions_dict = [{k: actions_out[e, i] for i, k in enumerate(self.agent_keys)} for e in range(batch_size)]
-        else:
-            actions_out = {k: actions[k].reshape(batch_size).cpu().detach().numpy() for k in self.agent_keys}
-            actions_dict = [{k: actions_out[k][i] for k in self.agent_keys} for i in range(batch_size)]
+        actions_out = {k: actions[k].reshape(batch_size).cpu().detach().numpy() for k in self.agent_keys}
+        actions_dict = [{k: actions_out[k][i] for k in self.agent_keys} for i in range(batch_size)]
 
         if not test_mode:  # get random actions
             actions_dict = self.exploration(batch_size, actions_dict, avail_actions_dict)
 
-        return {"hidden_state": hidden_state, "actions": actions_dict}
+        return {"rnn_states": rnn_states_new, "actions": actions_dict}
 
     def train(self, train_steps: int) -> dict:
         """Run the main multi-agent off-policy training loop.
@@ -348,14 +335,14 @@ class OffPolicyMARLAgents(MARLAgents):
                         update_info = self.train_epochs(n_epochs=self.n_epochs)
                         self.log_infos(update_info, self.current_step)
                         train_info.update(update_info)
-                        self.callback.on_train_epochs_end(self.current_step, policy=self.policy, memory=self.memory,
+                        self.callback.on_train_epochs_end(self.current_step, model=self.model, memory=self.memory,
                                                           current_episode=self.current_episode, train_steps=train_steps,
                                                           update_info=update_info)
 
                     process_bar.update((self.current_step - step_last) // self.n_envs)
                     step_last = deepcopy(self.current_step)
                 process_bar.update(train_steps - process_bar.last_print_n)
-                self.callback.on_train_step_end(self.current_step, envs=self.train_envs, policy=self.policy,
+                self.callback.on_train_step_end(self.current_step, envs=self.train_envs, model=self.model,
                                                 train_steps=train_steps, train_info=train_info)
             return train_info
 
@@ -369,7 +356,7 @@ class OffPolicyMARLAgents(MARLAgents):
             next_state = self.train_envs.buf_state.copy() if self.use_global_state else None
             next_avail_actions = self.train_envs.buf_avail_actions if self.use_actions_mask else None
 
-            self.callback.on_train_step(self.current_step, envs=self.train_envs, policy=self.policy,
+            self.callback.on_train_step(self.current_step, envs=self.train_envs, model=self.model,
                                         obs=obs_dict, policy_out=policy_out, acts=actions_dict, next_obs=next_obs_dict,
                                         rewards=rewards_dict, state=state, next_state=next_state,
                                         avail_actions=avail_actions, next_avail_actions=next_avail_actions,
@@ -383,7 +370,7 @@ class OffPolicyMARLAgents(MARLAgents):
                 update_info = self.train_epochs(n_epochs=self.n_epochs)
                 self.log_infos(update_info, self.current_step)
                 train_info.update(update_info)
-                self.callback.on_train_epochs_end(self.current_step, policy=self.policy, memory=self.memory,
+                self.callback.on_train_epochs_end(self.current_step, model=self.model, memory=self.memory,
                                                   current_episode=self.current_episode, train_steps=train_steps,
                                                   update_info=update_info)
 
@@ -417,7 +404,7 @@ class OffPolicyMARLAgents(MARLAgents):
                         }
                     self.log_infos(episode_info, self.current_step)
                     train_info.update(episode_info)
-                    self.callback.on_train_episode_info(envs=self.train_envs, policy=self.policy, env_id=i,
+                    self.callback.on_train_episode_info(envs=self.train_envs, model=self.model, env_id=i,
                                                         infos=info, rank=self.rank, use_wandb=self.use_wandb,
                                                         current_step=self.current_step,
                                                         current_episode=self.current_episode,
@@ -425,7 +412,7 @@ class OffPolicyMARLAgents(MARLAgents):
 
             self.current_step += self.n_envs
             self._update_explore_factor()
-            self.callback.on_train_step_end(self.current_step, envs=self.train_envs, policy=self.policy,
+            self.callback.on_train_step_end(self.current_step, envs=self.train_envs, model=self.model,
                                             train_steps=train_steps, train_info=train_info)
         return train_info
 
@@ -468,14 +455,14 @@ class OffPolicyMARLAgents(MARLAgents):
         else:
             if self.use_rnn:
                 self.memory.clear_episodes()
-        rnn_hidden = self.init_rnn_hidden(num_envs)
+        rnn_states = self.init_rnn_states(num_envs)
 
         while _current_episode < n_episodes:
             policy_out = self.get_actions(obs_dict=obs_dict,
                                           avail_actions_dict=avail_actions,
-                                          rnn_hidden=rnn_hidden,
+                                          rnn_states=rnn_states,
                                           test_mode=test_mode)
-            rnn_hidden, actions_dict = policy_out['hidden_state'], policy_out['actions']
+            rnn_states, actions_dict = policy_out['rnn_states'], policy_out['actions']
             next_obs_dict, rewards_dict, terminated_dict, truncated, info = envs.step(actions_dict)
             next_state = envs.buf_state.copy() if self.use_global_state else None
             next_avail_actions = envs.buf_avail_actions if self.use_actions_mask else None
@@ -489,7 +476,7 @@ class OffPolicyMARLAgents(MARLAgents):
                                       rewards_dict, terminated_dict, info,
                                       **{'state': state, 'next_state': next_state})
 
-            self.callback.on_test_step(envs=envs, policy=self.policy, images=images, test_mode=test_mode,
+            self.callback.on_test_step(envs=envs, model=self.model, images=images, test_mode=test_mode,
                                        obs=obs_dict, policy_out=policy_out, acts=actions_dict,
                                        next_obs=next_obs_dict, rewards=rewards_dict,
                                        terminals=terminated_dict, truncations=truncated, infos=info,
@@ -515,7 +502,7 @@ class OffPolicyMARLAgents(MARLAgents):
                         avail_actions[i] = info[i]["reset_avail_actions"]
                         envs.buf_avail_actions[i] = info[i]["reset_avail_actions"]
                     if self.use_rnn:
-                        rnn_hidden = self.init_hidden_item(i_env=i, rnn_hidden=rnn_hidden)
+                        rnn_states = self.init_rnn_states_item(i_env=i, rnn_states=rnn_states)
                         if not test_mode:
                             terminal_data = {'obs': next_obs_dict[i],
                                              'episode_step': info[i]['episode_step']}
@@ -546,7 +533,7 @@ class OffPolicyMARLAgents(MARLAgents):
                         self.current_step += info[i]["episode_step"]
                         self.log_infos(episode_info, self.current_step)
                         self._update_explore_factor()
-                        self.callback.on_train_episode_info(envs=envs, policy=self.policy, env_id=i,
+                        self.callback.on_train_episode_info(envs=envs, model=self.model, env_id=i,
                                                             infos=info, rank=self.rank, use_wandb=self.use_wandb,
                                                             current_step=self.current_step,
                                                             current_episode=self.current_episode,
@@ -566,7 +553,7 @@ class OffPolicyMARLAgents(MARLAgents):
 
             self.log_infos(test_info, self.current_step)
 
-            self.callback.on_test_end(envs=envs, policy=self.policy,
+            self.callback.on_test_end(envs=envs, model=self.model,
                                       current_train_step=self.current_step,
                                       current_step=_current_step, current_episode=_current_episode,
                                       scores=scores, best_score=best_score)

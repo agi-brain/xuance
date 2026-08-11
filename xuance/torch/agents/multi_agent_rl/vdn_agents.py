@@ -1,12 +1,12 @@
-import torch
 from argparse import Namespace
 from gymnasium.spaces import Space
 from xuance.common import List, Optional, MultiAgentBaseCallback
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
-from xuance.torch import Module
-from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
-from xuance.torch.policies import REGISTRY_Policy, VDN_mixer
+from xuance.torch import Module, ModuleDict
 from xuance.torch.agents import OffPolicyMARLAgents
+from xuance.torch.rl_models import DiscreteActionValueCritic
+from xuance.torch.rl_models.heads import VDN_Mixer
+from xuance.torch.rl_models.architectures import MixingQNetwork
 
 
 class VDN_Agents(OffPolicyMARLAgents):
@@ -37,36 +37,48 @@ class VDN_Agents(OffPolicyMARLAgents):
         self.e_greedy = self.start_greedy
         self.delta_egreedy = (self.start_greedy - self.end_greedy) / (config.decay_step_greedy / self.n_envs)
 
-        self.policy = self._build_policy()  # build policy
+        self.model = self._build_model()  # build the MARL model
         self.memory = self._build_memory()  # build memory
-        self.learner = self._build_learner(self.config, self.model_keys, self.agent_keys, self.policy, self.callback)
+        self.learner = self._build_learner(self.config, self.agent_grouping, self.model, self.callback)
 
-    def _build_policy(self) -> Module:
+    def _build_model(self) -> Module:
         """
-        Build representation(s) and policy(ies) for agent(s)
+        Build the MARL model.
 
         Returns:
-            policy (torch.nn.Module): A dict of policies.
+            model (torch.nn.Module): The MARL model.
         """
-        normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None
-        initializer = torch.nn.init.orthogonal_
-        activation = ActivationFunctions[self.config.activation]
-        device = self.device
+        q_networks = ModuleDict()
+        for group_key, group_agents in self.groups.items():
+            reference_agent = group_agents[0]
+            # build agent feature encoder as representations
+            agent_feature_encoder = self._build_agent_feature_encoder(
+                representation_choice=self.config.representation,
+                group_agents=group_agents,
+                input_space=self.observation_space[reference_agent]
+            )
+            # build inner-group shared q-network
+            q_networks[group_key] = DiscreteActionValueCritic(
+                representation=agent_feature_encoder,
+                action_space=self.action_space[reference_agent],
+                critic_hidden_size=self.config.q_hidden_size,
+                normalizer=self.normalize_fn,
+                initializer=self.initializer,
+                activation=self.activation,
+                device=self.device
+            )
 
-        # build representations
-        representation = self._build_representation(self.config.representation, self.observation_space, self.config)
+        # build mixer
+        mixer = VDN_Mixer()
 
-        # build policies
-        mixer = VDN_mixer()
-        if self.config.policy == "Mixing_Q_network":
-            policy = REGISTRY_Policy["Mixing_Q_network"](
-                action_space=self.action_space, n_agents=self.n_agents, representation=representation,
-                mixer=mixer, hidden_size=self.config.q_hidden_size,
-                normalize=normalize_fn, initialize=initializer, activation=activation,
-                device=device, use_distributed_training=self.distributed_training,
-                use_parameter_sharing=self.use_parameter_sharing, model_keys=self.model_keys,
-                use_rnn=self.use_rnn, rnn=self.config.rnn if self.use_rnn else None)
-        else:
-            raise AttributeError(f"VDN currently does not support the policy named {self.config.policy}.")
+        # build MARL model
+        model = MixingQNetwork(
+            grouping=self.agent_grouping,
+            q_networks=q_networks,
+            mixer=mixer,
+            use_rnn=self.use_rnn,
+            device=self.device,
+            use_distributed_training=self.distributed_training
+        )
 
-        return policy
+        return model

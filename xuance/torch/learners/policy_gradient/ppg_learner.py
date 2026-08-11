@@ -7,16 +7,16 @@ import torch
 from torch import nn
 from xuance.torch.learners import Learner
 from argparse import Namespace
-from xuance.torch.utils import merge_distributions
+from xuance.torch.rl_models.modules import merge_distributions
 
 
 class PPG_Learner(Learner):
     def __init__(self,
                  config: Namespace,
-                 policy: nn.Module,
+                 model: nn.Module,
                  callback):
-        super(PPG_Learner, self).__init__(config, policy, callback)
-        self.optimizer = torch.optim.Adam(self.policy.parameters(), self.config.learning_rate, eps=1e-5)
+        super(PPG_Learner, self).__init__(config, model, callback)
+        self.optimizer = torch.optim.Adam(self.model.parameters(), self.config.learning_rate, eps=1e-5)
         self.scheduler = torch.optim.lr_scheduler.LinearLR(self.optimizer,
                                                            start_factor=1.0,
                                                            end_factor=self.end_factor_lr_decay,
@@ -25,7 +25,7 @@ class PPG_Learner(Learner):
         self.ent_coef = config.ent_coef
         self.clip_range = config.clip_range
         self.kl_beta = config.kl_beta
-        self.policy_iterations = 0
+        self.model_iterations = 0
         self.value_iterations = 0
 
     def estimate_total_iterations(self):
@@ -35,18 +35,18 @@ class PPG_Learner(Learner):
         total_iters = update_times * self.config.n_epochs * self.config.n_minibatch
         return total_iters
 
-    def update_policy(self, **samples):
-        self.policy_iterations += 1
+    def update_actor(self, **samples):
+        self.model_iterations += 1
         obs_batch = torch.as_tensor(samples['obs'], device=self.device)
         act_batch = torch.as_tensor(samples['actions'], device=self.device)
         adv_batch = torch.as_tensor(samples['advantages'], device=self.device)
         old_dist = merge_distributions(samples['aux_batch']['old_dist'])
         old_logp_batch = old_dist.log_prob(act_batch).detach()
-        info = self.callback.on_update_start(self.iterations, method="update_policy",
-                                             policy=self.policy, obs=obs_batch, act=act_batch, advantages=adv_batch,
+        info = self.callback.on_update_start(self.iterations, method="update_model",
+                                             model=self.model, obs=obs_batch, act=act_batch, advantages=adv_batch,
                                              old_dist=old_dist, old_logp=old_logp_batch)
 
-        outputs, a_dist, _, _ = self.policy(obs_batch)
+        a_dist = self.model.actor(obs_batch).distributions
         log_prob = a_dist.log_prob(act_batch)
         # ppo-clip core implementations 
         ratio = (log_prob - old_logp_batch).exp().float()
@@ -58,7 +58,7 @@ class PPG_Learner(Learner):
         self.optimizer.zero_grad()
         loss.backward()
         if self.use_grad_clip:
-            torch.nn.utils.clip_grad_norm_(self.policy.parameters(), self.grad_clip_norm)
+            torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.grad_clip_norm)
         self.optimizer.step()
         if self.scheduler is not None:
             self.scheduler.step()
@@ -80,8 +80,8 @@ class PPG_Learner(Learner):
                 "learning_rate": lr,
                 "clip_ratio": cr,
             })
-        info.update(self.callback.on_update_end(self.iterations, method="update_policy",
-                                                policy=self.policy, info=info, rep_output=outputs,
+        info.update(self.callback.on_update_end(self.iterations, method="update_model",
+                                                model=self.model, info=info,
                                                 a_dist=a_dist, log_prob=log_prob,
                                                 ratio=ratio, surrogate1=surrogate1, surrogate2=surrogate2,
                                                 a_loss=a_loss, e_loss=e_loss, loss=loss))
@@ -92,14 +92,14 @@ class PPG_Learner(Learner):
         obs_batch = torch.as_tensor(samples['obs'], device=self.device)
         ret_batch = torch.as_tensor(samples['returns'], device=self.device)
         info = self.callback.on_update_start(self.iterations, method="update_critic",
-                                             policy=self.policy, obs=obs_batch, returns=ret_batch)
+                                             model=self.model, obs=obs_batch, returns=ret_batch)
 
-        _, _, v_pred, _ = self.policy(obs_batch)
+        v_pred = self.model.critic(obs_batch).values
         loss = self.mse_loss(v_pred, ret_batch)
         self.optimizer.zero_grad()
         loss.backward()
         if self.use_grad_clip:
-            torch.nn.utils.clip_grad_norm_(self.policy.parameters(), self.grad_clip_norm)
+            torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.grad_clip_norm)
         self.optimizer.step()
 
         if self.distributed_training:
@@ -107,18 +107,20 @@ class PPG_Learner(Learner):
         else:
             info.update({"critic-loss": loss.item()})
         info.update(self.callback.on_update_end(self.iterations, method="update_critic",
-                                                policy=self.policy, info=info, v_pred=v_pred,
+                                                model=self.model, info=info, v_pred=v_pred,
                                                 loss=loss))
         return info
 
-    def update_auxiliary(self, **samples):
+    def update_auxiliary_critic(self, **samples):
         obs_batch = torch.as_tensor(samples['obs'], device=self.device)
         ret_batch = torch.as_tensor(samples['returns'], device=self.device)
         old_dist = merge_distributions(samples['aux_batch']['old_dist'])
         info = self.callback.on_update_start(self.iterations, method="update_auxiliary",
-                                             policy=self.policy, obs=obs_batch, returns=ret_batch, old_dist=old_dist)
+                                             model=self.model, obs=obs_batch, returns=ret_batch, old_dist=old_dist)
 
-        outputs, a_dist, v, aux_v = self.policy(obs_batch)
+        model_output = self.model(obs_batch)
+        a_dist, v = model_output.distributions, model_output.values
+        aux_v = self.model.aux_critic(obs_batch).values
         aux_loss = self.mse_loss(v.detach(), aux_v)
         kl_loss = a_dist.kl_divergence(old_dist).mean()
         value_loss = self.mse_loss(v, ret_batch)
@@ -126,7 +128,7 @@ class PPG_Learner(Learner):
         self.optimizer.zero_grad()
         loss.backward()
         if self.use_grad_clip:
-            torch.nn.utils.clip_grad_norm_(self.policy.parameters(), self.grad_clip_norm)
+            torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.grad_clip_norm)
         self.optimizer.step()
 
         if self.distributed_training:
@@ -140,7 +142,7 @@ class PPG_Learner(Learner):
                          "value-loss": value_loss.item(),
                          "loss": loss.item()})
         info.update(self.callback.on_update_end(self.iterations, method="update_auxiliary",
-                                                policy=self.policy, info=info, rep_output=outputs,
+                                                model=self.model, info=info,
                                                 a_dist=a_dist, v_pred=v, v_aux=aux_v,
                                                 aux_loss=aux_loss, kl_loss=kl_loss, value_loss=value_loss, loss=loss))
         return info

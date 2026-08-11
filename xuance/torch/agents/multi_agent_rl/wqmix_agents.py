@@ -1,12 +1,12 @@
-import torch
 from argparse import Namespace
 from gymnasium.spaces import Space
 from xuance.common import List, Optional, MultiAgentBaseCallback
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
-from xuance.torch import Module
-from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
-from xuance.torch.policies import REGISTRY_Policy, QMIX_mixer, QMIX_FF_mixer
-from xuance.torch.agents.multi_agent_rl.qmix_agents import QMIX_Agents
+from xuance.torch import Module, ModuleDict
+from xuance.torch.agents.multi_agent_rl import QMIX_Agents
+from xuance.torch.rl_models import DiscreteActionValueCritic
+from xuance.torch.rl_models.heads import QMIX_Mixer, QMIX_FF_Mixer
+from xuance.torch.rl_models.architectures import WeightedMixingQNetwork
 
 
 class WQMIX_Agents(QMIX_Agents):
@@ -17,6 +17,7 @@ class WQMIX_Agents(QMIX_Agents):
         envs: the vectorized environments.
         callback: A user-defined callback function object to inject custom logic during training.
     """
+
     def __init__(
             self,
             config: Namespace,
@@ -32,35 +33,56 @@ class WQMIX_Agents(QMIX_Agents):
             config, envs, num_agents, agent_keys, state_space, observation_space, action_space, callback
         )
 
-    def _build_policy(self) -> Module:
+    def _build_model(self) -> Module:
         """
-        Build representation(s) and policy(ies) for agent(s)
+        Build the MARL model.
 
         Returns:
-            policy (torch.nn.Module): A dict of policies.
+            model (torch.nn.Module): The MARL model.
         """
-        normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None
-        initializer = torch.nn.init.orthogonal_
-        activation = ActivationFunctions[self.config.activation]
-        device = self.device
+        q_networks = ModuleDict()
+        for group_key, group_agents in self.groups.items():
+            reference_agent = group_agents[0]
+            # build agent feature encoder as representations
+            agent_feature_encoder = self._build_agent_feature_encoder(
+                representation_choice=self.config.representation,
+                group_agents=group_agents,
+                input_space=self.observation_space[reference_agent]
+            )
+            # build inner-group shared q-network
+            q_networks[group_key] = DiscreteActionValueCritic(
+                representation=agent_feature_encoder,
+                action_space=self.action_space[reference_agent],
+                critic_hidden_size=self.config.q_hidden_size,
+                normalizer=self.normalize_fn,
+                initializer=self.initializer,
+                activation=self.activation,
+                device=self.device
+            )
 
-        # build representations
-        representation = self._build_representation(self.config.representation, self.observation_space, self.config)
+        # build mixer
+        mixer = QMIX_Mixer(
+            dim_state=self.state_space.shape[0],
+            dim_hidden=self.config.hidden_dim_mixing_net,
+            dim_hypernet_hidden=self.config.hidden_dim_hyper_net,
+            n_agents=self.n_agents,
+            device=self.device
+        )
 
-        # build policies
-        dim_state = self.state_space.shape[-1]
-        mixer = QMIX_mixer(dim_state, self.config.hidden_dim_mixing_net,
-                           self.config.hidden_dim_hyper_net, self.n_agents, device)
-        ff_mixer = QMIX_FF_mixer(dim_state, self.config.hidden_dim_ff_mix_net, self.n_agents, device)
-        if self.config.policy == "Weighted_Mixing_Q_network":
-            policy = REGISTRY_Policy["Weighted_Mixing_Q_network"](
-                action_space=self.action_space, n_agents=self.n_agents, representation=representation,
-                mixer=mixer, ff_mixer=ff_mixer, hidden_size=self.config.q_hidden_size,
-                normalize=normalize_fn, initialize=initializer, activation=activation,
-                device=device, use_distributed_training=self.distributed_training,
-                use_parameter_sharing=self.use_parameter_sharing, model_keys=self.model_keys,
-                use_rnn=self.use_rnn, rnn=self.config.rnn if self.use_rnn else None)
-        else:
-            raise AttributeError(f"WQMIX currently does not support the policy named {self.config.policy}.")
+        ff_mixer = QMIX_FF_Mixer(
+            dim_state=self.state_space.shape[0],
+            dim_hidden=self.config.hidden_dim_ff_mix_net,
+            n_agents=self.n_agents,
+            device=self.device)
 
-        return policy
+        model = WeightedMixingQNetwork(
+            grouping=self.agent_grouping,
+            q_networks=q_networks,
+            mixer=mixer,
+            ff_mixer=ff_mixer,
+            use_rnn=self.use_rnn,
+            device=self.device,
+            use_distributed_training=self.distributed_training
+        )
+
+        return model

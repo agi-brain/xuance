@@ -7,30 +7,29 @@ import torch
 from argparse import Namespace
 from torch import nn
 from torch.nn.functional import one_hot
-from xuance.common import List
+from xuance.common import AgentGrouping
 from xuance.torch.learners.multi_agent_rl.iac_learner import IAC_Learner
 
 
 class COMA_Learner(IAC_Learner):
     def __init__(self,
                  config: Namespace,
-                 model_keys: List[str],
-                 agent_keys: List[str],
-                 policy: nn.Module,
+                 agent_grouping: AgentGrouping,
+                 model: nn.Module,
                  callback):
         config.use_value_clip, config.value_clip_range = False, None
         config.use_huber_loss, config.huber_delta = False, None
         config.use_value_norm = False
         config.vf_coef, config.ent_coef = None, None
-        super(COMA_Learner, self).__init__(config, model_keys, agent_keys, policy, callback)
+        super(COMA_Learner, self).__init__(config, agent_grouping, model, callback)
         self.sync_frequency = config.sync_frequency
-        self.n_actions = {k: self.policy.action_space[k].n for k in self.model_keys}
+        self.n_actions = {k: self.model.critics.action_space[k].n for k in self.agent_keys}
         self.mse_loss = nn.MSELoss()
 
     def build_optimizer(self):
         self.optimizer = {
-            'actor': torch.optim.Adam(self.policy.parameters_actor, self.config.learning_rate_actor, eps=1e-5),
-            'critic': torch.optim.Adam(self.policy.parameters_critic, self.config.learning_rate_critic, eps=1e-5)
+            'actor': torch.optim.Adam(self.model.actors.parameters(), self.config.learning_rate_actor, eps=1e-5),
+            'critic': torch.optim.Adam(self.model.critics.parameters(), self.config.learning_rate_critic, eps=1e-5)
         }
         self.scheduler = {
             'actor': torch.optim.lr_scheduler.LinearLR(self.optimizer['actor'],
@@ -58,51 +57,55 @@ class COMA_Learner(IAC_Learner):
         agent_mask = sample_Tensor['agent_mask']
         avail_actions = sample_Tensor['avail_actions']
         returns = sample_Tensor['returns']
-        IDs = sample_Tensor['agent_ids']
+        agent_indices = sample_Tensor['agent_indices']
 
-        bs = batch_size * self.n_agents if self.use_parameter_sharing else batch_size
+        if not self.agent_grouping.full_independent:
+            obs = self.packed_tensor(obs)
+            packed_actions = self.packed_tensor(actions)
+            packed_avail_actions = self.packed_tensor(avail_actions)
+            returns = self.packed_tensor(returns)
+            agent_mask = self.packed_tensor(agent_mask)
+        else:
+            packed_actions = actions
+            packed_avail_actions = avail_actions
 
         info = self.callback.on_update_start(self.iterations, method="update",
-                                             policy=self.policy, sample_Tensor=sample_Tensor, bs=bs)
+                                             model=self.model, sample_Tensor=sample_Tensor)
 
         # feedforward
-        _, pi_probs = self.policy(observation=obs, agent_ids=IDs, avail_actions=avail_actions, epsilon=epsilon)
+        pi_dist_dict = self.model(observations=obs, agent_indices=agent_indices,
+                                  avail_actions=avail_actions,
+                                  epsilon=epsilon).distributions
 
-        if self.use_parameter_sharing:
-            key = self.model_keys[0]
-            actions_onehot = {key: one_hot(actions[key].long(), self.n_actions[key])}
-        else:
-            IDs = torch.eye(self.n_agents).unsqueeze(0).repeat(batch_size, 1, 1).reshape(bs, -1).to(self.device)
-            actions_onehot = {k: one_hot(actions[k].long(), self.n_actions[k]) for k in self.agent_keys}
+        joint_actions = torch.concat([one_hot(v.long(), self.n_actions[k]) for k, v in actions.items()],
+                                     dim=1).reshape([batch_size, -1])
 
-        _, values_pred = self.policy.get_values(state=state, observation=obs, actions=actions_onehot,
-                                                agent_ids=IDs, target=False)
-
-        if self.use_parameter_sharing:
-            values_pred_dict = {k: values_pred.reshape(bs, -1) for k in self.model_keys}
-        else:
-            values_pred_dict = {k: values_pred[:, i] for i, k in enumerate(self.model_keys)}
+        values_pred = self.model.get_values(states=state, observations=obs, joint_actions=joint_actions,
+                                            agent_indices=agent_indices, target=False).values
+        if not self.agent_grouping.full_independent:
+            values_pred = self.packed_tensor(values_pred)
 
         # calculate loss
         loss_a, loss_c = [], []
-        for key in self.model_keys:
-            mask_values = agent_mask[key]
-
+        for group, agent_keys in self.groups.items():
+            bs = batch_size * self.n_group_agents[group]
+            mask_values = agent_mask[group]
+            pi_probs = pi_dist_dict[group].probs
             if self.use_actions_mask:
-                pi_probs[key][avail_actions[key] == 0] = 0.0  # mask out the unavailable actions.
-                pi_probs[key] = pi_probs[key] / pi_probs[key].sum(dim=-1, keepdim=True)  # re-normalize the actions.
-                pi_probs[key][avail_actions[key] == 0] = 0.0
-            baseline = (pi_probs[key] * values_pred_dict[key]).sum(-1).reshape(bs)
-            pi_taken = pi_probs[key].gather(-1, actions[key].unsqueeze(-1).long())
-            q_taken = values_pred_dict[key].gather(-1, actions[key].unsqueeze(-1).long()).reshape(bs)
+                pi_probs[packed_avail_actions[group] == 0] = 0.0  # mask out the unavailable actions.
+                pi_probs = pi_probs[group] / pi_probs.sum(dim=-1, keepdim=True)  # re-normalize the actions.
+                pi_probs[packed_avail_actions[group] == 0] = 0.0
+            baseline = (pi_probs * values_pred[group]).sum(-1).reshape(bs)
+            pi_taken = pi_probs.gather(-1, packed_actions[group].unsqueeze(-1).long())
+            q_taken = values_pred[group].gather(-1, packed_actions[group].unsqueeze(-1).long()).reshape(bs)
             log_pi_taken = torch.log(pi_taken).reshape(bs)
             advantages = (q_taken - baseline).detach()
             loss_a.append(-(advantages * log_pi_taken * mask_values).sum() / mask_values.sum())
 
-            td_error = (q_taken - returns[key].detach()) * mask_values
+            td_error = (q_taken - returns[group].detach()) * mask_values
             loss_c.append((td_error ** 2).sum() / mask_values.sum())
 
-            info.update(self.callback.on_update_agent_wise(self.iterations, key, info=info, method="update",
+            info.update(self.callback.on_update_agent_wise(self.iterations, group, info=info, method="update",
                                                            mask_values=mask_values, pi_probs=pi_probs,
                                                            baseline=baseline, pi_taken=pi_taken,
                                                            q_taken=q_taken, log_pi_taken=log_pi_taken,
@@ -114,20 +117,20 @@ class COMA_Learner(IAC_Learner):
         self.optimizer['critic'].zero_grad()
         loss_critic.backward()
         if self.use_grad_clip:
-            grad_norm = torch.nn.utils.clip_grad_norm_(self.policy.parameters_critic, self.grad_clip_norm)
+            grad_norm = torch.nn.utils.clip_grad_norm_(self.model.critics.parameters(), self.grad_clip_norm)
             info["gradient_norm_actor"] = grad_norm.item()
         self.optimizer['critic'].step()
         if self.scheduler['critic'] is not None:
             self.scheduler['critic'].step()
         if self.iterations % self.sync_frequency == 0:
-            self.policy.copy_target()
+            self.model.copy_target()
 
         # update actor(s)
         loss_coma = sum(loss_a)
         self.optimizer['actor'].zero_grad()
         loss_coma.backward()
         if self.use_grad_clip:
-            grad_norm = torch.nn.utils.clip_grad_norm_(self.policy.parameters_actor, self.grad_clip_norm)
+            grad_norm = torch.nn.utils.clip_grad_norm_(self.model.actors.parameters(), self.grad_clip_norm)
             info["gradient_norm_actor"] = grad_norm.item()
         self.optimizer['actor'].step()
         if self.scheduler['actor'] is not None:
@@ -145,7 +148,7 @@ class COMA_Learner(IAC_Learner):
             "advantage": advantages.mean().item(),
         })
 
-        info.update(self.callback.on_update_end(self.iterations, method="update", policy=self.policy, info=info))
+        info.update(self.callback.on_update_end(self.iterations, method="update", model=self.model, info=info))
 
         return info
 
@@ -158,7 +161,6 @@ class COMA_Learner(IAC_Learner):
                                                  use_global_state=True)
         batch_size = sample_Tensor['batch_size']
         state = sample_Tensor['state']
-        bs_rnn = batch_size * self.n_agents if self.use_parameter_sharing else batch_size
         obs = sample_Tensor['obs']
         actions = sample_Tensor['actions']
         returns = sample_Tensor['returns']
@@ -166,52 +168,61 @@ class COMA_Learner(IAC_Learner):
         agent_mask = sample_Tensor['agent_mask']
         filled = sample_Tensor['filled']
         seq_len = filled.shape[1]
-        IDs = sample_Tensor['agent_ids']
+        agent_indices = sample_Tensor['agent_indices']
 
-        if self.use_parameter_sharing:
-            filled = filled.unsqueeze(1).expand(batch_size, self.n_agents, seq_len).reshape(bs_rnn, seq_len)
+        if not self.agent_grouping.full_independent:
+            obs = self.packed_tensor(obs)
+            packed_actions = self.packed_tensor(actions)
+            packed_avail_actions = self.packed_tensor(avail_actions)
+            returns = self.packed_tensor(returns)
+            agent_mask = self.packed_tensor(agent_mask)
         else:
-            IDs = torch.eye(self.n_agents).unsqueeze(0).unsqueeze(0).repeat(batch_size, seq_len, 1, 1).to(self.device)
+            packed_actions = actions
+            packed_avail_actions = avail_actions
 
         info = self.callback.on_update_start(self.iterations, method="update_rnn",
-                                             policy=self.policy, sample_Tensor=sample_Tensor,
-                                             bs_rnn=bs_rnn, filled=filled, IDs=IDs)
+                                             model=self.model, sample_Tensor=sample_Tensor, filled=filled)
 
-        rnn_hidden_actor = {k: self.policy.actor_representation[k].init_hidden(bs_rnn) for k in self.model_keys}
-        rnn_hidden_critic = {k: self.policy.critic_representation[k].init_hidden(bs_rnn) for k in self.model_keys}
+        # initial hidden states for rnn
+        rnn_states_actor = self.model.init_actor_rnn_states(batch_size)
+        rnn_states_critic = self.model.init_critic_rnn_states(batch_size)
 
         # feedforward
-        _, pi_probs = self.policy(observation=obs, agent_ids=IDs, avail_actions=avail_actions,
-                                  rnn_hidden=rnn_hidden_actor, epsilon=epsilon)
-        actions_onehot = {k: one_hot(actions[k].long(), self.n_actions[k]) for k in self.model_keys}
-        _, values_pred = self.policy.get_values(state=state, observation=obs, actions=actions_onehot,
-                                                agent_ids=IDs, rnn_hidden=rnn_hidden_critic, target=False)
+        pi_dist_dict = self.model(observations=obs, agent_indices=agent_indices,
+                                  avail_actions=avail_actions,
+                                  rnn_states=rnn_states_actor, epsilon=epsilon).distributions
 
-        if self.use_parameter_sharing:
-            values_pred_dict = {self.model_keys[0]: values_pred.transpose(1, 2).reshape(bs_rnn, seq_len, -1)}
-        else:
-            values_pred_dict = {k: values_pred[:, :, i] for i, k in enumerate(self.model_keys)}
+        joint_actions = torch.concat([one_hot(v.long(), self.n_actions[k]) for k, v in actions.items()],
+                                     dim=2).reshape([batch_size, seq_len, -1])
+
+        values_pred = self.model.get_values(states=state, observations=obs, joint_actions=joint_actions,
+                                            agent_indices=agent_indices, rnn_states=rnn_states_critic,
+                                            target=False).values
+        if not self.agent_grouping.full_independent:
+            values_pred = self.packed_tensor(values_pred)
 
         # calculate loss
         loss_a, loss_c = [], []
-        for key in self.model_keys:
-            mask_values = agent_mask[key] * filled
+        for group, agent_keys in self.groups.items():
+            bs_rnn = batch_size * self.n_group_agents[group]
+            mask_values = agent_mask[group]
+            pi_probs = pi_dist_dict[group].probs
 
             if self.use_actions_mask:
-                pi_probs[key][avail_actions[key] == 0] = 0.0  # mask out the unavailable actions.
-                pi_probs[key] = pi_probs[key] / pi_probs[key].sum(dim=-1, keepdim=True)  # re-normalize the actions.
-                pi_probs[key][avail_actions[key] == 0] = 0.0
-            baseline = (pi_probs[key] * values_pred_dict[key]).sum(-1).reshape(bs_rnn, seq_len)
-            pi_taken = pi_probs[key].gather(-1, actions[key].unsqueeze(-1).long())
-            q_taken = values_pred_dict[key].gather(-1, actions[key].unsqueeze(-1).long()).reshape(bs_rnn, seq_len)
+                pi_probs[packed_avail_actions[group] == 0] = 0.0  # mask out the unavailable actions.
+                pi_probs = pi_probs[group] / pi_probs.sum(dim=-1, keepdim=True)  # re-normalize the actions.
+                pi_probs[packed_avail_actions[group] == 0] = 0.0
+            baseline = (pi_probs * values_pred[group]).sum(-1).reshape(bs_rnn, seq_len)
+            pi_taken = pi_probs.gather(-1, packed_actions[group].unsqueeze(-1).long())
+            q_taken = values_pred[group].gather(-1, packed_actions[group].unsqueeze(-1).long()).reshape(bs_rnn, seq_len)
             log_pi_taken = torch.log(pi_taken).reshape(bs_rnn, seq_len)
             advantages = (q_taken - baseline).detach()
             loss_a.append(-(advantages * log_pi_taken * mask_values).sum() / mask_values.sum())
 
-            td_error = (q_taken - returns[key].detach()) * mask_values
+            td_error = (q_taken - returns[group].detach()) * mask_values
             loss_c.append((td_error ** 2).sum() / mask_values.sum())
 
-            info.update(self.callback.on_update_agent_wise(self.iterations, key, info=info, method="update_rnn",
+            info.update(self.callback.on_update_agent_wise(self.iterations, group, info=info, method="update_rnn",
                                                            mask_values=mask_values, pi_probs=pi_probs,
                                                            baseline=baseline, pi_taken=pi_taken,
                                                            q_taken=q_taken, log_pi_taken=log_pi_taken,
@@ -223,20 +234,20 @@ class COMA_Learner(IAC_Learner):
         self.optimizer['critic'].zero_grad()
         loss_critic.backward()
         if self.use_grad_clip:
-            grad_norm = torch.nn.utils.clip_grad_norm_(self.policy.parameters_critic, self.grad_clip_norm)
+            grad_norm = torch.nn.utils.clip_grad_norm_(self.model.critics.parameters(), self.grad_clip_norm)
             info["gradient_norm_actor"] = grad_norm.item()
         self.optimizer['critic'].step()
         if self.scheduler['critic'] is not None:
             self.scheduler['critic'].step()
         if self.iterations % self.sync_frequency == 0:
-            self.policy.copy_target()
+            self.model.copy_target()
 
         # update actor(s)
         loss_coma = sum(loss_a)
         self.optimizer['actor'].zero_grad()
         loss_coma.backward()
         if self.use_grad_clip:
-            grad_norm = torch.nn.utils.clip_grad_norm_(self.policy.parameters_actor, self.grad_clip_norm)
+            grad_norm = torch.nn.utils.clip_grad_norm_(self.model.actors.parameters(), self.grad_clip_norm)
             info["gradient_norm_actor"] = grad_norm.item()
         self.optimizer['actor'].step()
         if self.scheduler['actor'] is not None:
@@ -254,6 +265,6 @@ class COMA_Learner(IAC_Learner):
             "advantage": advantages.mean().item(),
         })
 
-        info.update(self.callback.on_update_end(self.iterations, method="update_rnn", policy=self.policy, info=info))
+        info.update(self.callback.on_update_end(self.iterations, method="update_rnn", model=self.model, info=info))
 
         return info

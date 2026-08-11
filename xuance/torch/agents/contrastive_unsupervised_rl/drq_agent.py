@@ -4,7 +4,7 @@ from xuance.common import Union
 from xuance.environment import DummyVecEnv, SubprocVecEnv
 from xuance.torch import Module
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
-from xuance.torch.policies import REGISTRY_Policy
+# from xuance.torch.policies import REGISTRY_Policy
 from xuance.torch.agents import OffPolicyAgent
 
 
@@ -24,11 +24,11 @@ class DrQ_Agent(OffPolicyAgent):
         self.e_greedy = config.start_greedy
         self.delta_egreedy = (self.start_greedy - self.end_greedy) / (config.decay_step_greedy / self.n_envs)
 
-        self.policy = self._build_policy()  # build policy
+        self.model = self._build_model()  # build the MARL model
         self.memory = self._build_memory()  # build memory
         self.learner = self._build_learner(self.config, self.policy)  # build learner
 
-    def _build_policy(self) -> Module:
+    def _build_model(self) -> Module:
         normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None
         initializer = torch.nn.init.orthogonal_
         activation = ActivationFunctions[self.config.activation]

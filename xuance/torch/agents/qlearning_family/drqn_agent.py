@@ -8,8 +8,8 @@ from xuance.common import Optional, RecurrentOffPolicyBuffer, EpisodeBuffer, Bas
 from xuance.environment import DummyVecEnv, SubprocVecEnv
 from xuance.torch import Module
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
-from xuance.torch.policies import REGISTRY_Policy
 from xuance.torch.agents import OffPolicyAgent
+from xuance.torch.rl_models.architectures import DeepRecurrentQNetwork
 
 
 class DRQN_Agent(OffPolicyAgent):
@@ -27,10 +27,10 @@ class DRQN_Agent(OffPolicyAgent):
         self.egreedy = config.start_greedy
         self.delta_egreedy = (self.start_greedy - self.end_greedy) / (config.decay_step_greedy / self.n_envs)
 
-        self.policy = self._build_policy()  # build policy
+        self.model = self._build_model()  # build RL model
         self.auxiliary_info_shape = {}
         self.memory = self._build_memory(auxiliary_info_shape=self.auxiliary_info_shape)  # build memory
-        self.learner = self._build_learner(self.config, self.policy, self.callback)  # build learner
+        self.learner = self._build_learner(self.config, self.model, self.callback)  # build learner
         self.lstm = True if config.rnn == "LSTM" else False
 
     def _build_memory(self, auxiliary_info_shape=None):
@@ -45,7 +45,7 @@ class DRQN_Agent(OffPolicyAgent):
                                           lookup_length=self.config.lookup_length)
         return Buffer
 
-    def _build_policy(self) -> Module:
+    def _build_model(self) -> Module:
         normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None
         initializer = torch.nn.init.orthogonal_
         activation = ActivationFunctions[self.config.activation]
@@ -54,28 +54,30 @@ class DRQN_Agent(OffPolicyAgent):
         # build representation.
         representation = self._build_representation(self.config.representation, self.observation_space, self.config)
 
-        # build policy.
-        if self.config.policy == "DRQN_Policy":
-            policy = REGISTRY_Policy["DRQN_Policy"](
-                action_space=self.action_space, representation=representation,
-                rnn=self.config.rnn, recurrent_hidden_size=self.config.recurrent_hidden_size,
-                recurrent_layer_N=self.config.recurrent_layer_N, dropout=self.config.dropout,
-                normalize=normalize_fn, initialize=initializer, activation=activation, device=device,
-                use_distributed_training=self.distributed_training)
-        else:
-            raise AttributeError(
-                f"{self.config.agent} currently does not support the policy named {self.config.policy}.")
+        # build RL model.
+        model = DeepRecurrentQNetwork(
+            representation=representation,
+            recurrent_hidden_size=self.config.recurrent_hidden_size,
+            recurrent_layer_N=self.config.recurrent_layer_N,
+            dropout=self.config.dropout,
+            action_space=self.action_space,
+            rnn=self.config.rnn,
+            initializer=initializer,
+            device=self.device,
+            use_distributed_training=self.distributed_training
+        )
 
-        return policy
+        return model
 
-    def get_actions(self, obs, egreedy=0.0, rnn_hidden=None):
-        _, argmax_action, _, rnn_hidden_next = self.policy(obs[:, None], *rnn_hidden)
+    def get_actions(self, obs, egreedy=0.0, rnn_states=None):
+        rnn_states_new, model_output = self.model(obs[:, None], rnn_states)
+        argmax_action = model_output.actions
         random_action = np.random.choice(self.action_space.n, self.n_envs)
         if np.random.rand() < egreedy:
             actions = random_action
         else:
             actions = argmax_action.detach().cpu().numpy()
-        return {"actions": actions, "rnn_hidden_next": rnn_hidden_next}
+        return {"actions": actions, "rnn_states_next": rnn_states_new}
 
     def train(self, train_steps: int) -> dict:
         train_info = {}
@@ -83,19 +85,22 @@ class DRQN_Agent(OffPolicyAgent):
         episode_data = [EpisodeBuffer() for _ in range(self.n_envs)]
         for i_env in range(self.n_envs):
             episode_data[i_env].obs.append(self._process_observation(obs[i_env]))
-        self.rnn_hidden = self.policy.init_hidden(self.n_envs)
+        self.rnn_states = self.model.init_rnn_states(self.n_envs)
         dones = [False for _ in range(self.n_envs)]
         for _ in tqdm(range(train_steps)):
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
-            policy_out = self.get_actions(obs, self.egreedy, self.rnn_hidden)
-            acts, self.rnn_hidden = policy_out['actions'], policy_out['rnn_hidden_next']
-            next_obs, rewards, terminals, truncations, infos = self.train_envs.step(acts)
+            policy_out = self.get_actions(obs, self.egreedy, self.rnn_states)
+            acts, self.rnn_states = policy_out['actions'], policy_out['rnn_states_next']
+            try:
+                next_obs, rewards, terminals, truncations, infos = self.train_envs.step(acts)
+            except:
+                pass
 
-            self.callback.on_train_step(self.current_step, envs=self.train_envs, policy=self.policy,
+            self.callback.on_train_step(self.current_step, envs=self.train_envs, model=self.model,
                                         obs=obs, policy_out=policy_out, acts=acts, next_obs=next_obs, rewards=rewards,
                                         terminals=terminals, truncations=truncations, infos=infos,
-                                        train_steps=train_steps, rnn_hidden=self.rnn_hidden)
+                                        train_steps=train_steps, rnn_states=self.rnn_states)
 
             if (self.current_step > self.start_training) and (self.current_step % self.training_frequency == 0):
                 # training
@@ -111,7 +116,7 @@ class DRQN_Agent(OffPolicyAgent):
                     if self.atari and (not truncations[i]):
                         pass
                     else:
-                        self.rnn_hidden = self.policy.init_hidden_item(self.rnn_hidden, i)
+                        self.rnn_states = self.model.init_rnn_states_item(self.rnn_states, i)
                         dones[i] = True
                         self.current_episode[i] += 1
                         if self.use_wandb:
@@ -132,7 +137,7 @@ class DRQN_Agent(OffPolicyAgent):
                         self.train_envs.buf_obs[i] = obs[i]
                         episode_data[i].obs.append(self._process_observation(obs[i]))
 
-                        self.callback.on_train_episode_info(envs=self.train_envs, policy=self.policy, env_id=i,
+                        self.callback.on_train_episode_info(envs=self.train_envs, model=self.model, env_id=i,
                                                             memory=self.memory,
                                                             infos=infos, rank=self.rank, use_wandb=self.use_wandb,
                                                             current_step=self.current_step,
@@ -142,7 +147,7 @@ class DRQN_Agent(OffPolicyAgent):
             self.current_step += self.n_envs
             if self.egreedy > self.end_greedy:
                 self.egreedy = self.egreedy - self.delta_egreedy
-            self.callback.on_train_step_end(self.current_step, envs=self.train_envs, policy=self.policy,
+            self.callback.on_train_step_end(self.current_step, envs=self.train_envs, model=self.model,
                                             train_steps=train_steps, train_info=train_info)
         return train_info
 
@@ -161,19 +166,19 @@ class DRQN_Agent(OffPolicyAgent):
             for idx, img in enumerate(images):
                 videos[idx].append(img)
 
-        rnn_hidden = self.policy.init_hidden(num_envs)
+        rnn_states = self.model.init_rnn_states(num_envs)
         while current_episode < test_episodes:
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
-            policy_out = self.get_actions(obs, egreedy=0.0, rnn_hidden=rnn_hidden)
-            acts, rnn_hidden = policy_out['actions'], policy_out['rnn_hidden_next']
+            policy_out = self.get_actions(obs, egreedy=0.0, rnn_states=rnn_states)
+            acts, rnn_states = policy_out['actions'], policy_out['rnn_states_next']
             next_obs, rewards, terminals, truncations, infos = test_envs.step(acts)
             if self.config.render_mode == "rgb_array" and self.render:
                 images = test_envs.render(self.config.render_mode)
                 for idx, img in enumerate(images):
                     videos[idx].append(img)
 
-            self.callback.on_test_step(envs=test_envs, policy=self.policy, images=images, rnn_hidden=rnn_hidden,
+            self.callback.on_test_step(envs=test_envs, model=self.model, images=images, rnn_states=rnn_states,
                                        obs=obs, policy_out=policy_out, next_obs=next_obs, rewards=rewards,
                                        terminals=terminals, truncations=truncations, infos=infos,
                                        current_train_step=self.current_step,
@@ -186,7 +191,7 @@ class DRQN_Agent(OffPolicyAgent):
                         pass
                     else:
                         obs[i] = infos[i]["reset_obs"]
-                        rnn_hidden = self.policy.init_hidden_item(rnn_hidden, i)
+                        rnn_states = self.model.init_rnn_states_item(rnn_states, i)
                         scores.append(infos[i]["episode_score"])
                         current_episode += 1
                         if best_score < infos[i]["episode_score"]:
@@ -206,7 +211,7 @@ class DRQN_Agent(OffPolicyAgent):
         }
         self.log_infos(test_info, self.current_step)
 
-        self.callback.on_test_end(envs=test_envs, policy=self.policy,
+        self.callback.on_test_end(envs=test_envs, model=self.model,
                                   current_train_step=self.current_step,
                                   current_step=current_step, current_episode=current_episode,
                                   scores=scores, best_score=best_score)

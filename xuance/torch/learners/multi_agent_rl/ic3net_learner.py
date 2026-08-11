@@ -3,7 +3,8 @@ from operator import itemgetter
 import numpy as np
 import torch
 from argparse import Namespace
-from typing import List, Optional
+from typing import Optional
+from xuance.common import AgentGrouping
 from torch import nn, Tensor
 from xuance.torch.learners.multi_agent_rl.commnet_learner import CommNet_Learner
 
@@ -11,11 +12,10 @@ from xuance.torch.learners.multi_agent_rl.commnet_learner import CommNet_Learner
 class IC3Net_Learner(CommNet_Learner):
     def __init__(self,
                  config: Namespace,
-                 model_keys: List[str],
-                 agent_keys: List[str],
-                 policy: nn.Module,
+                 agent_grouping: AgentGrouping,
+                 model: nn.Module,
                  callback):
-        super(IC3Net_Learner, self).__init__(config, model_keys, agent_keys, policy, callback)
+        super(IC3Net_Learner, self).__init__(config, agent_grouping, model, callback)
 
     def build_training_data(self, sample: Optional[dict],
                             use_parameter_sharing: Optional[bool] = False,
@@ -159,13 +159,13 @@ class IC3Net_Learner(CommNet_Learner):
             critic_input = {k: joint_obs for k in self.agent_keys}
 
         # feedfowrd
-        rnn_hidden_actor = {k: self.policy.actor_representation[k].init_hidden(bs_rnn) for k in self.model_keys}
-        rnn_hidden_critic = {k: self.policy.critic_representation[k].init_hidden(bs_rnn) for k in self.model_keys}
+        rnn_states_actor = {k: self.policy.actor_representation[k].init_rnn_states(bs_rnn) for k in self.model_keys}
+        rnn_states_critic = {k: self.policy.critic_representation[k].init_rnn_states(bs_rnn) for k in self.model_keys}
 
         # feedforward
         _, pi_dist_dict, gate_log_probs = self.policy(obs, agent_ids=IDs, avail_actions=avail_actions,
-                                                      rnn_hidden=rnn_hidden_actor, alive_ally=alive_ally)
-        _, value_pred_dict = self.policy.get_values(observation=critic_input, agent_ids=IDs, rnn_hidden=rnn_hidden_critic)
+                                                      rnn_states=rnn_states_actor, alive_ally=alive_ally)
+        _, value_pred_dict = self.policy.get_values(observation=critic_input, agent_ids=IDs, rnn_states=rnn_states_critic)
 
         # calculate losses for each agent
         loss_gate, loss_a, loss_e, loss_c = [], [], [], []

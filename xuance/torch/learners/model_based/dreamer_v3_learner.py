@@ -3,8 +3,9 @@ from pyglet.resource import model
 
 from xuance.common import Tuple, Union
 from xuance.torch.learners import Learner
-from xuance.torch.policies import DreamerV3Policy
-from xuance.torch.utils import kl_div, dotdict
+# from xuance.torch.policies import DreamerV3Policy
+from xuance.torch.utils import dotdict
+from xuance.torch.rl_models.modules.distributions import kl_div
 from argparse import Namespace
 from torch.distributions import Independent, OneHotCategoricalStraightThrough
 
@@ -12,7 +13,7 @@ from torch.distributions import Independent, OneHotCategoricalStraightThrough
 class DreamerV3_Learner(Learner):
     def __init__(self,
                  config: Namespace,
-                 policy: DreamerV3Policy,
+                 policy: torch.nn.Module,
                  action_shape: Union[int, Tuple[int, ...]],
                  callback):
         super(DreamerV3_Learner, self).__init__(config, policy, callback)

@@ -6,7 +6,7 @@ import torch
 from gymnasium import Space
 from torch.nn import Module, ModuleDict
 
-from xuance.torch import REGISTRY_Policy
+# from xuance.torch import REGISTRY_Policy
 from xuance.torch.communications.attention_comm import TarMAC
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
 from xuance.common import MultiAgentBaseCallback
@@ -51,7 +51,7 @@ class TarMAC_Agents(IC3Net_Agents):
             communicator[key] = TarMAC(**input_communicator)
         return communicator
 
-    def _build_policy(self) -> Module:
+    def _build_model(self) -> Module:
         normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None
         initializer = torch.nn.init.orthogonal_
         activation = ActivationFunctions[self.config.activation]
@@ -87,4 +87,4 @@ class TarMAC_Agents(IC3Net_Agents):
             self.continuous_control = False
         else:
             raise AttributeError(f"{agent} currently does not support the policy named {self.config.policy}.")
-        return policy
+        return model

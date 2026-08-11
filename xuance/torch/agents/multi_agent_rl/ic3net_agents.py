@@ -11,7 +11,7 @@ from torch.nn import Module, ModuleDict
 from xuance.common.memory_tools_marl import IC3Net_OnPolicyBuffer_RNN
 from xuance.torch.communications import IC3NetComm
 
-from xuance.torch import REGISTRY_Policy
+# from xuance.torch import REGISTRY_Policy
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
 
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv, space2shape
@@ -76,7 +76,7 @@ class IC3Net_Agents(CommNet_Agents):
             communicator[key] = IC3NetComm(**input_communicator)
         return communicator
 
-    def _build_policy(self) -> Module:
+    def _build_model(self) -> Module:
         normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None
         initializer = torch.nn.init.orthogonal_
         activation = ActivationFunctions[self.config.activation]
@@ -112,33 +112,33 @@ class IC3Net_Agents(CommNet_Agents):
             self.continuous_control = False
         else:
             raise AttributeError(f"{agent} currently does not support the policy named {self.config.policy}.")
-        return policy
+        return model
 
     def get_actions(self,
                     obs_dict: List[dict],
                     state: Optional[np.ndarray] = None,
                     avail_actions_dict: Optional[List[dict]] = None,
-                    rnn_hidden_actor: Optional[dict] = None,
-                    rnn_hidden_critic: Optional[dict] = None,
+                    rnn_states_actor: Optional[dict] = None,
+                    rnn_states_critic: Optional[dict] = None,
                     test_mode: Optional[bool] = False,
                     deterministic: bool = False,
                     info: dict = None,
                     **kwargs):
         n_env = len(obs_dict)
-        rnn_hidden_critic_new, values_out, log_pi_a_dict, values_dict, log_pi_gate_dict = {}, {}, {}, {}, {}
+        rnn_states_critic_new, values_out, log_pi_a_dict, values_dict, log_pi_gate_dict = {}, {}, {}, {}, {}
         obs_input, agents_id, avail_actions_input = self._build_inputs(obs_dict, avail_actions_dict)
         alive_ally = {k: np.stack([int(data['agent_mask'][k]) for data in info]).reshape([n_env, 1, -1]) for k in
                       self.agent_keys}
-        rnn_hidden_actor_new, pi_dists, gate_log_prob = self.policy(observation=obs_input,
+        rnn_states_actor_new, pi_dists, gate_log_prob = self.policy(observation=obs_input,
                                                                     agent_ids=agents_id,
                                                                     avail_actions=avail_actions_input,
-                                                                    rnn_hidden=rnn_hidden_actor,
+                                                                    rnn_states=rnn_states_actor,
                                                                     alive_ally=alive_ally)
         if not test_mode:
             critic_input = self._build_critic_inputs(batch_size=n_env, obs_batch=obs_input, state=state)
-            rnn_hidden_critic_new, values_out = self.policy.get_values(observation=critic_input,
+            rnn_states_critic_new, values_out = self.policy.get_values(observation=critic_input,
                                                                        agent_ids=agents_id,
-                                                                       rnn_hidden=rnn_hidden_critic)
+                                                                       rnn_states=rnn_states_critic)
 
         if self.use_parameter_sharing:
             key = self.agent_keys[0]
@@ -178,7 +178,7 @@ class IC3Net_Agents(CommNet_Agents):
                 log_pi_gate_dict = {k: log_pi_gate[k].reshape([n_env]) for i, k in enumerate(self.agent_keys)}
                 values_dict = {k: values_out[k].cpu().detach().numpy().reshape([n_env]) for k in self.agent_keys}
 
-        return {"rnn_hidden_actor": rnn_hidden_actor_new, "rnn_hidden_critic": rnn_hidden_critic_new,
+        return {"rnn_states_actor": rnn_states_actor_new, "rnn_states_critic": rnn_states_critic_new,
                 "actions": actions_dict, "log_pi": log_pi_a_dict, "gate_log_pi": log_pi_gate_dict,
                 "values": values_dict}
 
@@ -225,15 +225,15 @@ class IC3Net_Agents(CommNet_Agents):
         else:
             if self.use_rnn:
                 self.memory.clear_episodes()
-        rnn_hidden_actor, rnn_hidden_critic = self.init_rnn_hidden(num_envs)
+        rnn_states_actor, rnn_states_critic = self.init_rnn_states(num_envs)
         info = [{'agent_mask': {k: True for k in self.agent_keys}} for _ in range(num_envs)]
         while episode_count < n_episodes:
             step_info = {}
             obs_dict = [self.pad_observation(obs) for obs in obs_dict]
             policy_out = self.get_actions(obs_dict=obs_dict, state=state, avail_actions_dict=avail_actions,
-                                          rnn_hidden_actor=rnn_hidden_actor, rnn_hidden_critic=rnn_hidden_critic,
+                                          rnn_states_actor=rnn_states_actor, rnn_states_critic=rnn_states_critic,
                                           test_mode=test_mode, deterministic=deterministic_policy, info=info)
-            rnn_hidden_actor, rnn_hidden_critic = policy_out['rnn_hidden_actor'], policy_out['rnn_hidden_critic']
+            rnn_states_actor, rnn_states_critic = policy_out['rnn_states_actor'], policy_out['rnn_states_critic']
             actions_dict, log_pi_a_dict, log_pi_gate_dict = policy_out['actions'], policy_out['log_pi'], policy_out[
                 'gate_log_pi']
             values_dict = policy_out['values']
@@ -258,7 +258,7 @@ class IC3Net_Agents(CommNet_Agents):
                     scores.append(episode_score)
                     if test_mode:
                         if self.use_rnn:
-                            rnn_hidden_actor, _ = self.init_hidden_item(i, rnn_hidden_actor)
+                            rnn_states_actor, _ = self.init_rnn_states_item(i, rnn_states_actor)
                         if best_score < episode_score:
                             best_score = episode_score
                             episode_videos = videos[i].copy()
@@ -268,12 +268,12 @@ class IC3Net_Agents(CommNet_Agents):
                         else:
                             _, value_next = self.values_next(i_env=i, obs_dict=obs_dict[i],
                                                              state=None if state is None else state[i],
-                                                             rnn_hidden_critic=rnn_hidden_critic)
+                                                             rnn_states_critic=rnn_states_critic)
                         self.memory.finish_path(i_env=i, i_step=info[i]['episode_step'], value_next=value_next,
                                                 value_normalizer=self.learner.value_normalizer)
                         if self.use_rnn:
-                            rnn_hidden_actor, rnn_hidden_critic = self.init_hidden_item(i, rnn_hidden_actor,
-                                                                                        rnn_hidden_critic)
+                            rnn_states_actor, rnn_states_critic = self.init_rnn_states_item(i, rnn_states_actor,
+                                                                                        rnn_states_critic)
                         if self.use_wandb:
                             step_info["Train-Results/Episode-Steps/env-%d" % i] = info[i]["episode_step"]
                             step_info["Train-Results/Episode-Rewards/env-%d" % i] = info[i]["episode_score"]

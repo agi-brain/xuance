@@ -12,10 +12,10 @@ from argparse import Namespace
 class DDQN_Learner(Learner):
     def __init__(self,
                  config: Namespace,
-                 policy: nn.Module,
+                 model: nn.Module,
                  callback):
-        super(DDQN_Learner, self).__init__(config, policy, callback)
-        self.optimizer = torch.optim.Adam(self.policy.parameters(), self.config.learning_rate, eps=1e-5)
+        super(DDQN_Learner, self).__init__(config, model, callback)
+        self.optimizer = torch.optim.Adam(self.model.parameters(), self.config.learning_rate, eps=1e-5)
         self.scheduler = torch.optim.lr_scheduler.LinearLR(self.optimizer,
                                                            start_factor=1.0,
                                                            end_factor=self.end_factor_lr_decay,
@@ -23,7 +23,7 @@ class DDQN_Learner(Learner):
         self.gamma = config.gamma
         self.sync_frequency = config.sync_frequency
         self.mse_loss = nn.MSELoss()
-        self.n_actions = self.policy.action_dim
+        self.n_actions = self.model.n_actions
 
     def update(self, **samples):
         self.iterations += 1
@@ -33,12 +33,12 @@ class DDQN_Learner(Learner):
         rew_batch = torch.as_tensor(samples['rewards'], device=self.device)
         ter_batch = torch.as_tensor(samples['terminals'], dtype=torch.float, device=self.device)
         info = self.callback.on_update_start(self.iterations,
-                                             policy=self.policy, obs=obs_batch, act=act_batch,
+                                             model=self.model, obs=obs_batch, act=act_batch,
                                              next_obs=next_batch, rew=rew_batch, termination=ter_batch)
 
-        _, _, evalQ = self.policy(obs_batch)
-        _, targetA, _ = self.policy(next_batch)
-        _, _, targetQ = self.policy.target(next_batch)
+        evalQ = self.model(obs_batch).values
+        targetA = self.model(next_batch).actions
+        targetQ = self.model.target(next_batch).values
 
         predictQ = evalQ.gather(-1, act_batch.unsqueeze(-1)).squeeze(-1)
         targetQ = targetQ.gather(-1, targetA.unsqueeze(-1)).squeeze(-1)
@@ -48,14 +48,14 @@ class DDQN_Learner(Learner):
         self.optimizer.zero_grad()
         loss.backward()
         if self.use_grad_clip:
-            torch.nn.utils.clip_grad_norm_(self.policy.parameters(), self.grad_clip_norm)
+            torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.grad_clip_norm)
         self.optimizer.step()
         if self.scheduler is not None:
             self.scheduler.step()
 
         # hard update for target network
         if self.iterations % self.sync_frequency == 0:
-            self.policy.copy_target()
+            self.model.copy_target()
 
         lr = self.optimizer.state_dict()['param_groups'][0]['lr']
 
@@ -72,7 +72,7 @@ class DDQN_Learner(Learner):
                 "predictQ": predictQ.mean().item()
             })
         info.update(self.callback.on_update_end(self.iterations,
-                                                policy=self.policy, info=info,
+                                                model=self.model, info=info,
                                                 evalQ=evalQ, targetA=targetA, targetQ=targetQ, predictQ=predictQ,
                                                 loss=loss))
         return info

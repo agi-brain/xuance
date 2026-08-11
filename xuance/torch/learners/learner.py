@@ -1,9 +1,14 @@
 import os
+from typing import Dict, Any
+
 import torch
 import numpy as np
 from pathlib import Path
 from abc import ABC, abstractmethod
-from xuance.common import Optional, List, Union
+
+from torch import Tensor
+
+from xuance.common import Optional, Union, Dict, AgentGrouping
 from argparse import Namespace
 from operator import itemgetter
 from xuance.torch import Tensor, Module
@@ -14,7 +19,7 @@ MAX_GPUs = torch.cuda.device_count()
 class Learner(ABC):
     def __init__(self,
                  config: Namespace,
-                 policy: Module,
+                 model: Module,
                  callback):
         self.value_normalizer = None
         self.config = config
@@ -27,7 +32,7 @@ class Learner(ABC):
         self.gamma = config.gamma if hasattr(config, 'gamma') else 0.99
         self.use_rnn = config.use_rnn if hasattr(config, 'use_rnn') else False
         self.use_actions_mask = config.use_actions_mask if hasattr(config, 'use_actions_mask') else False
-        self.policy = policy
+        self.model = model
         self.optimizer: Union[dict, list, Optional[torch.optim.Optimizer]] = None
         self.scheduler: Union[dict, list, Optional[torch.optim.lr_scheduler.LinearLR]] = None
         self.callback = callback
@@ -66,7 +71,7 @@ class Learner(ABC):
         if type(self.optimizer) is dict:
             torch.save(
                 {
-                    'policy': self.policy.state_dict(),
+                    'policy': self.model.state_dict(),
                     'optimizer': {k: v.state_dict() for k, v in self.optimizer.items()},
                     'rng_state': torch.get_rng_state(),
                     'cuda_rng_state': torch.cuda.get_rng_state_all(),
@@ -75,7 +80,7 @@ class Learner(ABC):
         elif type(self.optimizer) is list:  # e.g. PDQN-family learners keep [actor, qnet] optimizers.
             torch.save(
                 {
-                    'policy': self.policy.state_dict(),
+                    'policy': self.model.state_dict(),
                     'optimizer': [opt.state_dict() for opt in self.optimizer],
                     'rng_state': torch.get_rng_state(),
                     'cuda_rng_state': torch.cuda.get_rng_state_all(),
@@ -84,7 +89,7 @@ class Learner(ABC):
         else:
             torch.save(
                 {
-                    'policy': self.policy.state_dict(),
+                    'policy': self.model.state_dict(),
                     'optimizer': self.optimizer.state_dict(),
                     'rng_state': torch.get_rng_state(),
                     'cuda_rng_state': torch.cuda.get_rng_state_all(),
@@ -119,8 +124,8 @@ class Learner(ABC):
                     model_path = str(model_names)
 
         checkpoint = torch.load(str(model_path), map_location={f"cuda:{i}": self.device
-                                                                    for i in range(MAX_GPUs)}, weights_only=True)
-        self.policy.load_state_dict(checkpoint['policy'], strict=False)
+                                                               for i in range(MAX_GPUs)}, weights_only=True)
+        self.model.load_state_dict(checkpoint['policy'], strict=False)
 
         if 'optimizer' in checkpoint and self.optimizer is not None:
             if type(self.optimizer) is dict:
@@ -162,9 +167,9 @@ class Learner(ABC):
         snapshot = torch.load(snapshot_path, map_location=loc)
 
         if "MODEL_STATE" in snapshot:
-            self.policy.load_state_dict(snapshot["MODEL_STATE"])
+            self.model.load_state_dict(snapshot["MODEL_STATE"])
         elif "policy" in snapshot:
-            self.policy.load_state_dict(snapshot["policy"])
+            self.model.load_state_dict(snapshot["policy"])
 
             if "optimizer" in snapshot and self.optimizer is not None:
                 self.optimizer.load_state_dict(snapshot["optimizer"])
@@ -181,7 +186,7 @@ class Learner(ABC):
 
     def save_snapshot(self):
         snapshot = {
-            "policy": self.policy.state_dict(),
+            "policy": self.model.state_dict(),
             "optimizer": self.optimizer.state_dict(),
             "rng_state": torch.get_rng_state(),
             "cuda_rng_state": torch.cuda.get_rng_state_all() if torch.cuda.is_available() else None,
@@ -218,9 +223,8 @@ class Learner(ABC):
 class LearnerMAS(Learner):
     def __init__(self,
                  config: Namespace,
-                 model_keys: List[str],
-                 agent_keys: List[str],
-                 policy: Module,
+                 agent_grouping: AgentGrouping,
+                 model: Module,
                  callback):
         self.value_normalizer = None
         self.config = config
@@ -229,8 +233,13 @@ class LearnerMAS(Learner):
         self.dim_id = self.n_agents
 
         self.use_parameter_sharing = config.use_parameter_sharing
-        self.model_keys = model_keys
-        self.agent_keys = agent_keys
+        self.agent_grouping = agent_grouping
+        self.groups = agent_grouping.groups
+        self.group_keys = agent_grouping.group_keys
+        self.agent_keys = agent_grouping.agent_keys
+        self.n_group_agents = {k: len(self.groups[k]) for k in self.group_keys}
+        self.agent_indices = {k: self.agent_grouping.agent_indices(k) for k in self.group_keys}
+
         self.episode_length = config.episode_length
         self.learning_rate = getattr(config, 'learning_rate', None)
         self.use_linear_lr_decay = getattr(config, 'use_linear_lr_decay', False)
@@ -239,7 +248,7 @@ class LearnerMAS(Learner):
         self.use_cnn = getattr(config, "use_cnn", False)
         self.use_rnn = getattr(config, 'use_rnn', False)
         self.use_actions_mask = getattr(config, 'use_actions_mask', False)
-        self.policy = policy
+        self.model = model
         self.optimizer: Union[dict, list, Optional[torch.optim.Optimizer]] = None
         self.scheduler: Union[dict, list, Optional[torch.optim.lr_scheduler.LinearLR]] = None
         self.callback = callback
@@ -282,93 +291,47 @@ class LearnerMAS(Learner):
         """
         batch_size = sample['batch_size']
         seq_length = sample['sequence_length'] if self.use_rnn else 1
-        state, avail_actions, filled = None, None, None
-        obs_next, state_next, avail_actions_next = None, None, None
-        IDs = None
-        if use_parameter_sharing:
-            k = self.model_keys[0]
-            bs = batch_size * self.n_agents
-            if self.n_agents == 1:
-                obs_tensor = Tensor(sample['obs'][k]).to(self.device).unsqueeze(1)
-                actions_tensor = Tensor(sample['actions'][k]).to(self.device).unsqueeze(1)
-                rewards_tensor = Tensor(sample['rewards'][k]).to(self.device).unsqueeze(1)
-                ter_tensor = Tensor(sample['terminals'][k]).float().to(self.device).unsqueeze(1)
-                msk_tensor = Tensor(sample['agent_mask'][k]).float().to(self.device).unsqueeze(1)
-            else:
-                obs_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['obs']),
-                                             axis=1)).to(self.device)
-                actions_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['actions']),
-                                                 axis=1)).to(self.device)
-                rewards_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['rewards']),
-                                                 axis=1)).to(self.device)
-                ter_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['terminals']),
-                                             axis=1)).float().to(self.device)
-                msk_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['agent_mask']),
-                                             axis=1)).float().to(self.device)
+        state, state_next, filled = None, None, None
+        obs, obs_next, actions, rewards, terminals, agent_mask = {}, {}, {}, {}, {}, {}
+        avail_actions = {} if self.use_actions_mask else None
+        avail_actions_next = {} if use_actions_mask else None
+        agent_indices = {}
 
-            if self.use_cnn and len(obs_tensor.shape) > 3:  # obs_array consists of images
-                obs_shape_item = obs_tensor.shape[2:]
-            else:
-                obs_shape_item = (-1,)
-
-            if self.use_rnn:
-                obs = {k: obs_tensor.reshape(bs, seq_length + 1, -1)}
-                if len(actions_tensor.shape) == 3:
-                    actions = {k: actions_tensor.reshape(bs, seq_length)}
-                elif len(actions_tensor.shape) == 4:
-                    actions = {k: actions_tensor.reshape(bs, seq_length, -1)}
-                else:
-                    raise AttributeError("Wrong actions shape.")
-                rewards = {k: rewards_tensor.reshape(batch_size, self.n_agents, seq_length)}
-                terminals = {k: ter_tensor.reshape(batch_size, self.n_agents, seq_length)}
-                agent_mask = {k: msk_tensor.reshape(bs, seq_length)}
-                IDs = torch.eye(self.n_agents).unsqueeze(1).unsqueeze(0).expand(
-                    batch_size, -1, seq_length + 1, -1).reshape(bs, seq_length + 1, self.n_agents).to(self.device)
-            else:
-                obs = {k: obs_tensor.reshape(bs, *obs_shape_item)}
-                if len(actions_tensor.shape) == 2:
-                    actions = {k: actions_tensor.reshape(bs)}
-                elif len(actions_tensor.shape) == 3:
-                    actions = {k: actions_tensor.reshape(bs, -1)}
-                else:
-                    raise AttributeError("Wrong actions shape.")
-                rewards = {k: rewards_tensor.reshape(batch_size, self.n_agents)}
-                terminals = {k: ter_tensor.reshape(batch_size, self.n_agents)}
-                agent_mask = {k: msk_tensor.reshape(bs)}
-                obs_next = {k: Tensor(np.stack(itemgetter(*self.agent_keys)(sample['obs_next']),
-                                               axis=1)).to(self.device).reshape(bs, *obs_shape_item)}
-                IDs = torch.eye(self.n_agents).unsqueeze(0).expand(
-                    batch_size, -1, -1).reshape(bs, self.n_agents).to(self.device)
-
-            if use_actions_mask:
-                avail_a = np.stack(itemgetter(*self.agent_keys)(sample['avail_actions']), axis=1)
-                if self.use_rnn:
-                    avail_actions = {k: Tensor(avail_a.reshape([bs, seq_length + 1, -1])).float().to(self.device)}
-                else:
-                    avail_actions = {k: Tensor(avail_a.reshape([bs, -1])).float().to(self.device)}
-                    avail_a_next = np.stack(itemgetter(*self.agent_keys)(sample['avail_actions_next']), axis=1)
-                    avail_actions_next = {k: Tensor(avail_a_next.reshape([bs, -1])).float().to(self.device)}
-        else:
-            obs = {k: Tensor(sample['obs'][k]).to(self.device) for k in self.agent_keys}
-            actions = {k: Tensor(sample['actions'][k]).to(self.device) for k in self.agent_keys}
-            rewards = {k: Tensor(sample['rewards'][k]).to(self.device) for k in self.agent_keys}
-            terminals = {k: Tensor(sample['terminals'][k]).float().to(self.device) for k in self.agent_keys}
-            agent_mask = {k: Tensor(sample['agent_mask'][k]).float().to(self.device) for k in self.agent_keys}
+        for agent in self.agent_keys:
+            obs[agent] = torch.as_tensor(sample['obs'][agent], device=self.device)
             if not self.use_rnn:
-                obs_next = {k: Tensor(sample['obs_next'][k]).to(self.device) for k in self.agent_keys}
+                obs_next[agent] = torch.as_tensor(sample['obs_next'][agent], device=self.device)
+            actions[agent] = torch.as_tensor(sample['actions'][agent], device=self.device)
+            rewards[agent] = torch.as_tensor(sample['rewards'][agent], device=self.device)
+            terminals[agent] = torch.as_tensor(sample['terminals'][agent], device=self.device, dtype=torch.float32)
+            agent_mask[agent] = torch.as_tensor(sample['agent_mask'][agent], device=self.device, dtype=torch.float32)
             if use_actions_mask:
-                avail_actions = {k: Tensor(sample['avail_actions'][k]).float().to(self.device) for k in self.agent_keys}
+                avail_actions[agent] = torch.as_tensor(sample['avail_actions'][agent],
+                                                       device=self.device, dtype=torch.float32)
                 if not self.use_rnn:
-                    avail_actions_next = {k: Tensor(sample['avail_actions_next'][k]).float().to(self.device) for k in
-                                          self.model_keys}
+                    avail_actions_next[agent] = torch.as_tensor(sample['avail_actions_next'][agent],
+                                                                device=self.device, dtype=torch.float32)
 
         if use_global_state:
-            state = Tensor(sample['state']).to(self.device)
+            state = torch.as_tensor(sample['state'], device=self.device)
             if not self.use_rnn:
-                state_next = Tensor(sample['state_next']).to(self.device)
+                state_next = torch.as_tensor(sample['state_next'], device=self.device)
 
         if self.use_rnn:
-            filled = Tensor(sample['filled']).float().to(self.device)
+            filled = torch.as_tensor(sample['filled'], device=self.device, dtype=torch.float32)
+
+        for key in self.group_keys:
+            n_agents = self.n_group_agents[key]
+            bs = batch_size * n_agents
+
+            if self.use_rnn:
+                agents_id = torch.as_tensor(self.agent_grouping.agent_indices(key), dtype=torch.int64).repeat(
+                    batch_size, 1).reshape(bs, 1, 1).expand(-1, seq_length + 1, -1).to(self.device)
+            else:
+                agents_id = torch.as_tensor(self.agent_indices[key],
+                                            dtype=torch.int64).repeat(batch_size, 1).reshape([bs, 1]).to(self.device)
+
+            agent_indices[key] = agents_id
 
         sample_Tensor = {
             'batch_size': batch_size,
@@ -382,11 +345,33 @@ class LearnerMAS(Learner):
             'agent_mask': agent_mask,
             'avail_actions': avail_actions,
             'avail_actions_next': avail_actions_next,
-            'agent_ids': IDs,
+            'agent_indices': agent_indices,
             'filled': filled,
             'seq_length': seq_length,
         }
         return sample_Tensor
+
+    def packed_tensor(self, agent_tensor: Dict[str, Tensor] = None) -> dict[str, Tensor] | None:
+        if agent_tensor is None:
+            return
+        tensor_packed = {}
+        tensor_shape = agent_tensor[self.agent_keys[0]].shape
+        batch_size = tensor_shape[0]
+
+        for key in self.group_keys:
+            n_agents = self.n_group_agents[key]
+            agent_keys = self.groups[key]
+            bs = batch_size * n_agents
+
+            tensor_group = torch.stack([agent_tensor[k] for k in agent_keys], dim=1)
+            if self.use_cnn and len(tensor_group.shape) > 3:  # obs_array consists of images
+                grouped_tensor_shape = (bs,) + tensor_shape[2:]
+            else:
+                grouped_tensor_shape = (bs,) + tensor_shape[1:]
+
+            tensor_packed[key] = tensor_group.reshape(grouped_tensor_shape)
+
+        return tensor_packed
 
     def get_joint_input(self, input_tensor, output_shape=None):
         if self.n_agents == 1:
@@ -409,7 +394,7 @@ class LearnerMAS(Learner):
             if type(list(self.optimizer.values())[0]) is dict:
                 torch.save(
                     {
-                        'policy': self.policy.state_dict(),
+                        'policy': self.model.state_dict(),
                         'optimizer': {k_a: {k: v.state_dict() for k, v in v_a.items()}
                                       for k_a, v_a in self.optimizer.items()},  # agent-wise
                         'rng_state': torch.get_rng_state(),
@@ -419,7 +404,7 @@ class LearnerMAS(Learner):
             else:
                 torch.save(
                     {
-                        'policy': self.policy.state_dict(),
+                        'policy': self.model.state_dict(),
                         'optimizer': {k: v.state_dict() for k, v in self.optimizer.items()},
                         'rng_state': torch.get_rng_state(),
                         'cuda_rng_state': torch.cuda.get_rng_state_all(),
@@ -428,7 +413,7 @@ class LearnerMAS(Learner):
         else:
             torch.save(
                 {
-                    'policy': self.policy.state_dict(),
+                    'policy': self.model.state_dict(),
                     'optimizer': self.optimizer.state_dict(),
                     'rng_state': torch.get_rng_state(),
                     'cuda_rng_state': torch.cuda.get_rng_state_all(),
@@ -461,11 +446,11 @@ class LearnerMAS(Learner):
                     model_path = str(model_names)
 
         if self.device.upper() == "CPU":
-            checkpoint = torch.load(str(model_path), map_location = {'cuda:0': 'cpu'})
+            checkpoint = torch.load(str(model_path), map_location={'cuda:0': 'cpu'})
         else:
             checkpoint = torch.load(str(model_path), map_location={f"cuda:{i}": self.device
-                                                                    for i in range(MAX_GPUs)}, weights_only=True)
-        self.policy.load_state_dict(checkpoint['policy'], strict=False)
+                                                                   for i in range(MAX_GPUs)}, weights_only=True)
+        self.model.load_state_dict(checkpoint['policy'], strict=False)
 
         if 'optimizer' in checkpoint and self.optimizer is not None:
             if type(self.optimizer) is dict:
@@ -473,7 +458,8 @@ class LearnerMAS(Learner):
                     for k_a, v_a in self.optimizer.items():  # agent-wise
                         for k, v in v_a.items():
                             v.load_state_dict(checkpoint['optimizer'][k_a][k])
-                    current_lr = list(self.optimizer.values())[0][list(self.optimizer.values())[0].keys().__iter__().__next__()].param_groups[0]['lr']
+                    current_lr = list(self.optimizer.values())[0][
+                        list(self.optimizer.values())[0].keys().__iter__().__next__()].param_groups[0]['lr']
                 else:
                     for k, v in self.optimizer.items():
                         v.load_state_dict(checkpoint['optimizer'][k])

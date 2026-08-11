@@ -3,7 +3,7 @@ Independent TD3 for multi-agent cooperative task
 """
 import torch
 from torch import nn
-from xuance.common import List
+from xuance.common import AgentGrouping
 from argparse import Namespace
 from xuance.torch.learners import LearnerMAS
 
@@ -11,15 +11,16 @@ from xuance.torch.learners import LearnerMAS
 class ITD3_Learner(LearnerMAS):
     def __init__(self,
                  config: Namespace,
-                 model_keys: List[str],
-                 agent_keys: List[str],
-                 policy: nn.Module,
+                 agent_grouping: AgentGrouping,
+                 model: nn.Module,
                  callback):
-        super(ITD3_Learner, self).__init__(config, model_keys, agent_keys, policy, callback)
+        super(ITD3_Learner, self).__init__(config, agent_grouping, model, callback)
         self.optimizer = {
-            key: {'actor': torch.optim.Adam(self.policy.parameters_actor[key], self.config.learning_rate_actor, eps=1e-5),
-                  'critic': torch.optim.Adam(self.policy.parameters_critic[key], self.config.learning_rate_critic, eps=1e-5)}
-            for key in self.model_keys}
+            key: {'actor': torch.optim.Adam(self.model.actors[key].parameters(), self.config.learning_rate_actor,
+                                            eps=1e-5),
+                  'critic': torch.optim.Adam(self.model.critics[key].parameters(), self.config.learning_rate_critic,
+                                             eps=1e-5)}
+            for key in self.group_keys}
         self.scheduler = {
             key: {'actor': torch.optim.lr_scheduler.LinearLR(self.optimizer[key]['actor'],
                                                              start_factor=1.0,
@@ -29,7 +30,7 @@ class ITD3_Learner(LearnerMAS):
                                                               start_factor=1.0,
                                                               end_factor=self.end_factor_lr_decay,
                                                               total_iters=self.total_iters)}
-            for key in self.model_keys}
+            for key in self.group_keys}
         self.gamma = config.gamma
         self.tau = config.tau
         self.mse_loss = nn.MSELoss()
@@ -49,51 +50,59 @@ class ITD3_Learner(LearnerMAS):
         rewards = sample_Tensor['rewards']
         terminals = sample_Tensor['terminals']
         agent_mask = sample_Tensor['agent_mask']
-        IDs = sample_Tensor['agent_ids']
-        if self.use_parameter_sharing:
-            key = self.model_keys[0]
-            bs = batch_size * self.n_agents
-            rewards[key] = rewards[key].reshape(batch_size * self.n_agents)
-            terminals[key] = terminals[key].reshape(batch_size * self.n_agents)
-        else:
-            bs = batch_size
+        agent_indices = sample_Tensor['agent_indices']
+
+        if not self.agent_grouping.full_independent:
+            obs = self.packed_tensor(obs)
+            actions = self.packed_tensor(actions)
+            obs_next = self.packed_tensor(obs_next)
+            rewards = self.packed_tensor(rewards)
+            terminals = self.packed_tensor(terminals)
+            agent_mask = self.packed_tensor(agent_mask)
 
         info = self.callback.on_update_start(self.iterations, method="update",
-                                             policy=self.policy, sample_Tensor=sample_Tensor, bs=bs)
+                                             model=self.model, sample_Tensor=sample_Tensor)
 
         # get values
-        _, actions_eval = self.policy(observation=obs, agent_ids=IDs)
-        q_eval_A, q_eval_B, _ = self.policy.Qpolicy(observation=obs, actions=actions_eval, agent_ids=IDs)
-        _, next_actions = self.policy.Atarget(next_observation=obs_next, agent_ids=IDs)
-        q_next = self.policy.Qtarget(next_observation=obs_next, next_actions=next_actions, agent_ids=IDs)
+        q_eval_A, q_eval_B, _ = self.model.Qpolicy(observations=obs, actions=actions, agent_indices=agent_indices)
+        next_actions = self.model.Atarget(observations=obs_next, agent_indices=agent_indices)
+        if not self.agent_grouping.full_independent:
+            next_actions = self.packed_tensor(next_actions)
+
+        q_next = self.model.Qtarget(observations=obs_next, actions=next_actions, agent_indices=agent_indices)
+        if not self.agent_grouping.full_independent:
+            q_eval_A = self.packed_tensor(q_eval_A)
+            q_eval_B = self.packed_tensor(q_eval_B)
+            q_next = self.packed_tensor(q_next)
 
         # update critic(s)
-        for key in self.model_keys:
-            mask_values = agent_mask[key]
-            q_eval_A_i, q_eval_B_i = q_eval_A[key].reshape(bs), q_eval_B[key].reshape(bs)
-            q_next_i = q_next[key].reshape(bs)
-            q_target = rewards[key] + (1 - terminals[key]) * self.gamma * q_next_i
+        for group, agent_keys in self.groups.items():
+            bs = batch_size * self.n_group_agents[group]
+            mask_values = agent_mask[group]
+            q_eval_A_i, q_eval_B_i = q_eval_A[group].reshape(bs), q_eval_B[group].reshape(bs)
+            q_next_i = q_next[group].reshape(bs)
+            q_target = rewards[group] + (1 - terminals[group]) * self.gamma * q_next_i
             td_error_A = (q_eval_A_i - q_target.detach()) * mask_values
             td_error_B = (q_eval_B_i - q_target.detach()) * mask_values
             loss_c = ((td_error_A ** 2).sum() + (td_error_B ** 2).sum()) / mask_values.sum()
-            self.optimizer[key]['critic'].zero_grad()
+            self.optimizer[group]['critic'].zero_grad()
             loss_c.backward()
             if self.use_grad_clip:
-                torch.nn.utils.clip_grad_norm_(self.policy.parameters_critic[key], self.grad_clip_norm)
-            self.optimizer[key]['critic'].step()
-            if self.scheduler[key]['critic'] is not None:
-                self.scheduler[key]['critic'].step()
+                torch.nn.utils.clip_grad_norm_(self.model.critics[group].parameters(), self.grad_clip_norm)
+            self.optimizer[group]['critic'].step()
+            if self.scheduler[group]['critic'] is not None:
+                self.scheduler[group]['critic'].step()
 
-            learning_rate_critic = self.optimizer[key]['critic'].state_dict()['param_groups'][0]['lr']
+            learning_rate_critic = self.optimizer[group]['critic'].state_dict()['param_groups'][0]['lr']
 
             info.update({
-                f"{key}/learning_rate_critic": learning_rate_critic,
-                f"{key}/loss_critic": loss_c.item(),
-                f"{key}/predictQ_A": q_eval_A[key].mean().item(),
-                f"{key}/predictQ_B": q_eval_B[key].mean().item()
+                f"{group}/learning_rate_critic": learning_rate_critic,
+                f"{group}/loss_critic": loss_c.item(),
+                f"{group}/predictQ_A": q_eval_A[group].mean().item(),
+                f"{group}/predictQ_B": q_eval_B[group].mean().item()
             })
 
-            info.update(self.callback.on_update_agent_wise(self.iterations, key, info=info, method="update_critic",
+            info.update(self.callback.on_update_agent_wise(self.iterations, group, info=info, method="update_critic",
                                                            mask_values=mask_values,
                                                            q_eval_A_i=q_eval_A_i, q_eval_B_i=q_eval_B_i,
                                                            q_target=q_target, q_next_i=q_next_i,
@@ -101,33 +110,39 @@ class ITD3_Learner(LearnerMAS):
 
         # update actor(s)
         if self.iterations % self.actor_update_delay == 0:
-            _, actions_eval = self.policy(observation=obs, agent_ids=IDs)
-            for key in self.model_keys:
-                mask_values = agent_mask[key]
-                _, _, q_policy = self.policy.Qpolicy(observation=obs, actions=actions_eval, agent_ids=IDs,
-                                                     agent_key=key)
-                q_policy_i = q_policy[key].reshape(bs)
+            actions_eval = self.model(observations=obs, agent_indices=agent_indices).actions
+            if not self.agent_grouping.full_independent:
+                actions_eval = self.packed_tensor(actions_eval)
+            for group, agent_keys in self.groups.items():
+                bs = batch_size * self.n_group_agents[group]
+                mask_values = agent_mask[group]
+                _, _, q_policy = self.model.Qpolicy(observations=obs, actions=actions_eval, agent_indices=agent_indices,
+                                                    grou_key=group)
+                if not self.agent_grouping.full_independent:
+                    q_policy = self.packed_tensor(q_policy)
+
+                q_policy_i = q_policy[group].reshape(bs)
                 loss_a = -(q_policy_i * mask_values).sum() / mask_values.sum()
-                self.optimizer[key]['actor'].zero_grad()
+                self.optimizer[group]['actor'].zero_grad()
                 loss_a.backward()
                 if self.use_grad_clip:
-                    torch.nn.utils.clip_grad_norm_(self.policy.parameters_actor[key], self.grad_clip_norm)
-                self.optimizer[key]['actor'].step()
-                if self.scheduler[key]['actor'] is not None:
-                    self.scheduler[key]['actor'].step()
+                    torch.nn.utils.clip_grad_norm_(self.model.actors[group].parameters(), self.grad_clip_norm)
+                self.optimizer[group]['actor'].step()
+                if self.scheduler[group]['actor'] is not None:
+                    self.scheduler[group]['actor'].step()
 
-                learning_rate_actor = self.optimizer[key]['actor'].state_dict()['param_groups'][0]['lr']
+                learning_rate_actor = self.optimizer[group]['actor'].state_dict()['param_groups'][0]['lr']
 
                 info.update({
-                    f"{key}/learning_rate_actor": learning_rate_actor,
-                    f"{key}/loss_actor": loss_a.item(),
-                    f"{key}/q_policy": q_policy_i.mean().item(),
+                    f"{group}/learning_rate_actor": learning_rate_actor,
+                    f"{group}/loss_actor": loss_a.item(),
+                    f"{group}/q_policy": q_policy_i.mean().item(),
                 })
-                info.update(self.callback.on_update_agent_wise(self.iterations, key, info=info, method="update_actor",
+                info.update(self.callback.on_update_agent_wise(self.iterations, group, info=info, method="update_actor",
                                                                mask_values=mask_values, q_policy_i=q_policy_i))
-            self.policy.soft_update(self.tau)
+            self.model.soft_update(self.tau)
 
-        info.update(self.callback.on_update_end(self.iterations, method="update", policy=self.policy, info=info))
+        info.update(self.callback.on_update_end(self.iterations, method="update", model=self.model, info=info))
         return info
 
     def update_rnn(self, sample):
@@ -145,61 +160,72 @@ class ITD3_Learner(LearnerMAS):
         terminals = sample_Tensor['terminals']
         agent_mask = sample_Tensor['agent_mask']
         filled = sample_Tensor['filled']
-        IDs = sample_Tensor['agent_ids']
+        agent_indices = sample_Tensor['agent_indices']
 
-        if self.use_parameter_sharing:
-            key = self.model_keys[0]
-            bs_rnn = batch_size * self.n_agents
-            filled = filled.unsqueeze(1).expand(-1, self.n_agents, -1).reshape(bs_rnn, seq_len)
-            rewards[key] = rewards[key].reshape(bs_rnn, seq_len)
-            terminals[key] = terminals[key].reshape(bs_rnn, seq_len)
-            IDs_t = IDs[:, :-1]
-        else:
-            bs_rnn, IDs_t = batch_size, None
+        if not self.agent_grouping.full_independent:
+            obs = self.packed_tensor(obs)
+            actions = self.packed_tensor(actions)
+            rewards = self.packed_tensor(rewards)
+            terminals = self.packed_tensor(terminals)
+            agent_mask = self.packed_tensor(agent_mask)
 
         info = self.callback.on_update_start(self.iterations, method="update_rnn",
-                                             policy=self.policy, sample_Tensor=sample_Tensor, bs_rnn=bs_rnn)
+                                             model=self.model, sample_Tensor=sample_Tensor)
 
-        # initial hidden states for rnn
-        rnn_hidden_actor = {k: self.policy.actor_representation[k].init_hidden(bs_rnn) for k in self.model_keys}
-        rnn_hidden_critic = {k: self.policy.critic_A_representation[k].init_hidden(batch_size) for k in self.model_keys}
+        # feedforward
+        rnn_states_actor = self.model.init_actor_rnn_states(batch_size)
+        rnn_states_critic_1, rnn_states_critic_2 = self.model.init_critic_rnn_states(batch_size)
 
         # get q values
+        next_actions = self.model.Atarget(observations=obs, agent_indices=agent_indices,
+                                          rnn_states=rnn_states_actor)
+        if not self.agent_grouping.full_independent:
+            next_actions = self.packed_tensor(next_actions)
+
         obs_t = {k: v[:, :-1] for k, v in obs.items()}
-        IDs_t = IDs[:, :-1] if self.use_parameter_sharing else IDs
-        _, actions_next = self.policy.Atarget(next_observation=obs, agent_ids=IDs, rnn_hidden=rnn_hidden_actor)
-        q_eval_A, q_eval_B, _ = self.policy.Qpolicy(observation=obs_t, actions=actions, agent_ids=IDs_t,
-                                                    rnn_hidden=rnn_hidden_critic)
-        q_next = self.policy.Qtarget(next_observation=obs, next_actions=actions_next, agent_ids=IDs,
-                                     rnn_hidden=rnn_hidden_critic)
+        agent_indices_t = {k: v[:, :-1] for k, v in agent_indices.items()}
+        q_eval_A, q_eval_B, _ = self.model.Qpolicy(observations=obs_t, actions=actions, agent_indices=agent_indices_t,
+                                                   rnn_states_1=rnn_states_critic_1,
+                                                   rnn_states_2=rnn_states_critic_2)
+        q_next = self.model.Qtarget(observations=obs, actions=next_actions, agent_indices=agent_indices,
+                                    rnn_states_1=rnn_states_critic_1,
+                                    rnn_states_2=rnn_states_critic_2)
+
+        if not self.agent_grouping.full_independent:
+            q_eval_A = self.packed_tensor(q_eval_A)
+            q_eval_B = self.packed_tensor(q_eval_B)
+            q_next = self.packed_tensor(q_next)
 
         # update critic(s)
-        for key in self.model_keys:
-            mask_values = agent_mask[key] * filled
-            q_eval_A_i, q_eval_B_i = q_eval_A[key].reshape(bs_rnn, seq_len), q_eval_B[key].reshape(bs_rnn, seq_len)
-            q_next_i = q_next[key][:, 1:].reshape(bs_rnn, seq_len)
-            q_target = rewards[key] + (1 - terminals[key]) * self.gamma * q_next_i
+        for group, agent_keys in self.groups.items():
+            n_agents = len(agent_keys)
+            bs = batch_size * n_agents
+            group_filled = filled.unsqueeze(1).expand(batch_size, n_agents, seq_len).reshape([bs, seq_len])
+            mask_values = agent_mask[group] * group_filled
+            q_eval_A_i, q_eval_B_i = q_eval_A[group].reshape(bs, seq_len), q_eval_B[group].reshape(bs, seq_len)
+            q_next_i = q_next[group][:, 1:].reshape(bs, seq_len)
+            q_target = rewards[group] + (1 - terminals[group]) * self.gamma * q_next_i
             td_error_A = (q_eval_A_i - q_target.detach()) * mask_values
             td_error_B = (q_eval_B_i - q_target.detach()) * mask_values
             loss_c = ((td_error_A ** 2).sum() + (td_error_B ** 2).sum()) / mask_values.sum()
-            self.optimizer[key]['critic'].zero_grad()
+            self.optimizer[group]['critic'].zero_grad()
             loss_c.backward()
             if self.use_grad_clip:
-                torch.nn.utils.clip_grad_norm_(self.policy.parameters_critic[key], self.grad_clip_norm)
-            self.optimizer[key]['critic'].step()
-            if self.scheduler[key]['critic'] is not None:
-                self.scheduler[key]['critic'].step()
+                torch.nn.utils.clip_grad_norm_(self.model.critics[group].parameters(), self.grad_clip_norm)
+            self.optimizer[group]['critic'].step()
+            if self.scheduler[group]['critic'] is not None:
+                self.scheduler[group]['critic'].step()
 
-            learning_rate_critic = self.optimizer[key]['critic'].state_dict()['param_groups'][0]['lr']
+            learning_rate_critic = self.optimizer[group]['critic'].state_dict()['param_groups'][0]['lr']
 
             info.update({
-                f"{key}/learning_rate_critic": learning_rate_critic,
-                f"{key}/loss_critic": loss_c.item(),
-                f"{key}/predictQ_A": q_eval_A[key].mean().item(),
-                f"{key}/predictQ_B": q_eval_B[key].mean().item()
+                f"{group}/learning_rate_critic": learning_rate_critic,
+                f"{group}/loss_critic": loss_c.item(),
+                f"{group}/predictQ_A": q_eval_A[group].mean().item(),
+                f"{group}/predictQ_B": q_eval_B[group].mean().item()
             })
 
-            info.update(self.callback.on_update_agent_wise(self.iterations, key, info=info, method="update_rnn_critic",
+            info.update(self.callback.on_update_agent_wise(self.iterations, group, info=info, method="update_rnn_critic",
                                                            mask_values=mask_values,
                                                            q_eval_A_i=q_eval_A_i, q_eval_B_i=q_eval_B_i,
                                                            q_target=q_target, q_next_i=q_next_i,
@@ -207,31 +233,41 @@ class ITD3_Learner(LearnerMAS):
 
         # update actor(s)
         if self.iterations % self.actor_update_delay == 0:
-            _, actions_eval = self.policy(observation=obs, agent_ids=IDs, rnn_hidden=rnn_hidden_actor)
-            for key in self.model_keys:
-                mask_values = agent_mask[key] * filled
-                _, _, q_policy = self.policy.Qpolicy(observation=obs_t, actions=actions, agent_ids=IDs_t,
-                                                     agent_key=key, rnn_hidden=rnn_hidden_critic)
-                q_policy_i = q_policy[key].reshape(bs_rnn, seq_len)
+            actions_eval = self.model(observations=obs_t, agent_indices=agent_indices_t,
+                                      rnn_states=rnn_states_actor).actions
+            if not self.agent_grouping.full_independent:
+                actions_eval = self.packed_tensor(actions_eval)
+            for group, agent_keys in self.groups.items():
+                n_agents = len(agent_keys)
+                bs = batch_size * n_agents
+                group_filled = filled.unsqueeze(1).expand(batch_size, n_agents, seq_len).reshape([bs, seq_len])
+                mask_values = agent_mask[group] * group_filled
+                _, _, q_policy = self.model.Qpolicy(observations=obs_t, actions=actions_eval,
+                                                    agent_indices=agent_indices_t, group_key=group,
+                                                    rnn_states_1=rnn_states_critic_1,
+                                                    rnn_states_2=rnn_states_critic_2)
+                if not self.agent_grouping.full_independent:
+                    q_policy = self.packed_tensor(q_policy)
+                q_policy_i = q_policy[group].reshape(bs, seq_len)
                 loss_a = -(q_policy_i * mask_values).sum() / mask_values.sum()
-                self.optimizer[key]['actor'].zero_grad()
+                self.optimizer[group]['actor'].zero_grad()
                 loss_a.backward()
                 if self.use_grad_clip:
-                    torch.nn.utils.clip_grad_norm_(self.policy.parameters_actor[key], self.grad_clip_norm)
-                self.optimizer[key]['actor'].step()
-                if self.scheduler[key]['actor'] is not None:
-                    self.scheduler[key]['actor'].step()
+                    torch.nn.utils.clip_grad_norm_(self.model.actors[group].parameters(), self.grad_clip_norm)
+                self.optimizer[group]['actor'].step()
+                if self.scheduler[group]['actor'] is not None:
+                    self.scheduler[group]['actor'].step()
 
-                learning_rate_actor = self.optimizer[key]['actor'].state_dict()['param_groups'][0]['lr']
+                learning_rate_actor = self.optimizer[group]['actor'].state_dict()['param_groups'][0]['lr']
 
                 info.update({
-                    f"{key}/learning_rate_actor": learning_rate_actor,
-                    f"{key}/loss_actor": loss_a.item(),
-                    f"{key}/q_policy": q_policy_i.mean().item(),
+                    f"{group}/learning_rate_actor": learning_rate_actor,
+                    f"{group}/loss_actor": loss_a.item(),
+                    f"{group}/q_policy": q_policy_i.mean().item(),
                 })
-                info.update(self.callback.on_update_agent_wise(self.iterations, key, info=info,
+                info.update(self.callback.on_update_agent_wise(self.iterations, group, info=info,
                                                                method="update_rnn_actor",
                                                                mask_values=mask_values, q_policy_i=q_policy_i))
-            self.policy.soft_update(self.tau)
-        info.update(self.callback.on_update_end(self.iterations, method="update_rnn", policy=self.policy, info=info))
+            self.model.soft_update(self.tau)
+        info.update(self.callback.on_update_end(self.iterations, method="update_rnn", model=self.model, info=info))
         return info

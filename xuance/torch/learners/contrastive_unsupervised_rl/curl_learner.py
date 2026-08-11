@@ -33,7 +33,7 @@ class FrameStackTransform:
 class CURL_Learner(Learner):
     def __init__(self,
                  config: Namespace,
-                 policy: nn.Module,
+                 model: nn.Module,
                  callback):
         super(CURL_Learner, self).__init__(config, policy, callback)
 
