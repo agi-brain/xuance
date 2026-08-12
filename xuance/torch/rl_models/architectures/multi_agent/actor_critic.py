@@ -40,6 +40,13 @@ class IndependentActorCritic(Module):
             self.actors = DistributedDataParallel(module=self.actors, device_ids=[self.rank])
             self.critics = DistributedDataParallel(module=self.critics, device_ids=[self.rank])
 
+    @property
+    def parameters_model(self):
+        return {
+            group: list(self.actors[group].parameters()) + list(self.critics[group].parameters())
+            for group in self.group_keys
+        }
+
     def forward(
             self,
             observations: Dict[str, Tensor],
@@ -164,9 +171,6 @@ class IndependentActorCritic(Module):
 
 
 class MultiAgentActorCritic(IndependentActorCritic):
-    def __init__(self, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
-
     def get_values(
             self,
             observations: Dict[str, Tensor],

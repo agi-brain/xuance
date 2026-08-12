@@ -607,10 +607,7 @@ class COMA_Agents(OnPolicyMARLAgents):
                     end = start + self.batch_size
                     sample_idx = indexes[start:end]
                     sample = self.memory.sample(sample_idx)
-                    if self.use_rnn:
-                        info_train = self.learner.update_rnn(sample, self.egreedy)
-                    else:
-                        info_train = self.learner.update(sample, self.egreedy)
+                    info_train = self.learner.update(sample, self.egreedy)
             self.callback.on_train_epochs_end(self.current_step, policy=self.model, memory=self.memory,
                                               current_episode=self.current_episode, n_epochs=n_epochs,
                                               buffer_size=self.buffer_size, update_info=info_train)

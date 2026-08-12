@@ -358,16 +358,15 @@ class LearnerMAS(Learner):
         tensor_shape = agent_tensor[self.agent_keys[0]].shape
         batch_size = tensor_shape[0]
 
-        for key in self.group_keys:
+        for key, agent_keys in self.groups.items():
             n_agents = self.n_group_agents[key]
-            agent_keys = self.groups[key]
-            bs = batch_size * n_agents
+            packed_batch_size = batch_size * n_agents  # packed batch size
 
             tensor_group = torch.stack([agent_tensor[k] for k in agent_keys], dim=1)
             if self.use_cnn and len(tensor_group.shape) > 3:  # obs_array consists of images
-                grouped_tensor_shape = (bs,) + tensor_shape[2:]
+                grouped_tensor_shape = (packed_batch_size,) + tensor_shape[2:]
             else:
-                grouped_tensor_shape = (bs,) + tensor_shape[1:]
+                grouped_tensor_shape = (packed_batch_size,) + tensor_shape[1:]
 
             tensor_packed[key] = tensor_group.reshape(grouped_tensor_shape)
 

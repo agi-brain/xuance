@@ -6,14 +6,14 @@ from xuance.torch import Tensor
 
 @dataclass
 class RNN_State:
-    hidden_states: Optional[Tensor] = None
-    cell_states: Optional[Tensor] = None
+    hidden_states: Optional[Tensor] | None = None
+    cell_states: Optional[Tensor] | None = None
 
 
 @dataclass
 class RepresentationOutput:
     embeddings: Tensor
-    rnn_states: Optional[RNN_State] = None
+    rnn_states: RNN_State | None = None
     aux: dict[str, Any] = field(default_factory=dict)
 
 
@@ -26,7 +26,7 @@ class StochasticActorOutput:
 @dataclass
 class DeterministicActorOutput:
     representations: RepresentationOutput
-    actions: Optional[Tensor] = None
+    actions: Optional[Tensor] | None = None
 
 
 @dataclass
@@ -45,23 +45,84 @@ class TwinCriticOutput:
 
 @dataclass
 class ModelOutput:
-    actions: Optional[Tensor] = None
+    actions: Optional[Tensor] | None = None
     distributions: Optional[torch.distributions] = None
-    values: Optional[Tensor] = None
-    rep_out: Optional[RepresentationOutput] = None
-    actor_rep_out: Optional[RepresentationOutput] = None
-    critic_rep_out: Optional[RepresentationOutput] = None
+    values: Optional[Tensor] | None = None
+    rep_out: RepresentationOutput | None = None
+    actor_rep_out: RepresentationOutput | None = None
+    critic_rep_out: RepresentationOutput | None = None
 
 
 @dataclass
 class MultiAgentModelOutput:
-    actions: Optional[Dict[str, Tensor]] = None
-    log_probs: Optional[Dict[str, Tensor]] = None
-    distributions: Optional[Dict[str, torch.distributions]] = None
-    values: Optional[Dict[str, Tensor]] = None
-    rnn_states: Optional[Dict[str, RNN_State]] = None
-    actor_rnn_states: Optional[Dict[str, RNN_State]] = None
-    critic_rnn_states: Optional[Dict[str, RNN_State]] = None
-    rep_out: Optional[Dict[str, RepresentationOutput]] = None
-    actor_rep_out: Optional[Dict[str, RepresentationOutput]] = None
-    critic_rep_out: Optional[Dict[str, RepresentationOutput]] = None
+    actions: Dict[str, Tensor] | None = None
+    log_probs: Dict[str, Tensor] | None = None
+    distributions: Dict[str, torch.distributions] | None = None
+    values: Dict[str, Tensor] | None = None
+    rnn_states: Dict[str, RNN_State] | None = None
+    actor_rnn_states: Dict[str, RNN_State] | None = None
+    critic_rnn_states: Dict[str, RNN_State] | None = None
+    rep_out: Dict[str, RepresentationOutput] | None = None
+    actor_rep_out: Dict[str, RepresentationOutput] | None = None
+    critic_rep_out: Dict[str, RepresentationOutput] | None = None
+
+
+@dataclass
+class DRL_Batch:
+    batch_size: int
+    observations: Tensor
+    actions: Tensor
+    next_observations: Optional[Tensor] | None = None
+    rewards: Optional[Tensor] | None = None
+    terminals: Optional[Tensor] | None = None
+    values: Optional[Tensor] | None = None
+    returns: Optional[Tensor] | None = None
+    advantages: Optional[Tensor] | None = None
+    avail_actions: Optional[Tensor] | None = None
+    old_log_probs: Optional[Tensor] | None = None
+    old_distributions: Optional[Any] = None
+
+
+@dataclass
+class MARL_Batch:
+    batch_size: int
+    seq_length: int
+    agent_indices: Dict[str, Tensor]
+    observations: Dict[str, Tensor]
+    actions: Dict[str, Tensor]
+    global_states: Optional[Tensor] | None = None
+    avail_actions: Dict[str, Tensor] | None = None
+    agent_masks: Dict[str, Tensor] | None = None
+    filled_masks: Tensor | None = None  # Shape: batch_size * seq_length
+
+    def valid_mask(
+            self,
+            group: str,  # The selected group key
+            n_agents: int  # Number of agents in the group
+    ) -> Tensor:
+        mask = self.agent_masks[group]
+
+        if self.filled_masks is not None:
+            mask = mask * self.filled_masks.unsqueeze(1).repeat(1, n_agents, 1).reshape([-1, self.seq_length])
+
+        return mask
+
+    def flatten_valid(self, x, group):
+        return x.reshape(-1), self.valid_mask(group).reshape(-1)
+
+
+@dataclass
+class OnPolicyMARL_Batch(MARL_Batch):
+    returns: Dict[str, Tensor] | None = None
+    values: Dict[str, Tensor] | None = None
+    advantages: Dict[str, Tensor] | None = None
+    old_log_probs: Dict[str, Tensor] | None = None
+
+
+@dataclass
+class OffPolicyMARL_Batch(MARL_Batch):
+    next_observations: Dict[str, Tensor] | None = None
+    next_global_states: Tensor | None = None
+    rewards: Dict[str, Tensor] | None = None
+    terminals: Dict[str, Tensor] | None = None
+
