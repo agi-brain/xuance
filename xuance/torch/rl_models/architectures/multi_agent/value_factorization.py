@@ -210,18 +210,10 @@ class WeightedMixingQNetwork(MixingQNetwork):
             rnn_states: Dict[str, RNN_State | dict] = None
     ) -> MultiAgentModelOutput:
         rnn_states_new, evalQ = {}, {}
-        input_shape = observations[self.group_keys[0]].shape
-        bs = input_shape[0]
-        seq_len = input_shape[1] if self.use_rnn else 1
 
         group_list = self.group_keys if group_key is None else [group_key]
 
         for group in group_list:
-            group_agents = self.groups[group]
-            n_agent = self.n_group_agents[group]
-            batch_size = bs // n_agent
-            batch_shape = (batch_size, n_agent, seq_len) if self.use_rnn else (batch_size, n_agent)
-
             input_kwargs = {
                 "agent_indices": agent_indices[group]
             }
@@ -230,11 +222,8 @@ class WeightedMixingQNetwork(MixingQNetwork):
 
             individual_output = self.individual_q_centralized[group](observations[group], **input_kwargs)
 
-            individual_values = individual_output.values.reshape(*batch_shape, -1)
+            evalQ[group] = individual_output.values
             rnn_states_new[group] = individual_output.representations.rnn_states
-
-            for i, agent_key in enumerate(group_agents):
-                evalQ[agent_key] = individual_values[:, i]
 
         return MultiAgentModelOutput(values=evalQ, rnn_states=rnn_states_new)
 
@@ -246,17 +235,10 @@ class WeightedMixingQNetwork(MixingQNetwork):
             rnn_states: Dict[str, RNN_State | dict] = None
     ) -> MultiAgentModelOutput:
         rnn_states_new, q_target = {}, {}
-        input_shape = observations[self.group_keys[0]].shape
-        bs = input_shape[0]
-        seq_len = input_shape[1] if self.use_rnn else 1
 
         group_list = self.group_keys if group_key is None else [group_key]
 
         for group in group_list:
-            group_agents = self.groups[group]
-            n_agent = self.n_group_agents[group]
-            batch_size = bs // n_agent
-            batch_shape = (batch_size, n_agent, seq_len) if self.use_rnn else (batch_size, n_agent)
 
             target_input_kwargs = {
                 "agent_indices": agent_indices[group]
@@ -266,11 +248,8 @@ class WeightedMixingQNetwork(MixingQNetwork):
 
             individual_output = self.target_individual_q_centralized[group](observations[group], **target_input_kwargs)
 
-            individual_values = individual_output.values.reshape(*batch_shape, -1)
+            q_target[group] = individual_output.values
             rnn_states_new[group] = individual_output.representations.rnn_states
-
-            for i, agent_key in enumerate(group_agents):
-                q_target[agent_key] = individual_values[:, i]
 
         return MultiAgentModelOutput(values=q_target, rnn_states=rnn_states_new)
 

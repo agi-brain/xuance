@@ -32,6 +32,7 @@ class QMIX_Learner(IQL_Learner):
             use_global_state=True,
             use_shared_rewards=True
         )
+
         rewards_tot = torch.stack([r for r in batch.rewards.values()], dim=1).sum(dim=1, keepdim=False)
         terminals_tot = torch.stack([d for d in batch.terminals.values()], dim=1).all(dim=1, keepdim=False).float()
 
@@ -58,6 +59,7 @@ class QMIX_Learner(IQL_Learner):
             q_eval_taken *= mask_values
             q_next_taken *= mask_values
 
+            # get agent-wise values
             for i, agent_key in enumerate(self.groups[group]):
                 q_eval_a[agent_key] = q_eval_taken.reshape([batch.batch_size, n_agents, batch.seq_length])[:, i]
                 q_next_a[agent_key] = q_next_taken.reshape([batch.batch_size, n_agents, batch.seq_length])[:, i]

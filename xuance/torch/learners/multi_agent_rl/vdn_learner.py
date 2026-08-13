@@ -58,6 +58,7 @@ class VDN_Learner(IQL_Learner):
             q_eval_taken *= mask_values
             q_next_taken *= mask_values
 
+            # get agent-wise values
             for i, agent_key in enumerate(self.groups[group]):
                 q_eval_a[agent_key] = q_eval_taken.reshape([batch.batch_size, n_agents, batch.seq_length])[:, i]
                 q_next_a[agent_key] = q_next_taken.reshape([batch.batch_size, n_agents, batch.seq_length])[:, i]

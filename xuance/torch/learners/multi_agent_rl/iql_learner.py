@@ -36,7 +36,7 @@ class IQL_Learner(OffPolicyMultiAgentLearner):
         }
 
     def _forward_transitions(self, batch: OffPolicyMARLBatch):
-        # calculate the individual Q values.
+        # calculate the individual Q values
         rnn_states = self.model.init_rnn_states(batch.batch_size)
 
         model_output = self.model(
@@ -67,6 +67,7 @@ class IQL_Learner(OffPolicyMultiAgentLearner):
                     observations=batch.next_observations,
                     agent_indices=batch.agent_indices,
                 ).values
+
                 if self.config.double_q:
                     actions_next = self.model(observations=batch.next_observations,
                                               agent_indices=batch.agent_indices,
