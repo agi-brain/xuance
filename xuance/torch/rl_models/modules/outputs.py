@@ -84,12 +84,12 @@ class DRL_Batch:
 
 
 @dataclass
-class MARL_Batch:
+class MARLBatch:
     batch_size: int
     seq_length: int
     agent_indices: Dict[str, Tensor]
-    observations: Dict[str, Tensor]
-    actions: Dict[str, Tensor]
+    observations: Dict[str, Tensor] | Any
+    actions: Dict[str, Tensor] | Any
     global_states: Optional[Tensor] | None = None
     avail_actions: Dict[str, Tensor] | None = None
     agent_masks: Dict[str, Tensor] | None = None
@@ -112,7 +112,7 @@ class MARL_Batch:
 
 
 @dataclass
-class OnPolicyMARL_Batch(MARL_Batch):
+class OnPolicyMARLBatch(MARLBatch):
     returns: Dict[str, Tensor] | None = None
     values: Dict[str, Tensor] | None = None
     advantages: Dict[str, Tensor] | None = None
@@ -120,9 +120,10 @@ class OnPolicyMARL_Batch(MARL_Batch):
 
 
 @dataclass
-class OffPolicyMARL_Batch(MARL_Batch):
+class OffPolicyMARLBatch(MARLBatch):
     next_observations: Dict[str, Tensor] | None = None
     next_global_states: Tensor | None = None
+    next_avail_actions: Dict[str, Tensor] | None = None
     rewards: Dict[str, Tensor] | None = None
     terminals: Dict[str, Tensor] | None = None
 

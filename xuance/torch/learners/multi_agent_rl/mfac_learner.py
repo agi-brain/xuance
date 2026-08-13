@@ -8,30 +8,16 @@ import torch
 from torch import nn
 from argparse import Namespace
 from xuance.common import Optional, AgentGrouping
-from xuance.torch.learners.multi_agent_rl.ippo_learner import IPPO_Learner
+from xuance.torch.learners.multi_agent_rl.mappo_learner import MAPPO_Learner
 
 
-class MFAC_Learner(IPPO_Learner):
+class MFAC_Learner(MAPPO_Learner):
     def __init__(self,
                  config: Namespace,
                  agent_grouping: AgentGrouping,
                  model: nn.Module,
                  callback):
         super(MFAC_Learner, self).__init__(config, agent_grouping, model, callback)
-
-    def build_optimizer(self):
-        self.optimizer = torch.optim.Adam(
-            self.model.parameters(),
-            lr=self.learning_rate,
-            eps=1e-5,
-            weight_decay=self.config.weight_decay
-        )
-        self.scheduler = torch.optim.lr_scheduler.LinearLR(
-            self.optimizer,
-            start_factor=1.0,
-            end_factor=self.end_factor_lr_decay,
-            total_iters=self.total_iters
-        )
 
     def build_actions_mean_input(self, sample: Optional[dict], use_parameter_sharing: Optional[bool] = False):
         batch_size = sample['batch_size']

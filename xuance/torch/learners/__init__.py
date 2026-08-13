@@ -1,4 +1,5 @@
-from .learner import Learner, LearnerMAS
+from .base.drl_learner import Learner
+from .base.marl_learner import LearnerMAS, OnPolicyMultiAgentLearner, OffPolicyMultiAgentLearner
 
 from .policy_gradient import (
     # On-policy
@@ -98,7 +99,7 @@ REGISTRY_Learners = {
 }
 
 __all__ = [
-    "REGISTRY_Learners", "Learner", "LearnerMAS",
+    "REGISTRY_Learners", "Learner", "LearnerMAS", "OnPolicyMultiAgentLearner", "OffPolicyMultiAgentLearner",
 
     "PG_Learner", "A2C_Learner", "PPO_Learner", "PPOKL_Learner", "PPG_Learner", "DDPG_Learner", "TD3_Learner",
     "SAC_Learner", "SACDIS_Learner", "PDQN_Learner", "MPDQN_Learner", "SPDQN_Learner", "NPG_Learner",

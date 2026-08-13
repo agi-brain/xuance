@@ -8,10 +8,10 @@ import torch
 from torch import nn
 from argparse import Namespace
 from xuance.common import AgentGrouping
-from xuance.torch.learners.multi_agent_rl.iac_learner import IAC_Learner
+from xuance.torch.learners import OnPolicyMultiAgentLearner
 
 
-class VDAC_Learner(IAC_Learner):
+class VDAC_Learner(OnPolicyMultiAgentLearner):
     def __init__(self,
                  config: Namespace,
                  agent_grouping: AgentGrouping,
@@ -19,20 +19,6 @@ class VDAC_Learner(IAC_Learner):
                  callback):
         super(VDAC_Learner, self).__init__(config, agent_grouping, model, callback)
         self.use_global_state = True if config.mixer == "QMIX" else getattr(config, "use_global_state", False)
-
-    def build_optimizer(self):
-        self.optimizer = torch.optim.Adam(
-            self.model.parameters(),
-            lr=self.learning_rate,
-            eps=1e-5,
-            weight_decay=self.config.weight_decay
-        )
-        self.scheduler = torch.optim.lr_scheduler.LinearLR(
-            self.optimizer,
-            start_factor=1.0,
-            end_factor=self.end_factor_lr_decay,
-            total_iters=self.total_iters
-        )
 
     def update(self, sample):
         self.iterations += 1

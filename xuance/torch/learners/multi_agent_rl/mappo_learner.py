@@ -8,30 +8,18 @@ import torch
 from torch import nn
 from xuance.common import AgentGrouping
 from argparse import Namespace
-from xuance.torch.learners.multi_agent_rl.ippo_learner import IPPO_Learner
+from xuance.torch.learners import OnPolicyMultiAgentLearner
 
 
-class MAPPO_Learner(IPPO_Learner):
+class MAPPO_Learner(OnPolicyMultiAgentLearner):
     def __init__(self,
                  config: Namespace,
                  agent_grouping: AgentGrouping,
                  model: nn.Module,
                  callback):
         super(MAPPO_Learner, self).__init__(config, agent_grouping, model, callback)
-
-    def build_optimizer(self):
-        self.optimizer = torch.optim.Adam(
-            self.model.parameters(),
-            lr=self.learning_rate,
-            eps=1e-5,
-            weight_decay=self.config.weight_decay
-        )
-        self.scheduler = torch.optim.lr_scheduler.LinearLR(
-            self.optimizer,
-            start_factor=1.0,
-            end_factor=self.end_factor_lr_decay,
-            total_iters=self.total_iters
-        )
+        self.clip_range = config.clip_range
+        self.use_global_state = config.use_global_state
 
     def update(self, sample):
         self.iterations += 1

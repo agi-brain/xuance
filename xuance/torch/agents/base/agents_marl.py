@@ -17,7 +17,7 @@ from torch.distributed import destroy_process_group
 from xuance.common import get_time_string, create_directory, MultiAgentBaseCallback, AgentGrouping
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv, space2shape
 from xuance.torch import REGISTRY_Representation, REGISTRY_Learners, Module
-from xuance.torch.learners import learner
+from xuance.torch.learners import LearnerMAS
 from xuance.torch.utils import (NormalizeFunctions, InitializeFunctions, ActivationFunctions,
                                 init_distributed_mode, set_seed, set_device)
 from xuance.torch.rl_models import AgentFeatureEncoder
@@ -198,7 +198,7 @@ class MARLAgents(ABC):
         # predefine necessary components
         self.model_keys = [self.agent_keys[0]] if self.use_parameter_sharing else self.agent_keys
         self.model: Optional[nn.Module] = None
-        self.learner: Optional[learner] = None
+        self.learner: Optional[LearnerMAS] = None
         self.memory: Optional[object] = None
         self.callback = callback or MultiAgentBaseCallback()
 
