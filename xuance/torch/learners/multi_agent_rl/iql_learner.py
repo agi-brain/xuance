@@ -18,6 +18,7 @@ class IQL_Learner(OffPolicyMultiAgentLearner):
                  callback):
         super(IQL_Learner, self).__init__(config, agent_grouping, model, callback)
         self.sync_frequency = config.sync_frequency
+        self.mse_loss = nn.MSELoss()
         self.n_actions = {k: self.model.individual_q_networks[k].action_space.n for k in self.group_keys}
 
     def build_optimizer(self):
@@ -65,7 +66,6 @@ class IQL_Learner(OffPolicyMultiAgentLearner):
                 q_next = self.model.Qtarget(
                     observations=batch.next_observations,
                     agent_indices=batch.agent_indices,
-                    rnn_states=rnn_states
                 ).values
                 if self.config.double_q:
                     actions_next = self.model(observations=batch.next_observations,
@@ -140,6 +140,6 @@ class IQL_Learner(OffPolicyMultiAgentLearner):
         if self.iterations % self.sync_frequency == 0:
             self.model.copy_target()
 
-        info.update(self.callback.on_update_end(self.iterations, method="update", model=self.model, info=info))
+        info.update(self.callback.on_update_end(self.iterations, model=self.model, info=info))
 
         return info
