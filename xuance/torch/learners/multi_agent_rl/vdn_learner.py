@@ -32,8 +32,8 @@ class VDN_Learner(IQL_Learner):
             use_shared_rewards=True
         )
 
-        rewards_tot = torch.stack([r for r in batch.rewards.values()], dim=1).mean(dim=1, keepdim=False)
-        terminals_tot = torch.stack([d for d in batch.terminals.values()], dim=1).all(dim=1, keepdim=False).float()
+        rewards_tot = torch.stack([r for r in batch.rewards.values()], dim=1).mean(dim=1)
+        terminals_tot = torch.stack([d for d in batch.terminals.values()], dim=1).all(dim=1).float()
 
         info = self.callback.on_update_start(self.iterations, model=self.model, batch=batch,
                                              rewards_tot=rewards_tot, terminals_tot=terminals_tot)

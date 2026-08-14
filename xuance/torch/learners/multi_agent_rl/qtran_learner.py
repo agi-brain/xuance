@@ -6,48 +6,46 @@ Implementation: Pytorch
 """
 import torch
 from torch import nn
-from xuance.torch.learners import LearnerMAS
-from xuance.common import AgentGrouping
 from argparse import Namespace
 from operator import itemgetter
+from xuance.common import AgentGrouping
+from xuance.torch.learners import OffPolicyMultiAgentLearner
 
 
-class QTRAN_Learner(LearnerMAS):
+class QTRAN_Learner(OffPolicyMultiAgentLearner):
     def __init__(self,
                  config: Namespace,
                  agent_grouping: AgentGrouping,
                  model: nn.Module,
                  callback):
-        self.sync_frequency = config.sync_frequency
-        self.mse_loss = nn.MSELoss()
         super(QTRAN_Learner, self).__init__(config, agent_grouping, model, callback)
-        self.optimizer = torch.optim.Adam(self.model.parameters_model, config.learning_rate, eps=1e-5)
-        self.scheduler = torch.optim.lr_scheduler.LinearLR(self.optimizer,
-                                                           start_factor=1.0,
-                                                           end_factor=self.end_factor_lr_decay,
-                                                           total_iters=self.total_iters)
+        self.sync_frequency = config.sync_frequency
         self.n_actions = {k: self.model.individual_q_networks[k].action_space.n for k in self.group_keys}
 
     def update(self, sample):
+        if self.use_rnn:
+            return self.update_rnn(sample)
+
         self.iterations += 1
 
         # prepare training data
-        sample_Tensor = self.build_training_data(sample=sample,
-                                                 use_parameter_sharing=self.use_parameter_sharing,
-                                                 use_actions_mask=self.use_actions_mask,
-                                                 use_global_state=True)
-        batch_size = sample_Tensor['batch_size']
-        state = sample_Tensor['state']
-        state_next = sample_Tensor['state_next']
-        obs = sample_Tensor['obs']
-        actions = sample_Tensor['actions']
-        obs_next = sample_Tensor['obs_next']
-        rewards = sample_Tensor['rewards']
-        terminals = sample_Tensor['terminals']
-        agent_mask = sample_Tensor['agent_mask']
-        avail_actions = sample_Tensor['avail_actions']
-        avail_actions_next = sample_Tensor['avail_actions_next']
-        agent_indices = sample_Tensor['agent_indices']
+        batch = self.build_training_data(sample=sample,
+                                         use_parameter_sharing=self.use_parameter_sharing,
+                                         use_actions_mask=self.use_actions_mask,
+                                         use_global_state=True,
+                                         use_shared_rewards=True)
+        batch_size = batch.batch_size
+        state = batch.global_states
+        state_next = batch.next_global_states
+        obs = batch.observations
+        actions = batch.actions
+        obs_next = batch.next_observations
+        rewards = batch.rewards
+        terminals = batch.terminals
+        agent_mask = batch.agent_masks
+        avail_actions = batch.avail_actions
+        avail_actions_next = batch.next_avail_actions
+        agent_indices = batch.agent_indices
 
         if not self.agent_grouping.full_independent:
             obs = self.packed_tensor(obs)
@@ -57,7 +55,7 @@ class QTRAN_Learner(LearnerMAS):
         terminals_tot = torch.stack(itemgetter(*self.agent_keys)(terminals), dim=1).all(dim=1, keepdim=True).float()
 
         info = self.callback.on_update_start(self.iterations, method="update",
-                                             model=self.model, sample_Tensor=sample_Tensor,
+                                             model=self.model, batch=batch,
                                              rewards_tot=rewards_tot, terminals_tot=terminals_tot)
 
         model_output = self.model(observations=obs,
@@ -128,11 +126,11 @@ class QTRAN_Learner(LearnerMAS):
         elif self.config.agent == "QTRAN_alt":
             # -- TD Loss -- (Computed for all agents)
             q_count, v_joint = self.model.Q_tran(state, hidden_state, actions, agent_mask)
-            actions_choosen = itemgetter(*self.agent_keys)(actions)
+            actions_choosen = torch.stack([actions[k] for k in self.agent_keys], dim=1)
             actions_choosen = actions_choosen.reshape(-1, self.n_agents, 1)
             q_joint_choosen = q_count.gather(-1, actions_choosen.long()).reshape(-1, self.n_agents)
             q_next_count, _ = self.model.Q_tran_target(state_next, hidden_state_next, a_next_greedy, agent_mask)
-            actions_next_choosen = itemgetter(*self.agent_keys)(a_next_greedy)
+            actions_next_choosen = torch.stack([a_next_greedy[k] for k in self.agent_keys], dim=1)
             actions_next_choosen = actions_next_choosen.reshape(-1, self.n_agents, 1)
             q_joint_next_choosen = q_next_count.gather(-1, actions_next_choosen.long()).reshape(-1, self.n_agents)
 
@@ -142,7 +140,7 @@ class QTRAN_Learner(LearnerMAS):
             # -- Opt Loss -- (Computed for all agents)
             q_tot_greedy = self.model.Q_tot(q_eval_greedy_a)
             q_joint_greedy_hat, _ = self.model.Q_tran(state, hidden_state, actions_greedy, agent_mask)
-            actions_greedy_current = itemgetter(*self.agent_keys)(actions_greedy)
+            actions_greedy_current = torch.stack([actions_greedy[k] for k in self.agent_keys], dim=1)
             actions_greedy_current = actions_greedy_current.reshape(-1, self.n_agents, 1)
             q_joint_greedy_hat_all = q_joint_greedy_hat.gather(
                 -1, actions_greedy_current.long()).reshape(-1, self.n_agents)
@@ -150,8 +148,9 @@ class QTRAN_Learner(LearnerMAS):
             loss_opt = torch.mean(error_opt ** 2)  # Opt loss
 
             # -- Nopt Loss --
-            q_eval_count = itemgetter(*self.agent_keys)(q_eval).reshape(batch_size * self.n_agents, -1)
-            q_sums = itemgetter(*self.agent_keys)(q_eval_a).reshape(-1, self.n_agents)
+            q_eval_count = torch.stack([q_eval[k] for k in self.agent_keys], dim=1)
+            q_eval_count = q_eval_count.reshape(batch_size * self.n_agents, -1)
+            q_sums = torch.stack([q_eval_a[k] for k in self.agent_keys], dim=1).reshape(-1, self.n_agents)
             q_sums_repeat = q_sums.unsqueeze(dim=1).repeat(1, self.n_agents, 1)
             agent_mask_diag = (1 - torch.eye(self.n_agents, dtype=torch.float32,
                                              device=self.device)).unsqueeze(0).repeat(batch_size, 1, 1)
@@ -198,22 +197,23 @@ class QTRAN_Learner(LearnerMAS):
         self.iterations += 1
 
         # prepare training data
-        sample_Tensor = self.build_training_data(sample=sample,
-                                                 use_parameter_sharing=self.use_parameter_sharing,
-                                                 use_actions_mask=self.use_actions_mask,
-                                                 use_global_state=True)
-        batch_size = sample_Tensor['batch_size']
-        seq_len = sample['sequence_length']
-        state = sample_Tensor['state']
-        obs = sample_Tensor['obs']
-        actions = sample_Tensor['actions']
-        rewards = sample_Tensor['rewards']
-        terminals = sample_Tensor['terminals']
-        agent_mask = sample_Tensor['agent_mask']
-        avail_actions = sample_Tensor['avail_actions']
-        filled = sample_Tensor['filled'].reshape([-1, 1])
+        batch = self.build_training_data(sample=sample,
+                                         use_parameter_sharing=self.use_parameter_sharing,
+                                         use_actions_mask=self.use_actions_mask,
+                                         use_global_state=True,
+                                         use_shared_rewards=True)
+        batch_size = batch.batch_size
+        seq_len = batch.seq_length
+        state = batch.global_states
+        obs = batch.observations
+        actions = batch.actions
+        rewards = batch.rewards
+        terminals = batch.terminals
+        agent_mask = batch.agent_masks
+        avail_actions = batch.avail_actions
+        filled = batch.filled_masks.reshape([-1, 1])
         filled_n = filled.repeat(1, self.n_agents)
-        agent_indices = sample_Tensor['agent_indices']
+        agent_indices = batch.agent_indices
 
         if not self.agent_grouping.full_independent:
             obs = self.packed_tensor(obs)
@@ -222,7 +222,7 @@ class QTRAN_Learner(LearnerMAS):
         terminals_tot = torch.stack(itemgetter(*self.agent_keys)(terminals), dim=1).all(1).reshape([-1, 1]).float()
 
         info = self.callback.on_update_start(self.iterations, method="update_rnn",
-                                             model=self.model, sample_Tensor=sample_Tensor,
+                                             model=self.model, batch=batch,
                                              rewards_tot=rewards_tot, terminals_tot=terminals_tot)
 
         rnn_states = self.model.init_rnn_states(batch_size)
@@ -296,11 +296,12 @@ class QTRAN_Learner(LearnerMAS):
         elif self.config.agent == "QTRAN_alt":
             # -- TD Loss -- (Computed for all agents)
             q_count, v_joint = self.model.Q_tran(state[:, :-1], hidden_state, actions, agent_mask)
-            actions_choosen = itemgetter(*self.agent_keys)(actions)
+            actions_choosen = torch.stack([actions[k] for k in self.agent_keys], dim=2)
             actions_choosen = actions_choosen.reshape(-1, self.n_agents, 1)
             q_joint_choosen = q_count.gather(-1, actions_choosen.long()).reshape(-1, self.n_agents)
             q_next_count, _ = self.model.Q_tran_target(state[:, 1:], hidden_state_next, actions_next_greedy, agent_mask)
-            actions_next_choosen = itemgetter(*self.agent_keys)(actions_next_greedy)
+            actions_next_choosen = torch.stack([actions_next_greedy[k] for k in self.agent_keys], dim=2)
+
             actions_next_choosen = actions_next_choosen.reshape(-1, self.n_agents, 1)
             q_joint_next_choosen = q_next_count.gather(-1, actions_next_choosen.long()).reshape(-1, self.n_agents)
 
@@ -311,7 +312,7 @@ class QTRAN_Learner(LearnerMAS):
             # -- Opt Loss -- (Computed for all agents)
             q_tot_greedy = self.model.Q_tot(q_eval_greedy_a)
             q_joint_greedy_hat, _ = self.model.Q_tran(state[:, :-1], hidden_state, actions_greedy_eval, agent_mask)
-            actions_greedy_current = itemgetter(*self.agent_keys)(actions_greedy_eval)
+            actions_greedy_current = torch.stack([actions_greedy_eval[k] for k in self.agent_keys], dim=2)
             actions_greedy_current = actions_greedy_current.reshape(-1, self.n_agents, 1)
             q_joint_greedy_hat_all = q_joint_greedy_hat.gather(
                 -1, actions_greedy_current.long()).reshape(-1, self.n_agents)
@@ -319,10 +320,11 @@ class QTRAN_Learner(LearnerMAS):
             loss_opt = (error_opt ** 2).sum() / filled_n.sum()  # Opt loss
 
             # -- Nopt Loss --
-            q_eval_count = itemgetter(*self.agent_keys)(q_eval)[:, :-1].reshape(batch_size, self.n_agents, seq_len, -1)
-            q_eval_count = q_eval_count.transpose(1, 2).reshape(batch_size * seq_len * self.n_agents, -1)
-            q_sums = itemgetter(*self.agent_keys)(q_eval_a).reshape(batch_size, self.n_agents, seq_len)
-            q_sums = q_sums.transpose(1, 2).reshape(batch_size * seq_len, self.n_agents)
+            q_eval_count = torch.stack([q_eval[k][:, :-1] for k in self.agent_keys],
+                                       dim=2).reshape(batch_size, seq_len, self.n_agents, -1)
+            q_eval_count = q_eval_count.reshape(batch_size * seq_len * self.n_agents, -1)
+            q_sums = torch.stack([q_eval_a[k] for k in self.agent_keys], dim=2).reshape(-1, seq_len, self.n_agents)
+            q_sums = q_sums.reshape(batch_size * seq_len, self.n_agents)
             q_sums_repeat = q_sums.unsqueeze(dim=1).repeat(1, self.n_agents, 1)
             agent_mask_diag = (1 - torch.eye(self.n_agents, dtype=torch.float32,
                                              device=self.device)).unsqueeze(0).repeat(batch_size * seq_len, 1, 1)

@@ -59,14 +59,16 @@ class WQMIX_Learner(IQL_Learner):
                         agent_indices=batch.agent_indices,
                         rnn_states=rnn_states
                     ).values
-                    return_tensors["q_next"] = {k: v[:, 1:] for k, v in q_next_seq.items()}
+                    q_next = {k: v[:, 1:] for k, v in q_next_seq.items()}
+                else:
+                    q_next = None
 
                 q_eval = {k: v[:, :-1] for k, v in q_eval.items()}
                 q_eval_centralized = {k: v[:, :-1] for k, v in q_eval_centralized.items()}
                 q_next_centralized = {k: v[:, 1:] for k, v in q_next_centralized.items()}
 
-                return_tensors["actions_greedy"] = {k: v[:, :-1] for k, v in actions_greedy.items()}
-                return_tensors["next_actions_greedy"] = {k: v[:, 1:] for k, v in actions_greedy.items()}
+                next_actions_greedy = {k: v[:, 1:] for k, v in actions_greedy.items()}
+                actions_greedy = {k: v[:, :-1] for k, v in actions_greedy.items()}
 
             else:
                 q_next_centralized = self.model.target_q_centralized(
@@ -82,8 +84,8 @@ class WQMIX_Learner(IQL_Learner):
                     ).actions
                     if not self.agent_grouping.full_independent:
                         a_next_greedy = self.packed_tensor(a_next_greedy)
-                    return_tensors["next_actions_greedy"] = a_next_greedy
-
+                    next_actions_greedy = a_next_greedy
+                    q_next = None
                 else:
                     q_next = self.model.Qtarget(
                         observations=batch.next_observations,
@@ -94,40 +96,8 @@ class WQMIX_Learner(IQL_Learner):
                         for group in self.group_keys:
                             q_next[batch.next_avail_actions[group] == 0] = -1e10
 
-                    return_tensors["q_next"] = q_next
+                    next_actions_greedy = None
 
-                return_tensors["actions_greedy"] = actions_greedy
-
-        return_tensors["q_eval"] = q_eval
-        return_tensors["q_eval_centralized"] = q_eval_centralized
-        return_tensors["q_next_centralized"] = q_next_centralized
-
-        return return_tensors
-
-    def update(self, sample):
-        self.iterations += 1
-
-        # prepare training data
-        batch = self.build_training_data(sample=sample,
-                                         use_parameter_sharing=self.use_parameter_sharing,
-                                         use_actions_mask=self.use_actions_mask,
-                                         use_global_state=True,
-                                         use_shared_rewards=True)
-
-        rewards_tot = torch.stack([r for r in batch.rewards.values()], dim=1).mean(dim=1, keepdim=False)
-        terminals_tot = torch.stack([d for d in batch.terminals.values()], dim=1).all(dim=1, keepdim=False).float()
-
-        info = self.callback.on_update_start(self.iterations, model=self.model, batch=batch,
-                                             rewards_tot=rewards_tot, terminals_tot=terminals_tot)
-
-        # feedforward
-        values_dict = self._forward_transitions(batch)
-        q_eval = values_dict["q_eval"]
-        q_eval_centralized = values_dict["q_eval_centralized"]
-        q_next_centralized = values_dict["q_next_centralized"]
-        actions_greedy = values_dict["actions_greedy"]
-
-        # calculate target values
         q_eval_a, q_eval_centralized_a, q_next_centralized_a = {}, {}, {}
         for group, n_agents in self.n_group_agents.items():
             mask_values = batch.valid_mask(group, n_agents).reshape([-1, batch.seq_length])
@@ -138,9 +108,9 @@ class WQMIX_Learner(IQL_Learner):
                 -1, actions_greedy[group].long().unsqueeze(-1)).reshape(-1, batch.seq_length)
 
             if self.config.double_q:
-                actions_next = values_dict["next_actions_greedy"][group]
+                actions_next = next_actions_greedy[group]
             else:
-                actions_next = values_dict["q_next"].argmax(dim=-1, keepdim=True)
+                actions_next = q_next[group].argmax(dim=-1, keepdim=True)
 
             q_next_centralized_taken = q_next_centralized[group].gather(
                 -1, actions_next.long().unsqueeze(-1)).reshape(-1, batch.seq_length)
@@ -157,6 +127,26 @@ class WQMIX_Learner(IQL_Learner):
                 q_next_centralized_a[agent_key] = q_next_centralized_taken.reshape(
                     [batch.batch_size, n_agents, batch.seq_length])[:, i]
 
+        return q_eval_a, q_eval_centralized_a, q_next_centralized_a, actions_greedy
+
+    def update(self, sample):
+        self.iterations += 1
+
+        # prepare training data
+        batch = self.build_training_data(sample=sample,
+                                         use_parameter_sharing=self.use_parameter_sharing,
+                                         use_actions_mask=self.use_actions_mask,
+                                         use_global_state=True,
+                                         use_shared_rewards=True)
+
+        rewards_tot = torch.stack([r for r in batch.rewards.values()], dim=1).mean(dim=1)
+        terminals_tot = torch.stack([d for d in batch.terminals.values()], dim=1).all(dim=1).float()
+
+        info = self.callback.on_update_start(self.iterations, model=self.model, batch=batch,
+                                             rewards_tot=rewards_tot, terminals_tot=terminals_tot)
+        # feedforward
+        q_eval_a, q_eval_centralized_a, q_next_centralized_a, actions_greedy = self._forward_transitions(batch)
+
         if self.use_rnn:
             state_input = batch.global_states[:, :-1].reshape([batch.batch_size * batch.seq_length, -1])
             state_input_next = batch.global_states[:, 1:].reshape([batch.batch_size * batch.seq_length, -1])
@@ -164,15 +154,13 @@ class WQMIX_Learner(IQL_Learner):
             state_input = batch.global_states
             state_input_next = batch.next_global_states
         # calculate Q_tot
-        q_tot_eval = self.model.Q_tot(individual_values=q_eval_a,
-                                      states=state_input).reshape(-1)
+        q_tot_eval = self.model.Q_tot(individual_values=q_eval_a, states=state_input).reshape(-1)
         # calculate centralized Q
         q_tot_centralized = self.model.q_feedforward(individual_values=q_eval_centralized_a,
                                                      states=state_input).reshape(-1)
         # calculate y_i
         q_tot_next_centralized = self.model.target_q_feedforward(individual_values=q_next_centralized_a,
                                                                  states=state_input_next).reshape(-1)
-
         rewards_tot = rewards_tot.reshape(-1)
         terminals_tot = terminals_tot.reshape(-1)
 
@@ -183,8 +171,14 @@ class WQMIX_Learner(IQL_Learner):
         ones = torch.ones_like(td_error)
         w = ones * self.alpha
         if self.config.agent == "CWQMIX":
-            condition_1 = ((actions_greedy == batch.actions.reshape(
-                [-1, self.n_agents, 1])) * batch.agent_masks).all(dim=1)
+            condition_1_list = []
+            for group, agent_keys in self.groups.items():
+                n_agents = self.n_group_agents[group]
+                mask_values = batch.valid_mask(group, n_agents).reshape([batch.batch_size, n_agents, batch.seq_length])
+                a_greedy = actions_greedy[group].reshape([batch.batch_size, n_agents, batch.seq_length])
+                act = batch.actions[group].reshape([batch.batch_size, n_agents, batch.seq_length])
+                condition_1_list.append(((a_greedy == act) * mask_values))
+            condition_1 = torch.concat(condition_1_list, dim=1).all(dim=1).reshape(-1)
             condition_2 = target_value > q_tot_centralized
             conditions = condition_1 | condition_2
             w = torch.where(conditions, ones, w)

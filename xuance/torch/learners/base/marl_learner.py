@@ -43,24 +43,25 @@ class LearnerMAS(Learner):
         total_iters *= n_epochs
         return total_iters
 
-    def packed_tensor(self, agent_tensor: Dict[str, Tensor] | None = None) -> dict[str, Tensor] | None:
+    def packed_tensor(self, agent_tensor: Dict[str, Tensor] | None = None,
+                      group_key: str | None = None) -> dict[str, Tensor] | None:
         if agent_tensor is None:
             return None
         tensor_packed = {}
         tensor_shape = agent_tensor[self.agent_keys[0]].shape
         batch_size = tensor_shape[0]
 
-        for key, agent_keys in self.groups.items():
-            n_agents = self.n_group_agents[key]
+        group_list = self.group_keys if group_key is None else [group_key]
+
+        for group in group_list:
+            agent_keys = self.groups[group]
+            n_agents = self.n_group_agents[group]
             packed_batch_size = batch_size * n_agents  # packed batch size
 
             tensor_group = torch.stack([agent_tensor[k] for k in agent_keys], dim=1)
-            if self.use_cnn and len(tensor_group.shape) > 3:  # obs_array consists of images
-                grouped_tensor_shape = (packed_batch_size,) + tensor_shape[2:]
-            else:
-                grouped_tensor_shape = (packed_batch_size,) + tensor_shape[1:]
+            grouped_tensor_shape = (packed_batch_size,) + tensor_shape[1:]
 
-            tensor_packed[key] = tensor_group.reshape(grouped_tensor_shape)
+            tensor_packed[group] = tensor_group.reshape(grouped_tensor_shape)
 
         return tensor_packed
 

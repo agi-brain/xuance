@@ -4,18 +4,22 @@ Implementation: Pytorch
 """
 import torch
 from torch import nn
-from xuance.torch.learners import LearnerMAS
-from xuance.common import AgentGrouping
 from argparse import Namespace
+from xuance.common import AgentGrouping
+from xuance.torch.learners import OffPolicyMultiAgentLearner
+from xuance.torch.rl_models.modules import OffPolicyMARLBatch
 
 
-class IDDPG_Learner(LearnerMAS):
+class IDDPG_Learner(OffPolicyMultiAgentLearner):
     def __init__(self,
                  config: Namespace,
                  agent_grouping: AgentGrouping,
                  model: nn.Module,
                  callback):
         super(IDDPG_Learner, self).__init__(config, agent_grouping, model, callback)
+        self.tau = config.tau
+
+    def build_optimizer(self):
         self.optimizer = {
             key: {'actor': torch.optim.Adam(self.model.actors[key].parameters(),
                                             self.config.learning_rate_actor, eps=1e-5),
@@ -32,54 +36,89 @@ class IDDPG_Learner(LearnerMAS):
                                                               end_factor=self.end_factor_lr_decay,
                                                               total_iters=self.total_iters)}
             for key in self.group_keys}
-        self.gamma = config.gamma
-        self.tau = config.tau
-        self.mse_loss = nn.MSELoss()
+
+    def _forward_transition(self, batch: OffPolicyMARLBatch):
+        rnn_states_actor = self.model.init_actor_rnn_states(batch.batch_size)
+        rnn_states_critic = self.model.init_critic_rnn_states(batch.batch_size)
+        if self.use_rnn:
+            obs_t = {k: v[:, :-1] for k, v in batch.observations.items()}
+            agent_indices_t = {k: v[:, :-1] for k, v in batch.agent_indices.items()}
+        else:
+            obs_t = batch.observations
+            agent_indices_t = batch.agent_indices
+
+        actions_eval = self.model(
+            observations=batch.observations,
+            agent_indices=batch.agent_indices,
+            rnn_states=rnn_states_actor
+        ).actions
+        if not self.agent_grouping.full_independent:
+            actions_eval = self.packed_tensor(actions_eval)
+
+        q_model = self.model.Qpolicy(
+            observations=batch.observations,
+            actions=actions_eval,
+            agent_indices=batch.agent_indices,
+            rnn_states=rnn_states_critic
+        )
+        q_eval = self.model.Qpolicy(
+            observations=obs_t,
+            actions=batch.actions,
+            agent_indices=agent_indices_t,
+            rnn_states=rnn_states_critic
+        )
+        with torch.no_grad():
+            if self.use_rnn:
+                next_actions = self.model.Atarget(
+                    observations=batch.observations,
+                    agent_indices=batch.agent_indices,
+                    rnn_states=rnn_states_actor
+                )
+                if not self.agent_grouping.full_independent:
+                    next_actions = self.packed_tensor(next_actions)
+                q_next = self.model.Qtarget(
+                    observations=batch.observations,
+                    actions=next_actions,
+                    agent_indices=batch.agent_indices,
+                    rnn_states=rnn_states_critic
+                )
+                q_model = {k: v[:, :-1] for k, v in q_model.items()}
+                q_next = {k: v[:, 1:] for k, v in q_next.items()}
+            else:
+                next_actions = self.model.Atarget(
+                    observations=batch.next_observations,
+                    agent_indices=batch.agent_indices
+                )
+                if not self.agent_grouping.full_independent:
+                    next_actions = self.packed_tensor(next_actions)
+                q_next = self.model.Qtarget(
+                    observations=batch.next_observations,
+                    actions=next_actions,
+                    agent_indices=batch.agent_indices
+                )
+
+        return q_model, q_eval, q_next
 
     def update(self, sample):
         self.iterations += 1
 
         # prepare training data.
-        sample_Tensor = self.build_training_data(sample,
-                                                 use_parameter_sharing=self.use_parameter_sharing,
-                                                 use_actions_mask=False)
-        batch_size = sample_Tensor['batch_size']
-        obs = sample_Tensor['obs']
-        actions = sample_Tensor['actions']
-        obs_next = sample_Tensor['obs_next']
-        rewards = sample_Tensor['rewards']
-        terminals = sample_Tensor['terminals']
-        agent_mask = sample_Tensor['agent_mask']
-        agent_indices = sample_Tensor['agent_indices']
+        batch = self.build_training_data(
+            sample,
+            use_parameter_sharing=self.use_parameter_sharing,
+            use_actions_mask=False
+        )
 
-        if not self.agent_grouping.full_independent:
-            obs = self.packed_tensor(obs)
-            actions = self.packed_tensor(actions)
-            obs_next = self.packed_tensor(obs_next)
-
-        info = self.callback.on_update_start(self.iterations, method="update",
-                                             model=self.model, sample_Tensor=sample_Tensor)
+        info = self.callback.on_update_start(self.iterations, model=self.model, batch=batch)
 
         # feedforward
-        actions_eval = self.model(observations=obs, agent_indices=agent_indices).actions
-        if not self.agent_grouping.full_independent:
-            actions_eval = self.packed_tensor(actions_eval)
-        q_model = self.model.Qpolicy(observations=obs, actions=actions_eval, agent_indices=agent_indices)
-        q_eval = self.model.Qpolicy(observations=obs, actions=actions, agent_indices=agent_indices)
-        next_actions = self.model.Atarget(observations=obs_next, agent_indices=agent_indices)
-        if not self.agent_grouping.full_independent:
-            next_actions = self.packed_tensor(next_actions)
-        q_next = self.model.Qtarget(observations=obs_next, actions=next_actions, agent_indices=agent_indices)
+        q_model, q_eval, q_next = self._forward_transition(batch)
 
-        for group, agent_keys in self.groups.items():
+        for group, n_agents in self.n_group_agents.items():
+            mask_values = batch.valid_mask(group, n_agents).reshape(-1)
+
             # update actor
-            loss_a = []
-            for key in agent_keys:
-                mask_values = agent_mask[key]
-                q_model_i = q_model[key].reshape(batch_size)
-                loss_i = -(q_model_i * mask_values).sum() / mask_values.sum()
-                loss_a.append(loss_i)
-            loss_actor = sum(loss_a)
+            loss_actor = (q_model[group].reshape(-1) * mask_values).sum() / mask_values.sum()
             self.optimizer[group]['actor'].zero_grad()
             loss_actor.backward()
             if self.use_grad_clip:
@@ -89,16 +128,11 @@ class IDDPG_Learner(LearnerMAS):
                 self.scheduler[group]['actor'].step()
 
             # update critic
-            loss_c = []
-            for key in agent_keys:
-                mask_values = agent_mask[key]
-                q_eval_a = q_eval[key].reshape(batch_size)
-                q_next_i = q_next[key].reshape(batch_size)
-                q_target = rewards[key] + (1 - terminals[key]) * self.gamma * q_next_i
-                td_error = (q_eval_a - q_target.detach()) * mask_values
-                loss_i = (td_error ** 2).sum() / mask_values.sum()
-                loss_c.append(loss_i)
-            loss_critic = sum(loss_c)
+            rewards = batch.rewards[group].reshape(-1)
+            terminals = batch.terminals[group].reshape(-1)
+            q_target = rewards + (1 - terminals) * self.gamma * q_next[group].reshape(-1)
+            td_error = (q_eval[group].reshape(-1) - q_target.detach()) * mask_values
+            loss_critic = (td_error ** 2).sum() / mask_values.sum()
             self.optimizer[group]['critic'].zero_grad()
             loss_critic.backward()
             if self.use_grad_clip:
@@ -115,114 +149,14 @@ class IDDPG_Learner(LearnerMAS):
                 f"{group}/learning_rate_critic": learning_rate_critic,
                 f"{group}/loss_actor": loss_actor.item(),
                 f"{group}/loss_critic": loss_critic.item(),
-                f"{group}/predictQ": q_eval[agent_keys[0]].mean().item()
+                f"{group}/predictQ": q_eval[group].mean().item()
             })
 
-            info.update(self.callback.on_update_agent_wise(self.iterations, group, info=info, method="update",
-                                                           mask_values=mask_values, q_model_i=q_model_i,
-                                                           q_eval_a=q_eval_a, q_next_i=q_next_i,
+            info.update(self.callback.on_update_agent_wise(self.iterations, group, info=info,
+                                                           mask_values=mask_values, q_model_i=q_model[group],
+                                                           q_eval_i=q_eval[group], q_next_i=q_next[group],
                                                            q_target=q_target, td_error=td_error))
 
         self.model.soft_update(self.tau)
-        info.update(self.callback.on_update_end(self.iterations, method="update", model=self.model, info=info))
-        return info
-
-    def update_rnn(self, sample):
-        self.iterations += 1
-
-        # prepare training data
-        sample_Tensor = self.build_training_data(sample=sample,
-                                                 use_parameter_sharing=self.use_parameter_sharing,
-                                                 use_actions_mask=self.use_actions_mask)
-        batch_size = sample_Tensor['batch_size']
-        seq_len = sample_Tensor['seq_length']
-        obs = sample_Tensor['obs']
-        actions = sample_Tensor['actions']
-        rewards = sample_Tensor['rewards']
-        terminals = sample_Tensor['terminals']
-        agent_mask = sample_Tensor['agent_mask']
-        filled = sample_Tensor['filled']
-        agent_indices = sample_Tensor['agent_indices']
-
-        if not self.agent_grouping.full_independent:
-            obs = self.packed_tensor(obs)
-            actions = self.packed_tensor(actions)
-
-        info = self.callback.on_update_start(self.iterations, method="update_rnn",
-                                             model=self.model, sample_Tensor=sample_Tensor)
-
-        # feedforward
-        rnn_states_actor = self.model.init_actor_rnn_states(batch_size)
-        rnn_states_critic = self.model.init_critic_rnn_states(batch_size)
-
-        actions_eval = self.model(observations=obs, agent_indices=agent_indices, rnn_states=rnn_states_actor).actions
-        if not self.agent_grouping.full_independent:
-            actions_eval = self.packed_tensor(actions_eval)
-        q_model = self.model.Qpolicy(observations=obs, actions=actions_eval, agent_indices=agent_indices,
-                                     rnn_states=rnn_states_critic)
-        obs_t = {k: v[:, :-1] for k, v in obs.items()}
-        agent_indices_t = {k: v[:, :-1] for k, v in agent_indices.items()}
-        q_eval = self.model.Qpolicy(observations=obs_t, actions=actions, agent_indices=agent_indices_t,
-                                    rnn_states=rnn_states_critic)
-        next_actions = self.model.Atarget(observations=obs, agent_indices=agent_indices,
-                                          rnn_states=rnn_states_actor)
-        if not self.agent_grouping.full_independent:
-            next_actions = self.packed_tensor(next_actions)
-        q_next = self.model.Qtarget(observations=obs, actions=next_actions, agent_indices=agent_indices,
-                                    rnn_states=rnn_states_critic)
-
-        for group, agent_keys in self.groups.items():
-            # update actor
-            loss_a = []
-            for key in agent_keys:
-                mask_values = agent_mask[key] * filled
-                q_model_i = q_model[key][:, :-1].reshape(batch_size, seq_len)
-                loss_i = -(q_model_i * mask_values).sum() / mask_values.sum()
-                loss_a.append(loss_i)
-            loss_actor = sum(loss_a)
-            self.optimizer[group]['actor'].zero_grad()
-            loss_actor.backward()
-            if self.use_grad_clip:
-                torch.nn.utils.clip_grad_norm_(self.model.parameters_actor[group], self.grad_clip_norm)
-            self.optimizer[group]['actor'].step()
-            if self.scheduler[group]['actor'] is not None:
-                self.scheduler[group]['actor'].step()
-
-            # update critic
-            loss_c = []
-            for key in agent_keys:
-                mask_values = agent_mask[key] * filled
-                q_eval_a = q_eval[key].reshape(batch_size, seq_len)
-                q_next_i = q_next[key][:, 1:].reshape(batch_size, seq_len)
-                q_target = rewards[key] + (1 - terminals[key]) * self.gamma * q_next_i
-                td_error = (q_eval_a - q_target.detach()) * mask_values
-                loss_i = (td_error ** 2).sum() / mask_values.sum()
-                loss_c.append(loss_i)
-            loss_critic = sum(loss_c)
-            self.optimizer[group]['critic'].zero_grad()
-            loss_critic.backward()
-            if self.use_grad_clip:
-                torch.nn.utils.clip_grad_norm_(self.model.parameters_critic[group], self.grad_clip_norm)
-            self.optimizer[group]['critic'].step()
-            if self.scheduler[group]['critic'] is not None:
-                self.scheduler[group]['critic'].step()
-
-            learning_rate_actor = self.optimizer[group]['actor'].state_dict()['param_groups'][0]['lr']
-            learning_rate_critic = self.optimizer[group]['critic'].state_dict()['param_groups'][0]['lr']
-
-            info.update({
-                f"{group}/learning_rate_actor": learning_rate_actor,
-                f"{group}/learning_rate_critic": learning_rate_critic,
-                f"{group}/loss_actor": loss_actor.item(),
-                f"{group}/loss_critic": loss_critic.item(),
-                f"{group}/predictQ": q_eval[agent_keys[0]].mean().item()
-            })
-
-            info.update(self.callback.on_update_agent_wise(self.iterations, group, info=info, method="update_rnn",
-                                                           mask_values=mask_values, q_model_i=q_model_i,
-                                                           q_eval_a=q_eval_a, q_next_i=q_next_i,
-                                                           q_target=q_target, td_error=td_error))
-
-        self.model.soft_update(self.tau)
-        info.update(self.callback.on_update_end(self.iterations, method="update_rnn", model=self.model, info=info))
+        info.update(self.callback.on_update_end(self.iterations, model=self.model, info=info))
         return info

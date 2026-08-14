@@ -65,12 +65,11 @@ class MeanFieldQNetwork(MixingQNetwork):
             individual_output = self.individual_q_networks[group](observations[group], mean_actions[group],
                                                                   **input_kwargs)
 
-            individual_values = individual_output.values.reshape(*batch_shape, -1)
-
             rnn_states_new[group] = individual_output.representations.rnn_states
             rep_out[group] = individual_output.representations
+            evalQ[group] = individual_output.values  # shape: bs * -1 or bs * seq_len * -1
 
-            evalQ_detach = individual_values.clone().detach()
+            evalQ_detach = individual_output.values.reshape(*batch_shape, -1).clone().detach()
             if avail_actions is not None:
                 evalQ_detach[avail_actions[group] == 0] = -1e10
 
@@ -84,7 +83,6 @@ class MeanFieldQNetwork(MixingQNetwork):
 
             for i, agent_key in enumerate(group_agents):
                 actions[agent_key] = group_actions[:, i]
-                evalQ[agent_key] = individual_values[:, i]
 
         return MultiAgentModelOutput(
             actions=actions,
@@ -124,12 +122,11 @@ class MeanFieldQNetwork(MixingQNetwork):
             individual_output = self.target_individual_q_networks[group](observations[group], mean_actions[group],
                                                                          **target_input_kwargs)
 
-            individual_values = individual_output.values.reshape(*batch_shape, -1)
-
             rnn_states_new[group] = individual_output.representations.rnn_states
             rep_out[group] = individual_output.representations
+            targetQ[group] = individual_output.values
 
-            targetQ_detach = individual_values.clone().detach()
+            targetQ_detach = individual_output.values.reshape(*batch_shape, -1).clone().detach()
             if avail_actions is not None:
                 targetQ_detach[avail_actions[group] == 0] = -1e10
 
@@ -143,7 +140,6 @@ class MeanFieldQNetwork(MixingQNetwork):
 
             for i, agent_key in enumerate(group_agents):
                 actions[agent_key] = group_actions[:, i]
-                targetQ[agent_key] = individual_values[:, i]
 
         return MultiAgentModelOutput(
             actions=actions,

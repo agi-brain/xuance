@@ -79,9 +79,9 @@ class IQL_Learner(OffPolicyMultiAgentLearner):
         for group in self.group_keys:
             if self.use_actions_mask:
                 if self.use_rnn:
-                    next_avail_actions = batch.next_avail_actions
-                else:
                     next_avail_actions = batch.avail_actions[group][:, 1:]
+                else:
+                    next_avail_actions = batch.next_avail_actions
                 q_next[group][next_avail_actions == 0] = -1e10
 
         return q_eval, q_next, actions_next

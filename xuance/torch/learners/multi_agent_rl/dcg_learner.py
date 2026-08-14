@@ -25,6 +25,7 @@ class DCG_Learner(OffPolicyMultiAgentLearner):
         super(DCG_Learner, self).__init__(config, agent_grouping, model, callback)
         self.dim_hidden_state = model.representation[self.group_keys[0]].output_shapes['state'][0]
         self.dim_act = max([self.model.action_space[key].n for key in self.agent_keys])
+        self.sync_frequency = config.sync_frequency
 
     def build_training_data(
             self,
@@ -171,7 +172,7 @@ class DCG_Learner(OffPolicyMultiAgentLearner):
                                                          dim_size=n_vertexes)
                 utility = f_i_mean + msg_forward + msg_backward
         if avail_actions is not None:
-            avail_actions = torch.Tensor(avail_actions)
+            avail_actions = torch.as_tensor(avail_actions, device=self.device)
             utility_detach = utility.clone().detach()
             utility_detach[avail_actions == 0] = -1e10
             actions_greedy = utility_detach.argmax(dim=-1)
@@ -190,7 +191,7 @@ class DCG_Learner(OffPolicyMultiAgentLearner):
                       actions[:, self.model.graph.edges_to]).unsqueeze(-1)
         payoffs = f_ij_mean.reshape(list(f_ij_mean.shape[0:-2]) + [-1]).gather(-1, actions_ij.long()).sum(dim=1)
         if self.config.agent == "DCG_S":
-            state_value = self.model.bias(states)
+            state_value = self.model.bias(states).unsqueeze(-1)
             return utilities + payoffs + state_value
         else:
             return utilities + payoffs
@@ -207,8 +208,11 @@ class DCG_Learner(OffPolicyMultiAgentLearner):
                                                         use_target_net=False)
         if self.use_rnn:
             seq_len = batch.seq_length
-            state_current = batch.global_states[:, :-1] if self.config.agent == "DCG_S" else None
-            state_next = batch.global_states[:, 1:] if self.config.agent == "DCG_S" else None
+            if self.config.agent == "DCG_S":
+                state_current = batch.global_states[:, :-1].reshape(batch_size * seq_len, -1)
+                state_next = batch.global_states[:, 1:].reshape(batch_size * seq_len, -1)
+            else:
+                state_current, state_next = None, None
             q_tot_eval = self.q_dcg(hidden_states[:, :-1].reshape(batch_size * seq_len, self.n_agents, -1),
                                     actions.reshape(batch_size * seq_len, self.n_agents),
                                     states=state_current, use_target_net=False)
@@ -229,6 +233,8 @@ class DCG_Learner(OffPolicyMultiAgentLearner):
         else:
             if self.use_actions_mask:
                 avail_actions_next = torch.stack([batch.next_avail_actions[k] for k in self.agent_keys], dim=-2)
+            else:
+                avail_actions_next = None
 
             q_tot_eval = self.q_dcg(hidden_states, actions, states=batch.global_states, use_target_net=False)
 
@@ -257,8 +263,8 @@ class DCG_Learner(OffPolicyMultiAgentLearner):
             use_shared_rewards=True
         )
 
-        rewards_tot = torch.stack([r for r in batch.rewards.values()], dim=1).mean(dim=1, keepdim=False)
-        terminals_tot = torch.stack([d for d in batch.terminals.values()], dim=1).all(dim=1, keepdim=False).float()
+        rewards_tot = torch.stack([r for r in batch.rewards.values()], dim=1).mean(dim=1)
+        terminals_tot = torch.stack([d for d in batch.terminals.values()], dim=1).all(dim=1).float()
 
         info = self.callback.on_update_start(self.iterations, model=self.model, batch=batch,
                                              rewards_tot=rewards_tot, terminals_tot=terminals_tot)

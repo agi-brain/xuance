@@ -53,7 +53,7 @@ class COMA_Learner(IAC_Learner):
 
         joint_actions = torch.concat([one_hot(torch.as_tensor(v, device=self.device, dtype=torch.int64),
                                               num_classes=self.n_actions[k])
-                                      for k, v in sample['actions'].items()], dim=1)
+                                      for k, v in sample['actions'].items()], dim=-1)
         if self.use_rnn:
             joint_actions = joint_actions.reshape([batch.batch_size, batch.seq_length, -1])
         else:

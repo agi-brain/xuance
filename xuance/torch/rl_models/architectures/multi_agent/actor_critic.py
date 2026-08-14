@@ -430,17 +430,10 @@ class IndependentDeterministicActorCritic(OffPolicyMultiAgentActorCritic):
             **kwargs
     ) -> Dict[str, Tensor]:
         q_eval = {}
-        input_shape = observations[self.group_keys[0]].shape
-        bs = input_shape[0]
-        seq_len = input_shape[1] if self.use_rnn else 1
 
         group_list = self.group_keys if group_key is None else [group_key]
 
         for group in group_list:
-            group_agents = self.groups[group]
-            n_agent = self.n_group_agents[group]
-            batch_size = bs // n_agent
-            batch_shape = (batch_size, n_agent, seq_len) if self.use_rnn else (batch_size, n_agent)
 
             critic_kwargs = {
                 "agent_indices": agent_indices[group]
@@ -450,10 +443,7 @@ class IndependentDeterministicActorCritic(OffPolicyMultiAgentActorCritic):
 
             critic_out = self.critics[group](observations[group], actions[group], **critic_kwargs)
 
-            group_values = critic_out.values.reshape(*batch_shape, -1)
-
-            for i, agent_key in enumerate(group_agents):
-                q_eval[agent_key] = group_values[:, i]
+            q_eval[group] = critic_out.values
 
         return q_eval
 
@@ -467,17 +457,10 @@ class IndependentDeterministicActorCritic(OffPolicyMultiAgentActorCritic):
             **kwargs
     ) -> Dict[str, Tensor]:
         q_target = {}
-        input_shape = observations[self.group_keys[0]].shape
-        bs = input_shape[0]
-        seq_len = input_shape[1] if self.use_rnn else 1
 
         group_list = self.group_keys if group_key is None else [group_key]
 
         for group in group_list:
-            group_agents = self.groups[group]
-            n_agent = self.n_group_agents[group]
-            batch_size = bs // n_agent
-            batch_shape = (batch_size, n_agent, seq_len) if self.use_rnn else (batch_size, n_agent)
 
             critic_kwargs = {
                 "agent_indices": agent_indices[group]
@@ -487,10 +470,7 @@ class IndependentDeterministicActorCritic(OffPolicyMultiAgentActorCritic):
 
             target_critic_out = self.target_critics[group](observations[group], actions[group], **critic_kwargs)
 
-            group_values = target_critic_out.values.reshape(*batch_shape, -1)
-
-            for i, agent_key in enumerate(group_agents):
-                q_target[agent_key] = group_values[:, i]
+            q_target[group] = target_critic_out.values
 
         return q_target
 
