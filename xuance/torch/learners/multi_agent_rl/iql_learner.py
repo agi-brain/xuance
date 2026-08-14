@@ -18,7 +18,6 @@ class IQL_Learner(OffPolicyMultiAgentLearner):
                  callback):
         super(IQL_Learner, self).__init__(config, agent_grouping, model, callback)
         self.sync_frequency = config.sync_frequency
-        self.mse_loss = nn.MSELoss()
         self.n_actions = {k: self.model.individual_q_networks[k].action_space.n for k in self.group_keys}
 
     def build_optimizer(self):

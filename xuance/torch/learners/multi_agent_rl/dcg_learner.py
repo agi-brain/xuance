@@ -4,33 +4,120 @@ Paper link: http://proceedings.mlr.press/v119/boehmer20a/boehmer20a.pdf
 Implementation: Pytorch
 """
 import torch
-from torch import nn
-from operator import itemgetter
-from xuance.torch.learners import LearnerMAS
-from xuance.common import AgentGrouping
+from torch import nn, Tensor
 from argparse import Namespace
+from xuance.common import Optional, AgentGrouping
+from xuance.torch.learners import OffPolicyMultiAgentLearner
+from xuance.torch.rl_models.modules import OffPolicyMARLBatch
+
 try:
     import torch_scatter
 except ImportError:
     print("The module torch_scatter is not installed.")
 
 
-class DCG_Learner(LearnerMAS):
+class DCG_Learner(OffPolicyMultiAgentLearner):
     def __init__(self,
                  config: Namespace,
                  agent_grouping: AgentGrouping,
                  model: nn.Module,
                  callback):
         super(DCG_Learner, self).__init__(config, agent_grouping, model, callback)
-        self.optimizer = torch.optim.Adam(self.model.parameters_model, self.learning_rate, eps=1e-5)
-        self.scheduler = torch.optim.lr_scheduler.LinearLR(self.optimizer,
-                                                           start_factor=1.0,
-                                                           end_factor=self.end_factor_lr_decay,
-                                                           total_iters=self.total_iters)
         self.dim_hidden_state = model.representation[self.group_keys[0]].output_shapes['state'][0]
         self.dim_act = max([self.model.action_space[key].n for key in self.agent_keys])
-        self.sync_frequency = config.sync_frequency
-        self.mse_loss = nn.MSELoss()
+
+    def build_training_data(
+            self,
+            sample: Optional[dict],
+            use_parameter_sharing: Optional[bool] = False,
+            use_actions_mask: Optional[bool] = False,
+            use_global_state: Optional[bool] = False,
+            use_shared_rewards: Optional[bool] = False,
+    ) -> OffPolicyMARLBatch:
+        """
+        Prepare the training data.
+
+        Parameters:
+            sample (dict): The raw sampled data.
+            use_parameter_sharing (bool): Whether to use parameter sharing for individual agent models.
+            use_actions_mask (bool): Whether to use actions mask for unavailable actions.
+            use_global_state (bool): Whether to use global state.
+            use_shared_rewards (bool)： Whether to use shared rewards for each agent.
+
+        Returns:
+            OffPolicyMARLBatch: The formatted sampled data.
+        """
+        batch_size = sample['batch_size']
+        seq_length = sample['sequence_length'] if self.use_rnn else 1
+        state, state_next, filled = None, None, None
+        obs, actions, rewards, terminals, agent_mask = {}, {}, {}, {}, {}
+        avail_actions = {} if use_actions_mask else None
+        agent_indices = {}
+        if self.use_rnn:
+            obs_next, avail_actions_next = None, None
+        else:
+            obs_next = {}
+            avail_actions_next = {} if use_actions_mask else None
+
+        for agent in self.agent_keys:
+            obs[agent] = torch.as_tensor(sample['obs'][agent], device=self.device)
+            if not self.use_rnn:
+                obs_next[agent] = torch.as_tensor(sample['obs_next'][agent], device=self.device)
+            actions[agent] = torch.as_tensor(sample['actions'][agent], device=self.device)
+            rewards[agent] = torch.as_tensor(sample['rewards'][agent], device=self.device)
+            terminals[agent] = torch.as_tensor(sample['terminals'][agent], device=self.device, dtype=torch.float32)
+            agent_mask[agent] = torch.as_tensor(sample['agent_mask'][agent], device=self.device, dtype=torch.float32)
+            if use_actions_mask:
+                avail_actions[agent] = torch.as_tensor(sample['avail_actions'][agent],
+                                                       device=self.device, dtype=torch.float32)
+                if not self.use_rnn:
+                    avail_actions_next[agent] = torch.as_tensor(sample['avail_actions_next'][agent],
+                                                                device=self.device, dtype=torch.float32)
+
+        if use_global_state:
+            state = torch.as_tensor(sample['state'], device=self.device)
+            if not self.use_rnn:
+                state_next = torch.as_tensor(sample['state_next'], device=self.device)
+
+        if self.use_rnn:
+            filled = torch.as_tensor(sample['filled'], device=self.device, dtype=torch.float32)
+
+        for key, n_agents in self.n_group_agents.items():
+            bs = batch_size * n_agents
+
+            if self.use_rnn:
+                agents_id = torch.as_tensor(self.agent_grouping.agent_indices(key), dtype=torch.int64).repeat(
+                    batch_size, 1).reshape(bs, 1, 1).expand(-1, seq_length + 1, -1).to(self.device)
+            else:
+                agents_id = torch.as_tensor(self.agent_indices[key], dtype=torch.int64).repeat(
+                    batch_size, 1).reshape([bs, 1]).to(self.device)
+
+            agent_indices[key] = agents_id
+
+        if not self.agent_grouping.full_independent:
+            obs = self.packed_tensor(obs)
+            obs_next = self.packed_tensor(obs_next)
+            if not use_shared_rewards:
+                rewards = self.packed_tensor(rewards)
+                terminals = self.packed_tensor(terminals)
+            agent_mask = self.packed_tensor(agent_mask)
+
+        return OffPolicyMARLBatch(
+            batch_size=batch_size,
+            global_states=state,
+            next_global_states=state_next,
+            observations=obs,
+            actions=actions,
+            next_observations=obs_next,
+            rewards=rewards,
+            terminals=terminals,
+            agent_masks=agent_mask,
+            avail_actions=avail_actions,
+            next_avail_actions=avail_actions_next,
+            agent_indices=agent_indices,
+            filled_masks=filled,
+            seq_length=seq_length,
+        )
 
     def get_graph_values(self, hidden_states, use_target_net=False):
         if use_target_net:
@@ -41,7 +128,7 @@ class DCG_Learner(LearnerMAS):
             payoff = self.model.payoffs(hidden_states, self.model.graph.edges_from, self.model.graph.edges_to)
         return utilities, payoff
 
-    def act(self, hidden_states, avail_actions=None):
+    def act(self, hidden_states, avail_actions: Tensor | None = None):
         """
         Calculate the actions via belief propagation.
 
@@ -108,152 +195,97 @@ class DCG_Learner(LearnerMAS):
         else:
             return utilities + payoffs
 
+    def _forward_transitions(self, batch: OffPolicyMARLBatch):
+        batch_size = batch.batch_size
+        actions = torch.stack([batch.actions[k] for k in self.agent_keys], dim=-1)
+
+        rnn_states = self.model.init_rnn_states(batch_size)
+
+        _, hidden_states = self.model.get_hidden_states(observations=batch.observations,
+                                                        agent_indices=batch.agent_indices,
+                                                        rnn_states=rnn_states,
+                                                        use_target_net=False)
+        if self.use_rnn:
+            seq_len = batch.seq_length
+            state_current = batch.global_states[:, :-1] if self.config.agent == "DCG_S" else None
+            state_next = batch.global_states[:, 1:] if self.config.agent == "DCG_S" else None
+            q_tot_eval = self.q_dcg(hidden_states[:, :-1].reshape(batch_size * seq_len, self.n_agents, -1),
+                                    actions.reshape(batch_size * seq_len, self.n_agents),
+                                    states=state_current, use_target_net=False)
+
+            if self.use_actions_mask:
+                avail_actions = torch.stack([batch.avail_actions[k] for k in self.agent_keys], dim=-2)
+                avail_a_next = avail_actions[:, 1:].reshape(batch_size * seq_len, self.n_agents, -1)
+            else:
+                avail_a_next = None
+            hidden_states_next = hidden_states[:, 1:].reshape(batch_size * seq_len, self.n_agents, -1)
+            action_next_greedy = torch.Tensor(self.act(hidden_states_next, avail_actions=avail_a_next)).to(self.device)
+            _, hidden_states_tar = self.model.get_hidden_states(observations=batch.observations,
+                                                                agent_indices=batch.agent_indices,
+                                                                rnn_states=rnn_states,
+                                                                use_target_net=True)
+            q_tot_next = self.q_dcg(hidden_states_tar[:, 1:].reshape(batch_size * seq_len, self.n_agents, -1),
+                                    action_next_greedy, states=state_next, use_target_net=True)
+        else:
+            if self.use_actions_mask:
+                avail_actions_next = torch.stack([batch.next_avail_actions[k] for k in self.agent_keys], dim=-2)
+
+            q_tot_eval = self.q_dcg(hidden_states, actions, states=batch.global_states, use_target_net=False)
+
+            _, hidden_states_next = self.model.get_hidden_states(observations=batch.next_observations,
+                                                                 agent_indices=batch.agent_indices,
+                                                                 use_target_net=False)
+            action_next_greedy = torch.Tensor(self.act(hidden_states_next, avail_actions_next)).to(self.device)
+            _, hidden_states_target = self.model.get_hidden_states(observations=batch.next_observations,
+                                                                   agent_indices=batch.agent_indices,
+                                                                   use_target_net=True)
+
+            q_tot_next = self.q_dcg(hidden_states_target, action_next_greedy,
+                                    states=batch.next_global_states, use_target_net=True)
+
+        return q_tot_eval, q_tot_next
+
     def update(self, sample):
         self.iterations += 1
 
         # prepare training data
-        sample_Tensor = self.build_training_data(sample=sample,
-                                                 use_parameter_sharing=self.use_parameter_sharing,
-                                                 use_actions_mask=self.use_actions_mask,
-                                                 use_global_state=True if self.config.agent == "DCG_S" else False)
-        batch_size = sample_Tensor['batch_size']
-        state = sample_Tensor['state']
-        state_next = sample_Tensor['state_next']
-        obs = sample_Tensor['obs']
-        actions = sample_Tensor['actions']
-        obs_next = sample_Tensor['obs_next']
-        rewards = sample_Tensor['rewards']
-        terminals = sample_Tensor['terminals']
-        avail_actions = sample_Tensor['avail_actions']
-        avail_actions_next = sample_Tensor['avail_actions_next']
-        agent_indices = sample_Tensor['agent_indices']
+        batch = self.build_training_data(
+            sample=sample,
+            use_parameter_sharing=self.use_parameter_sharing,
+            use_actions_mask=self.use_actions_mask,
+            use_global_state=True if self.config.agent == "DCG_S" else False,
+            use_shared_rewards=True
+        )
 
-        if not self.agent_grouping.full_independent:
-            obs = self.packed_tensor(obs)
-            obs_next = self.packed_tensor(obs_next)
+        rewards_tot = torch.stack([r for r in batch.rewards.values()], dim=1).mean(dim=1, keepdim=False)
+        terminals_tot = torch.stack([d for d in batch.terminals.values()], dim=1).all(dim=1, keepdim=False).float()
 
-        rewards_tot = torch.stack(itemgetter(*self.agent_keys)(rewards), dim=1).mean(dim=-1, keepdim=True)
-        terminals_tot = torch.stack(itemgetter(*self.agent_keys)(terminals), dim=1).all(dim=1, keepdim=True).float()
-        actions = torch.stack(itemgetter(*self.agent_keys)(actions), dim=-1)
-        if self.use_actions_mask:
-            avail_actions_next = torch.stack(itemgetter(*self.agent_keys)(avail_actions_next), dim=-2)
+        info = self.callback.on_update_start(self.iterations, model=self.model, batch=batch,
+                                             rewards_tot=rewards_tot, terminals_tot=terminals_tot)
 
-        info = self.callback.on_update_start(self.iterations, method="update",
-                                             model=self.model, sample_Tensor=sample_Tensor,
-                                             rewards_tot=rewards_tot, terminals_tot=terminals_tot, actions=actions,
-                                             avail_actions_next=avail_actions_next)
+        # feedforward
+        q_tot_eval, q_tot_next = self._forward_transitions(batch)
 
-        _, hidden_states = self.model.get_hidden_states(observations=obs,
-                                                        agent_indices=agent_indices,
-                                                        use_target_net=False)
-        q_tot_eval = self.q_dcg(hidden_states, actions, states=state, use_target_net=False)
-
-        _, hidden_states_next = self.model.get_hidden_states(observations=obs_next,
-                                                             agent_indices=agent_indices,
-                                                             use_target_net=False)
-        action_next_greedy = torch.Tensor(self.act(hidden_states_next, avail_actions_next)).to(self.device)
-        _, hidden_states_target = self.model.get_hidden_states(observations=obs_next,
-                                                               agent_indices=agent_indices,
-                                                               use_target_net=True)
-        q_tot_next = self.q_dcg(hidden_states_target, action_next_greedy, states=state_next, use_target_net=True)
-
+        # calculate target value
+        q_tot_eval = q_tot_eval.reshape(-1)
+        q_tot_next = q_tot_next.reshape(-1)
+        rewards_tot = rewards_tot.reshape(-1)
+        terminals_tot = terminals_tot.reshape(-1)
         q_tot_target = rewards_tot + (1 - terminals_tot) * self.gamma * q_tot_next
 
-        # calculate the loss function
-        loss = self.mse_loss(q_tot_eval, q_tot_target.detach())
-        self.optimizer.zero_grad()
-        loss.backward()
-        if self.use_grad_clip:
-            torch.nn.utils.clip_grad_norm_(self.model.parameters_model, self.grad_clip_norm)
-        self.optimizer.step()
-        if self.scheduler is not None:
-            self.scheduler.step()
-
-        lr = self.optimizer.state_dict()['param_groups'][0]['lr']
-
-        info.update({
-            "learning_rate": lr,
-            "loss_Q": loss.item(),
-            "predictQ": q_tot_eval.mean().item()
-        })
-
-        if self.iterations % self.sync_frequency == 0:
-            self.model.copy_target()
-
-        info.update(self.callback.on_update_end(self.iterations, method="update",
-                                                model=self.model, info=info,
-                                                hidden_states=hidden_states, q_tot_eval=q_tot_eval,
-                                                hidden_states_next=hidden_states_next,
-                                                action_next_greedy=action_next_greedy,
-                                                hidden_states_target=hidden_states_target,
-                                                q_tot_next=q_tot_next, q_tot_target=q_tot_target, loss=loss))
-
-        return info
-
-    def update_rnn(self, sample):
-        self.iterations += 1
-
-        # prepare training data
-        sample_Tensor = self.build_training_data(sample=sample,
-                                                 use_parameter_sharing=self.use_parameter_sharing,
-                                                 use_actions_mask=self.use_actions_mask,
-                                                 use_global_state=True if self.config.agent == "DCG_S" else False)
-        batch_size = sample_Tensor['batch_size']
-        seq_len = sample['sequence_length']
-        state = sample_Tensor['state']
-        obs = sample_Tensor['obs']
-        actions = sample_Tensor['actions']
-        rewards = sample_Tensor['rewards']
-        terminals = sample_Tensor['terminals']
-        avail_actions = sample_Tensor['avail_actions']
-        filled = sample_Tensor['filled'].reshape([-1, 1])
-        agent_indices = sample_Tensor['agent_indices']
-
-        if not self.agent_grouping.full_independent:
-            obs = self.packed_tensor(obs)
-
-        rewards_tot = torch.stack(itemgetter(*self.agent_keys)(rewards), dim=1).mean(dim=1).reshape(-1, 1)
-        terminals_tot = torch.stack(itemgetter(*self.agent_keys)(terminals), dim=1).all(1).reshape([-1, 1]).float()
-        actions = torch.stack(itemgetter(*self.agent_keys)(actions), dim=-1)
-        if self.use_actions_mask:
-            avail_actions = torch.stack(itemgetter(*self.agent_keys)(avail_actions), dim=-2)
-
-        info = self.callback.on_update_start(self.iterations, method="update_rnn",
-                                             model=self.model, sample_Tensor=sample_Tensor,
-                                             rewards_tot=rewards_tot, terminals_tot=terminals_tot,
-                                             actions=actions, avail_actions=avail_actions)
-
-        rnn_states = self.model.init_rnn_states(batch_size)
-        _, hidden_states = self.model.get_hidden_states(observations=obs, agent_indices=agent_indices,
-                                                        rnn_states=rnn_states,
-                                                        use_target_net=False)
-        state_current = state[:, :-1] if self.config.agent == "DCG_S" else None
-        state_next = state[:, 1:] if self.config.agent == "DCG_S" else None
-        q_tot_eval = self.q_dcg(hidden_states[:, :-1].reshape(batch_size * seq_len, self.n_agents, -1),
-                                actions.reshape(batch_size * seq_len, self.n_agents),
-                                states=state_current, use_target_net=False)
-
-        if self.use_actions_mask:
-            avail_a_next = avail_actions[:, 1:].reshape(batch_size * seq_len, self.n_agents, -1)
+        # calculate the loss
+        if self.use_rnn:
+            filled = batch.filled_masks.reshape(-1)
+            td_error = (q_tot_eval - q_tot_target.detach()) * filled
+            loss = (td_error ** 2).sum() / filled.sum()
         else:
-            avail_a_next = None
-        hidden_states_next = hidden_states[:, 1:].reshape(batch_size * seq_len, self.n_agents, -1)
-        action_next_greedy = torch.Tensor(self.act(hidden_states_next, avail_actions=avail_a_next)).to(self.device)
-        _, hidden_states_tar = self.model.get_hidden_states(observations=obs, agent_indices=agent_indices,
-                                                            rnn_states=rnn_states,
-                                                            use_target_net=True)
-        q_tot_next = self.q_dcg(hidden_states_tar[:, 1:].reshape(batch_size * seq_len, self.n_agents, -1),
-                                action_next_greedy, states=state_next, use_target_net=True)
+            loss = self.mse_loss(q_tot_eval, q_tot_target.detach())
 
-        q_tot_target = rewards_tot + (1 - terminals_tot) * self.gamma * q_tot_next
-        td_error = (q_tot_eval - q_tot_target.detach()) * filled
-
-        # calculate the loss function
-        loss = (td_error ** 2).sum() / filled.sum()
+        # update the networks
         self.optimizer.zero_grad()
         loss.backward()
         if self.use_grad_clip:
-            torch.nn.utils.clip_grad_norm_(self.model.parameters_model, self.grad_clip_norm)
+            torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.grad_clip_norm)
         self.optimizer.step()
         if self.scheduler is not None:
             self.scheduler.step()
@@ -269,12 +301,8 @@ class DCG_Learner(LearnerMAS):
         if self.iterations % self.sync_frequency == 0:
             self.model.copy_target()
 
-        info.update(self.callback.on_update_end(self.iterations, method="update_rnn",
-                                                model=self.model, info=info,
-                                                hidden_states=hidden_states, q_tot_eval=q_tot_eval,
-                                                hidden_states_next=hidden_states_next,
-                                                action_next_greedy=action_next_greedy,
-                                                hidden_states_target=hidden_states_tar,
-                                                q_tot_next=q_tot_next, q_tot_target=q_tot_target, loss=loss))
+        info.update(self.callback.on_update_end(self.iterations, model=self.model, info=info,
+                                                q_tot_eval=q_tot_eval, q_tot_next=q_tot_next, q_tot_target=q_tot_target,
+                                                loss=loss))
 
         return info

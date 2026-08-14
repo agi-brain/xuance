@@ -330,6 +330,7 @@ class OffPolicyMultiAgentLearner(LearnerMAS):
                  callback):
         super(OffPolicyMultiAgentLearner, self).__init__(config, agent_grouping, model, callback)
         self.build_optimizer()
+        self.mse_loss = nn.MSELoss()
 
     @abstractmethod
     def update(self, *args, **kwargs):
