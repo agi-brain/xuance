@@ -409,7 +409,7 @@ class OffPolicyMultiAgentLearner(LearnerMAS):
             obs = self.packed_tensor(obs)
             actions = self.packed_tensor(actions)
             obs_next = self.packed_tensor(obs_next)
-            if not  use_shared_rewards:
+            if not use_shared_rewards:
                 rewards = self.packed_tensor(rewards)
                 terminals = self.packed_tensor(terminals)
             agent_mask = self.packed_tensor(agent_mask)

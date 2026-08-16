@@ -41,63 +41,40 @@ class IDDPG_Learner(OffPolicyMultiAgentLearner):
         rnn_states_actor = self.model.init_actor_rnn_states(batch.batch_size)
         rnn_states_critic = self.model.init_critic_rnn_states(batch.batch_size)
         if self.use_rnn:
-            obs_t = {k: v[:, :-1] for k, v in batch.observations.items()}
-            agent_indices_t = {k: v[:, :-1] for k, v in batch.agent_indices.items()}
+            observations_t = {k: v[:, :-1] for k, v in batch.observations.items()}
+            observations_next = {k: v[:, 1:] for k, v in batch.observations.items()}
+            agent_indices = {k: v[:, :-1] for k, v in batch.agent_indices.items()}
         else:
-            obs_t = batch.observations
-            agent_indices_t = batch.agent_indices
+            observations_t = batch.observations
+            observations_next = batch.next_observations
+            agent_indices = batch.agent_indices
 
-        actions_eval = self.model(
-            observations=batch.observations,
-            agent_indices=batch.agent_indices,
-            rnn_states=rnn_states_actor
-        ).actions
+        actions_eval = self.model(observations=observations_t,
+                                  agent_indices=agent_indices,
+                                  rnn_states=rnn_states_actor).actions
         if not self.agent_grouping.full_independent:
             actions_eval = self.packed_tensor(actions_eval)
 
-        q_model = self.model.Qpolicy(
-            observations=batch.observations,
-            actions=actions_eval,
-            agent_indices=batch.agent_indices,
-            rnn_states=rnn_states_critic
-        )
-        q_eval = self.model.Qpolicy(
-            observations=obs_t,
-            actions=batch.actions,
-            agent_indices=agent_indices_t,
-            rnn_states=rnn_states_critic
-        )
+        q_policy = self.model.Qpolicy(observations=observations_t,
+                                      actions=actions_eval,
+                                      agent_indices=agent_indices,
+                                      rnn_states=rnn_states_critic)
+        q_eval = self.model.Qpolicy(observations=observations_next,
+                                    actions=batch.actions,
+                                    agent_indices=agent_indices,
+                                    rnn_states=rnn_states_critic)
         with torch.no_grad():
-            if self.use_rnn:
-                next_actions = self.model.Atarget(
-                    observations=batch.observations,
-                    agent_indices=batch.agent_indices,
-                    rnn_states=rnn_states_actor
-                )
-                if not self.agent_grouping.full_independent:
-                    next_actions = self.packed_tensor(next_actions)
-                q_next = self.model.Qtarget(
-                    observations=batch.observations,
-                    actions=next_actions,
-                    agent_indices=batch.agent_indices,
-                    rnn_states=rnn_states_critic
-                )
-                q_model = {k: v[:, :-1] for k, v in q_model.items()}
-                q_next = {k: v[:, 1:] for k, v in q_next.items()}
-            else:
-                next_actions = self.model.Atarget(
-                    observations=batch.next_observations,
-                    agent_indices=batch.agent_indices
-                )
-                if not self.agent_grouping.full_independent:
-                    next_actions = self.packed_tensor(next_actions)
-                q_next = self.model.Qtarget(
-                    observations=batch.next_observations,
-                    actions=next_actions,
-                    agent_indices=batch.agent_indices
-                )
+            next_actions = self.model.Atarget(observations=observations_next,
+                                              agent_indices=agent_indices,
+                                              rnn_states=rnn_states_actor)
+            if not self.agent_grouping.full_independent:
+                next_actions = self.packed_tensor(next_actions)
+            q_next = self.model.Qtarget(observations=observations_next,
+                                        actions=next_actions,
+                                        agent_indices=agent_indices,
+                                        rnn_states=rnn_states_critic)
 
-        return q_model, q_eval, q_next
+        return q_policy, q_eval, q_next
 
     def update(self, sample):
         self.iterations += 1
@@ -112,13 +89,13 @@ class IDDPG_Learner(OffPolicyMultiAgentLearner):
         info = self.callback.on_update_start(self.iterations, model=self.model, batch=batch)
 
         # feedforward
-        q_model, q_eval, q_next = self._forward_transition(batch)
+        q_policy, q_eval, q_next = self._forward_transition(batch)
 
         for group, n_agents in self.n_group_agents.items():
             mask_values = batch.valid_mask(group, n_agents).reshape(-1)
 
             # update actor
-            loss_actor = (q_model[group].reshape(-1) * mask_values).sum() / mask_values.sum()
+            loss_actor = (q_policy[group].reshape(-1) * mask_values).sum() / mask_values.sum()
             self.optimizer[group]['actor'].zero_grad()
             loss_actor.backward()
             if self.use_grad_clip:

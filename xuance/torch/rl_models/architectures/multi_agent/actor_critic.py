@@ -659,17 +659,10 @@ class IndependentSoftActorCritic(OffPolicyMultiAgentActorCritic):
             **kwargs
     ) -> Tuple[Dict[str, Tensor], ...]:
         q_eval_1, q_eval_2 = {}, {}
-        input_shape = observations[self.group_keys[0]].shape
-        bs = input_shape[0]
-        seq_len = input_shape[1] if self.use_rnn else 1
 
         group_list = self.group_keys if group_key is None else [group_key]
 
         for group in group_list:
-            group_agents = self.groups[group]
-            n_agent = self.n_group_agents[group]
-            batch_size = bs // n_agent
-            batch_shape = (batch_size, n_agent, seq_len) if self.use_rnn else (batch_size, n_agent)
 
             critic_kwargs = {
                 "agent_indices": agent_indices[group]
@@ -680,12 +673,8 @@ class IndependentSoftActorCritic(OffPolicyMultiAgentActorCritic):
 
             critic_out = self.critics[group](observations[group], actions[group], **critic_kwargs)
 
-            group_values_1 = critic_out.values_1.reshape(*batch_shape, -1)
-            group_values_2 = critic_out.values_2.reshape(*batch_shape, -1)
-
-            for i, agent_key in enumerate(group_agents):
-                q_eval_1[agent_key] = group_values_1[:, i]
-                q_eval_2[agent_key] = group_values_2[:, i]
+            q_eval_1[group] = critic_out.values_1
+            q_eval_2[group] = critic_out.values_2
 
         return q_eval_1, q_eval_2
 
@@ -700,17 +689,10 @@ class IndependentSoftActorCritic(OffPolicyMultiAgentActorCritic):
             **kwargs
     ) -> Dict[str, Tensor]:
         q_target = {}
-        input_shape = observations[self.group_keys[0]].shape
-        bs = input_shape[0]
-        seq_len = input_shape[1] if self.use_rnn else 1
 
         group_list = self.group_keys if group_key is None else [group_key]
 
         for group in group_list:
-            group_agents = self.groups[group]
-            n_agent = self.n_group_agents[group]
-            batch_size = bs // n_agent
-            batch_shape = (batch_size, n_agent, seq_len) if self.use_rnn else (batch_size, n_agent)
 
             critic_kwargs = {
                 "agent_indices": agent_indices[group]
@@ -721,12 +703,9 @@ class IndependentSoftActorCritic(OffPolicyMultiAgentActorCritic):
 
             target_critic_out = self.target_critics[group](observations[group], actions[group], **critic_kwargs)
 
-            group_values_1 = target_critic_out.values_1.reshape(*batch_shape, -1)
-            group_values_2 = target_critic_out.values_2.reshape(*batch_shape, -1)
-            group_q_target = torch.min(group_values_1, group_values_2)
-
-            for i, agent_key in enumerate(group_agents):
-                q_target[agent_key] = group_q_target[:, i]
+            group_values_1 = target_critic_out.values_1
+            group_values_2 = target_critic_out.values_2
+            q_target[group] = torch.min(group_values_1, group_values_2)
 
         return q_target
 
@@ -863,17 +842,10 @@ class IndependentTwinDelayedActorCritic(IndependentDeterministicActorCritic):
             **kwargs
     ) -> Tuple[Dict[str, Tensor], ...]:
         q_eval_1, q_eval_2, q_eval = {}, {}, {}
-        input_shape = observations[self.group_keys[0]].shape
-        bs = input_shape[0]
-        seq_len = input_shape[1] if self.use_rnn else 1
 
         group_list = self.group_keys if group_key is None else [group_key]
 
         for group in group_list:
-            group_agents = self.groups[group]
-            n_agent = self.n_group_agents[group]
-            batch_size = bs // n_agent
-            batch_shape = (batch_size, n_agent, seq_len) if self.use_rnn else (batch_size, n_agent)
 
             critic_kwargs = {
                 "agent_indices": agent_indices[group]
@@ -884,14 +856,9 @@ class IndependentTwinDelayedActorCritic(IndependentDeterministicActorCritic):
 
             critic_out = self.critics[group](observations[group], actions[group], **critic_kwargs)
 
-            group_values_1 = critic_out.values_1.reshape(*batch_shape, -1)
-            group_values_2 = critic_out.values_2.reshape(*batch_shape, -1)
-            group_values = (group_values_1 + group_values_2) / 2.0
-
-            for i, agent_key in enumerate(group_agents):
-                q_eval_1[agent_key] = group_values_1[:, i]
-                q_eval_2[agent_key] = group_values_2[:, i]
-                q_eval[agent_key] = group_values[:, i]
+            q_eval_1[group] = critic_out.values_1
+            q_eval_2[group] = critic_out.values_2
+            q_eval[group] = (q_eval_1[group] + q_eval_2[group]) / 2.0
 
         return q_eval_1, q_eval_2, q_eval
 
@@ -906,17 +873,10 @@ class IndependentTwinDelayedActorCritic(IndependentDeterministicActorCritic):
             **kwargs
     ) -> Dict[str, Tensor]:
         q_target = {}
-        input_shape = observations[self.group_keys[0]].shape
-        bs = input_shape[0]
-        seq_len = input_shape[1] if self.use_rnn else 1
 
         group_list = self.group_keys if group_key is None else [group_key]
 
         for group in group_list:
-            group_agents = self.groups[group]
-            n_agent = self.n_group_agents[group]
-            batch_size = bs // n_agent
-            batch_shape = (batch_size, n_agent, seq_len) if self.use_rnn else (batch_size, n_agent)
 
             critic_kwargs = {
                 "agent_indices": agent_indices[group]
@@ -927,12 +887,9 @@ class IndependentTwinDelayedActorCritic(IndependentDeterministicActorCritic):
 
             target_critic_out = self.target_critics[group](observations[group], actions[group], **critic_kwargs)
 
-            group_values_1 = target_critic_out.values_1.reshape(*batch_shape, -1)
-            group_values_2 = target_critic_out.values_2.reshape(*batch_shape, -1)
-            group_q_target = torch.min(group_values_1, group_values_2)
-
-            for i, agent_key in enumerate(group_agents):
-                q_target[agent_key] = group_q_target[:, i]
+            group_values_1 = target_critic_out.values_1
+            group_values_2 = target_critic_out.values_2
+            q_target[group] = torch.min(group_values_1, group_values_2)
 
         return q_target
 
@@ -978,10 +935,8 @@ class MultiAgentTwinDelayedActorCritic(IndependentTwinDelayedActorCritic):
         group_list = self.group_keys if group_key is None else [group_key]
 
         for group in group_list:
-            group_agents = self.groups[group]
             n_agent = self.n_group_agents[group]
             bs = batch_size * n_agent
-            batch_shape = (batch_size, n_agent, seq_len) if self.use_rnn else (batch_size, n_agent)
 
             if self.use_rnn:
                 expand_joint_obs = joint_observations.unsqueeze(1).expand(-1, n_agent, -1, -1).reshape(bs, seq_len, -1)
@@ -999,14 +954,9 @@ class MultiAgentTwinDelayedActorCritic(IndependentTwinDelayedActorCritic):
 
             critic_out = self.critics[group](expand_joint_obs, expand_joint_act, **critic_kwargs)
 
-            group_values_1 = critic_out.values_1.reshape(*batch_shape, -1)
-            group_values_2 = critic_out.values_2.reshape(*batch_shape, -1)
-            group_values = (group_values_1 + group_values_2) / 2.0
-
-            for i, agent_key in enumerate(group_agents):
-                q_eval_1[agent_key] = group_values_1[:, i]
-                q_eval_2[agent_key] = group_values_2[:, i]
-                q_eval[agent_key] = group_values[:, i]
+            q_eval_1[group] = critic_out.values_1
+            q_eval_2[group] = critic_out.values_2
+            q_eval[group] = (q_eval_1[group] + q_eval_2[group]) / 2.0
 
         return q_eval_1, q_eval_2, q_eval
 
@@ -1028,10 +978,8 @@ class MultiAgentTwinDelayedActorCritic(IndependentTwinDelayedActorCritic):
         group_list = self.group_keys if group_key is None else [group_key]
 
         for group in group_list:
-            group_agents = self.groups[group]
             n_agent = self.n_group_agents[group]
             bs = batch_size * n_agent
-            batch_shape = (batch_size, n_agent, seq_len) if self.use_rnn else (batch_size, n_agent)
 
             if self.use_rnn:
                 expand_joint_obs = joint_observations.unsqueeze(1).expand(-1, n_agent, -1, -1).reshape(bs, seq_len, -1)
@@ -1049,11 +997,8 @@ class MultiAgentTwinDelayedActorCritic(IndependentTwinDelayedActorCritic):
 
             target_critic_out = self.target_critics[group](expand_joint_obs, expand_joint_act, **target_critic_kwargs)
 
-            group_values_1 = target_critic_out.values_1.reshape(*batch_shape, -1)
-            group_values_2 = target_critic_out.values_2.reshape(*batch_shape, -1)
-            group_q_target = torch.min(group_values_1, group_values_2)
-
-            for i, agent_key in enumerate(group_agents):
-                q_target[agent_key] = group_q_target[:, i]
+            group_values_1 = target_critic_out.values_1
+            group_values_2 = target_critic_out.values_2
+            q_target[group] = torch.min(group_values_1, group_values_2)
 
         return q_target
