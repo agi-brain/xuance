@@ -10,6 +10,7 @@ from xuance.torch import Tensor, Module
 from xuance.torch.utils import ValueNorm
 from xuance.torch.rl_models.modules import OnPolicyMARLBatch, OffPolicyMARLBatch
 from xuance.torch.learners.base.drl_learner import Learner
+from xuance.torch.utils import AgentGroupedTensor
 
 MAX_GPUs = torch.cuda.device_count()
 
@@ -28,7 +29,9 @@ class LearnerMAS(Learner):
         self.agent_keys = self.agent_grouping.agent_keys
         self.n_agents = len(self.agent_keys)
         self.n_group_agents = {k: len(self.groups[k]) for k in self.group_keys}
-        self.agent_indices = {k: self.agent_grouping.agent_indices(k) for k in self.group_keys}
+        self.agent_indices = {k: torch.as_tensor(self.agent_grouping.agent_indices(k),
+                                                 dtype=torch.int64, device=self.device)
+                              for k in self.group_keys}
 
     def estimate_total_iterations(self):
         """Estimated total number of training iterations"""
@@ -43,28 +46,6 @@ class LearnerMAS(Learner):
         total_iters *= n_epochs
         return total_iters
 
-    def packed_tensor(self, agent_tensor: Dict[str, Tensor] | None = None,
-                      group_key: str | None = None) -> dict[str, Tensor] | None:
-        if agent_tensor is None:
-            return None
-        tensor_packed = {}
-        tensor_shape = agent_tensor[self.agent_keys[0]].shape
-        batch_size = tensor_shape[0]
-
-        group_list = self.group_keys if group_key is None else [group_key]
-
-        for group in group_list:
-            agent_keys = self.groups[group]
-            n_agents = self.n_group_agents[group]
-            packed_batch_size = batch_size * n_agents  # packed batch size
-
-            tensor_group = torch.stack([agent_tensor[k] for k in agent_keys], dim=1)
-            grouped_tensor_shape = (packed_batch_size,) + tensor_shape[1:]
-
-            tensor_packed[group] = tensor_group.reshape(grouped_tensor_shape)
-
-        return tensor_packed
-
     def get_joint_input(self, input_tensor, output_shape=None):
         if self.n_agents == 1:
             joint_tensor = itemgetter(*self.agent_keys)(input_tensor)
@@ -76,7 +57,6 @@ class LearnerMAS(Learner):
 
     def build_training_data(self,
                             sample: Optional[dict],
-                            use_parameter_sharing: Optional[bool] = False,
                             use_actions_mask: Optional[bool] = False,
                             use_global_state: Optional[bool] = False) -> OnPolicyMARLBatch | OffPolicyMARLBatch:
         raise NotImplementedError
@@ -340,95 +320,90 @@ class OffPolicyMultiAgentLearner(LearnerMAS):
     def build_training_data(
             self,
             sample: Optional[dict],
-            use_parameter_sharing: Optional[bool] = False,
             use_actions_mask: Optional[bool] = False,
             use_global_state: Optional[bool] = False,
-            use_shared_rewards: Optional[bool] = False,
     ) -> OffPolicyMARLBatch:
         """
         Prepare the training data.
 
         Parameters:
             sample (dict): The raw sampled data.
-            use_parameter_sharing (bool): Whether to use parameter sharing for individual agent models.
             use_actions_mask (bool): Whether to use actions mask for unavailable actions.
             use_global_state (bool): Whether to use global state.
-            use_shared_rewards (bool)： Whether to use shared rewards for each agent.
 
         Returns:
             OffPolicyMARLBatch: The formatted sampled data.
         """
         batch_size = sample['batch_size']
         seq_length = sample['sequence_length'] if self.use_rnn else 1
-        state, state_next, filled = None, None, None
-        obs, actions, rewards, terminals, agent_mask = {}, {}, {}, {}, {}
-        avail_actions = {} if use_actions_mask else None
-        agent_indices = {}
-        if self.use_rnn:
-            obs_next, avail_actions_next = None, None
+
+        obs_agent_wise = {
+            agent: torch.as_tensor(sample['obs'][agent], device=self.device)
+            for agent in self.agent_keys
+        }
+        act_agent_wise = {
+            agent: torch.as_tensor(sample['actions'][agent], device=self.device)
+            for agent in self.agent_keys
+        }
+        if not self.use_rnn:
+            obs_next_agent_wise = {
+                agent: torch.as_tensor(sample['obs_next'][agent], device=self.device)
+                for agent in self.agent_keys
+            }
         else:
-            obs_next = {}
-            avail_actions_next = {} if use_actions_mask else None
-
-        for agent in self.agent_keys:
-            obs[agent] = torch.as_tensor(sample['obs'][agent], device=self.device)
+            obs_next_agent_wise = None
+        rewards_agent_wise = {
+            agent: torch.as_tensor(sample['rewards'][agent], device=self.device)
+            for agent in self.agent_keys
+        }
+        terminals_agent_wise = {
+            agent: torch.as_tensor(sample['terminals'][agent], device=self.device, dtype=torch.float32)
+            for agent in self.agent_keys
+        }
+        agent_mask_agent_wise = {
+            agent: torch.as_tensor(sample['agent_mask'][agent], device=self.device, dtype=torch.float32)
+            for agent in self.agent_keys
+        }
+        avail_actions_agent_wise, avail_actions_next_agent_wise = None, None
+        if use_actions_mask:
+            avail_actions_agent_wise = {
+                agent: torch.as_tensor(sample['avail_actions'][agent], device=self.device, dtype=torch.float32)
+                for agent in self.agent_keys
+            }
             if not self.use_rnn:
-                obs_next[agent] = torch.as_tensor(sample['obs_next'][agent], device=self.device)
-            actions[agent] = torch.as_tensor(sample['actions'][agent], device=self.device)
-            rewards[agent] = torch.as_tensor(sample['rewards'][agent], device=self.device)
-            terminals[agent] = torch.as_tensor(sample['terminals'][agent], device=self.device, dtype=torch.float32)
-            agent_mask[agent] = torch.as_tensor(sample['agent_mask'][agent], device=self.device, dtype=torch.float32)
-            if use_actions_mask:
-                avail_actions[agent] = torch.as_tensor(sample['avail_actions'][agent],
-                                                       device=self.device, dtype=torch.float32)
-                if not self.use_rnn:
-                    avail_actions_next[agent] = torch.as_tensor(sample['avail_actions_next'][agent],
-                                                                device=self.device, dtype=torch.float32)
-
+                avail_actions_next_agent_wise = {
+                    agent: torch.as_tensor(sample['avail_actions_next'][agent], device=self.device, dtype=torch.float32)
+                    for agent in self.agent_keys
+                }
+        state, state_next = None, None
         if use_global_state:
             state = torch.as_tensor(sample['state'], device=self.device)
             if not self.use_rnn:
                 state_next = torch.as_tensor(sample['state_next'], device=self.device)
 
+        filled = None
         if self.use_rnn:
             filled = torch.as_tensor(sample['filled'], device=self.device, dtype=torch.float32)
 
-        for key, n_agents in self.n_group_agents.items():
-            bs = batch_size * n_agents
-
+        agent_indices = {}
+        for group, n_agents in self.n_group_agents.items():
+            agent_indices[group] = self.agent_indices[group].repeat(batch_size, 1).reshape(batch_size, n_agents, 1)
             if self.use_rnn:
-                agents_id = torch.as_tensor(self.agent_grouping.agent_indices(key), dtype=torch.int64).repeat(
-                    batch_size, 1).reshape(bs, 1, 1).expand(-1, seq_length + 1, -1).to(self.device)
-            else:
-                agents_id = torch.as_tensor(self.agent_indices[key], dtype=torch.int64).repeat(
-                    batch_size, 1).reshape([bs, 1]).to(self.device)
-
-            agent_indices[key] = agents_id
-
-        if not self.agent_grouping.full_independent:
-            obs = self.packed_tensor(obs)
-            actions = self.packed_tensor(actions)
-            obs_next = self.packed_tensor(obs_next)
-            if not use_shared_rewards:
-                rewards = self.packed_tensor(rewards)
-                terminals = self.packed_tensor(terminals)
-            agent_mask = self.packed_tensor(agent_mask)
-            avail_actions = self.packed_tensor(avail_actions)
-            avail_actions_next = self.packed_tensor(avail_actions_next)
+                agent_indices[group] = agent_indices[group].unsqueeze(2).expand(-1, -1, seq_length + 1, -1)
 
         return OffPolicyMARLBatch(
             batch_size=batch_size,
             global_states=state,
             next_global_states=state_next,
-            observations=obs,
-            actions=actions,
-            next_observations=obs_next,
-            rewards=rewards,
-            terminals=terminals,
-            agent_masks=agent_mask,
-            avail_actions=avail_actions,
-            next_avail_actions=avail_actions_next,
-            agent_indices=agent_indices,
+            observations=AgentGroupedTensor.from_agent_wise(obs_agent_wise, grouping=self.agent_grouping),
+            actions=AgentGroupedTensor.from_agent_wise(act_agent_wise, grouping=self.agent_grouping),
+            next_observations=AgentGroupedTensor.from_agent_wise(obs_next_agent_wise, grouping=self.agent_grouping),
+            rewards=AgentGroupedTensor.from_agent_wise(rewards_agent_wise, grouping=self.agent_grouping),
+            terminals=AgentGroupedTensor.from_agent_wise(terminals_agent_wise, grouping=self.agent_grouping),
+            agent_masks=AgentGroupedTensor.from_agent_wise(agent_mask_agent_wise, grouping=self.agent_grouping),
+            avail_actions=AgentGroupedTensor.from_agent_wise(avail_actions_agent_wise, grouping=self.agent_grouping),
+            next_avail_actions=AgentGroupedTensor.from_agent_wise(avail_actions_next_agent_wise, self.agent_grouping),
+            agent_indices=AgentGroupedTensor(agent_indices, self.agent_grouping),
             filled_masks=filled,
             seq_length=seq_length,
         )

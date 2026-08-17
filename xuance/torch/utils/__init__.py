@@ -1,4 +1,5 @@
 import torch.nn as nn
+from .data import AgentGroupedTensor
 from .device import set_device, collect_device_info
 from .operations import (init_distributed_mode, update_linear_decay, set_seed,
                          get_flat_grad, get_flat_params, assign_from_flat_grads,

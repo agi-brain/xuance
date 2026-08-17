@@ -108,8 +108,8 @@ class OffPolicyMARLAgents(MARLAgents):
     def _build_model(self) -> Module:
         raise NotImplementedError
 
-    def store_experience(self, obs_dict, avail_actions, actions_dict, obs_next_dict, avail_actions_next,
-                         rewards_dict, terminals_dict, info, **kwargs):
+    def store_experience(self, obs_list, avail_actions, actions_list, obs_next_list, avail_actions_next,
+                         rewards_list, terminals_list, info, **kwargs):
         """Store a batch of multi-agent transitions into the replay buffer.
 
         This method converts per-environment dictionaries (one dict per vector environment) into per-agent batched
@@ -117,20 +117,20 @@ class OffPolicyMARLAgents(MARLAgents):
         when enabled, global state and action masks.
 
         Args:
-            obs_dict (List[dict]): Observations for each parallel environment.
+            obs_list (List[dict]): Observations for each parallel environment.
                 Each element is a dict keyed by `self.agent_keys`.
             avail_actions (Optional[List[dict]]): Available-action masks for each parallel environment
                 when `use_actions_mask=True`. Each element is a dict keyed by `self.agent_keys`.
                 Can be None when action masking is disabled.
-            actions_dict (List[dict]): Actions executed by each agent for each parallel environment.
+            actions_list (List[dict]): Actions executed by each agent for each parallel environment.
                 Each element is a dict keyed by `self.agent_keys`.
-            obs_next_dict (List[dict]): Next observations for each parallel environment.
+            obs_next_list (List[dict]): Next observations for each parallel environment.
                 Each element is a dict keyed by `self.agent_keys`.
             avail_actions_next (Optional[List[dict]]): Next-step available-action masks when `use_actions_mask=True`.
                 Can be None when action masking is disabled.
-            rewards_dict (List[dict]): Rewards for each agent for each parallel environment.
+            rewards_list (List[dict]): Rewards for each agent for each parallel environment.
                 Each element is a dict keyed by `self.agent_keys`.
-            terminals_dict (List[dict]): Termination flags for each agent for each parallel environment.
+            terminals_list (List[dict]): Termination flags for each agent for each parallel environment.
                 Each element is a dict keyed by `self.agent_keys`.
             info (List[dict]): Environment info for each parallel environment at the current step.
                 Must contain `agent_mask` for each agent key.
@@ -138,11 +138,11 @@ class OffPolicyMARLAgents(MARLAgents):
                 to be provided.
         """
         experience_data = {
-            'obs': {k: np.array([data[k] for data in obs_dict]) for k in self.agent_keys},
-            'actions': {k: np.array([data[k] for data in actions_dict]) for k in self.agent_keys},
-            'obs_next': {k: np.array([data[k] for data in obs_next_dict]) for k in self.agent_keys},
-            'rewards': {k: np.array([data[k] for data in rewards_dict]) for k in self.agent_keys},
-            'terminals': {k: np.array([data[k] for data in terminals_dict]) for k in self.agent_keys},
+            'obs': {k: np.array([data[k] for data in obs_list]) for k in self.agent_keys},
+            'actions': {k: np.array([data[k] for data in actions_list]) for k in self.agent_keys},
+            'obs_next': {k: np.array([data[k] for data in obs_next_list]) for k in self.agent_keys},
+            'rewards': {k: np.array([data[k] for data in rewards_list]) for k in self.agent_keys},
+            'terminals': {k: np.array([data[k] for data in terminals_list]) for k in self.agent_keys},
             'agent_mask': {k: np.array([data['agent_mask'][k] for data in info]) for k in self.agent_keys},
         }
         if self.use_rnn:
@@ -209,8 +209,8 @@ class OffPolicyMARLAgents(MARLAgents):
             return
 
     def exploration(self, batch_size: int,
-                    pi_actions_dict: Union[List[dict], dict],
-                    avail_actions_dict: Optional[List[dict]] = None):
+                    pi_actions_list: Union[List[dict], dict],
+                    avail_actions_list: Optional[List[dict]] = None):
         """Apply exploration strategy to policy actions.
 
         This method modifies the actions produced by the policy according to the configured exploration mechanism.
@@ -222,39 +222,39 @@ class OffPolicyMARLAgents(MARLAgents):
 
         Args:
             batch_size (int): Number of parallel environments (batch size).
-            pi_actions_dict (Union[List[dict], dict]): Actions produced by the policy before exploration.
+            pi_actions_list (Union[List[dict], dict]): Actions produced by the policy before exploration.
                 When parameter sharing is enabled, this may be a shared structure across agents.
-            avail_actions_dict (Optional[List[dict]]): Available-action masks for each parallel environment
+            avail_actions_list (Optional[List[dict]]): Available-action masks for each parallel environment
                 when `use_actions_mask=True`. Can be None when action masking is disabled.
 
         Returns:
             Union[List[dict], dict]: Actions after applying the exploration strategy.
-                The returned structure matches the format of `pi_actions_dict`.
+                The returned structure matches the format of `pi_actions_list`.
         """
         if self.e_greedy is not None:
             if np.random.rand() < self.e_greedy:
                 if self.use_actions_mask:
-                    explore_actions = [{k: Categorical(Tensor(avail_actions_dict[e][k])).sample().numpy()
+                    explore_actions = [{k: Categorical(Tensor(avail_actions_list[e][k])).sample().numpy()
                                         for k in self.agent_keys} for e in range(batch_size)]
                 else:
                     explore_actions = [{k: self.action_space[k].sample() for k in self.agent_keys} for _ in
                                        range(batch_size)]
             else:
-                explore_actions = pi_actions_dict
+                explore_actions = pi_actions_list
         elif self.noise_scale is not None:
-            for key, action in pi_actions_dict.items():
+            for key, action in pi_actions_list.items():
                 noise = np.random.normal(0, self.noise_scale * self.sigma, size=action.shape)
-                pi_actions_dict[key] = np.clip(action + noise,
+                pi_actions_list[key] = np.clip(action + noise,
                                                self.action_space[key].low, self.action_space[key].high,
                                                dtype=self.action_space[key].dtype)
-            explore_actions = pi_actions_dict
+            explore_actions = pi_actions_list
         else:
-            explore_actions = pi_actions_dict
+            explore_actions = pi_actions_list
         return explore_actions
 
     def get_actions(self,
-                    obs_dict: List[dict],
-                    avail_actions_dict: Optional[List[dict]] = None,
+                    obs_list: List[dict],
+                    avail_actions_list: Optional[List[dict]] = None,
                     rnn_states: Optional[Dict[str, RNN_State]] = None,
                     test_mode: Optional[bool] = False,
                     **kwargs) -> dict:
@@ -266,9 +266,9 @@ class OffPolicyMARLAgents(MARLAgents):
         (epsilon-greedy or additive noise); during evaluation (`test_mode=True`), exploration is disabled.
 
         Args:
-            obs_dict (List[dict]): Observations for each parallel environment.
+            obs_list (List[dict]): Observations for each parallel environment.
                 Each element is a dict keyed by `self.agent_keys`.
-            avail_actions_dict (Optional[List[dict]]): Available-action masks for each parallel environment when
+            avail_actions_list (Optional[List[dict]]): Available-action masks for each parallel environment when
                 `use_actions_mask=True`. Each element is a dict keyed by `self.agent_keys`. Can be None when
                 action masking is disabled.
             rnn_states (Optional[Dict[str, RNN_State]]): Current RNN hidden states keyed by `self.group_keys`.
@@ -283,22 +283,23 @@ class OffPolicyMARLAgents(MARLAgents):
                 - actions (List[dict]): Actions for each parallel environment.
                     Each element is a dict keyed by `self.agent_keys`.
         """
-        batch_size = len(obs_dict)
-        obs_input, agent_indices, avail_actions_input = self._build_inputs(obs_dict, avail_actions_dict)
+        batch_size = len(obs_list)
+        obs_input, agent_indices_input, avail_actions_input = self._build_inputs(obs_list, avail_actions_list)
         model_output = self.model(observations=obs_input,
-                                  agent_indices=agent_indices,
+                                  agent_indices=agent_indices_input,
                                   avail_actions=avail_actions_input,
                                   rnn_states=rnn_states)
         rnn_states_new = model_output.rnn_states
         actions = model_output.actions
 
-        actions_out = {k: actions[k].reshape(batch_size).cpu().detach().numpy() for k in self.agent_keys}
-        actions_dict = [{k: actions_out[k][i] for k in self.agent_keys} for i in range(batch_size)]
+        actions.grouped_tensor = {k: actions.grouped_tensor[k].reshape(batch_size, n).cpu().detach().numpy()
+                                  for k, n in self.n_group_agents.items()}
+        actions_list = [{k: actions.agent_wise[k][i] for k in self.agent_keys} for i in range(batch_size)]
 
         if not test_mode:  # get random actions
-            actions_dict = self.exploration(batch_size, actions_dict, avail_actions_dict)
+            actions_list = self.exploration(batch_size, actions_list, avail_actions_list)
 
-        return {"rnn_states": rnn_states_new, "actions": actions_dict}
+        return {"rnn_states": rnn_states_new, "actions": actions_list}
 
     def train(self, train_steps: int) -> dict:
         """Run the main multi-agent off-policy training loop.
@@ -346,25 +347,25 @@ class OffPolicyMARLAgents(MARLAgents):
                                                 train_steps=train_steps, train_info=train_info)
             return train_info
 
-        obs_dict = self.train_envs.buf_obs
+        obs_list = self.train_envs.buf_obs
         avail_actions = self.train_envs.buf_avail_actions if self.use_actions_mask else None
         state = self.train_envs.buf_state.copy() if self.use_global_state else None
         for _ in tqdm(range(train_steps)):
-            policy_out = self.get_actions(obs_dict=obs_dict, avail_actions_dict=avail_actions, test_mode=False)
-            actions_dict = policy_out['actions']
-            next_obs_dict, rewards_dict, terminated_dict, truncated, info = self.train_envs.step(actions_dict)
+            policy_out = self.get_actions(obs_list=obs_list, avail_actions_list=avail_actions, test_mode=False)
+            actions_list = policy_out['actions']
+            next_obs_list, rewards_list, terminated_list, truncated, info = self.train_envs.step(actions_list)
             next_state = self.train_envs.buf_state.copy() if self.use_global_state else None
             next_avail_actions = self.train_envs.buf_avail_actions if self.use_actions_mask else None
 
             self.callback.on_train_step(self.current_step, envs=self.train_envs, model=self.model,
-                                        obs=obs_dict, policy_out=policy_out, acts=actions_dict, next_obs=next_obs_dict,
-                                        rewards=rewards_dict, state=state, next_state=next_state,
+                                        obs=obs_list, policy_out=policy_out, acts=actions_list, next_obs=next_obs_list,
+                                        rewards=rewards_list, state=state, next_state=next_state,
                                         avail_actions=avail_actions, next_avail_actions=next_avail_actions,
-                                        terminals=terminated_dict, truncations=truncated, infos=info,
+                                        terminals=terminated_list, truncations=truncated, infos=info,
                                         train_steps=train_steps)
 
-            self.store_experience(obs_dict, avail_actions, actions_dict, next_obs_dict, next_avail_actions,
-                                  rewards_dict, terminated_dict, info,
+            self.store_experience(obs_list, avail_actions, actions_list, next_obs_list, next_avail_actions,
+                                  rewards_list, terminated_list, info,
                                   **{'state': state, 'next_state': next_state})
             if self.current_step >= self.start_training and self.current_step % self.training_frequency == 0:
                 update_info = self.train_epochs(n_epochs=self.n_epochs)
@@ -374,15 +375,15 @@ class OffPolicyMARLAgents(MARLAgents):
                                                   current_episode=self.current_episode, train_steps=train_steps,
                                                   update_info=update_info)
 
-            obs_dict = deepcopy(next_obs_dict)
+            obs_list = deepcopy(next_obs_list)
             if self.use_global_state:
                 state = deepcopy(next_state)
             if self.use_actions_mask:
                 avail_actions = deepcopy(next_avail_actions)
 
             for i in range(self.n_envs):
-                if all(terminated_dict[i].values()) or truncated[i]:
-                    obs_dict[i] = info[i]["reset_obs"]
+                if all(terminated_list[i].values()) or truncated[i]:
+                    obs_list[i] = info[i]["reset_obs"]
                     self.train_envs.buf_obs[i] = info[i]["reset_obs"]
                     if self.use_global_state:
                         state = info[i]["reset_state"]
@@ -444,7 +445,7 @@ class OffPolicyMARLAgents(MARLAgents):
         num_envs = envs.num_envs
         videos, episode_videos, images = [[] for _ in range(num_envs)], [], None
         _current_episode, _current_step, scores, best_score = 0, 0, [], -np.inf
-        obs_dict, info = envs.reset()
+        obs_list, info = envs.reset()
         state = envs.buf_state.copy() if self.use_global_state else None
         avail_actions = envs.buf_avail_actions if self.use_actions_mask else None
         if test_mode:
@@ -458,12 +459,12 @@ class OffPolicyMARLAgents(MARLAgents):
         rnn_states = self.init_rnn_states(num_envs)
 
         while _current_episode < n_episodes:
-            policy_out = self.get_actions(obs_dict=obs_dict,
-                                          avail_actions_dict=avail_actions,
+            policy_out = self.get_actions(obs_list=obs_list,
+                                          avail_actions_list=avail_actions,
                                           rnn_states=rnn_states,
                                           test_mode=test_mode)
-            rnn_states, actions_dict = policy_out['rnn_states'], policy_out['actions']
-            next_obs_dict, rewards_dict, terminated_dict, truncated, info = envs.step(actions_dict)
+            rnn_states, actions_list = policy_out['rnn_states'], policy_out['actions']
+            next_obs_list, rewards_list, terminated_list, truncated, info = envs.step(actions_list)
             next_state = envs.buf_state.copy() if self.use_global_state else None
             next_avail_actions = envs.buf_avail_actions if self.use_actions_mask else None
             if test_mode:
@@ -472,28 +473,28 @@ class OffPolicyMARLAgents(MARLAgents):
                     for idx, img in enumerate(images):
                         videos[idx].append(img)
             else:
-                self.store_experience(obs_dict, avail_actions, actions_dict, next_obs_dict, next_avail_actions,
-                                      rewards_dict, terminated_dict, info,
+                self.store_experience(obs_list, avail_actions, actions_list, next_obs_list, next_avail_actions,
+                                      rewards_list, terminated_list, info,
                                       **{'state': state, 'next_state': next_state})
 
             self.callback.on_test_step(envs=envs, model=self.model, images=images, test_mode=test_mode,
-                                       obs=obs_dict, policy_out=policy_out, acts=actions_dict,
-                                       next_obs=next_obs_dict, rewards=rewards_dict,
-                                       terminals=terminated_dict, truncations=truncated, infos=info,
+                                       obs=obs_list, policy_out=policy_out, acts=actions_list,
+                                       next_obs=next_obs_list, rewards=rewards_list,
+                                       terminals=terminated_list, truncations=truncated, infos=info,
                                        state=state, next_state=next_state,
                                        current_train_step=self.current_step, n_episodes=n_episodes,
                                        current_step=_current_step, current_episode=_current_episode)
 
-            obs_dict = deepcopy(next_obs_dict)
+            obs_list = deepcopy(next_obs_list)
             if self.use_global_state:
                 state = deepcopy(next_state)
             if self.use_actions_mask:
                 avail_actions = deepcopy(next_avail_actions)
 
             for i in range(num_envs):
-                if all(terminated_dict[i].values()) or truncated[i]:
+                if all(terminated_list[i].values()) or truncated[i]:
                     _current_episode += 1
-                    obs_dict[i] = info[i]["reset_obs"]
+                    obs_list[i] = info[i]["reset_obs"]
                     envs.buf_obs[i] = info[i]["reset_obs"]
                     if self.use_global_state:
                         state = info[i]["reset_state"]
@@ -504,7 +505,7 @@ class OffPolicyMARLAgents(MARLAgents):
                     if self.use_rnn:
                         rnn_states = self.init_rnn_states_item(i_env=i, rnn_states=rnn_states)
                         if not test_mode:
-                            terminal_data = {'obs': next_obs_dict[i],
+                            terminal_data = {'obs': next_obs_list[i],
                                              'episode_step': info[i]['episode_step']}
                             if self.use_global_state:
                                 terminal_data['state'] = next_state[i]

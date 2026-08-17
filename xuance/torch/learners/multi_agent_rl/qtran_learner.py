@@ -10,6 +10,7 @@ from argparse import Namespace
 from operator import itemgetter
 from xuance.common import AgentGrouping
 from xuance.torch.learners import OffPolicyMultiAgentLearner
+from xuance.torch.utils import AgentGroupedTensor
 
 
 class QTRAN_Learner(OffPolicyMultiAgentLearner):
@@ -29,27 +30,23 @@ class QTRAN_Learner(OffPolicyMultiAgentLearner):
         self.iterations += 1
 
         # prepare training data
-        batch = self.build_training_data(sample=sample,
-                                         use_parameter_sharing=self.use_parameter_sharing,
-                                         use_actions_mask=self.use_actions_mask,
-                                         use_global_state=True,
-                                         use_shared_rewards=True)
+        batch = self.build_training_data(
+            sample=sample,
+            use_actions_mask=self.use_actions_mask,
+            use_global_state=True
+        )
         batch_size = batch.batch_size
         state = batch.global_states
         state_next = batch.next_global_states
         obs = batch.observations
         actions = batch.actions
         obs_next = batch.next_observations
-        rewards = batch.rewards
-        terminals = batch.terminals
+        rewards = batch.rewards.agent_wise
+        terminals = batch.terminals.agent_wise
         agent_mask = batch.agent_masks
         avail_actions = batch.avail_actions
         avail_actions_next = batch.next_avail_actions
         agent_indices = batch.agent_indices
-
-        if not self.agent_grouping.full_independent:
-            obs = self.packed_tensor(obs)
-            obs_next = self.packed_tensor(obs_next)
 
         rewards_tot = torch.stack(itemgetter(*self.agent_keys)(rewards), dim=1).mean(dim=-1, keepdim=True)
         terminals_tot = torch.stack(itemgetter(*self.agent_keys)(terminals), dim=1).all(dim=1, keepdim=True).float()
@@ -78,18 +75,18 @@ class QTRAN_Learner(OffPolicyMultiAgentLearner):
 
         q_eval_a, q_eval_greedy_a, q_next_a = {}, {}, {}
         for key in self.agent_keys:
-            mask_values = agent_mask[key]
-            q_eval_a[key] = q_eval[key].gather(-1, actions[key].long().unsqueeze(-1)).reshape(batch_size)
-            q_eval_greedy_a[key] = q_eval[key].gather(-1, actions_greedy[key].long().unsqueeze(-1)).reshape(batch_size)
+            mask_values = agent_mask.agent_wise[key]
+            q_eval_a[key] = q_eval.agent_wise[key].gather(-1, actions.agent_wise[key].long().unsqueeze(-1)).reshape(batch_size)
+            q_eval_greedy_a[key] = q_eval.agent_wise[key].gather(-1, actions_greedy.agent_wise[key].long().unsqueeze(-1)).reshape(batch_size)
 
             if self.use_actions_mask:
-                q_next[key][avail_actions_next[key] == 0] = -1e10
+                q_next.agent_wise[key][avail_actions_next[key] == 0] = -1e10
 
             if self.config.double_q:
-                q_next_a[key] = q_next[key].gather(-1, a_next_greedy[key].long().unsqueeze(-1)).reshape(batch_size)
+                q_next_a[key] = q_next.agent_wise[key].gather(-1, a_next_greedy.agent_wise[key].long().unsqueeze(-1)).reshape(batch_size)
             else:
-                a_next_greedy[key] = q_next[key].argmax(dim=-1, keepdim=False)
-                q_next_a[key] = q_next[key].max(dim=-1, keepdim=True).values.reshape(batch_size)
+                a_next_greedy[key] = q_next.agent_wise[key].argmax(dim=-1, keepdim=False)
+                q_next_a[key] = q_next.agent_wise[key].max(dim=-1, keepdim=True).values.reshape(batch_size)
 
             q_eval_a[key] *= mask_values
             q_eval_greedy_a[key] *= mask_values
@@ -102,7 +99,10 @@ class QTRAN_Learner(OffPolicyMultiAgentLearner):
         if self.config.agent == "QTRAN_base":
             # -- TD Loss --
             q_joint, v_joint = self.model.Q_tran(state, hidden_state, actions, agent_mask)
-            q_joint_next, _ = self.model.Q_tran_target(state_next, hidden_state_next, a_next_greedy, agent_mask)
+            a_next_greedy = {k: v.reshape(batch_size, -1) for k, v in a_next_greedy.agent_wise.items()}
+            q_joint_next, _ = self.model.Q_tran_target(state_next, hidden_state_next,
+                                                       AgentGroupedTensor(a_next_greedy, self.agent_grouping),
+                                                       agent_mask)
 
             y_dqn = rewards_tot + (1 - terminals_tot) * self.gamma * q_joint_next
             loss_td = self.mse_loss(q_joint, y_dqn.detach())  # TD loss
@@ -110,7 +110,10 @@ class QTRAN_Learner(OffPolicyMultiAgentLearner):
             # -- Opt Loss --
             # Argmax across the current agents' actions
             q_tot_greedy = self.model.Q_tot(q_eval_greedy_a)
-            q_joint_greedy_hat, _ = self.model.Q_tran(state, hidden_state, actions_greedy, agent_mask)
+            actions_greedy = {k: v.reshape(batch_size, -1) for k, v in actions_greedy.agent_wise.items()}
+            q_joint_greedy_hat, _ = self.model.Q_tran(state, hidden_state,
+                                                      AgentGroupedTensor(actions_greedy, self.agent_grouping),
+                                                      agent_mask)
             error_opt = q_tot_greedy - q_joint_greedy_hat.detach() + v_joint
             loss_opt = torch.mean(error_opt ** 2)  # Opt loss
 
@@ -197,26 +200,23 @@ class QTRAN_Learner(OffPolicyMultiAgentLearner):
         self.iterations += 1
 
         # prepare training data
-        batch = self.build_training_data(sample=sample,
-                                         use_parameter_sharing=self.use_parameter_sharing,
-                                         use_actions_mask=self.use_actions_mask,
-                                         use_global_state=True,
-                                         use_shared_rewards=True)
+        batch = self.build_training_data(
+            sample=sample,
+            use_actions_mask=self.use_actions_mask,
+            use_global_state=True
+        )
         batch_size = batch.batch_size
         seq_len = batch.seq_length
         state = batch.global_states
         obs = batch.observations
         actions = batch.actions
-        rewards = batch.rewards
-        terminals = batch.terminals
+        rewards = batch.rewards.agent_wise
+        terminals = batch.terminals.agent_wise
         agent_mask = batch.agent_masks
         avail_actions = batch.avail_actions
         filled = batch.filled_masks.reshape([-1, 1])
         filled_n = filled.repeat(1, self.n_agents)
         agent_indices = batch.agent_indices
-
-        if not self.agent_grouping.full_independent:
-            obs = self.packed_tensor(obs)
 
         rewards_tot = torch.stack(itemgetter(*self.agent_keys)(rewards), dim=1).mean(dim=1).reshape(-1, 1)
         terminals_tot = torch.stack(itemgetter(*self.agent_keys)(terminals), dim=1).all(1).reshape([-1, 1]).float()
@@ -238,21 +238,21 @@ class QTRAN_Learner(OffPolicyMultiAgentLearner):
         q_eval_a, q_eval_greedy_a, q_next, q_next_a = {}, {}, {}, {}
         actions_greedy_eval, actions_next_greedy = {}, {}
         for key in self.agent_keys:
-            mask_values = agent_mask[key]
+            mask_values = agent_mask.agent_wise[key]
             hidden_state[key] = hidden_state[key][:, :-1]
             hidden_state_next[key] = hidden_state_next[key][:, :-1]
-            actions_greedy_eval[key] = actions_greedy[key][:, :-1]
-            q_eval_a[key] = q_eval[key][:, :-1].gather(-1, actions[key].long().unsqueeze(-1)).reshape(
+            actions_greedy_eval[key] = actions_greedy.agent_wise[key][:, :-1]
+            q_eval_a[key] = q_eval.agent_wise[key][:, :-1].gather(-1, actions.agent_wise[key].long().unsqueeze(-1)).reshape(
                 batch_size, seq_len)
-            q_eval_greedy_a[key] = q_eval[key][:, :-1].gather(
-                -1, actions_greedy[key][:, :-1].long().unsqueeze(-1)).reshape(batch_size, seq_len)
-            q_next[key] = q_next_seq[key][:, 1:]
+            q_eval_greedy_a[key] = q_eval.agent_wise[key][:, :-1].gather(
+                -1, actions_greedy.agent_wise[key][:, :-1].long().unsqueeze(-1)).reshape(batch_size, seq_len)
+            q_next[key] = q_next_seq.agent_wise[key][:, 1:]
 
             if self.use_actions_mask:
-                q_next[key][avail_actions[key][:, 1:] == 0] = -1e10
+                q_next[key][avail_actions.agent_wise[key][:, 1:] == 0] = -1e10
 
             if self.config.double_q:
-                act_next = actions_greedy[key][:, 1:]
+                act_next = actions_greedy.agent_wise[key][:, 1:]
                 q_next_a[key] = q_next[key].gather(-1, act_next.long().unsqueeze(-1)).reshape(batch_size, seq_len)
                 actions_next_greedy[key] = act_next
             else:
@@ -272,7 +272,8 @@ class QTRAN_Learner(OffPolicyMultiAgentLearner):
             # -- TD Loss --
             q_joint, v_joint = self.model.Q_tran(state[:, :-1], hidden_state, actions, agent_mask)
             q_joint_next, _ = self.model.Q_tran_target(state[:, 1:], hidden_state_next,
-                                                       actions_next_greedy, agent_mask)
+                                                       AgentGroupedTensor(actions_next_greedy, self.agent_grouping),
+                                                       agent_mask)
             y_dqn = rewards_tot + (1 - terminals_tot) * self.gamma * q_joint_next
             td_error = (q_joint - y_dqn.detach()) * filled
             loss_td = (td_error ** 2).sum() / filled.sum()  # TD loss
@@ -280,7 +281,9 @@ class QTRAN_Learner(OffPolicyMultiAgentLearner):
             # -- Opt Loss --
             # Argmax across the current agents' actions
             q_tot_greedy = self.model.Q_tot(q_eval_greedy_a)
-            q_joint_greedy_hat, _ = self.model.Q_tran(state[:, :-1], hidden_state, actions_greedy_eval, agent_mask)
+            q_joint_greedy_hat, _ = self.model.Q_tran(state[:, :-1], hidden_state,
+                                                      AgentGroupedTensor(actions_greedy_eval, self.agent_grouping),
+                                                      agent_mask)
             error_opt = (q_tot_greedy - q_joint_greedy_hat.detach() + v_joint) * filled
             loss_opt = (error_opt ** 2).sum() / filled.sum()  # Opt loss
 

@@ -2,6 +2,7 @@ import torch
 from dataclasses import dataclass, field
 from typing import Any, Optional, Dict
 from xuance.torch import Tensor
+from xuance.torch.utils import AgentGroupedTensor
 
 
 @dataclass
@@ -55,10 +56,10 @@ class ModelOutput:
 
 @dataclass
 class MultiAgentModelOutput:
-    actions: Dict[str, Tensor] | None = None
-    log_probs: Dict[str, Tensor] | None = None
+    actions: AgentGroupedTensor | None = None
+    log_probs: AgentGroupedTensor | None = None
     distributions: Dict[str, torch.distributions] | None = None
-    values: Dict[str, Tensor] | None = None
+    values: AgentGroupedTensor | None = None
     rnn_states: Dict[str, RNN_State] | None = None
     actor_rnn_states: Dict[str, RNN_State] | None = None
     critic_rnn_states: Dict[str, RNN_State] | None = None
@@ -87,12 +88,12 @@ class DRL_Batch:
 class MARLBatch:
     batch_size: int
     seq_length: int
-    agent_indices: Dict[str, Tensor]
-    observations: Dict[str, Tensor] | Any
-    actions: Dict[str, Tensor] | Any
-    global_states: Optional[Tensor] | None = None
-    avail_actions: Dict[str, Tensor] | None = None
-    agent_masks: Dict[str, Tensor] | None = None
+    agent_indices: AgentGroupedTensor
+    observations: AgentGroupedTensor
+    actions: AgentGroupedTensor
+    global_states: AgentGroupedTensor | None = None
+    avail_actions: AgentGroupedTensor | None = None
+    agent_masks: AgentGroupedTensor | None = None
     filled_masks: Tensor | None = None  # Shape: batch_size * seq_length
 
     def valid_mask(
@@ -100,10 +101,10 @@ class MARLBatch:
             group: str,  # The selected group key
             n_agents: int  # Number of agents in the group
     ) -> Tensor:
-        mask = self.agent_masks[group]
+        mask = self.agent_masks.grouped_tensor[group]
 
         if self.filled_masks is not None:
-            mask = mask * self.filled_masks.unsqueeze(1).repeat(1, n_agents, 1).reshape([-1, self.seq_length])
+            mask = mask * self.filled_masks.unsqueeze(1).repeat(1, n_agents, 1)
 
         return mask
 
@@ -121,9 +122,9 @@ class OnPolicyMARLBatch(MARLBatch):
 
 @dataclass
 class OffPolicyMARLBatch(MARLBatch):
-    next_observations: Dict[str, Tensor] | None = None
+    next_observations: AgentGroupedTensor | None = None
     next_global_states: Tensor | None = None
-    next_avail_actions: Dict[str, Tensor] | None = None
-    rewards: Dict[str, Tensor] | None = None
-    terminals: Dict[str, Tensor] | None = None
+    next_avail_actions: AgentGroupedTensor | None = None
+    rewards: AgentGroupedTensor | None = None
+    terminals: AgentGroupedTensor | None = None
 

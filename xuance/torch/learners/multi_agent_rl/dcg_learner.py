@@ -27,99 +27,6 @@ class DCG_Learner(OffPolicyMultiAgentLearner):
         self.dim_act = max([self.model.action_space[key].n for key in self.agent_keys])
         self.sync_frequency = config.sync_frequency
 
-    def build_training_data(
-            self,
-            sample: Optional[dict],
-            use_parameter_sharing: Optional[bool] = False,
-            use_actions_mask: Optional[bool] = False,
-            use_global_state: Optional[bool] = False,
-            use_shared_rewards: Optional[bool] = False,
-    ) -> OffPolicyMARLBatch:
-        """
-        Prepare the training data.
-
-        Parameters:
-            sample (dict): The raw sampled data.
-            use_parameter_sharing (bool): Whether to use parameter sharing for individual agent models.
-            use_actions_mask (bool): Whether to use actions mask for unavailable actions.
-            use_global_state (bool): Whether to use global state.
-            use_shared_rewards (bool)： Whether to use shared rewards for each agent.
-
-        Returns:
-            OffPolicyMARLBatch: The formatted sampled data.
-        """
-        batch_size = sample['batch_size']
-        seq_length = sample['sequence_length'] if self.use_rnn else 1
-        state, state_next, filled = None, None, None
-        obs, actions, rewards, terminals, agent_mask = {}, {}, {}, {}, {}
-        avail_actions = {} if use_actions_mask else None
-        agent_indices = {}
-        if self.use_rnn:
-            obs_next, avail_actions_next = None, None
-        else:
-            obs_next = {}
-            avail_actions_next = {} if use_actions_mask else None
-
-        for agent in self.agent_keys:
-            obs[agent] = torch.as_tensor(sample['obs'][agent], device=self.device)
-            if not self.use_rnn:
-                obs_next[agent] = torch.as_tensor(sample['obs_next'][agent], device=self.device)
-            actions[agent] = torch.as_tensor(sample['actions'][agent], device=self.device)
-            rewards[agent] = torch.as_tensor(sample['rewards'][agent], device=self.device)
-            terminals[agent] = torch.as_tensor(sample['terminals'][agent], device=self.device, dtype=torch.float32)
-            agent_mask[agent] = torch.as_tensor(sample['agent_mask'][agent], device=self.device, dtype=torch.float32)
-            if use_actions_mask:
-                avail_actions[agent] = torch.as_tensor(sample['avail_actions'][agent],
-                                                       device=self.device, dtype=torch.float32)
-                if not self.use_rnn:
-                    avail_actions_next[agent] = torch.as_tensor(sample['avail_actions_next'][agent],
-                                                                device=self.device, dtype=torch.float32)
-
-        if use_global_state:
-            state = torch.as_tensor(sample['state'], device=self.device)
-            if not self.use_rnn:
-                state_next = torch.as_tensor(sample['state_next'], device=self.device)
-
-        if self.use_rnn:
-            filled = torch.as_tensor(sample['filled'], device=self.device, dtype=torch.float32)
-
-        for key, n_agents in self.n_group_agents.items():
-            bs = batch_size * n_agents
-
-            if self.use_rnn:
-                agents_id = torch.as_tensor(self.agent_grouping.agent_indices(key), dtype=torch.int64).repeat(
-                    batch_size, 1).reshape(bs, 1, 1).expand(-1, seq_length + 1, -1).to(self.device)
-            else:
-                agents_id = torch.as_tensor(self.agent_indices[key], dtype=torch.int64).repeat(
-                    batch_size, 1).reshape([bs, 1]).to(self.device)
-
-            agent_indices[key] = agents_id
-
-        if not self.agent_grouping.full_independent:
-            obs = self.packed_tensor(obs)
-            obs_next = self.packed_tensor(obs_next)
-            if not use_shared_rewards:
-                rewards = self.packed_tensor(rewards)
-                terminals = self.packed_tensor(terminals)
-            agent_mask = self.packed_tensor(agent_mask)
-
-        return OffPolicyMARLBatch(
-            batch_size=batch_size,
-            global_states=state,
-            next_global_states=state_next,
-            observations=obs,
-            actions=actions,
-            next_observations=obs_next,
-            rewards=rewards,
-            terminals=terminals,
-            agent_masks=agent_mask,
-            avail_actions=avail_actions,
-            next_avail_actions=avail_actions_next,
-            agent_indices=agent_indices,
-            filled_masks=filled,
-            seq_length=seq_length,
-        )
-
     def get_graph_values(self, hidden_states, use_target_net=False):
         if use_target_net:
             utilities = self.model.target_utility(hidden_states)
@@ -198,7 +105,7 @@ class DCG_Learner(OffPolicyMultiAgentLearner):
 
     def _forward_transitions(self, batch: OffPolicyMARLBatch):
         batch_size = batch.batch_size
-        actions = torch.stack([batch.actions[k] for k in self.agent_keys], dim=-1)
+        actions = torch.stack([batch.actions.agent_wise[k] for k in self.agent_keys], dim=-1)
 
         rnn_states = self.model.init_rnn_states(batch_size)
 
@@ -218,7 +125,7 @@ class DCG_Learner(OffPolicyMultiAgentLearner):
                                     states=state_current, use_target_net=False)
 
             if self.use_actions_mask:
-                avail_actions = torch.stack([batch.avail_actions[k] for k in self.agent_keys], dim=-2)
+                avail_actions = torch.stack([batch.avail_actions.agent_wise[k] for k in self.agent_keys], dim=-2)
                 avail_a_next = avail_actions[:, 1:].reshape(batch_size * seq_len, self.n_agents, -1)
             else:
                 avail_a_next = None
@@ -232,7 +139,7 @@ class DCG_Learner(OffPolicyMultiAgentLearner):
                                     action_next_greedy, states=state_next, use_target_net=True)
         else:
             if self.use_actions_mask:
-                avail_actions_next = torch.stack([batch.next_avail_actions[k] for k in self.agent_keys], dim=-2)
+                avail_actions_next = torch.stack([batch.next_avail_actions.agent_wise[k] for k in self.agent_keys], dim=-2)
             else:
                 avail_actions_next = None
 
@@ -257,14 +164,12 @@ class DCG_Learner(OffPolicyMultiAgentLearner):
         # prepare training data
         batch = self.build_training_data(
             sample=sample,
-            use_parameter_sharing=self.use_parameter_sharing,
             use_actions_mask=self.use_actions_mask,
             use_global_state=True if self.config.agent == "DCG_S" else False,
-            use_shared_rewards=True
         )
 
-        rewards_tot = torch.stack([r for r in batch.rewards.values()], dim=1).mean(dim=1)
-        terminals_tot = torch.stack([d for d in batch.terminals.values()], dim=1).all(dim=1).float()
+        rewards_tot = torch.stack([r for r in batch.rewards.agent_wise.values()], dim=1).mean(dim=1)
+        terminals_tot = torch.stack([d for d in batch.terminals.agent_wise.values()], dim=1).all(dim=1).float()
 
         info = self.callback.on_update_start(self.iterations, model=self.model, batch=batch,
                                              rewards_tot=rewards_tot, terminals_tot=terminals_tot)

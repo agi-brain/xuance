@@ -19,5 +19,5 @@ __all__ = [
     "ModuleType",
     "DistributedDataParallel",
     "set_device", "collect_device_info",
-    "REGISTRY_Representation", "REGISTRY_Policy", "REGISTRY_Learners", "REGISTRY_Agents",
+    "REGISTRY_Representation", "REGISTRY_Learners", "REGISTRY_Agents",
 ]

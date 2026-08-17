@@ -5,6 +5,7 @@ from torch import Tensor
 from torch.nn import Module, ModuleDict
 from torch.distributions import Categorical
 from xuance.common import AgentGrouping
+from xuance.torch.utils import AgentGroupedTensor
 from xuance.torch.rl_models.modules import MultiAgentModelOutput, RNN_State
 from xuance.torch.rl_models.architectures.multi_agent.value_factorization import MixingQNetwork
 from xuance.torch.rl_models.architectures.multi_agent.actor_critic import IndependentActorCritic
@@ -36,114 +37,107 @@ class MeanFieldQNetwork(MixingQNetwork):
 
     def forward(
             self,
-            observations: Dict[str, Tensor],
-            agent_indices: Dict[str, Tensor],
-            mean_actions: Dict[str, Tensor] = None,
-            avail_actions: Dict[str, Tensor] = None,
+            observations: AgentGroupedTensor,
+            agent_indices: AgentGroupedTensor,
+            mean_actions: AgentGroupedTensor | None = None,
+            avail_actions: AgentGroupedTensor | None = None,
             group_key: Optional[str] = None,
             rnn_states: Dict[str, RNN_State | dict] = None
     ) -> MultiAgentModelOutput:
         rep_out, rnn_states_new, actions, evalQ = {}, {}, {}, {}
-        input_shape = observations[self.group_keys[0]].shape
-        bs = input_shape[0]
-        seq_len = input_shape[1] if self.use_rnn else 1
+        input_shape = observations.grouped_tensor[self.group_keys[0]].shape
+        batch_size = input_shape[0]
+        seq_len = input_shape[2] if self.use_rnn else 1
 
         group_list = self.group_keys if group_key is None else [group_key]
 
         for group in group_list:
-            group_agents = self.groups[group]
             n_agent = self.n_group_agents[group]
-            batch_size = bs // n_agent
             batch_shape = (batch_size, n_agent, seq_len) if self.use_rnn else (batch_size, n_agent)
 
             input_kwargs = {
-                "agent_indices": agent_indices[group]
+                "agent_indices": agent_indices.packed(group)
             }
             if self.use_rnn:
                 input_kwargs["rnn_states"] = rnn_states[group]
 
-            individual_output = self.individual_q_networks[group](observations[group], mean_actions[group],
+            individual_output = self.individual_q_networks[group](observations.packed(group),
+                                                                  mean_actions.packed(group),
                                                                   **input_kwargs)
 
             rnn_states_new[group] = individual_output.representations.rnn_states
             rep_out[group] = individual_output.representations
-            evalQ[group] = individual_output.values  # shape: bs * -1 or bs * seq_len * -1
+            # Q value shape: batch_size * n_agent * -1 or batch_size * n_agent * seq_len * -1
+            evalQ[group] = individual_output.values.reshape(*batch_shape, -1)
 
-            evalQ_detach = individual_output.values.reshape(*batch_shape, -1).clone().detach()
+            evalQ_detach = evalQ[group].clone().detach()
             if avail_actions is not None:
-                evalQ_detach[avail_actions[group] == 0] = -1e10
+                evalQ_detach[avail_actions.group(group) == 0] = -1e10
 
             if self.policy_type == "Boltzmann":
                 actions_prob = self.get_boltzmann_policy(evalQ_detach)
-                group_actions = Categorical(probs=actions_prob).sample()
+                actions[group] = Categorical(probs=actions_prob).sample()
             elif self.policy_type == "greedy":
-                group_actions = evalQ_detach.argmax(dim=-1, keepdim=False)
+                actions[group] = evalQ_detach.argmax(dim=-1, keepdim=False)
             else:
                 raise NotImplementedError
 
-            for i, agent_key in enumerate(group_agents):
-                actions[agent_key] = group_actions[:, i]
-
         return MultiAgentModelOutput(
-            actions=actions,
-            values=evalQ,
+            actions=AgentGroupedTensor(actions, self.grouping),
+            values=AgentGroupedTensor(evalQ, self.grouping),
             rnn_states=rnn_states_new,
             rep_out=rep_out
         )
 
     def Qtarget(
             self,
-            observations: Dict[str, Tensor],
-            agent_indices: Dict[str, Tensor],
-            mean_actions: Dict[str, Tensor] = None,
-            avail_actions: Dict[str, Tensor] = None,
+            observations: AgentGroupedTensor,
+            agent_indices: AgentGroupedTensor,
+            mean_actions: AgentGroupedTensor | None = None,
+            avail_actions: AgentGroupedTensor | None = None,
             group_key: Optional[str] = None,
             rnn_states: Dict[str, RNN_State | dict] = None
     ) -> MultiAgentModelOutput:
         rep_out, rnn_states_new, actions, targetQ = {}, {}, {}, {}
-        input_shape = observations[self.group_keys[0]].shape
-        bs = input_shape[0]
-        seq_len = input_shape[1] if self.use_rnn else 1
+        input_shape = observations.grouped_tensor[self.group_keys[0]].shape
+        batch_size = input_shape[0]
+        seq_len = input_shape[2] if self.use_rnn else 1
 
         group_list = self.group_keys if group_key is None else [group_key]
 
         for group in group_list:
-            group_agents = self.groups[group]
             n_agent = self.n_group_agents[group]
-            batch_size = bs // n_agent
             batch_shape = (batch_size, n_agent, seq_len) if self.use_rnn else (batch_size, n_agent)
 
             target_input_kwargs = {
-                "agent_indices": agent_indices[group]
+                "agent_indices": agent_indices.packed(group)
             }
             if self.use_rnn:
                 target_input_kwargs["rnn_states"] = rnn_states[group]
 
-            individual_output = self.target_individual_q_networks[group](observations[group], mean_actions[group],
+            individual_output = self.target_individual_q_networks[group](observations.packed(group),
+                                                                         mean_actions.packed(group),
                                                                          **target_input_kwargs)
 
             rnn_states_new[group] = individual_output.representations.rnn_states
             rep_out[group] = individual_output.representations
-            targetQ[group] = individual_output.values
+            targetQ[group] = individual_output.values.reshape(*batch_shape, -1)
 
-            targetQ_detach = individual_output.values.reshape(*batch_shape, -1).clone().detach()
+            targetQ_detach = targetQ[group].clone().detach()
             if avail_actions is not None:
-                targetQ_detach[avail_actions[group] == 0] = -1e10
+                targetQ_detach[avail_actions.group(group) == 0] = -1e10
 
             if self.policy_type == "Boltzmann":
                 actions_prob = self.get_boltzmann_policy(targetQ_detach)
-                group_actions = Categorical(probs=actions_prob).sample()
+                actions[group] = Categorical(probs=actions_prob).sample()
             elif self.policy_type == "greedy":
-                group_actions = targetQ_detach.argmax(dim=-1, keepdim=False)
+                actions[group] = targetQ_detach.argmax(dim=-1, keepdim=False)
             else:
                 raise NotImplementedError
 
-            for i, agent_key in enumerate(group_agents):
-                actions[agent_key] = group_actions[:, i]
-
         return MultiAgentModelOutput(
-            actions=actions,
-            values=targetQ,
+            actions=AgentGroupedTensor(actions, self.grouping),
+            values=AgentGroupedTensor(targetQ, self.grouping),
             rnn_states=rnn_states_new,
             rep_out=rep_out
         )
@@ -152,7 +146,8 @@ class MeanFieldQNetwork(MixingQNetwork):
         actions_prob = self.softmax(q / self.temperature)
         return actions_prob
 
-    def get_mean_actions(self, actions: Dict[str, Tensor],
+    def get_mean_actions(self,
+                         actions: Dict[str, Tensor],  # Dict of agent-wise tensor
                          agent_mask_tensor: Tensor, batch_size: int) -> Dict[str, Tensor]:
         masked_mean_actions_dict = {}
         actions_tensor = torch.stack([v for v in actions.values()], dim=-1).reshape([-1, self.n_agents])
@@ -215,16 +210,16 @@ class MeanFiledActorCritic(IndependentActorCritic):
 
     def forward(
             self,
-            observations: Dict[str, Tensor],
-            agent_indices: Dict[str, Tensor],
-            avail_actions: Dict[str, Tensor] = None,
+            observations: AgentGroupedTensor,
+            agent_indices: AgentGroupedTensor,
+            avail_actions: AgentGroupedTensor | None = None,
             group_key: Optional[str] = None,
             rnn_states: Dict[str, RNN_State | dict] = None,
             deterministic: bool = False
     ) -> MultiAgentModelOutput:
         rnn_states_new, pi_dists, actions = {}, {}, {}
-        input_shape = observations[self.group_keys[0]].shape
-        bs = input_shape[0]
+        input_shape = observations.grouped_tensor[self.group_keys[0]].shape
+        batch_size = input_shape[0]
         seq_len = input_shape[1] if self.use_rnn else 1
 
         group_list = self.group_keys if group_key is None else [group_key]
@@ -232,18 +227,17 @@ class MeanFiledActorCritic(IndependentActorCritic):
         for group in group_list:
             group_agents = self.groups[group]
             n_agent = self.n_group_agents[group]
-            batch_size = bs // n_agent
             batch_shape = (batch_size, n_agent, seq_len) if self.use_rnn else (batch_size, n_agent)
 
             actor_kwargs = {
-                "agent_indices": agent_indices[group]
+                "agent_indices": agent_indices.packed(group)
             }
             if avail_actions is not None:
-                actor_kwargs["avail_actions"] = avail_actions[group]
+                actor_kwargs["avail_actions"] = avail_actions.packed(group)
             if self.use_rnn:
                 actor_kwargs["rnn_states"] = rnn_states[group]
 
-            actor_out = self.actors[group](observations[group], **actor_kwargs)
+            actor_out = self.actors[group](observations.packed(group), **actor_kwargs)
 
             pi_logits = actor_out.distributions.logits
             pi_probs = self.get_boltzmann_policy(pi_logits)
@@ -289,16 +283,16 @@ class MeanFiledActorCritic(IndependentActorCritic):
 
     def get_values(
             self,
-            observations: Dict[str, Tensor],
-            agent_indices: Dict[str, Tensor],
-            mean_actions: Dict[str, Tensor] = None,
+            observations: AgentGroupedTensor,
+            agent_indices: AgentGroupedTensor,
+            mean_actions: AgentGroupedTensor | None = None,
             group_key: Optional[str] = None,
             rnn_states: Dict[str, RNN_State | dict] = None,
             **kwargs
     ) -> MultiAgentModelOutput:
         rnn_states_new, values = {}, {}
-        input_shape = observations[self.group_keys[0]].shape
-        bs = input_shape[0]
+        input_shape = observations.grouped_tensor[self.group_keys[0]].shape
+        batch_size = input_shape[0]
         seq_len = input_shape[1] if self.use_rnn else 1
 
         group_list = self.group_keys if group_key is None else [group_key]
@@ -306,16 +300,17 @@ class MeanFiledActorCritic(IndependentActorCritic):
         for group in group_list:
             group_agents = self.groups[group]
             n_agent = self.n_group_agents[group]
-            batch_size = bs // n_agent
             batch_shape = (batch_size, n_agent, seq_len) if self.use_rnn else (batch_size, n_agent)
 
             critic_kwargs = {
-                "agent_indices": agent_indices[group]
+                "agent_indices": agent_indices.packed(group)
             }
             if self.use_rnn:
                 critic_kwargs["rnn_states"] = rnn_states[group]
 
-            critic_out = self.critics[group](observations[group], mean_actions[group], **critic_kwargs)
+            critic_out = self.critics[group](observations.packed(group),
+                                             mean_actions.packed(group),
+                                             **critic_kwargs)
 
             group_values = critic_out.values.reshape(*batch_shape, 1)
             rnn_states_new[group] = critic_out.representations.rnn_states

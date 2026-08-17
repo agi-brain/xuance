@@ -9,6 +9,7 @@ from torch import Tensor
 from torch.nn import Module, ModuleDict
 from torch.nn.parallel import DistributedDataParallel
 from xuance.common import AgentGrouping
+from xuance.torch.utils import AgentGroupedTensor
 from xuance.torch.rl_models.heads import QTRAN_Base, QTRAN_Alt, Coordination_Graph
 from xuance.torch.rl_models.modules import MultiAgentModelOutput, RNN_State
 
@@ -52,81 +53,85 @@ class MixingQNetwork(Module):
 
     def forward(
             self,
-            observations: Dict[str, Tensor],
-            agent_indices: Dict[str, Tensor],
-            avail_actions: Dict[str, Tensor] = None,
+            observations: AgentGroupedTensor,
+            agent_indices: AgentGroupedTensor,
+            avail_actions: AgentGroupedTensor | None = None,
             group_key: Optional[str] = None,
             rnn_states: Dict[str, RNN_State | dict] = None,
     ) -> MultiAgentModelOutput:
         rep_out, rnn_states_new, argmax_action, evalQ = {}, {}, {}, {}
-        input_shape = observations[self.group_keys[0]].shape
-        bs = input_shape[0]
-        seq_len = input_shape[1] if self.use_rnn else 1
+        input_shape = observations.grouped_tensor[self.group_keys[0]].shape
+        batch_size = input_shape[0]
+        seq_len = input_shape[2] if self.use_rnn else 1
 
         group_list = self.group_keys if group_key is None else [group_key]
 
         for group in group_list:
-            group_agents = self.groups[group]
             n_agent = self.n_group_agents[group]
-            batch_size = bs // n_agent
             batch_shape = (batch_size, n_agent, seq_len) if self.use_rnn else (batch_size, n_agent)
 
             input_kwargs = {
-                "agent_indices": agent_indices[group]
+                "agent_indices": agent_indices.packed(group)
             }
             if self.use_rnn:
                 input_kwargs["rnn_states"] = rnn_states[group]
 
-            individual_output = self.individual_q_networks[group](observations[group], **input_kwargs)
+            individual_output = self.individual_q_networks[group](observations.packed(group),
+                                                                  **input_kwargs)
 
             rnn_states_new[group] = individual_output.representations.rnn_states
             rep_out[group] = individual_output.representations
-            evalQ[group] = individual_output.values  # shape: bs * -1 or bs * seq_len * -1
+            # Q value shape: batch_size * n_agent * -1 or batch_size * n_agent * seq_len * -1
+            evalQ[group] = individual_output.values.reshape(*batch_shape, -1)
 
-            # shape: batch_size * n_agent * -1 or batch_size * n_agent * seq_len * -1
-            evalQ_detach = individual_output.values.reshape(*batch_shape, -1).clone().detach()
             if avail_actions is not None:
-                evalQ_detach[avail_actions[group] == 0] = -1e10
-            group_actions = evalQ_detach.argmax(dim=-1, keepdim=False)
-
-            for i, agent_key in enumerate(group_agents):
-                argmax_action[agent_key] = group_actions[:, i]  # get agent-wise actions for execution
+                evalQ_detach = evalQ[group].clone().detach()
+                evalQ_detach[avail_actions.group(group) == 0] = -1e10
+                argmax_action[group] = evalQ_detach.argmax(dim=-1, keepdim=False)
+            else:
+                argmax_action[group] = evalQ[group].argmax(dim=-1, keepdim=False)
 
         return MultiAgentModelOutput(
-            actions=argmax_action,  # agent-wise
-            values=evalQ,  # group-wise
-            rnn_states=rnn_states_new,  # group-wise
-            rep_out=rep_out  # group-wise
+            actions=AgentGroupedTensor(argmax_action, self.grouping),
+            values=AgentGroupedTensor(evalQ, self.grouping),
+            rnn_states=rnn_states_new,
+            rep_out=rep_out
         )
 
     def Qtarget(self,
-                observations: Dict[str, Tensor],
-                agent_indices: Dict[str, Tensor],
+                observations: AgentGroupedTensor,
+                agent_indices: AgentGroupedTensor,
                 group_key: Optional[str] = None,
                 rnn_states: Dict[str, RNN_State | dict] = None) -> MultiAgentModelOutput:
         rep_out, rnn_states_new, q_target = {}, {}, {}
+        input_shape = observations.grouped_tensor[self.group_keys[0]].shape
+        batch_size = input_shape[0]
+        seq_len = input_shape[2] if self.use_rnn else 1
 
         group_list = self.group_keys if group_key is None else [group_key]
 
         for group in group_list:
+            n_agent = self.n_group_agents[group]
+            batch_shape = (batch_size, n_agent, seq_len) if self.use_rnn else (batch_size, n_agent)
 
             target_input_kwargs = {
-                "agent_indices": agent_indices[group]
+                "agent_indices": agent_indices.packed(group)
             }
             if self.use_rnn:
                 target_input_kwargs["rnn_states"] = rnn_states[group]
 
-            individual_output = self.target_individual_q_networks[group](observations[group],
+            individual_output = self.target_individual_q_networks[group](observations.packed(group),
                                                                          **target_input_kwargs)
 
             rnn_states_new[group] = individual_output.representations.rnn_states
             rep_out[group] = individual_output.representations
-            q_target[group] = individual_output.values
+            # Q value shape: batch_size * n_agent * -1 or batch_size * n_agent * seq_len * -1
+            q_target[group] = individual_output.values.reshape(*batch_shape, -1)
 
         return MultiAgentModelOutput(
-            values=q_target,  # group-wise
-            rnn_states=rnn_states_new,  # group-wise
-            rep_out=rep_out  # group-wise
+            values=AgentGroupedTensor(q_target, self.grouping),
+            rnn_states=rnn_states_new,
+            rep_out=rep_out
         )
 
     def Q_tot(self, individual_values: Dict[str, Tensor], states: Optional[Tensor] = None):
@@ -204,54 +209,72 @@ class WeightedMixingQNetwork(MixingQNetwork):
 
     def q_centralized(
             self,
-            observations: Dict[str, Tensor],
-            agent_indices: Dict[str, Tensor],
+            observations: AgentGroupedTensor,
+            agent_indices: AgentGroupedTensor,
             group_key: Optional[str] = None,
             rnn_states: Dict[str, RNN_State | dict] = None
     ) -> MultiAgentModelOutput:
         rnn_states_new, evalQ = {}, {}
+        input_shape = observations.grouped_tensor[self.group_keys[0]].shape
+        batch_size = input_shape[0]
+        seq_len = input_shape[2] if self.use_rnn else 1
 
         group_list = self.group_keys if group_key is None else [group_key]
 
         for group in group_list:
+            n_agent = self.n_group_agents[group]
+            batch_shape = (batch_size, n_agent, seq_len) if self.use_rnn else (batch_size, n_agent)
+
             input_kwargs = {
-                "agent_indices": agent_indices[group]
+                "agent_indices": agent_indices.packed(group)
             }
             if self.use_rnn:
                 input_kwargs["rnn_states"] = rnn_states[group]
 
-            individual_output = self.individual_q_centralized[group](observations[group], **input_kwargs)
+            individual_output = self.individual_q_centralized[group](observations.packed(group), **input_kwargs)
 
-            evalQ[group] = individual_output.values
+            evalQ[group] = individual_output.values.reshape(*batch_shape, -1)
             rnn_states_new[group] = individual_output.representations.rnn_states
 
-        return MultiAgentModelOutput(values=evalQ, rnn_states=rnn_states_new)
+        return MultiAgentModelOutput(
+            values=AgentGroupedTensor(evalQ, self.grouping),
+            rnn_states=rnn_states_new
+        )
 
     def target_q_centralized(
             self,
-            observations: Dict[str, Tensor],
-            agent_indices: Dict[str, Tensor],
+            observations: AgentGroupedTensor,
+            agent_indices: AgentGroupedTensor,
             group_key: Optional[str] = None,
             rnn_states: Dict[str, RNN_State | dict] = None
     ) -> MultiAgentModelOutput:
         rnn_states_new, q_target = {}, {}
+        input_shape = observations.grouped_tensor[self.group_keys[0]].shape
+        batch_size = input_shape[0]
+        seq_len = input_shape[2] if self.use_rnn else 1
 
         group_list = self.group_keys if group_key is None else [group_key]
 
         for group in group_list:
+            n_agent = self.n_group_agents[group]
+            batch_shape = (batch_size, n_agent, seq_len) if self.use_rnn else (batch_size, n_agent)
 
             target_input_kwargs = {
-                "agent_indices": agent_indices[group]
+                "agent_indices": agent_indices.packed(group)
             }
             if self.use_rnn:
                 target_input_kwargs["rnn_states"] = rnn_states[group]
 
-            individual_output = self.target_individual_q_centralized[group](observations[group], **target_input_kwargs)
+            individual_output = self.target_individual_q_centralized[group](observations.packed(group),
+                                                                            **target_input_kwargs)
 
-            q_target[group] = individual_output.values
+            q_target[group] = individual_output.values.reshape(*batch_shape, -1)
             rnn_states_new[group] = individual_output.representations.rnn_states
 
-        return MultiAgentModelOutput(values=q_target, rnn_states=rnn_states_new)
+        return MultiAgentModelOutput(
+            values=AgentGroupedTensor(q_target, self.grouping),
+            rnn_states=rnn_states_new
+        )
 
     def q_feedforward(self, individual_values: Dict[str, Tensor], states: Optional[Tensor] = None):
         # Expected shape: [tot_batch_size * 1, ...] -> tot_batch_size * n_agents_all
@@ -331,9 +354,9 @@ class QTranMixingNetwork(MixingQNetwork):
     def Q_tran(self,
                states: Tensor,
                hidden_states: Dict[str, Tensor],
-               actions: Dict[str, Tensor],
-               agent_mask: Dict[str, Tensor] = None,
-               avail_actions: Dict[str, Tensor] = None,
+               actions: AgentGroupedTensor,
+               agent_mask: AgentGroupedTensor | None = None,
+               avail_actions: AgentGroupedTensor | None = None,
                group_key: Optional[str] = None) -> Tuple[Tensor, ...]:
         seq_len = states.shape[1] if self.use_rnn else 1
         batch_size = states.shape[0]
@@ -344,7 +367,7 @@ class QTranMixingNetwork(MixingQNetwork):
             n_agents = self.n_group_agents[group]
             n_actions = self.n_actions[group]
             dim_hidden_state = hidden_states[group].shape[-1]
-            group_actions_onehot = F.one_hot(actions[group].long(), n_actions)
+            group_actions_onehot = F.one_hot(actions.packed(group).long(), n_actions)
             if self.use_rnn:
                 actions_onehot_dict[group] = group_actions_onehot.reshape(batch_size, n_agents, seq_len, -1)
                 hidden_states_dict[group] = hidden_states[group].reshape([-1, n_agents, seq_len, dim_hidden_state])
@@ -353,13 +376,13 @@ class QTranMixingNetwork(MixingQNetwork):
                 hidden_states_dict[group] = hidden_states[group].reshape([-1, n_agents, dim_hidden_state])
 
             if avail_actions is not None:
-                actions_onehot_dict[group] *= avail_actions[group]
+                actions_onehot_dict[group] *= avail_actions.packed(group)
             if agent_mask is not None:
                 if self.use_rnn:
-                    agt_mask = agent_mask[group].reshape(
+                    agt_mask = agent_mask.packed(group).reshape(
                         batch_size, n_agents, seq_len, 1).repeat(1, 1, 1, dim_hidden_state)
                 else:
-                    agt_mask = agent_mask[group].reshape(batch_size, n_agents, 1).repeat(1, 1, dim_hidden_state)
+                    agt_mask = agent_mask.packed(group).reshape(batch_size, n_agents, 1).repeat(1, 1, dim_hidden_state)
                 hidden_states_dict[group] = hidden_states_dict[group] * agt_mask
 
         hidden_states_tensor_in = torch.concat([hidden_states_dict[k] for k in self.group_keys], dim=1)
@@ -376,9 +399,9 @@ class QTranMixingNetwork(MixingQNetwork):
     def Q_tran_target(self,
                       states: Tensor,
                       hidden_states: Dict[str, Tensor],
-                      actions: Dict[str, Tensor],
-                      agent_mask: Dict[str, Tensor] = None,
-                      avail_actions: Dict[str, Tensor] = None,
+                      actions: AgentGroupedTensor,
+                      agent_mask: AgentGroupedTensor | None = None,
+                      avail_actions: AgentGroupedTensor | None = None,
                       group_key: Optional[str] = None) -> Tuple[Tensor, ...]:
         seq_len = states.shape[1] if self.use_rnn else 1
         batch_size = states.shape[0]
@@ -389,7 +412,7 @@ class QTranMixingNetwork(MixingQNetwork):
             n_agents = self.n_group_agents[group]
             n_actions = self.n_actions[group]
             dim_hidden_state = hidden_states[group].shape[-1]
-            group_actions_onehot = F.one_hot(actions[group].long(), n_actions)
+            group_actions_onehot = F.one_hot(actions.packed(group).long(), n_actions)
             if self.use_rnn:
                 actions_onehot_dict[group] = group_actions_onehot.reshape(batch_size, n_agents, seq_len, -1)
                 hidden_states_dict[group] = hidden_states[group].reshape([-1, n_agents, seq_len, dim_hidden_state])
@@ -398,13 +421,13 @@ class QTranMixingNetwork(MixingQNetwork):
                 hidden_states_dict[group] = hidden_states[group].reshape([-1, n_agents, dim_hidden_state])
 
             if avail_actions is not None:
-                actions_onehot_dict[group] *= avail_actions[group]
+                actions_onehot_dict[group] *= avail_actions.packed(group)
             if agent_mask is not None:
                 if self.use_rnn:
-                    agt_mask = agent_mask[group].reshape(
+                    agt_mask = agent_mask.packed(group).reshape(
                         batch_size, n_agents, seq_len, 1).repeat(1, 1, 1, dim_hidden_state)
                 else:
-                    agt_mask = agent_mask[group].reshape(batch_size, n_agents, 1).repeat(1, 1, dim_hidden_state)
+                    agt_mask = agent_mask.packed(group).reshape(batch_size, n_agents, 1).repeat(1, 1, dim_hidden_state)
                 hidden_states_dict[group] = hidden_states_dict[group] * agt_mask
 
         hidden_states_tensor_in = torch.concat([hidden_states_dict[k] for k in self.group_keys], dim=1)
@@ -481,8 +504,8 @@ class DeepCoordinationGraph(Module):
         return parameters_model
 
     def get_hidden_states(self,
-                          observations: Dict[str, Tensor],
-                          agent_indices: Dict[str, Tensor],
+                          observations: AgentGroupedTensor,
+                          agent_indices: AgentGroupedTensor,
                           group_key: Optional[str] = None,
                           rnn_states: Dict[str, RNN_State | dict] = None,
                           use_target_net=False):
@@ -500,27 +523,27 @@ class DeepCoordinationGraph(Module):
             hidden_states_n: The hidden states of the representations that what we want.
         """
         rnn_states_new, hidden_states = {}, {}
-        batch_size = observations[self.group_keys[0]].shape[0]
-        seq_len = observations[self.group_keys[0]].shape[1] if self.use_rnn else 1
+        obs_shape = observations.group(self.group_keys[0]).shape
+        batch_size = obs_shape[0]
+        seq_len = obs_shape[2] if self.use_rnn else 1
 
         group_list = self.group_keys if group_key is None else [group_key]
 
         for group in group_list:
             group_agents = self.groups[group]
             n_agent = self.n_group_agents[group]
-            batch_size = batch_size // n_agent
             batch_shape = (batch_size, n_agent, seq_len) if self.use_rnn else (batch_size, n_agent)
 
             input_kwargs = {
-                "agent_indices": agent_indices[group]
+                "agent_indices": agent_indices.packed(group)
             }
             if self.use_rnn:
                 input_kwargs["rnn_states"] = rnn_states[group]
 
             if use_target_net:
-                representation_out = self.target_representation[group](observations[group], **input_kwargs)
+                representation_out = self.target_representation[group](observations.packed(group), **input_kwargs)
             else:
-                representation_out = self.representation[group](observations[group], **input_kwargs)
+                representation_out = self.representation[group](observations.packed(group), **input_kwargs)
 
             hidden_states_out = representation_out.embeddings.reshape(*batch_shape, -1)
             rnn_states_new[group] = representation_out.rnn_states

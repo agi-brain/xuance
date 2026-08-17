@@ -27,13 +27,11 @@ class VDN_Learner(IQL_Learner):
         # prepare training data
         batch = self.build_training_data(
             sample=sample,
-            use_parameter_sharing=self.use_parameter_sharing,
             use_actions_mask=self.use_actions_mask,
-            use_shared_rewards=True
         )
 
-        rewards_tot = torch.stack([r for r in batch.rewards.values()], dim=1).mean(dim=1)
-        terminals_tot = torch.stack([d for d in batch.terminals.values()], dim=1).all(dim=1).float()
+        rewards_tot = torch.stack([r for r in batch.rewards.agent_wise.values()], dim=1).mean(dim=1)
+        terminals_tot = torch.stack([d for d in batch.terminals.agent_wise.values()], dim=1).all(dim=1).float()
 
         info = self.callback.on_update_start(self.iterations, model=self.model, batch=batch,
                                              rewards_tot=rewards_tot, terminals_tot=terminals_tot)
@@ -44,24 +42,27 @@ class VDN_Learner(IQL_Learner):
         # calculate target values
         q_eval_a, q_next_a = {}, {}
         for group, n_agents in self.n_group_agents.items():
-            mask_values = batch.valid_mask(group, n_agents).reshape([-1, batch.seq_length])
+            mask_values = batch.valid_mask(group, n_agents).reshape([batch.batch_size, n_agents, batch.seq_length])
 
-            q_eval_taken = q_eval[group].gather(-1, batch.actions[group].long().unsqueeze(-1)).reshape(
-                [-1, batch.seq_length])
+            actions_taken = batch.actions.group(group)
+            q_eval_taken = q_eval.group(group).gather(-1, actions_taken.long().unsqueeze(-1)).reshape(
+                [batch.batch_size, n_agents, batch.seq_length])
 
             if self.config.double_q:
-                q_next_taken = q_next[group].gather(-1, actions_next[group].long().unsqueeze(-1)).reshape(
-                    [-1, batch.seq_length])
+                actions_next_taken = actions_next.group(group)
+                q_next_taken = q_next.group(group).gather(-1, actions_next_taken.long().unsqueeze(-1)).reshape(
+                    [batch.batch_size, n_agents, batch.seq_length])
             else:
-                q_next_taken = q_next[group].max(dim=-1, keepdim=True).values.reshape([-1, batch.seq_length])
+                q_next_taken = q_next.group(group).max(dim=-1, keepdim=True).values.reshape(
+                    [batch.batch_size, n_agents, batch.seq_length])
 
             q_eval_taken *= mask_values
             q_next_taken *= mask_values
 
             # get agent-wise values
             for i, agent_key in enumerate(self.groups[group]):
-                q_eval_a[agent_key] = q_eval_taken.reshape([batch.batch_size, n_agents, batch.seq_length])[:, i]
-                q_next_a[agent_key] = q_next_taken.reshape([batch.batch_size, n_agents, batch.seq_length])[:, i]
+                q_eval_a[agent_key] = q_eval_taken[:, i]
+                q_next_a[agent_key] = q_next_taken[:, i]
 
         q_tot_eval = self.model.Q_tot(q_eval_a).reshape(-1)
         q_tot_next = self.model.Qtarget_tot(q_next_a).reshape(-1)

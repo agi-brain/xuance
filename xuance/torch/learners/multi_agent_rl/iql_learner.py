@@ -44,22 +44,20 @@ class IQL_Learner(OffPolicyMultiAgentLearner):
             avail_actions=batch.avail_actions,
             rnn_states=rnn_states
         )
-        actions_greedy = model_output.actions
         q_eval = model_output.values
 
         with torch.no_grad():
             if self.use_rnn:
-                if not self.agent_grouping.full_independent:
-                    actions_greedy = self.packed_tensor(actions_greedy)
+                actions_next = model_output.actions
 
-                q_next_seq = self.model.Qtarget(
+                q_next = self.model.Qtarget(
                     observations=batch.observations,
                     agent_indices=batch.agent_indices,
                     rnn_states=rnn_states
                 ).values
-                q_eval = {k: v[:, :-1] for k, v in q_eval.items()}
-                q_next = {k: v[:, 1:] for k, v in q_next_seq.items()}
-                actions_next = {k: v[:, 1:] for k, v in actions_greedy.items()}
+                q_eval.grouped_tensor = {k: v[:, :, :-1] for k, v in q_eval.grouped_tensor.items()}
+                q_next.grouped_tensor = {k: v[:, :, 1:] for k, v in q_next.grouped_tensor.items()}
+                actions_next.grouped_tensor = {k: v[:, :, 1:] for k, v in actions_next.grouped_tensor.items()}
 
             else:
                 q_next = self.model.Qtarget(
@@ -71,18 +69,16 @@ class IQL_Learner(OffPolicyMultiAgentLearner):
                     actions_next = self.model(observations=batch.next_observations,
                                               agent_indices=batch.agent_indices,
                                               avail_actions=batch.next_avail_actions).actions
-                    if not self.agent_grouping.full_independent:
-                        actions_next = self.packed_tensor(actions_next)
                 else:
                     actions_next = None
 
         for group in self.group_keys:
             if self.use_actions_mask:
                 if self.use_rnn:
-                    next_avail_actions = batch.avail_actions[group][:, 1:]
+                    next_avail_actions = batch.avail_actions.group(group)[:, 1:]
                 else:
-                    next_avail_actions = batch.next_avail_actions
-                q_next[group][next_avail_actions == 0] = -1e10
+                    next_avail_actions = batch.next_avail_actions.group(group)
+                q_next.group(group)[next_avail_actions == 0] = -1e10
 
         return q_eval, q_next, actions_next
 
@@ -91,7 +87,6 @@ class IQL_Learner(OffPolicyMultiAgentLearner):
 
         # prepare training data
         batch = self.build_training_data(sample=sample,
-                                         use_parameter_sharing=self.use_parameter_sharing,
                                          use_actions_mask=self.use_actions_mask)
 
         info = self.callback.on_update_start(self.iterations, model=self.model, batch=batch)
@@ -103,15 +98,17 @@ class IQL_Learner(OffPolicyMultiAgentLearner):
         for group, n_agents in self.n_group_agents.items():
             mask_values = batch.valid_mask(group, n_agents).reshape(-1)
 
-            rewards = batch.rewards[group].reshape(-1)
-            terminals = batch.terminals[group].reshape(-1)
+            rewards = batch.rewards.packed(group).reshape(-1)
+            terminals = batch.terminals.packed(group).reshape(-1)
 
-            q_eval_taken = q_eval[group].gather(-1, batch.actions[group].long().unsqueeze(-1)).reshape(-1)
+            actions_taken = batch.actions.packed(group)
+            q_eval_taken = q_eval.packed(group).gather(-1, actions_taken.long().unsqueeze(-1)).reshape(-1)
 
             if self.config.double_q:
-                q_next_taken = q_next[group].gather(-1, actions_next[group].long().unsqueeze(-1)).reshape(-1)
+                actions_next_taken = actions_next.packed(group)
+                q_next_taken = q_next.packed(group).gather(-1, actions_next_taken.long().unsqueeze(-1)).reshape(-1)
             else:
-                q_next_taken = q_next[group].max(dim=-1, keepdim=True).values.reshape(-1)
+                q_next_taken = q_next.packed(group).max(dim=-1, keepdim=True).values.reshape(-1)
 
             q_target = rewards + (1 - terminals) * self.gamma * q_next_taken
 

@@ -8,7 +8,6 @@ import torch.distributed as dist
 from abc import ABC, abstractmethod
 from pathlib import Path
 from argparse import Namespace
-from operator import itemgetter
 from typing import Optional, List, Dict, Union, Tuple
 from gymnasium.spaces import Space
 from torch import nn
@@ -18,7 +17,7 @@ from xuance.common import get_time_string, create_directory, MultiAgentBaseCallb
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv, space2shape
 from xuance.torch import REGISTRY_Representation, REGISTRY_Learners, Module
 from xuance.torch.learners import LearnerMAS
-from xuance.torch.utils import (NormalizeFunctions, InitializeFunctions, ActivationFunctions,
+from xuance.torch.utils import (NormalizeFunctions, InitializeFunctions, ActivationFunctions, AgentGroupedTensor,
                                 init_distributed_mode, set_seed, set_device)
 from xuance.torch.rl_models import AgentFeatureEncoder
 from xuance.torch.rl_models import IdentityFeatureFusion, build_identity_encoder
@@ -136,7 +135,9 @@ class MARLAgents(ABC):
         self.groups = self.agent_grouping.groups
         self.group_keys = self.agent_grouping.group_keys
         self.n_group_agents = {k: len(self.groups[k]) for k in self.group_keys}
-        self.agent_indices = {k: self.agent_grouping.agent_indices(k) for k in self.group_keys}
+        self.agent_indices = {k: torch.as_tensor(self.agent_grouping.agent_indices(k),
+                                                 dtype=torch.int64, device=self.device)
+                              for k in self.group_keys}
 
         # Set network's normalizer, initializer, activation.
         self.normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None
@@ -336,55 +337,43 @@ class MARLAgents(ABC):
         return REGISTRY_Learners[self.config.learner](*args)
 
     def _build_inputs(self,
-                      obs_dict: List[dict],
-                      avail_actions_dict: Optional[List[dict]] = None):
+                      obs_list: List[dict],
+                      avail_actions_list: Optional[List[dict]] = None):
         """
         Build inputs for representations before calculating actions.
 
         Parameters:
-            obs_dict (List[dict]): Observations for each agent in self.agent_keys.
-            avail_actions_dict (Optional[List[dict]]): Actions mask values, default is None.
+            obs_list (List[dict]): List of observations for each agent in self.agent_keys.
+            avail_actions_list (Optional[List[dict]]): Actions mask values, default is None.
 
         Returns:
             obs_input: The represented observations.
             agents_id: The agent id (One-Hot variables).
         """
-        batch_size = len(obs_dict)
+        batch_size = len(obs_list)
         obs_input = {}
         agent_indices = {}
-        avail_actions_input = {} if self.use_actions_mask else None
+        avail_actions = {} if self.use_actions_mask else None
 
         for group, group_agents in self.groups.items():
-            bs = batch_size * self.n_group_agents[group]
-            obs_array = np.array([itemgetter(*group_agents)(data) for data in obs_dict])
+            obs_input[group] = torch.as_tensor(np.array([[obs[k] for k in group_agents] for obs in obs_list]),
+                                               device=self.device)  # shape: batch_size * n_agent * obs_dim
 
-            if self.use_cnn and len(obs_array.shape) > 3:  # batch * n_agent * height * width * channels (images)
-                obs_shape_item = obs_array.shape[2:]
-            else:
-                obs_shape_item = (-1,)
-
-            agents_id = torch.as_tensor(self.agent_indices[group],
-                                        dtype=torch.int64).repeat(batch_size, 1).reshape([bs, 1]).to(self.device)
+            agent_indices[group] = self.agent_indices[group].repeat(batch_size, 1).reshape(batch_size, -1, 1)
+            if self.use_rnn:  # sequence length T=1
+                obs_input[group] = obs_input[group].unsqueeze(2)  # shape: batch_size * n_agent * 1 * obs_dim
+                agent_indices[group] = agent_indices[group].unsqueeze(2)  # shape: batch_size * n_agent * 1 * 1
 
             if self.use_actions_mask:
-                avail_actions_array = torch.as_tensor(np.array([itemgetter(*group_agents)(data)
-                                                                for data in avail_actions_dict])).to(self.device)
-            else:
-                avail_actions_array = None
+                avail_actions[group] = torch.as_tensor(np.array([[avail_a[k] for k in group_agents]
+                                                                 for avail_a in avail_actions_list]),
+                                                       device=self.device)  # shape: batch_size * n_agent * n_actions
+                if self.use_rnn:
+                    avail_actions[group] = avail_actions[group].unsqueeze(2)
 
-            if self.use_rnn:
-                obs_input[group] = obs_array.reshape([bs, 1, *obs_shape_item])
-                agents_id = agents_id.reshape(bs, 1, -1)
-                if self.use_actions_mask:
-                    avail_actions_input[group] = avail_actions_array.reshape([bs, 1, -1])
-            else:
-                obs_input[group] = obs_array.reshape([bs, *obs_shape_item])
-                agents_id = agents_id.reshape(bs, -1)
-                if self.use_actions_mask:
-                    avail_actions_input[group] = avail_actions_array.reshape([bs, -1])
-            agent_indices[group] = agents_id
-
-        return obs_input, agent_indices, avail_actions_input
+        return (AgentGroupedTensor(obs_input, self.agent_grouping),
+                AgentGroupedTensor(agent_indices, self.agent_grouping),
+                AgentGroupedTensor(avail_actions, self.agent_grouping))
 
     @abstractmethod
     def get_actions(self, **kwargs):

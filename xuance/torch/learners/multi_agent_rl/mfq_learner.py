@@ -8,6 +8,7 @@ import torch
 from argparse import Namespace
 from xuance.torch import Module
 from xuance.common import AgentGrouping, Optional
+from xuance.torch.utils import AgentGroupedTensor
 from xuance.torch.learners import OffPolicyMultiAgentLearner
 
 
@@ -35,15 +36,15 @@ class MFQ_Learner(OffPolicyMultiAgentLearner):
                                                     for v in sample['actions_mean_next'].values()], dim=1)
 
         for group, n_agents in self.n_group_agents.items():
-            bs = batch_size * n_agents
 
             if self.use_rnn:
-                actions_mean[group] = actions_mean_tensor.reshape([bs, seq_length + 1, -1])
+                actions_mean[group] = actions_mean_tensor.reshape([batch_size, n_agents, seq_length + 1, -1])
             else:
-                actions_mean[group] = actions_mean_tensor.reshape([bs, -1])
-                actions_mean_next[group] = actions_mean_next_tensor.reshape([bs, -1])
+                actions_mean[group] = actions_mean_tensor.reshape([batch_size, n_agents, -1])
+                actions_mean_next[group] = actions_mean_next_tensor.reshape([batch_size, n_agents, -1])
 
-        return actions_mean, actions_mean_next
+        return (AgentGroupedTensor(actions_mean, self.agent_grouping),
+                AgentGroupedTensor(actions_mean_next, self.agent_grouping))
 
     def update(self, sample):
         self.iterations += 1
@@ -52,7 +53,6 @@ class MFQ_Learner(OffPolicyMultiAgentLearner):
         act_mean, act_mean_next = self.build_actions_mean_input(sample=sample,
                                                                 use_parameter_sharing=self.use_parameter_sharing)
         batch = self.build_training_data(sample=sample,
-                                         use_parameter_sharing=self.use_parameter_sharing,
                                          use_actions_mask=self.use_actions_mask)
 
         info = self.callback.on_update_start(self.iterations, model=self.model, batch=batch)
@@ -62,16 +62,16 @@ class MFQ_Learner(OffPolicyMultiAgentLearner):
         model_output = self.model(observations=batch.observations, mean_actions=act_mean,
                                   agent_indices=batch.agent_indices, avail_actions=batch.avail_actions,
                                   rnn_states=rnn_states)
-        actions_greedy, q_eval = model_output.actions, model_output.values
+        actions_greedy = model_output.actions
+        q_eval = model_output.values
+
         with torch.no_grad():
             if self.use_rnn:
-                q_next_seq = self.model.Qtarget(observations=batch.observations, mean_actions=act_mean,
-                                                agent_indices=batch.agent_indices,
-                                                rnn_states=rnn_states).values
-                q_eval = {k: v[:, :-1] for k, v in q_eval.items()}
-                q_next = {k: v[:, 1:] for k, v in q_next_seq.items()}
-                if not self.agent_grouping.full_independent:
-                    actions_greedy = self.packed_tensor(actions_greedy)
+                q_next = self.model.Qtarget(observations=batch.observations, mean_actions=act_mean,
+                                            agent_indices=batch.agent_indices,
+                                            rnn_states=rnn_states).values
+                q_eval.grouped_tensor = {k: v[:, :, :-1] for k, v in q_eval.grouped_tensor.items()}
+                q_next.grouped_tensor = {k: v[:, :, 1:] for k, v in q_next.grouped_tensor.items()}
             else:
                 q_next = self.model.Qtarget(observations=batch.next_observations, mean_actions=act_mean_next,
                                             agent_indices=batch.agent_indices).values
@@ -81,32 +81,33 @@ class MFQ_Learner(OffPolicyMultiAgentLearner):
         for group, n_agents in self.n_group_agents.items():
             mask_values = batch.valid_mask(group, n_agents).reshape(-1)
 
-            rewards = batch.rewards[group].reshape(-1)
-            terminals = batch.terminals[group].reshape(-1)
+            rewards = batch.rewards.packed(group).reshape(-1)
+            terminals = batch.terminals.packed(group).reshape(-1)
 
-            q_eval_taken = q_eval[group].gather(-1, batch.actions[group].long().unsqueeze(-1)).reshape(-1)
+            q_eval_taken = q_eval.packed(group).gather(-1, batch.actions.packed(group).long().unsqueeze(-1)).reshape(-1)
 
             if self.use_actions_mask:
                 if self.use_rnn:
-                    next_avail_actions = batch.avail_actions[group][:, 1:]
+                    next_avail_actions = batch.avail_actions.packed(group)[:, 1:]
                 else:
-                    next_avail_actions = batch.next_avail_actions
-                q_next[group][next_avail_actions == 0] = -1e10
+                    next_avail_actions = batch.next_avail_actions.packed(group)
+                q_next.packed(group)[next_avail_actions == 0] = -1e10
 
             if self.policy_type == "Boltzmann":
-                pi_probs = self.model.get_boltzmann_policy(q_next[group])
-                v_mf = (pi_probs * q_next[group]).sum(-1).reshape(-1)
+                pi_probs = self.model.get_boltzmann_policy(q_next.packed(group))
+                v_mf = (pi_probs * q_next.packed(group)).sum(-1).reshape(-1)
                 q_target = rewards + (1 - terminals) * self.gamma * v_mf
             elif self.policy_type == "greedy":
                 if self.use_rnn:
-                    group_actions_next = actions_greedy[group][:, 1:]
+                    group_actions_next = actions_greedy.packed(group)[:, 1:]
+                    q_next_taken = q_next.packed(group).gather(
+                        -1, group_actions_next.unsqueeze(-1).long()).reshape(-1)
                 else:
                     group_actions_next = self.model(observations=batch.next_observations, mean_actions=act_mean_next,
                                                     group_key=group, agent_indices=batch.agent_indices,
                                                     avail_actions=batch.avail_actions).actions
-                    if not self.agent_grouping.full_independent:
-                        group_actions_next = self.packed_tensor(group_actions_next, group_key=group)
-                q_next_taken = q_next[group].gather(-1, group_actions_next[group].unsqueeze(-1).long()).reshape(-1)
+                    q_next_taken = q_next.packed(group).gather(
+                        -1, group_actions_next.packed(group).unsqueeze(-1).long()).reshape(-1)
                 q_target = rewards + (1 - terminals) * self.gamma * q_next_taken
             else:
                 raise NotImplementedError
@@ -122,7 +123,7 @@ class MFQ_Learner(OffPolicyMultiAgentLearner):
 
             info.update(self.callback.on_update_agent_wise(self.iterations, group, info=info,
                                                            mask_values=mask_values, q_eval_a=q_eval_taken,
-                                                           q_next=q_next[group], q_target=q_target,
+                                                           q_next=q_next, q_target=q_target,
                                                            td_error=td_error))
         loss = sum(individual_loss)
         self.optimizer.zero_grad()
