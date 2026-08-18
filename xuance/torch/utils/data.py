@@ -59,10 +59,10 @@ class AgentGroupedTensor:
             cls,
             values: Dict[str, Tensor] | None,
             grouping: AgentGrouping,
-    ) -> "AgentGroupedTensor":
+    ) -> "AgentGroupedTensor | None":
         grouped = {}
         if values is None:
-            return cls(None, grouping)
+            return None
 
         for group, agents in grouping.groups.items():
             grouped[group] = torch.stack(

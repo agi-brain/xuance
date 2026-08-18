@@ -123,30 +123,30 @@ class VDAC_Agents(OnPolicyMARLAgents):
 
         return model
 
-    def store_experience(self, obs_dict, avail_actions, actions_dict, log_pi_a, rewards_dict, values_dict,
-                         terminals_dict, info, **kwargs):
+    def store_experience(self, obs_list, avail_actions, actions_list, log_pi_a, rewards_list, values_dict,
+                         terminals_list, info, **kwargs):
         """
         Store experience data into replay buffer.
 
         Parameters:
-            obs_dict (List[dict]): Observations for each agent in self.agent_keys.
+            obs_list (List[dict]): Observations for each agent in self.agent_keys.
             avail_actions (List[dict]): Actions mask values for each agent in self.agent_keys.
-            actions_dict (List[dict]): Actions for each agent in self.agent_keys.
+            actions_list (List[dict]): Actions for each agent in self.agent_keys.
             log_pi_a (dict): The log of pi.
-            rewards_dict (List[dict]): Rewards for each agent in self.agent_keys.
+            rewards_list (List[dict]): Rewards for each agent in self.agent_keys.
             values_dict (dict): Critic values for each agent in self.agent_keys.
-            terminals_dict (List[dict]): Terminated values for each agent in self.agent_keys.
+            terminals_list (List[dict]): Terminated values for each agent in self.agent_keys.
             info (List[dict]): Other information for the environment at current step.
             **kwargs: Other inputs.
         """
         experience_data = {
-            'obs': {k: np.array([data[k] for data in obs_dict]) for k in self.agent_keys},
-            'actions': {k: np.array([data[k] for data in actions_dict]) for k in self.agent_keys},
+            'obs': {k: np.array([data[k] for data in obs_list]) for k in self.agent_keys},
+            'actions': {k: np.array([data[k] for data in actions_list]) for k in self.agent_keys},
             # 'log_pi_old': log_pi_a,
-            'rewards': {k: np.array([np.array(list(data.values())).mean() for data in rewards_dict])
+            'rewards': {k: np.array([np.array(list(data.values())).mean() for data in rewards_list])
                         for k in self.agent_keys},
             'values': values_dict,
-            'terminals': {k: np.array([data[k] for data in terminals_dict]) for k in self.agent_keys},
+            'terminals': {k: np.array([data[k] for data in terminals_list]) for k in self.agent_keys},
             'agent_mask': {k: np.array([data['agent_mask'][k] for data in info]) for k in self.agent_keys},
         }
         if self.use_rnn:
@@ -159,9 +159,9 @@ class VDAC_Agents(OnPolicyMARLAgents):
         self.memory.store(**experience_data)
 
     def get_actions(self,
-                    obs_dict: List[dict],
+                    obs_list: List[dict],
                     state: Optional[np.ndarray] = None,
-                    avail_actions_dict: Optional[List[dict]] = None,
+                    avail_actions_list: Optional[List[dict]] = None,
                     rnn_states_actor: Dict[str, RNN_State] = None,
                     rnn_states_critic: Dict[str, RNN_State] = None,
                     test_mode: Optional[bool] = False,
@@ -171,9 +171,9 @@ class VDAC_Agents(OnPolicyMARLAgents):
         Returns actions for agents.
 
         Parameters:
-            obs_dict (dict): Observations for each agent in self.agent_keys.
+            obs_list (dict): Observations for each agent in self.agent_keys.
             state (Optional[np.ndarray]): The global state.
-            avail_actions_dict (Optional[List[dict]]): Actions mask values, default is None.
+            avail_actions_list (Optional[List[dict]]): Actions mask values, default is None.
             rnn_states_actor (Optional[dict]): The RNN hidden states of actor representation.
             rnn_states_critic (Optional[dict]): The RNN hidden states of critic representation.
             test_mode (Optional[bool]): True for testing without noises.
@@ -182,38 +182,46 @@ class VDAC_Agents(OnPolicyMARLAgents):
         Returns:
             rnn_states_actor_new (dict): The new RNN hidden states of actor representation (if self.use_rnn=True).
             rnn_states_critic_new (dict): The new RNN hidden states of critic representation (if self.use_rnn=True).
-            actions_dict (dict): The output actions.
+            actions_list (dict): The output actions.
             log_pi_a (dict): The log of pi.
             values_dict (dict): The evaluated critic values (when test_mode is False).
         """
-        n_env = len(obs_dict)
+        batch_size = len(obs_list)
         rnn_states_critic_new, values_dict = {}, {}
 
-        obs_input, agent_indices, avail_actions_input = self._build_inputs(obs_dict, avail_actions_dict)
-        model_output = self.model(observations=obs_input,
-                                  agent_indices=agent_indices,
-                                  avail_actions=avail_actions_input,
-                                  rnn_states=rnn_states_actor,
-                                  deterministic=deterministic)
-        rnn_states_actor_new = model_output.actor_rnn_states
+        obs_input, agent_indices, avail_actions_input = self._build_inputs(obs_list, avail_actions_list)
+        with torch.no_grad():
+            model_output = self.model(observations=obs_input,
+                                      agent_indices=agent_indices,
+                                      avail_actions=avail_actions_input,
+                                      rnn_states=rnn_states_actor,
+                                      deterministic=deterministic)
+            rnn_states_actor_new = model_output.actor_rnn_states
+            actions = model_output.actions
+
+        actions.grouped_tensor = {k: actions.grouped_tensor[k].reshape(batch_size, n).cpu().numpy()
+                                  for k, n in self.n_group_agents.items()}
+        if self.continuous_control:
+            actions_list = [{k: actions.agent_wise[k][e].reshape([-1]) for k in self.agent_keys}
+                            for e in range(batch_size)]
+        else:
+            actions_list = [{k: actions.agent_wise[k][e].reshape([]) for k in self.agent_keys}
+                            for e in range(batch_size)]
 
         if not test_mode:
-            values_model_output = self.model.get_values(observations=obs_input,
-                                                        agent_indices=agent_indices,
-                                                        rnn_states=rnn_states_critic)
-            rnn_states_critic_new = values_model_output.critic_rnn_states
-            state = torch.as_tensor(state, device=self.device)
-            values_tot = self.model.values_tot(values_model_output.values, state).detach().cpu().numpy().reshape(n_env)
-            values_dict = {k: values_tot for k in self.agent_keys}
-
-        actions_sample = {k: v.cpu().detach().numpy() for k, v in model_output.actions.items()}
-        if self.continuous_control:
-            actions_dict = [{k: actions_sample[k][e].reshape([-1]) for k in self.agent_keys} for e in range(n_env)]
-        else:
-            actions_dict = [{k: actions_sample[k][e].reshape([]) for k in self.agent_keys} for e in range(n_env)]
+            with torch.no_grad():
+                values_model_output = self.model.get_values(observations=obs_input,
+                                                            agent_indices=agent_indices,
+                                                            rnn_states=rnn_states_critic)
+                rnn_states_critic_new = values_model_output.critic_rnn_states
+                values_individual = values_model_output.values.agent_wise
+                if state is not None:
+                    state = torch.as_tensor(state, device=self.device)
+                values_tot = self.model.values_tot(values_individual, state).cpu().numpy().reshape(batch_size)
+                values_dict = {k: values_tot for k in self.agent_keys}
 
         return {"rnn_states_actor": rnn_states_actor_new, "rnn_states_critic": rnn_states_critic_new,
-                "actions": actions_dict, "log_pi": None, "values": values_dict}
+                "actions": actions_list, "log_pi": None, "values": values_dict}
 
     def values_next(self,
                     i_env: int,
@@ -244,11 +252,13 @@ class VDAC_Agents(OnPolicyMARLAgents):
             rnn_states_critic_i = None
 
         obs_input, agent_indices, _ = self._build_inputs([obs_dict])
-        values_model_output = self.model.get_values(observations=obs_input,
-                                                    agent_indices=agent_indices,
-                                                    rnn_states=rnn_states_critic_i)
-        rnn_states_critic_new_i = values_model_output.critic_rnn_states
-        values_tot = self.model.values_tot(values_model_output.values, state).detach().cpu().numpy().reshape([])
+        with torch.no_grad():
+            values_model_output = self.model.get_values(observations=obs_input,
+                                                        agent_indices=agent_indices,
+                                                        rnn_states=rnn_states_critic_i)
+            rnn_states_critic_new_i = values_model_output.critic_rnn_states
+            values_individual = values_model_output.values.agent_wise
+            values_tot = self.model.values_tot(values_individual, state).cpu().numpy().reshape([])
         values_dict = {k: values_tot for k in self.agent_keys}
 
         return rnn_states_critic_new_i, values_dict

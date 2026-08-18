@@ -48,9 +48,9 @@ class LearnerMAS(Learner):
 
     def get_joint_input(self, input_tensor, output_shape=None):
         if self.n_agents == 1:
-            joint_tensor = itemgetter(*self.agent_keys)(input_tensor)
+            joint_tensor = input_tensor[self.agent_keys[0]]
         else:
-            joint_tensor = torch.concat(itemgetter(*self.agent_keys)(input_tensor), dim=-1)
+            joint_tensor = torch.concat([input_tensor[key] for key in self.agent_keys], dim=-1)
         if output_shape is not None:
             joint_tensor = joint_tensor.reshape(output_shape)
         return joint_tensor
@@ -220,7 +220,6 @@ class OnPolicyMultiAgentLearner(LearnerMAS):
     def build_training_data(
             self,
             sample: Optional[dict],
-            use_parameter_sharing: Optional[bool] = False,
             use_actions_mask: Optional[bool] = False,
             use_global_state: Optional[bool] = False
     ) -> OnPolicyMARLBatch:
@@ -229,7 +228,6 @@ class OnPolicyMultiAgentLearner(LearnerMAS):
 
         Parameters:
             sample (dict): The raw sampled data.
-            use_parameter_sharing (bool): Whether to use parameter sharing for individual agent models.
             use_actions_mask (bool): Whether to use actions mask for unavailable actions.
             use_global_state (bool): Whether to use global state.
 
@@ -238,66 +236,67 @@ class OnPolicyMultiAgentLearner(LearnerMAS):
         """
         batch_size = sample['batch_size']
         seq_length = sample['sequence_length'] if self.use_rnn else 1
-        state, filled = None, None
-        obs, actions, rewards, terminals, agent_mask = {}, {}, {}, {}, {}
-        values, returns, advantages, log_pi_old = {}, {}, {}, {}
-        avail_actions = {} if self.use_actions_mask else None
-        agent_indices = {}
 
-        for agent in self.agent_keys:
-            obs[agent] = torch.as_tensor(sample['obs'][agent], device=self.device)
-            actions[agent] = torch.as_tensor(sample['actions'][agent], device=self.device)
-            rewards[agent] = torch.as_tensor(sample['rewards'][agent], device=self.device)
-            agent_mask[agent] = torch.as_tensor(sample['agent_mask'][agent], device=self.device, dtype=torch.float32)
-            values[agent] = torch.as_tensor(sample['values'][agent], device=self.device)
-            returns[agent] = torch.as_tensor(sample['returns'][agent], device=self.device)
-            advantages[agent] = torch.as_tensor(sample['advantages'][agent], device=self.device)
-            log_pi_old[agent] = torch.as_tensor(sample['log_pi_old'][agent], device=self.device)
-            if use_actions_mask:
-                avail_actions[agent] = torch.as_tensor(sample['avail_actions'][agent],
-                                                       device=self.device, dtype=torch.float32)
-
+        obs_agent_wise = {
+            agent: torch.as_tensor(sample['obs'][agent], device=self.device)
+            for agent in self.agent_keys
+        }
+        act_agent_wise = {
+            agent: torch.as_tensor(sample['actions'][agent], device=self.device)
+            for agent in self.agent_keys
+        }
+        agent_mask_agent_wise = {
+            agent: torch.as_tensor(sample['agent_mask'][agent], device=self.device, dtype=torch.float32)
+            for agent in self.agent_keys
+        }
+        values_agent_wise = {
+            agent: torch.as_tensor(sample['values'][agent], device=self.device, dtype=torch.float32)
+            for agent in self.agent_keys
+        }
+        returns_agent_wise = {
+            agent: torch.as_tensor(sample['returns'][agent], device=self.device, dtype=torch.float32)
+            for agent in self.agent_keys
+        }
+        advantages_agent_wise = {
+            agent: torch.as_tensor(sample['advantages'][agent], device=self.device, dtype=torch.float32)
+            for agent in self.agent_keys
+        }
+        log_pi_old_agent_wise = {
+            agent: torch.as_tensor(sample['log_pi_old'][agent], device=self.device, dtype=torch.float32)
+            for agent in self.agent_keys
+        }
+        avail_actions_agent_wise = None
+        if use_actions_mask:
+            avail_actions_agent_wise = {
+                agent: torch.as_tensor(sample['avail_actions'][agent], device=self.device, dtype=torch.float32)
+                for agent in self.agent_keys
+            }
+        state = None
         if use_global_state:
             state = torch.as_tensor(sample['state'], device=self.device)
 
+        filled = None
         if self.use_rnn:
             filled = torch.as_tensor(sample['filled'], device=self.device, dtype=torch.float32)
 
-        for key, n_agents in self.n_group_agents.items():
-            bs = batch_size * n_agents
-
+        agent_indices = {}
+        for group, n_agents in self.n_group_agents.items():
+            agent_indices[group] = self.agent_indices[group].repeat(batch_size, 1).reshape(batch_size, n_agents, 1)
             if self.use_rnn:
-                agents_id = torch.as_tensor(self.agent_indices[key], dtype=torch.int64).repeat(
-                    batch_size, 1).reshape(bs, 1, 1).expand(-1, seq_length, -1).to(self.device)
-            else:
-                agents_id = torch.as_tensor(self.agent_indices[key], dtype=torch.int64).repeat(
-                    batch_size, 1).reshape([bs, 1]).to(self.device)
-
-            agent_indices[key] = agents_id
-
-        # from agent-wise to group-wise
-        if not self.agent_grouping.full_independent:
-            obs = self.packed_tensor(obs)
-            actions = self.packed_tensor(actions)
-            values = self.packed_tensor(values)
-            returns = self.packed_tensor(returns)
-            advantages = self.packed_tensor(advantages)
-            log_pi_old = self.packed_tensor(log_pi_old)
-            agent_mask = self.packed_tensor(agent_mask)
-            avail_actions = self.packed_tensor(avail_actions)
+                agent_indices[group] = agent_indices[group].unsqueeze(2).expand(-1, -1, seq_length, -1)
 
         return OnPolicyMARLBatch(
             batch_size=batch_size,
             global_states=state,
-            observations=obs,
-            actions=actions,
-            values=values,
-            returns=returns,
-            advantages=advantages,
-            old_log_probs=log_pi_old,
-            agent_masks=agent_mask,
-            avail_actions=avail_actions,
-            agent_indices=agent_indices,
+            observations=AgentGroupedTensor.from_agent_wise(obs_agent_wise, grouping=self.agent_grouping),
+            actions=AgentGroupedTensor.from_agent_wise(act_agent_wise, grouping=self.agent_grouping),
+            values=AgentGroupedTensor.from_agent_wise(values_agent_wise, grouping=self.agent_grouping),
+            returns=AgentGroupedTensor.from_agent_wise(returns_agent_wise, grouping=self.agent_grouping),
+            advantages=AgentGroupedTensor.from_agent_wise(advantages_agent_wise, grouping=self.agent_grouping),
+            old_log_probs=AgentGroupedTensor.from_agent_wise(log_pi_old_agent_wise, grouping=self.agent_grouping),
+            agent_masks=AgentGroupedTensor.from_agent_wise(agent_mask_agent_wise, grouping=self.agent_grouping),
+            avail_actions=AgentGroupedTensor.from_agent_wise(avail_actions_agent_wise, grouping=self.agent_grouping),
+            agent_indices=AgentGroupedTensor(agent_indices, grouping=self.agent_grouping),
             filled_masks=filled,
             seq_length=seq_length
         )

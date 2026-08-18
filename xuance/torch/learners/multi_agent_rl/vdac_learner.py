@@ -8,6 +8,7 @@ import torch
 from torch import nn
 from argparse import Namespace
 from xuance.common import AgentGrouping
+from xuance.torch.utils import AgentGroupedTensor
 from xuance.torch.learners import OnPolicyMultiAgentLearner
 
 
@@ -24,10 +25,12 @@ class VDAC_Learner(OnPolicyMultiAgentLearner):
         self.iterations += 1
 
         # prepare training data
-        batch = self.build_training_data(sample=sample,
-                                         use_parameter_sharing=self.use_parameter_sharing,
-                                         use_actions_mask=self.use_actions_mask,
-                                         use_global_state=self.use_global_state)
+        batch = self.build_training_data(
+            sample=sample,
+            use_actions_mask=self.use_actions_mask,
+            use_global_state=self.use_global_state
+        )
+
         info = self.callback.on_update_start(self.iterations, model=self.model, batch=batch)
 
         # initial hidden states for rnn
@@ -48,11 +51,10 @@ class VDAC_Learner(OnPolicyMultiAgentLearner):
         )
 
         values_pred_individual = value_outputs.values
-        values_tot = self.model.values_tot(individual_values=values_pred_individual,
+        values_tot = self.model.values_tot(individual_values=values_pred_individual.agent_wise,
                                            global_states=batch.global_states)
-        values_pred = {k: values_tot for k in self.agent_keys}
-        if not self.agent_grouping.full_independent:
-            values_pred = self.packed_tensor(values_pred)
+        values_pred = AgentGroupedTensor.from_agent_wise({k: values_tot for k in self.agent_keys},
+                                                         grouping=self.agent_grouping)
 
         # calculate losses for each agent
         actor_loss, entropy_loss, critic_loss = [], [], []
@@ -61,8 +63,8 @@ class VDAC_Learner(OnPolicyMultiAgentLearner):
 
             # actor loss
             dist = policy_outputs.distributions[group]
-            log_pi = dist.log_prob(batch.actions[group]).reshape(-1)
-            advantages = batch.advantages[group].reshape(-1)
+            log_pi = dist.log_prob(batch.actions.packed(group)).reshape(-1)
+            advantages = batch.advantages.packed(group).reshape(-1)
 
             actor_loss.append(-((advantages.detach() * log_pi) * mask_values).sum() / mask_values.sum())
 
@@ -71,9 +73,9 @@ class VDAC_Learner(OnPolicyMultiAgentLearner):
             entropy_loss.append((entropy * mask_values).sum() / mask_values.sum())
 
             # value loss
-            value_pred_i = values_pred[group].reshape(-1)
-            value_target = batch.returns[group].reshape(-1)
-            values_i = batch.values[group].reshape(-1)
+            value_pred_i = values_pred.packed(group).reshape(-1)
+            value_target = batch.returns.packed(group).reshape(-1)
+            values_i = batch.values.packed(group).reshape(-1)
             if self.use_value_clip:
                 value_clipped = values_i + (value_pred_i - values_i).clamp(
                     -self.value_clip_range,
@@ -116,7 +118,10 @@ class VDAC_Learner(OnPolicyMultiAgentLearner):
                                                            value_pred_i=value_pred_i, value_target=value_target,
                                                            values_i=values_i, loss_v=loss_v))
 
+        # calculate the loss
         loss = sum(actor_loss) + self.vf_coef * sum(critic_loss) - self.ent_coef * sum(entropy_loss)
+
+        # update the networks
         self.optimizer.zero_grad()
         loss.backward()
         if self.use_grad_clip:

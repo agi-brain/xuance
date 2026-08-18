@@ -23,37 +23,31 @@ class MFQ_Learner(OffPolicyMultiAgentLearner):
         self.n_actions = {k: self.model.individual_q_networks[k].action_space.n for k in self.group_keys}
         self.policy_type = self.model.policy_type
 
-    def build_actions_mean_input(self, sample: Optional[dict], use_parameter_sharing: Optional[bool] = False):
-        batch_size = sample['batch_size']
-        seq_length = sample['sequence_length'] if self.use_rnn else 1
-        actions_mean, actions_mean_next = {}, {}
-        actions_mean_tensor = torch.stack([torch.as_tensor(v, device=self.device)
-                                           for v in sample['actions_mean'].values()], dim=1)
-        if self.use_rnn:
-            actions_mean_next_tensor = None
+    def build_actions_mean_input(self, sample: Optional[dict]):
+        actions_mean_agent_wise = {
+            agent: torch.as_tensor(sample['actions_mean'][agent], device=self.device)
+            for agent in self.agent_keys
+        }
+        if not self.use_rnn:
+            actions_mean_next_agent_wise = {
+                agent: torch.as_tensor(sample['actions_mean_next'][agent], device=self.device)
+                for agent in self.agent_keys
+            }
         else:
-            actions_mean_next_tensor = torch.stack([torch.as_tensor(v, device=self.device)
-                                                    for v in sample['actions_mean_next'].values()], dim=1)
+            actions_mean_next_tensor = None
 
-        for group, n_agents in self.n_group_agents.items():
-
-            if self.use_rnn:
-                actions_mean[group] = actions_mean_tensor.reshape([batch_size, n_agents, seq_length + 1, -1])
-            else:
-                actions_mean[group] = actions_mean_tensor.reshape([batch_size, n_agents, -1])
-                actions_mean_next[group] = actions_mean_next_tensor.reshape([batch_size, n_agents, -1])
-
-        return (AgentGroupedTensor(actions_mean, self.agent_grouping),
-                AgentGroupedTensor(actions_mean_next, self.agent_grouping))
+        return (AgentGroupedTensor.from_agent_wise(actions_mean_agent_wise, self.agent_grouping),
+                AgentGroupedTensor.from_agent_wise(actions_mean_next_tensor, self.agent_grouping))
 
     def update(self, sample):
         self.iterations += 1
 
         # prepare training data
-        act_mean, act_mean_next = self.build_actions_mean_input(sample=sample,
-                                                                use_parameter_sharing=self.use_parameter_sharing)
-        batch = self.build_training_data(sample=sample,
-                                         use_actions_mask=self.use_actions_mask)
+        act_mean, act_mean_next = self.build_actions_mean_input(sample=sample)
+        batch = self.build_training_data(
+            sample=sample,
+            use_actions_mask=self.use_actions_mask
+        )
 
         info = self.callback.on_update_start(self.iterations, model=self.model, batch=batch)
 

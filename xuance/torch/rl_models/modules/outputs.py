@@ -114,10 +114,10 @@ class MARLBatch:
 
 @dataclass
 class OnPolicyMARLBatch(MARLBatch):
-    returns: Dict[str, Tensor] | None = None
-    values: Dict[str, Tensor] | None = None
-    advantages: Dict[str, Tensor] | None = None
-    old_log_probs: Dict[str, Tensor] | None = None
+    returns: AgentGroupedTensor | None = None
+    values: AgentGroupedTensor | None = None
+    advantages: AgentGroupedTensor | None = None
+    old_log_probs: AgentGroupedTensor | None = None
 
 
 @dataclass

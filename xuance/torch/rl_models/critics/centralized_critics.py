@@ -5,6 +5,7 @@ from gymnasium.spaces import Discrete, Box
 from torch import Tensor
 from torch.nn import Module, ModuleDict
 from xuance.common import AgentGrouping
+from xuance.torch.utils import AgentGroupedTensor
 from xuance.torch.rl_models.heads import ValueHead, QValueHead
 from xuance.torch.rl_models.modules import MultiAgentModelOutput, CriticOutput, TwinCriticOutput, RNN_State
 
@@ -56,33 +57,33 @@ class CentralizedStateValueCritic(Module):
         )
 
     def forward(self,
-                observations: Dict[str, Tensor],
-                agent_indices: Dict[str, Tensor],
+                observations: AgentGroupedTensor,
+                agent_indices: AgentGroupedTensor,
                 expanded_states: Optional[Tensor] = None,  # shape: batch * T * dim_S or batch * T * N * dim_S (for RNN)
                 rnn_states: Dict[str, RNN_State | dict] = None,
                 **kwargs) -> MultiAgentModelOutput:
         rnn_states_new, rep_out, obs_features, evalQ = {}, {}, {}, {}
-        bs = observations[self.group_keys[0]].shape[0]
-        seq_len = observations[self.group_keys[0]].shape[1] if self.use_rnn else 1
+        input_shape = observations.grouped_tensor[self.group_keys[0]].shape
+        batch_size = input_shape[0]
+        seq_len = input_shape[2] if self.use_rnn else 1
 
         for group, group_agents in self.groups.items():
             n_agent = self.n_group_agents[group]
-            batch_size = bs // n_agent
+            batch_shape = (batch_size, n_agent, seq_len) if self.use_rnn else (batch_size, n_agent)
 
+            input_kwargs = {
+                "agent_indices": agent_indices.packed(group)
+            }
             if self.use_rnn:
-                representation_output = self.representations[group](observations[group],
-                                                                    rnn_states=rnn_states[group],
-                                                                    agent_indices=agent_indices[group])
-                # Features shape: batch_size * n_agent * seq_len * feature_dim
-                group_obs_features = representation_output.embeddings.reshape(batch_size, n_agent, seq_len, -1)
-            else:
-                representation_output = self.representations[group](observations[group],
-                                                                    agent_indices=agent_indices[group])
-                # Features shape: batch_size * n_agent * feature_dim
-                group_obs_features = representation_output.embeddings.reshape(batch_size, n_agent, -1)
+                input_kwargs["rnn_states"] = rnn_states[group]
 
+            representation_output = self.representations[group](observations.packed(group),
+                                                                **input_kwargs)
             rep_out[group] = representation_output
             rnn_states_new[group] = representation_output.rnn_states
+            # Features shape: batch_size * n_agent * seq_len * feature_dim
+            group_obs_features = representation_output.embeddings.reshape(*batch_shape, -1)
+
             for i, agent_key in enumerate(group_agents):
                 obs_features[agent_key] = group_obs_features[:, i]
 
@@ -91,7 +92,11 @@ class CentralizedStateValueCritic(Module):
             critic_input = torch.concat([expanded_states, critic_input], dim=-1)
         values = self.critic_head(critic_input, **kwargs)
 
-        return MultiAgentModelOutput(values=values, critic_rnn_states=rnn_states_new, critic_rep_out=rep_out)
+        return MultiAgentModelOutput(
+            values=values,
+            critic_rnn_states=rnn_states_new,
+            critic_rep_out=rep_out
+        )
 
 
 class CentralizedActionValueCritic(Module):
@@ -241,49 +246,48 @@ class CounterfactualCentralizedCritic(Module):
 
     def forward(self,
                 states: Tensor,
-                observations: Dict[str, Tensor],
+                observations: AgentGroupedTensor,
                 joint_actions: Tensor,
-                agent_indices: Dict[str, Tensor],
+                agent_indices: AgentGroupedTensor,
                 rnn_states: Dict[str, RNN_State | dict] = None,
                 **kwargs) -> MultiAgentModelOutput:
         rnn_states_new, rep_out, evalQ = {}, {}, {}
-        bs = observations[self.group_keys[0]].shape[0]
+        input_shape = observations.grouped_tensor[self.group_keys[0]].shape
+        batch_size = input_shape[0]
+        seq_len = input_shape[2] if self.use_rnn else 1
 
-        if self.use_rnn:
-            seq_len = states.shape[1]
-            expanded_states = states.unsqueeze(1).repeat(1, self.n_agents, 1, 1)  # batch * T * N * dim_S
-            expanded_joint_actions = joint_actions.unsqueeze(1).repeat(1, self.n_agents, 1, 1)
-        else:
-            seq_len = 1
-            expanded_states = states.unsqueeze(1).repeat(1, self.n_agents, 1)  # batch * N * dim_S
-            expanded_joint_actions = joint_actions.unsqueeze(1).repeat(1, self.n_agents, 1)
-
-        agent_mask = (1 - torch.eye(self.n_agents, dtype=torch.float32, device=self.device)).unsqueeze(-1)
+        agent_mask_base = (1 - torch.eye(self.n_agents, dtype=torch.float32, device=self.device)).unsqueeze(-1)
         for group, group_agents in self.groups.items():
             n_agent = self.n_group_agents[group]
-            batch_size = bs // n_agent
+            batch_shape = (batch_size, n_agent, seq_len) if self.use_rnn else (batch_size, n_agent)
 
-            agent_mask = agent_mask.repeat(1, 1, self.critic_head.n_actions).reshape(n_agent, -1).unsqueeze(0)
+            agent_mask = agent_mask_base.repeat(1, 1, self.critic_head.n_actions).reshape(n_agent, -1).unsqueeze(0)
 
+            input_kwargs = {
+                "agent_indices": agent_indices.packed(group)
+            }
             if self.use_rnn:
+                input_kwargs["rnn_states"] = rnn_states[group]
                 agent_mask = agent_mask.unsqueeze(2)
-                representation_output = self.representations[group](observations[group],
-                                                                    rnn_states=rnn_states[group],
-                                                                    agent_indices=agent_indices[group])
-                # Features shape: batch_size * n_agent * seq_len * feature_dim
-                group_obs_features = representation_output.embeddings.reshape(batch_size, n_agent, seq_len, -1)
+                expanded_states = states.unsqueeze(1).repeat(1, n_agent, 1, 1)  # batch * T * N * dim_S
+                expanded_joint_actions = joint_actions.unsqueeze(1).repeat(1, n_agent, 1, 1)
             else:
-                representation_output = self.representations[group](observations[group],
-                                                                    agent_indices=agent_indices[group])
-                # Features shape: batch_size * n_agent * feature_dim
-                group_obs_features = representation_output.embeddings.reshape(batch_size, n_agent, -1)
+                expanded_states = states.unsqueeze(1).repeat(1, n_agent, 1)  # batch * N * dim_S
+                expanded_joint_actions = joint_actions.unsqueeze(1).repeat(1, n_agent, 1)
 
-            rep_out[group] = representation_output
+            representation_output = self.representations[group](observations.packed(group), **input_kwargs)
+
             rnn_states_new[group] = representation_output.rnn_states
+            rep_out[group] = representation_output
+            # Features shape: batch_size * n_agent * seq_len * feature_dim or batch_size * n_agent * feature_dim
+            group_obs_features = representation_output.embeddings.reshape(*batch_shape, -1)
+
             masked_joint_actions = expanded_joint_actions * agent_mask
             critic_input = torch.concat([expanded_states, group_obs_features, masked_joint_actions], dim=-1)
-            critic_output = self.critic_head(critic_input, **kwargs)
-            for i, agent_key in enumerate(group_agents):
-                evalQ[agent_key] = critic_output[:, i]
+            evalQ[group] = self.critic_head(critic_input, **kwargs)
 
-        return MultiAgentModelOutput(values=evalQ, critic_rnn_states=rnn_states_new, critic_rep_out=rep_out)
+        return MultiAgentModelOutput(
+            values=AgentGroupedTensor(evalQ, self.grouping),
+            critic_rnn_states=rnn_states_new,
+            critic_rep_out=rep_out
+        )

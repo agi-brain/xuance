@@ -1,3 +1,4 @@
+import torch
 import gymnasium
 from argparse import Namespace
 from gymnasium.spaces import Space
@@ -7,8 +8,8 @@ from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
 from xuance.torch import Module, ModuleDict
 from xuance.torch.utils import ActivationFunctions
 from xuance.torch.agents import OffPolicyMARLAgents
-from xuance.torch.rl_models import CategoricalActor, SAC_GaussianActor, TwinActionValueCritic, \
-    TwinDiscreteActionValueCritic
+from xuance.torch.rl_models import (CategoricalActor, SAC_GaussianActor, TwinActionValueCritic,
+                                    TwinDiscreteActionValueCritic)
 from xuance.torch.rl_models.modules import RNN_State
 from xuance.torch.rl_models.architectures import IndependentSoftActorCritic
 
@@ -113,8 +114,8 @@ class ISAC_Agents(OffPolicyMARLAgents):
         return model
 
     def get_actions(self,
-                    obs_dict: List[dict],
-                    avail_actions_dict: Optional[List[dict]] = None,
+                    obs_list: List[dict],
+                    avail_actions_list: Optional[List[dict]] = None,
                     rnn_states: Optional[Dict[str, RNN_State]] = None,
                     test_mode: Optional[bool] = False,
                     **kwargs):
@@ -122,31 +123,41 @@ class ISAC_Agents(OffPolicyMARLAgents):
         Returns actions for agents.
 
         Parameters:
-            obs_dict (List[dict]): Observations for each agent in self.agent_keys.
-            avail_actions_dict (Optional[List[dict]]): Actions mask values, default is None.
+            obs_list (List[dict]): Observations for each agent in self.agent_keys.
+            avail_actions_list (Optional[List[dict]]): Actions mask values, default is None.
             rnn_states (Optional[Dict[str, RNN_State]]): The hidden variables of the RNN.
             test_mode (Optional[bool]): True for testing without noises.
 
         Returns:
             rnn_states (dict): The new hidden states for RNN (if self.use_rnn=True).
-            actions_dict (dict): The output actions.
+            actions_list (dict): The output actions.
         """
-        batch_size = len(obs_dict)
+        batch_size = len(obs_list)
 
-        obs_input, agent_indices, avail_actions_input = self._build_inputs(obs_dict, avail_actions_dict)
-        model_output = self.model(observations=obs_input,
-                                  agent_indices=agent_indices,
-                                  avail_actions=avail_actions_input,
-                                  rnn_states=rnn_states)
-        rnn_states_new = model_output.actor_rnn_states
-        actions = model_output.actions
+        obs_input, agent_indices, avail_actions_input = self._build_inputs(obs_list, avail_actions_list)
+        with torch.no_grad():
+            model_output = self.model(observations=obs_input,
+                                      agent_indices=agent_indices,
+                                      avail_actions=avail_actions_input,
+                                      rnn_states=rnn_states)
+            rnn_states_new = model_output.actor_rnn_states
+            actions = model_output.actions
 
-        for key in self.agent_keys:
-            if self.continuous_control:
-                actions[key] = actions[key].reshape(batch_size, -1).cpu().detach().numpy()
-            else:
-                actions[key] = actions[key].reshape(batch_size).cpu().detach().numpy()
+        if self.continuous_control:
+            actions.grouped_tensor = {
+                k: actions.grouped_tensor[k].reshape(batch_size, n, -1).cpu().numpy() for k, n in
+                self.n_group_agents.items()
+            }
+            actions_list = [{
+                k: actions.agent_wise[k][e].reshape([-1]) for k in self.agent_keys
+            } for e in range(batch_size)]
+        else:
+            actions.grouped_tensor = {
+                k: actions.grouped_tensor[k].reshape(batch_size, n).cpu().numpy() for k, n in
+                self.n_group_agents.items()
+            }
+            actions_list = [{
+                k: actions.agent_wise[k][e].reshape([]) for k in self.agent_keys
+            } for e in range(batch_size)]
 
-        actions_dict = [{k: actions[k][i] for k in self.agent_keys} for i in range(batch_size)]
-
-        return {"rnn_states": rnn_states_new, "actions": actions_dict}
+        return {"rnn_states": rnn_states_new, "actions": actions_list}

@@ -8,6 +8,7 @@ import torch
 from torch import nn
 from argparse import Namespace
 from xuance.common import Optional, AgentGrouping
+from xuance.torch.utils import AgentGroupedTensor
 from xuance.torch.learners.multi_agent_rl.mappo_learner import MAPPO_Learner
 
 
@@ -19,33 +20,22 @@ class MFAC_Learner(MAPPO_Learner):
                  callback):
         super(MFAC_Learner, self).__init__(config, agent_grouping, model, callback)
 
-    def build_actions_mean_input(self, sample: Optional[dict], use_parameter_sharing: Optional[bool] = False):
-        batch_size = sample['batch_size']
-        seq_length = sample['sequence_length'] if self.use_rnn else 1
-        actions_mean = {}
-        actions_mean_tensor = torch.stack([torch.as_tensor(v, device=self.device)
-                                           for v in sample['actions_mean'].values()], dim=1)
-
-        for group, n_agents in self.n_group_agents.items():
-            bs = batch_size * n_agents
-
-            if self.use_rnn:
-                actions_mean[group] = actions_mean_tensor.reshape([bs, seq_length, -1])
-            else:
-                actions_mean[group] = actions_mean_tensor.reshape([bs, -1])
-
-        return actions_mean
+    def build_actions_mean_input(self, sample: Optional[dict]):
+        actions_mean_agent_wise = {
+            agent: torch.as_tensor(sample['actions_mean'][agent], device=self.device)
+            for agent in self.agent_keys
+        }
+        return AgentGroupedTensor.from_agent_wise(actions_mean_agent_wise, self.agent_grouping)
 
     def update(self, sample):
         self.iterations += 1
 
         # prepare training data
-        batch = self.build_training_data(sample=sample,
-                                         use_parameter_sharing=self.use_parameter_sharing,
-                                         use_actions_mask=self.use_actions_mask)
-
-        act_mean = self.build_actions_mean_input(sample=sample,
-                                                 use_parameter_sharing=self.use_parameter_sharing)
+        act_mean = self.build_actions_mean_input(sample=sample)
+        batch = self.build_training_data(
+            sample=sample,
+            use_actions_mask=self.use_actions_mask
+        )
 
         info = self.callback.on_update_start(self.iterations, model=self.model, batch=batch)
 
@@ -67,8 +57,6 @@ class MFAC_Learner(MAPPO_Learner):
             rnn_states=rnn_states_critic
         )
         values_pred = value_outputs.values
-        if not self.agent_grouping.full_independent:
-            values_pred = self.packed_tensor(values_pred)
 
         # calculate losses for each agent
         actor_loss, entropy_loss, critic_loss = [], [], []
@@ -77,9 +65,9 @@ class MFAC_Learner(MAPPO_Learner):
 
             # actor loss
             dist = policy_outputs.distributions[group]
-            log_pi = dist.log_prob(batch.actions[group]).reshape(-1)
-            advantages = batch.advantages[group].reshape(-1)
-            old_log_prob = batch.old_log_probs[group].reshape(-1)
+            log_pi = dist.log_prob(batch.actions.packed(group)).reshape(-1)
+            advantages = batch.advantages.packed(group).reshape(-1)
+            old_log_prob = batch.old_log_probs.packed(group).reshape(-1)
 
             ratio = torch.exp(log_pi - old_log_prob)
             surrogate1 = ratio * advantages
@@ -96,9 +84,9 @@ class MFAC_Learner(MAPPO_Learner):
             entropy_loss.append((entropy * mask_values).sum() / mask_values.sum())
 
             # critic loss
-            value_pred_i = values_pred[group].reshape(-1)
-            value_target = batch.returns[group].reshape(-1)
-            values_i = batch.values[group].reshape(-1)
+            value_pred_i = values_pred.packed(group).reshape(-1)
+            value_target = batch.returns.packed(group).reshape(-1)
+            values_i = batch.values.packed(group).reshape(-1)
             if self.use_value_clip:
                 value_clipped = values_i + (value_pred_i - values_i).clamp(
                     -self.value_clip_range,

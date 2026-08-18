@@ -47,7 +47,6 @@ class COMA_Learner(IAC_Learner):
 
         # prepare training data
         batch = self.build_training_data(sample=sample,
-                                         use_parameter_sharing=self.use_parameter_sharing,
                                          use_actions_mask=self.use_actions_mask,
                                          use_global_state=True)
 
@@ -82,8 +81,6 @@ class COMA_Learner(IAC_Learner):
             target=False
         )
         values_pred = value_outputs.values
-        if not self.agent_grouping.full_independent:
-            values_pred = self.packed_tensor(values_pred)
 
         # calculate actor and critic losses
         loss_a, loss_c = [], []
@@ -92,14 +89,14 @@ class COMA_Learner(IAC_Learner):
 
             dist = policy_outputs.distributions[group]
             pi_probs = dist.probs
-            returns = batch.returns[group].detach().reshape(-1)
+            returns = batch.returns.packed(group).detach().reshape(-1)
 
             if self.use_actions_mask:
-                pi_probs[batch.avail_actions[group] == 0] = 0.0  # mask out the unavailable actions.
+                pi_probs[batch.avail_actions.packed(group) == 0] = 0.0  # mask out the unavailable actions.
                 pi_probs = pi_probs / pi_probs.sum(dim=-1, keepdim=True)  # re-normalize the actions.
-            baseline = (pi_probs * values_pred[group]).sum(-1).reshape(-1)
-            pi_taken = pi_probs.gather(-1, batch.actions[group].unsqueeze(-1).long())
-            q_taken = values_pred[group].gather(-1, batch.actions[group].unsqueeze(-1).long()).reshape(-1)
+            baseline = (pi_probs * values_pred.packed(group)).sum(-1).reshape(-1)
+            pi_taken = pi_probs.gather(-1, batch.actions.packed(group).unsqueeze(-1).long())
+            q_taken = values_pred.packed(group).gather(-1, batch.actions.packed(group).unsqueeze(-1).long()).reshape(-1)
             log_pi_taken = torch.log(pi_taken).reshape(-1)
             advantages = (q_taken - baseline).detach()
 

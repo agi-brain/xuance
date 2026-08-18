@@ -220,12 +220,11 @@ class MeanFiledActorCritic(IndependentActorCritic):
         rnn_states_new, pi_dists, actions = {}, {}, {}
         input_shape = observations.grouped_tensor[self.group_keys[0]].shape
         batch_size = input_shape[0]
-        seq_len = input_shape[1] if self.use_rnn else 1
+        seq_len = input_shape[2] if self.use_rnn else 1
 
         group_list = self.group_keys if group_key is None else [group_key]
 
         for group in group_list:
-            group_agents = self.groups[group]
             n_agent = self.n_group_agents[group]
             batch_shape = (batch_size, n_agent, seq_len) if self.use_rnn else (batch_size, n_agent)
 
@@ -249,17 +248,19 @@ class MeanFiledActorCritic(IndependentActorCritic):
             else:
                 sampled_actions = policy_dist.stochastic_sample()
 
-            group_actions = sampled_actions.reshape(*batch_shape, -1)
+            actions[group] = sampled_actions.reshape(*batch_shape)
 
             rnn_states_new[group] = actor_out.representations.rnn_states
             pi_dists[group] = policy_dist
 
-            for i, agent_key in enumerate(group_agents):
-                actions[agent_key] = group_actions[:, i]
+        return MultiAgentModelOutput(
+            actions=AgentGroupedTensor(actions, self.grouping),
+            distributions=pi_dists,
+            actor_rnn_states=rnn_states_new
+        )
 
-        return MultiAgentModelOutput(actions=actions, distributions=pi_dists, actor_rnn_states=rnn_states_new)
-
-    def get_mean_actions(self, actions: Dict[str, Tensor],
+    def get_mean_actions(self,
+                         actions: Dict[str, Tensor],
                          agent_mask_tensor: Tensor, batch_size: int) -> Dict[str, Tensor]:
         masked_mean_actions_dict = {}
         actions_tensor = torch.stack([v for v in actions.values()], dim=-1).reshape([-1, self.n_agents])
@@ -293,12 +294,11 @@ class MeanFiledActorCritic(IndependentActorCritic):
         rnn_states_new, values = {}, {}
         input_shape = observations.grouped_tensor[self.group_keys[0]].shape
         batch_size = input_shape[0]
-        seq_len = input_shape[1] if self.use_rnn else 1
+        seq_len = input_shape[2] if self.use_rnn else 1
 
         group_list = self.group_keys if group_key is None else [group_key]
 
         for group in group_list:
-            group_agents = self.groups[group]
             n_agent = self.n_group_agents[group]
             batch_shape = (batch_size, n_agent, seq_len) if self.use_rnn else (batch_size, n_agent)
 
@@ -312,10 +312,10 @@ class MeanFiledActorCritic(IndependentActorCritic):
                                              mean_actions.packed(group),
                                              **critic_kwargs)
 
-            group_values = critic_out.values.reshape(*batch_shape, 1)
+            values[group] = critic_out.values.reshape(*batch_shape, 1)
             rnn_states_new[group] = critic_out.representations.rnn_states
 
-            for i, agent_key in enumerate(group_agents):
-                values[agent_key] = group_values[:, i]
-
-        return MultiAgentModelOutput(values=values, critic_rnn_states=rnn_states_new)
+        return MultiAgentModelOutput(
+            values=AgentGroupedTensor(values, self.grouping),
+            critic_rnn_states=rnn_states_new
+        )

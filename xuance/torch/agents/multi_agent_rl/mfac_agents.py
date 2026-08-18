@@ -9,6 +9,7 @@ from typing import List, Optional, Dict, Tuple
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
 from xuance.common import MeanField_OnPolicyBuffer, MeanField_OnPolicyBuffer_RNN, MultiAgentBaseCallback
 from xuance.torch import Module, ModuleDict
+from xuance.torch.utils import AgentGroupedTensor
 from xuance.torch.agents import OnPolicyMARLAgents
 from xuance.torch.rl_models import CategoricalActor as Actor
 from xuance.torch.rl_models import MeanFieldStateValueCritic as Critic
@@ -130,44 +131,42 @@ class MFAC_Agents(OnPolicyMARLAgents):
 
     def _build_inputs_mean_mask(self,
                                 agent_mask: Optional[dict] = None,
-                                act_mean_dict=None):
-        batch_size = len(act_mean_dict)
+                                act_mean_list=None):
         mean_actions_input = {}
-        agent_mask_array = np.array([itemgetter(*self.agent_keys)(data) for data in agent_mask])
+        agent_mask_array = torch.as_tensor(np.array([[data[k] for k in self.agent_keys] for data in agent_mask]),
+                                           dtype=torch.float, device=self.device)
         # get mean actions as input
-        for group, group_agents in self.groups.items():
-            bs = batch_size * len(group_agents)
-            mean_actions_array = np.array([itemgetter(*self.agent_keys)(data) for data in act_mean_dict])
+        for group in self.group_keys:
+            mean_actions_input[group] = torch.as_tensor(np.array([[data[k] for k in self.agent_keys]
+                                                                  for data in act_mean_list]), device=self.device)
             if self.use_rnn:
-                mean_actions_input[group] = mean_actions_array.reshape([bs, 1, -1])
-            else:
-                mean_actions_input[group] = mean_actions_array.reshape([bs, -1])
+                mean_actions_input[group] = mean_actions_input[group].unsqueeze(2)
 
-        return mean_actions_input, agent_mask_array
+        return AgentGroupedTensor(mean_actions_input, self.agent_grouping), agent_mask_array
 
-    def store_experience(self, obs_dict, avail_actions, actions_dict, log_pi_a, rewards_dict, values_dict,
-                         terminals_dict, info, **kwargs):
+    def store_experience(self, obs_list, avail_actions, actions_list, log_pi_a, rewards_list, values_dict,
+                         terminals_list, info, **kwargs):
         """
         Store experience data into replay buffer.
 
         Parameters:
-            obs_dict (List[dict]): Observations for each agent in self.agent_keys.
+            obs_list (List[dict]): Observations for each agent in self.agent_keys.
             avail_actions (List[dict]): Actions mask values for each agent in self.agent_keys.
-            actions_dict (List[dict]): Actions for each agent in self.agent_keys.
+            actions_list (List[dict]): Actions for each agent in self.agent_keys.
             log_pi_a (dict): The log of pi.
-            rewards_dict (List[dict]): Rewards for each agent in self.agent_keys.
+            rewards_list (List[dict]): Rewards for each agent in self.agent_keys.
             values_dict (dict): Critic values for each agent in self.agent_keys.
-            terminals_dict (List[dict]): Terminated values for each agent in self.agent_keys.
+            terminals_list (List[dict]): Terminated values for each agent in self.agent_keys.
             info (List[dict]): Other information for the environment at current step.
             **kwargs: Other inputs.
         """
         experience_data = {
-            'obs': {k: np.array([data[k] for data in obs_dict]) for k in self.agent_keys},
-            'actions': {k: np.array([data[k] for data in actions_dict]) for k in self.agent_keys},
+            'obs': {k: np.array([data[k] for data in obs_list]) for k in self.agent_keys},
+            'actions': {k: np.array([data[k] for data in actions_list]) for k in self.agent_keys},
             'log_pi_old': log_pi_a,
-            'rewards': {k: np.array([data[k] for data in rewards_dict]) for k in self.agent_keys},
+            'rewards': {k: np.array([data[k] for data in rewards_list]) for k in self.agent_keys},
             'values': values_dict,
-            'terminals': {k: np.array([data[k] for data in terminals_dict]) for k in self.agent_keys},
+            'terminals': {k: np.array([data[k] for data in terminals_list]) for k in self.agent_keys},
             'agent_mask': {k: np.array([data['agent_mask'][k] for data in info]) for k in self.agent_keys},
         }
         if self.use_rnn:
@@ -182,11 +181,11 @@ class MFAC_Agents(OnPolicyMARLAgents):
         self.memory.store(**experience_data)
 
     def get_actions(self,
-                    obs_dict: List[dict],
+                    obs_list: List[dict],
                     agent_mask: Optional[List[dict]] = None,
-                    act_mean_dict: Optional[List[dict]] = None,
+                    act_mean_list: Optional[List[dict]] = None,
                     state: Optional[np.ndarray] = None,
-                    avail_actions_dict: Optional[List[dict]] = None,
+                    avail_actions_list: Optional[List[dict]] = None,
                     rnn_states_actor: Optional[Dict[str, RNN_State]] = None,
                     rnn_states_critic: Optional[Dict[str, RNN_State]] = None,
                     test_mode: Optional[bool] = False,
@@ -196,11 +195,11 @@ class MFAC_Agents(OnPolicyMARLAgents):
         Returns actions for agents.
 
         Parameters:
-            obs_dict (dict): Observations for each agent in self.agent_keys.
+            obs_list (dict): Observations for each agent in self.agent_keys.
             agent_mask (Optional[List[dict]]): Mask the agents that are alive.
             state (Optional[np.ndarray]): The global state.
-            act_mean_dict (Optional[List[dict]]): Mean actions of each agent's neighbors.
-            avail_actions_dict (Optional[List[dict]]): Actions mask values, default is None.
+            act_mean_list (Optional[List[dict]]): Mean actions of each agent's neighbors.
+            avail_actions_list (Optional[List[dict]]): Actions mask values, default is None.
             rnn_states_actor (Optional[dict]): The RNN hidden states of actor representation.
             rnn_states_critic (Optional[dict]): The RNN hidden states of critic representation.
             test_mode (Optional[bool]): True for testing without noises.
@@ -209,52 +208,57 @@ class MFAC_Agents(OnPolicyMARLAgents):
         Returns:
             rnn_states_actor_new (dict): The new RNN hidden states of actor representation (if self.use_rnn=True).
             rnn_states_critic_new (dict): The new RNN hidden states of critic representation (if self.use_rnn=True).
-            actions_dict (dict): The output actions.
+            actions_list (dict): The output actions.
             log_pi_a (dict): The log of pi.
             values_dict (dict): The evaluated critic values (when test_mode is False).
         """
-        n_env = len(obs_dict)
+        batch_size = len(obs_list)
         rnn_states_critic_new, values_out, log_pi_a_dict, values_dict = {}, {}, {}, {}
 
-        mean_actions_input, agent_mask_array = self._build_inputs_mean_mask(agent_mask, act_mean_dict)
-        obs_input, agent_indices, avail_actions_input = self._build_inputs(obs_dict, avail_actions_dict)
+        mean_actions_input, agent_mask_array = self._build_inputs_mean_mask(agent_mask, act_mean_list)
+        obs_input, agent_indices, avail_actions_input = self._build_inputs(obs_list, avail_actions_list)
         agent_mask_tensor = torch.tensor(agent_mask_array, dtype=torch.float32, device=self.device)
-        model_output = self.model(observations=obs_input,
-                                  agent_indices=agent_indices,
-                                  avail_actions=avail_actions_input,
-                                  rnn_states=rnn_states_actor,
-                                  deterministic=deterministic)
-        rnn_states_actor_new = model_output.actor_rnn_states
-        actions = model_output.actions
-
-        actions_out = {k: actions[k].reshape(n_env).cpu().detach().numpy() for k in self.agent_keys}
-        actions_dict = [{k: actions_out[k][i] for k in self.agent_keys} for i in range(n_env)]
-        actions_mean_masked = self.model.get_mean_actions(actions=actions, agent_mask_tensor=agent_mask_tensor,
-                                                          batch_size=n_env)
-        actions_mean_masked = {k: v.cpu().detach().numpy() for k, v in actions_mean_masked.items()}
-        actions_mean_dict = [{k: v[e] for k, v in actions_mean_masked.items()} for e in range(n_env)]
+        with torch.no_grad():
+            model_output = self.model(observations=obs_input,
+                                      agent_indices=agent_indices,
+                                      avail_actions=avail_actions_input,
+                                      rnn_states=rnn_states_actor,
+                                      deterministic=deterministic)
+            rnn_states_actor_new = model_output.actor_rnn_states
+            actions = model_output.actions
 
         if not test_mode:
             for group, agent_keys in self.groups.items():
-                n_agents = self.n_group_agents[group]
-                actions_group = torch.stack([model_output.actions[k] for k in agent_keys], dim=1)
-                if self.use_rnn:
-                    actions_group = actions_group.reshape([n_env * n_agents, -1])
-                else:
-                    actions_group = actions_group.reshape([n_env * n_agents])
-                log_pi_a = model_output.distributions[group].log_prob(actions_group).reshape(n_env, n_agents)
+                # shape: batch_size * N_agents
+                log_pi_a = model_output.distributions[group].log_prob(actions.packed(group)).reshape(batch_size, -1)
                 for i, agent in enumerate(agent_keys):
-                    log_pi_a_dict[agent] = log_pi_a[:, i].detach().cpu().numpy()
+                    log_pi_a_dict[agent] = log_pi_a[:, i].cpu().numpy()
 
-            values_model_output = self.model.get_values(observations=obs_input,
-                                                        mean_actions=mean_actions_input,
-                                                        agent_indices=agent_indices,
-                                                        rnn_states=rnn_states_critic)
-            rnn_states_critic_new = values_model_output.critic_rnn_states
-            values_dict = {k: v.detach().cpu().numpy().reshape(n_env) for k, v in values_model_output.values.items()}
+            with torch.no_grad():
+                values_model_output = self.model.get_values(observations=obs_input,
+                                                            mean_actions=mean_actions_input,
+                                                            agent_indices=agent_indices,
+                                                            rnn_states=rnn_states_critic)
+                rnn_states_critic_new = values_model_output.critic_rnn_states
+                values = values_model_output.values
+                values.grouped_tensor = {k: v.cpu().numpy() for k, v in values.grouped_tensor.items()}
+                values_dict = {k: v.reshape(batch_size) for k, v in values.agent_wise.items()}
+
+        actions_mean_masked = self.model.get_mean_actions(actions=actions.agent_wise,
+                                                          agent_mask_tensor=agent_mask_tensor,
+                                                          batch_size=batch_size)
+        actions_mean_masked = {k: v.cpu().numpy() for k, v in actions_mean_masked.items()}
+        actions_mean_dict = [{k: v[e] for k, v in actions_mean_masked.items()} for e in range(batch_size)]
+
+        actions.grouped_tensor = {
+            k: v.reshape(batch_size, -1).cpu().numpy() for k, v in actions.grouped_tensor.items()
+        }
+        actions_list = [
+            {k: v[e].reshape([]) for k, v in actions.agent_wise.items()} for e in range(batch_size)
+        ]
 
         return {"rnn_states_actor": rnn_states_actor_new, "rnn_states_critic": rnn_states_critic_new,
-                "actions": actions_dict, "actions_mean": actions_mean_dict,
+                "actions": actions_list, "actions_mean": actions_mean_dict,
                 "log_pi": log_pi_a_dict, "values": values_dict}
 
     def values_next(
@@ -293,14 +297,16 @@ class MFAC_Agents(OnPolicyMARLAgents):
 
         mean_actions_input, _ = self._build_inputs_mean_mask([agent_mask], [act_mean_dict])
         obs_input, agent_indices, _ = self._build_inputs([obs_dict])
-
-        values_model_output = self.model.get_values(state=state if self.use_global_state else None,
-                                                    observations=obs_input,
-                                                    agent_indices=agent_indices,
-                                                    mean_actions=mean_actions_input,
-                                                    rnn_states=rnn_states_critic_i)
-        rnn_states_critic_new_i = values_model_output.critic_rnn_states
-        values_dict = {k: v.detach().cpu().numpy().reshape([]) for k, v in values_model_output.values.items()}
+        with torch.no_grad():
+            values_model_output = self.model.get_values(state=state if self.use_global_state else None,
+                                                        observations=obs_input,
+                                                        agent_indices=agent_indices,
+                                                        mean_actions=mean_actions_input,
+                                                        rnn_states=rnn_states_critic_i)
+            rnn_states_critic_new_i = values_model_output.critic_rnn_states
+            values = values_model_output.values
+            values.grouped_tensor = {k: v.cpu().numpy() for k, v in values.grouped_tensor.items()}
+            values_dict = {k: v.reshape([]) for k, v in values.agent_wise.items()}
 
         return rnn_states_critic_new_i, values_dict
 
@@ -327,64 +333,64 @@ class MFAC_Agents(OnPolicyMARLAgents):
                                                 n_steps=train_steps, train_info=train_info)
             return train_info
 
-        obs_dict = self.train_envs.buf_obs
-        agent_mask_dict = [data['agent_mask'] for data in self.train_envs.buf_info]
-        actions_mean_dict = self.actions_mean
+        obs_list = self.train_envs.buf_obs
+        agent_mask_list = [data['agent_mask'] for data in self.train_envs.buf_info]
+        actions_mean_list = self.actions_mean
         avail_actions = self.train_envs.buf_avail_actions if self.use_actions_mask else None
         state = self.train_envs.buf_state if self.use_global_state else None
         for _ in tqdm(range(train_steps)):
-            policy_out = self.get_actions(obs_dict=obs_dict, state=state,
-                                          agent_mask=agent_mask_dict, act_mean_dict=actions_mean_dict,
-                                          avail_actions_dict=avail_actions, test_mode=False)
-            actions_dict, log_pi_a_dict = policy_out['actions'], policy_out['log_pi']
-            actions_mean_next_dict = policy_out['actions_mean']
+            policy_out = self.get_actions(obs_list=obs_list, state=state,
+                                          agent_mask=agent_mask_list, act_mean_list=actions_mean_list,
+                                          avail_actions_list=avail_actions, test_mode=False)
+            actions_list, log_pi_a_list = policy_out['actions'], policy_out['log_pi']
+            actions_mean_next_list = policy_out['actions_mean']
             values_dict = policy_out['values']
-            next_obs_dict, rewards_dict, terminated_dict, truncated, info = self.train_envs.step(actions_dict)
+            next_obs_list, rewards_list, terminated_list, truncated, info = self.train_envs.step(actions_list)
             next_state = self.train_envs.buf_state if self.use_global_state else None
             next_avail_actions = self.train_envs.buf_avail_actions if self.use_actions_mask else None
 
             self.callback.on_train_step(self.current_step, envs=self.train_envs, model=self.model,
-                                        obs=obs_dict, policy_out=policy_out, acts=actions_dict, next_obs=next_obs_dict,
-                                        rewards=rewards_dict, state=state, next_state=next_state,
+                                        obs=obs_list, policy_out=policy_out, acts=actions_list, next_obs=next_obs_list,
+                                        rewards=rewards_list, state=state, next_state=next_state,
                                         avail_actions=avail_actions, next_avail_actions=next_avail_actions,
-                                        actions_mean_dict=actions_mean_dict,
-                                        terminals=terminated_dict, truncations=truncated, infos=info,
+                                        actions_mean_list=actions_mean_list,
+                                        terminals=terminated_list, truncations=truncated, infos=info,
                                         train_steps=train_steps, values_dict=values_dict)
 
-            self.store_experience(obs_dict, avail_actions, actions_dict, log_pi_a_dict, rewards_dict, values_dict,
-                                  terminated_dict, info,
-                                  **{'state': state, 'actions_mean': actions_mean_dict})
+            self.store_experience(obs_list, avail_actions, actions_list, log_pi_a_list, rewards_list, values_dict,
+                                  terminated_list, info,
+                                  **{'state': state, 'actions_mean': actions_mean_list})
             if self.memory.full:
                 for i in range(self.n_envs):
-                    if all(terminated_dict[i].values()):
+                    if all(terminated_list[i].values()):
                         value_next = {key: 0.0 for key in self.agent_keys}
                     else:
                         next_state_i = next_state[i] if self.use_global_state else None
-                        _, value_next = self.values_next(i_env=i, obs_dict=next_obs_dict[i], state=next_state_i,
-                                                         act_mean_dict=actions_mean_dict[i],
-                                                         agent_mask=agent_mask_dict[i])
+                        _, value_next = self.values_next(i_env=i, obs_dict=next_obs_list[i], state=next_state_i,
+                                                         act_mean_dict=actions_mean_list[i],
+                                                         agent_mask=agent_mask_list[i])
                     self.memory.finish_path(i_env=i, agent_grouping=self.agent_grouping, value_next=value_next,
                                             value_normalizer=self.learner.value_normalizer)
             update_info = self.train_epochs(n_epochs=self.n_epochs)
             self.log_infos(update_info, self.current_step)
             train_info.update(update_info)
-            obs_dict, avail_actions = deepcopy(next_obs_dict), deepcopy(next_avail_actions)
+            obs_list, avail_actions = deepcopy(next_obs_list), deepcopy(next_avail_actions)
             state = deepcopy(next_state) if self.use_global_state else None
-            agent_mask_dict = [data['agent_mask'] for data in info]
-            actions_mean_dict = deepcopy(actions_mean_next_dict)
+            agent_mask_list = [data['agent_mask'] for data in info]
+            actions_mean_list = deepcopy(actions_mean_next_list)
 
             for i in range(self.n_envs):
-                if all(terminated_dict[i].values()) or truncated[i]:
-                    if all(terminated_dict[i].values()):
+                if all(terminated_list[i].values()) or truncated[i]:
+                    if all(terminated_list[i].values()):
                         value_next = {key: 0.0 for key in self.agent_keys}
                     else:
                         state_i = state[i] if self.use_global_state else None
-                        _, value_next = self.values_next(i_env=i, obs_dict=obs_dict[i], state=state_i,
-                                                         act_mean_dict=actions_mean_dict[i],
-                                                         agent_mask=agent_mask_dict[i])
+                        _, value_next = self.values_next(i_env=i, obs_dict=obs_list[i], state=state_i,
+                                                         act_mean_dict=actions_mean_list[i],
+                                                         agent_mask=agent_mask_list[i])
                     self.memory.finish_path(i_env=i, agent_grouping=self.agent_grouping, value_next=value_next,
                                             value_normalizer=self.learner.value_normalizer)
-                    obs_dict[i] = info[i]["reset_obs"]
+                    obs_list[i] = info[i]["reset_obs"]
                     self.train_envs.buf_obs[i] = info[i]["reset_obs"]
                     if self.use_actions_mask:
                         avail_actions[i] = info[i]["reset_avail_actions"]
@@ -393,8 +399,8 @@ class MFAC_Agents(OnPolicyMARLAgents):
                         state[i] = info[i]["reset_state"]
                         self.train_envs.buf_state[i] = info[i]["reset_state"]
                     self.train_envs.buf_info[i]["agent_mask"] = {k: True for k in self.agent_keys}
-                    agent_mask_dict[i] = {k: True for k in self.agent_keys}
-                    actions_mean_dict[i] = {k: np.zeros(self.n_actions_max) for k in self.agent_keys}
+                    agent_mask_list[i] = {k: True for k in self.agent_keys}
+                    actions_mean_list[i] = {k: np.zeros(self.n_actions_max) for k in self.agent_keys}
                     self.current_episode[i] += 1
                     if self.use_wandb:
                         episode_info = {
@@ -416,7 +422,7 @@ class MFAC_Agents(OnPolicyMARLAgents):
                                                         train_steps=train_steps)
 
             self.current_step += self.n_envs
-            self.actions_mean = deepcopy(actions_mean_dict)
+            self.actions_mean = deepcopy(actions_mean_list)
             self.callback.on_train_step_end(self.current_step, envs=self.train_envs, model=self.model,
                                             train_steps=train_steps, train_info=train_info)
         return train_info
@@ -431,9 +437,9 @@ class MFAC_Agents(OnPolicyMARLAgents):
         num_envs = envs.num_envs
         videos, episode_videos, images = [[] for _ in range(num_envs)], [], None
         current_episode, current_step, scores, best_score = 0, 0, [], -np.inf
-        obs_dict, info = envs.reset()
-        agent_mask_dict = [data['agent_mask'] for data in info]
-        actions_mean_dict = [{k: np.zeros(self.n_actions_max) for k in self.agent_keys} for _ in range(num_envs)]
+        obs_list, info = envs.reset()
+        agent_mask_list = [data['agent_mask'] for data in info]
+        actions_mean_list = [{k: np.zeros(self.n_actions_max) for k in self.agent_keys} for _ in range(num_envs)]
         avail_actions = envs.buf_avail_actions if self.use_actions_mask else None
         state = envs.buf_state if self.use_global_state else None
         if test_mode:
@@ -447,15 +453,15 @@ class MFAC_Agents(OnPolicyMARLAgents):
         rnn_states_actor, rnn_states_critic = self.init_rnn_states(num_envs)
 
         while current_episode < n_episodes:
-            policy_out = self.get_actions(obs_dict=obs_dict, state=state, avail_actions_dict=avail_actions,
-                                          agent_mask=agent_mask_dict, act_mean_dict=actions_mean_dict,
+            policy_out = self.get_actions(obs_list=obs_list, state=state, avail_actions_list=avail_actions,
+                                          agent_mask=agent_mask_list, act_mean_list=actions_mean_list,
                                           rnn_states_actor=rnn_states_actor, rnn_states_critic=rnn_states_critic,
                                           test_mode=test_mode, deterministic=deterministic_policy)
             rnn_states_actor, rnn_states_critic = policy_out['rnn_states_actor'], policy_out['rnn_states_critic']
-            actions_dict, log_pi_a_dict = policy_out['actions'], policy_out['log_pi']
-            actions_mean_next_dict = policy_out['actions_mean']
+            actions_list, log_pi_a_list = policy_out['actions'], policy_out['log_pi']
+            actions_mean_next_list = policy_out['actions_mean']
             values_dict = policy_out['values']
-            next_obs_dict, rewards_dict, terminated_dict, truncated, info = envs.step(actions_dict)
+            next_obs_list, rewards_list, terminated_list, truncated, info = envs.step(actions_list)
             next_state = envs.buf_state if self.use_global_state else None
             next_avail_actions = envs.buf_avail_actions if self.use_actions_mask else None
             if test_mode:
@@ -464,25 +470,25 @@ class MFAC_Agents(OnPolicyMARLAgents):
                     for idx, img in enumerate(images):
                         videos[idx].append(img)
             else:
-                self.store_experience(obs_dict, avail_actions, actions_dict, log_pi_a_dict, rewards_dict, values_dict,
-                                      terminated_dict, info, **{'state': state, 'actions_mean': actions_mean_dict})
+                self.store_experience(obs_list, avail_actions, actions_list, log_pi_a_list, rewards_list, values_dict,
+                                      terminated_list, info, **{'state': state, 'actions_mean': actions_mean_list})
 
             self.callback.on_test_step(envs=envs, model=self.model, images=images, test_mode=test_mode,
-                                       obs=obs_dict, policy_out=policy_out, acts=actions_dict,
-                                       actions_mean_dict=actions_mean_dict,
-                                       next_obs=next_obs_dict, rewards=rewards_dict,
-                                       terminals=terminated_dict, truncations=truncated, infos=info,
+                                       obs=obs_list, policy_out=policy_out, acts=actions_list,
+                                       actions_mean_list=actions_mean_list,
+                                       next_obs=next_obs_list, rewards=rewards_list,
+                                       terminals=terminated_list, truncations=truncated, infos=info,
                                        state=state, next_state=next_state,
                                        current_train_step=self.current_step, n_episodes=n_episodes,
                                        current_step=current_step, current_episode=current_episode)
 
-            obs_dict, avail_actions = deepcopy(next_obs_dict), deepcopy(next_avail_actions)
-            agent_mask_dict = [data['agent_mask'] for data in info]
-            actions_mean_dict = deepcopy(actions_mean_next_dict)
+            obs_list, avail_actions = deepcopy(next_obs_list), deepcopy(next_avail_actions)
+            agent_mask_list = [data['agent_mask'] for data in info]
+            actions_mean_list = deepcopy(actions_mean_next_list)
             state = deepcopy(next_state) if self.use_global_state else None
 
             for i in range(num_envs):
-                if all(terminated_dict[i].values()) or truncated[i]:
+                if all(terminated_list[i].values()) or truncated[i]:
                     current_episode += 1
                     episode_score = float(np.mean(itemgetter(*self.agent_keys)(info[i]["episode_score"])))
                     scores.append(episode_score)
@@ -493,13 +499,13 @@ class MFAC_Agents(OnPolicyMARLAgents):
                             best_score = episode_score
                             episode_videos = videos[i].copy()
                     else:
-                        if all(terminated_dict[i].values()):
+                        if all(terminated_list[i].values()):
                             value_next = {key: 0.0 for key in self.agent_keys}
                         else:
-                            _, value_next = self.values_next(i_env=i, obs_dict=obs_dict[i],
+                            _, value_next = self.values_next(i_env=i, obs_dict=obs_list[i],
                                                              state=None if state is None else state[i],
-                                                             act_mean_dict=actions_mean_dict[i],
-                                                             agent_mask=agent_mask_dict[i],
+                                                             act_mean_dict=actions_mean_list[i],
+                                                             agent_mask=agent_mask_list[i],
                                                              rnn_states_critic=rnn_states_critic)
                         self.memory.finish_path(i_env=i, i_step=info[i]['episode_step'],
                                                 agent_grouping=self.agent_grouping, value_next=value_next,
@@ -526,10 +532,10 @@ class MFAC_Agents(OnPolicyMARLAgents):
                                                             current_episode=self.current_episode,
                                                             n_episodes=n_episodes)
 
-                    obs_dict[i] = info[i]["reset_obs"]
+                    obs_list[i] = info[i]["reset_obs"]
                     envs.buf_obs[i] = info[i]["reset_obs"]
-                    agent_mask_dict[i] = {k: True for k in self.agent_keys}
-                    actions_mean_dict[i] = {k: np.zeros(self.n_actions_max) for k in self.agent_keys}
+                    agent_mask_list[i] = {k: True for k in self.agent_keys}
+                    actions_mean_list[i] = {k: np.zeros(self.n_actions_max) for k in self.agent_keys}
                     if self.use_actions_mask:
                         avail_actions[i] = info[i]["reset_avail_actions"]
                         envs.buf_avail_actions[i] = info[i]["reset_avail_actions"]

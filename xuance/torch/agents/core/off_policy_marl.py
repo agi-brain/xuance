@@ -1,4 +1,5 @@
 import numpy as np
+import torch
 from tqdm import tqdm
 from copy import deepcopy
 from argparse import Namespace
@@ -208,8 +209,9 @@ class OffPolicyMARLAgents(MARLAgents):
         else:
             return
 
-    def exploration(self, batch_size: int,
-                    pi_actions_list: Union[List[dict], dict],
+    def exploration(self,
+                    batch_size: int,
+                    pi_actions_dict: dict,
                     avail_actions_list: Optional[List[dict]] = None):
         """Apply exploration strategy to policy actions.
 
@@ -222,7 +224,7 @@ class OffPolicyMARLAgents(MARLAgents):
 
         Args:
             batch_size (int): Number of parallel environments (batch size).
-            pi_actions_list (Union[List[dict], dict]): Actions produced by the policy before exploration.
+            pi_actions_dict (dict): Actions produced by the policy before exploration.
                 When parameter sharing is enabled, this may be a shared structure across agents.
             avail_actions_list (Optional[List[dict]]): Available-action masks for each parallel environment
                 when `use_actions_mask=True`. Can be None when action masking is disabled.
@@ -240,16 +242,16 @@ class OffPolicyMARLAgents(MARLAgents):
                     explore_actions = [{k: self.action_space[k].sample() for k in self.agent_keys} for _ in
                                        range(batch_size)]
             else:
-                explore_actions = pi_actions_list
+                explore_actions = pi_actions_dict
         elif self.noise_scale is not None:
-            for key, action in pi_actions_list.items():
-                noise = np.random.normal(0, self.noise_scale * self.sigma, size=action.shape)
-                pi_actions_list[key] = np.clip(action + noise,
+            for key in self.agent_keys:
+                noise = np.random.normal(0, self.noise_scale * self.sigma, size=pi_actions_dict[key].shape)
+                pi_actions_dict[key] = np.clip(pi_actions_dict[key] + noise,
                                                self.action_space[key].low, self.action_space[key].high,
                                                dtype=self.action_space[key].dtype)
-            explore_actions = pi_actions_list
+            explore_actions = pi_actions_dict
         else:
-            explore_actions = pi_actions_list
+            explore_actions = pi_actions_dict
         return explore_actions
 
     def get_actions(self,
@@ -285,12 +287,13 @@ class OffPolicyMARLAgents(MARLAgents):
         """
         batch_size = len(obs_list)
         obs_input, agent_indices_input, avail_actions_input = self._build_inputs(obs_list, avail_actions_list)
-        model_output = self.model(observations=obs_input,
-                                  agent_indices=agent_indices_input,
-                                  avail_actions=avail_actions_input,
-                                  rnn_states=rnn_states)
-        rnn_states_new = model_output.rnn_states
-        actions = model_output.actions
+        with torch.no_grad():
+            model_output = self.model(observations=obs_input,
+                                      agent_indices=agent_indices_input,
+                                      avail_actions=avail_actions_input,
+                                      rnn_states=rnn_states)
+            rnn_states_new = model_output.rnn_states
+            actions = model_output.actions
 
         actions.grouped_tensor = {k: actions.grouped_tensor[k].reshape(batch_size, n).cpu().detach().numpy()
                                   for k, n in self.n_group_agents.items()}

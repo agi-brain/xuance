@@ -1,3 +1,4 @@
+import torch
 import gymnasium
 import numpy as np
 from argparse import Namespace
@@ -149,11 +150,15 @@ class MAPPO_Agents(IPPO_Agents):
             rnn_states_critic_i = None
 
         obs_input, agent_indices, _ = self._build_inputs([obs_dict])
-        values_model_output = self.model.get_values(state=state if self.use_global_state else None,
-                                                    observations=obs_input,
-                                                    agent_indices=agent_indices,
-                                                    rnn_states=rnn_states_critic_i)
-        rnn_states_critic_new_i = values_model_output.critic_rnn_states
-        values_dict = {k: v.detach().cpu().numpy().reshape([]) for k, v in values_model_output.values.items()}
+        with torch.no_grad():
+            values_model_output = self.model.get_values(state=state if self.use_global_state else None,
+                                                        observations=obs_input,
+                                                        agent_indices=agent_indices,
+                                                        rnn_states=rnn_states_critic_i)
+            rnn_states_critic_new_i = values_model_output.critic_rnn_states
+            values = values_model_output.values
+            values.grouped_tensor = {k: v.cpu().numpy() for k, v in values.grouped_tensor.items()}
+            values_dict = {k: v.reshape([]) for k, v in values.agent_wise.items()}
 
         return rnn_states_critic_new_i, values_dict
+

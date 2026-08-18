@@ -25,10 +25,11 @@ class MAPPO_Learner(OnPolicyMultiAgentLearner):
         self.iterations += 1
 
         # prepare training data
-        batch = self.build_training_data(sample=sample,
-                                         use_parameter_sharing=self.use_parameter_sharing,
-                                         use_actions_mask=self.use_actions_mask,
-                                         use_global_state=self.use_global_state)
+        batch = self.build_training_data(
+            sample=sample,
+            use_actions_mask=self.use_actions_mask,
+            use_global_state=self.use_global_state
+        )
 
         info = self.callback.on_update_start(self.iterations, model=self.model, batch=batch)
 
@@ -50,8 +51,6 @@ class MAPPO_Learner(OnPolicyMultiAgentLearner):
             rnn_states=rnn_states_critic
         )
         values_pred = value_outputs.values
-        if not self.agent_grouping.full_independent:
-            values_pred = self.packed_tensor(values_pred)
 
         # calculate losses for each agent
         actor_loss, entropy_loss, critic_loss = [], [], []
@@ -60,9 +59,9 @@ class MAPPO_Learner(OnPolicyMultiAgentLearner):
 
             # actor loss
             dist = policy_outputs.distributions[group]
-            log_pi = dist.log_prob(batch.actions[group]).reshape(-1)
-            advantages = batch.advantages[group].reshape(-1)
-            old_log_prob = batch.old_log_probs[group].reshape(-1)
+            log_pi = dist.log_prob(batch.actions.packed(group)).reshape(-1)
+            advantages = batch.advantages.packed(group).reshape(-1)
+            old_log_prob = batch.old_log_probs.packed(group).reshape(-1)
 
             ratio = torch.exp(log_pi - old_log_prob)
             surrogate1 = ratio * advantages
@@ -79,9 +78,9 @@ class MAPPO_Learner(OnPolicyMultiAgentLearner):
             entropy_loss.append((entropy * mask_values).sum() / mask_values.sum())
 
             # critic loss
-            value_pred_i = values_pred[group].reshape(-1)
-            value_target = batch.returns[group].reshape(-1)
-            values_i = batch.values[group].reshape(-1)
+            value_pred_i = values_pred.packed(group).reshape(-1)
+            value_target = batch.returns.packed(group).reshape(-1)
+            values_i = batch.values.packed(group).reshape(-1)
             if self.use_value_clip:
                 value_clipped = values_i + (value_pred_i - values_i).clamp(
                     -self.value_clip_range,
