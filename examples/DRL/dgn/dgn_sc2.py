@@ -2,7 +2,7 @@ import time
 import argparse
 import numpy as np
 
-from examples.dgn.dgn_agents import DGN_Agents
+from examples.single_agent_RL.dgn.dgn_agents import DGN_Agents
 from xuance.common import load_yaml, recursive_dict_update
 from xuance.environment import make_envs
 from xuance.torch.utils.operations import set_seed

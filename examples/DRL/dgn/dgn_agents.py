@@ -3,11 +3,11 @@ from typing import Union, Optional, Dict
 import gymnasium as gym
 import numpy as np
 import torch
-from gymnasium import spaces, Space
+from gymnasium import Space
 from torch.nn import Module, ModuleDict
 
-from examples.dgn.dgn_learner import DGN_Learner
-from examples.dgn.dgn_policy import DGN_Policy
+from examples.single_agent_RL.dgn.dgn_learner import DGN_Learner
+from examples.single_agent_RL.dgn.dgn_policy import DGN_Policy
 from xuance.common import space2shape
 from xuance.torch import REGISTRY_Policy, REGISTRY_Learners
 from xuance.torch.communications.gnn_comm import DGNComm

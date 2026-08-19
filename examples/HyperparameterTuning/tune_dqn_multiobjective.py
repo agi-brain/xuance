@@ -2,7 +2,7 @@ from xuance.common import MultiObjectiveTuner, set_hyperparameters
 from optuna.visualization import plot_pareto_front
 
 tuner = MultiObjectiveTuner(algo='dqn',
-                            config_path='../dqn/dqn_configs/dqn_cartpole.yaml',
+                            config_path='../single_agent_RL/dqn/dqn_configs/dqn_cartpole.yaml',
                             running_steps=10000,
                             test_episodes=2)
 
