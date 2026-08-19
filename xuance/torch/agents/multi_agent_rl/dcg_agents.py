@@ -8,6 +8,7 @@ from xuance.common import List, Optional, MultiAgentBaseCallback
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
 from xuance.torch import ModuleDict
 from xuance.torch.agents import OffPolicyMARLAgents
+from xuance.torch.rl_models.modules import MARLActionOutput
 from xuance.torch.rl_models.heads import ValueHead, DCG_Utility, DCG_Payoff, Coordination_Graph
 from xuance.torch.rl_models.architectures import DeepCoordinationGraph
 
@@ -105,12 +106,14 @@ class DCG_Agents(OffPolicyMARLAgents):
 
         return model
 
-    def get_actions(self,
-                    obs_list: List[dict],
-                    avail_actions_list: Optional[List[dict]] = None,
-                    rnn_states: Optional[dict] = None,
-                    test_mode: Optional[bool] = False,
-                    **kwargs):
+    def get_actions(
+            self,
+            obs_list: List[dict],
+            avail_actions_list: Optional[List[dict]] = None,
+            rnn_states: Optional[dict] = None,
+            test_mode: Optional[bool] = False,
+            **kwargs
+    ) -> MARLActionOutput:
         """
         Returns actions for agents.
 
@@ -141,8 +144,12 @@ class DCG_Agents(OffPolicyMARLAgents):
             actions = self.learner.act(hidden_states, avail_actions=avail_actions_input.grouped_tensor)
 
         actions_out = actions.reshape([batch_size, self.n_agents]).cpu().detach().numpy()
-        actions_dict = [{k: actions_out[e, i] for i, k in enumerate(self.agent_keys)} for e in range(batch_size)]
+        actions_list = [{k: actions_out[e, i] for i, k in enumerate(self.agent_keys)} for e in range(batch_size)]
 
         if not test_mode:  # get random actions
-            actions_dict = self.exploration(batch_size, actions_dict, avail_actions_list)
-        return {"rnn_states": rnn_states_new, "actions": actions_dict}
+            actions_dict = self.exploration(batch_size, actions_list, avail_actions_list)
+
+        return MARLActionOutput(
+            env_actions=actions_list,
+            rnn_states=rnn_states_new
+        )

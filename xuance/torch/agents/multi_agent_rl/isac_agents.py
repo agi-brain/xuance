@@ -10,7 +10,7 @@ from xuance.torch.utils import ActivationFunctions
 from xuance.torch.agents import OffPolicyMARLAgents
 from xuance.torch.rl_models import (CategoricalActor, SAC_GaussianActor, TwinActionValueCritic,
                                     TwinDiscreteActionValueCritic)
-from xuance.torch.rl_models.modules import RNN_State
+from xuance.torch.rl_models.modules import RNN_State, MARLActionOutput
 from xuance.torch.rl_models.architectures import IndependentSoftActorCritic
 
 
@@ -113,12 +113,14 @@ class ISAC_Agents(OffPolicyMARLAgents):
 
         return model
 
-    def get_actions(self,
-                    obs_list: List[dict],
-                    avail_actions_list: Optional[List[dict]] = None,
-                    rnn_states: Optional[Dict[str, RNN_State]] = None,
-                    test_mode: Optional[bool] = False,
-                    **kwargs):
+    def get_actions(
+            self,
+            obs_list: List[dict],
+            avail_actions_list: Optional[List[dict]] = None,
+            rnn_states: Optional[Dict[str, RNN_State]] = None,
+            test_mode: Optional[bool] = False,
+            **kwargs
+    ) -> MARLActionOutput:
         """
         Returns actions for agents.
 
@@ -160,4 +162,8 @@ class ISAC_Agents(OffPolicyMARLAgents):
                 k: actions.agent_wise[k][e].reshape([]) for k in self.agent_keys
             } for e in range(batch_size)]
 
-        return {"rnn_states": rnn_states_new, "actions": actions_list}
+        return MARLActionOutput(
+            env_actions=actions_list,
+            rnn_states=rnn_states_new
+        )
+

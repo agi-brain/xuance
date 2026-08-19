@@ -8,7 +8,7 @@ from xuance.torch import Module, ModuleDict
 from xuance.torch.utils import ActivationFunctions
 from xuance.torch.agents import OffPolicyMARLAgents
 from xuance.torch.rl_models import DeterministicActor, ActionValueCritic
-from xuance.torch.rl_models.modules import RNN_State
+from xuance.torch.rl_models.modules import RNN_State, MARLActionOutput
 from xuance.torch.rl_models.architectures import IndependentDeterministicActorCritic
 
 
@@ -103,12 +103,14 @@ class IDDPG_Agents(OffPolicyMARLAgents):
 
         return model
 
-    def get_actions(self,
-                    obs_list: List[dict],
-                    avail_actions_list: Optional[List[dict]] = None,
-                    rnn_states: Optional[Dict[str, RNN_State]] = None,
-                    test_mode: Optional[bool] = False,
-                    **kwargs):
+    def get_actions(
+            self,
+            obs_list: List[dict],
+            avail_actions_list: Optional[List[dict]] = None,
+            rnn_states: Optional[Dict[str, RNN_State]] = None,
+            test_mode: Optional[bool] = False,
+            **kwargs
+    ) -> MARLActionOutput:
         """
         Returns actions for agents.
 
@@ -140,4 +142,8 @@ class IDDPG_Agents(OffPolicyMARLAgents):
 
         actions_list = [{k: v[i] for k, v in actions_dict.items()} for i in range(batch_size)]
 
-        return {"rnn_states": rnn_states_new, "actions": actions_list}
+        return MARLActionOutput(
+            env_actions=actions_list,
+            rnn_states=rnn_states_new
+        )
+

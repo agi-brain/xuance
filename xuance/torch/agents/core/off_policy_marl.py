@@ -10,7 +10,7 @@ from xuance.common import MARL_OffPolicyBuffer, MARL_OffPolicyBuffer_RNN, MultiA
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
 from xuance.torch import Tensor, Module
 from xuance.torch.agents.base import MARLAgents
-from xuance.torch.rl_models.modules import RNN_State
+from xuance.torch.rl_models.modules import RNN_State, MARLActionOutput
 from xuance.torch.rl_models.modules.distributions import Categorical
 
 
@@ -211,8 +211,8 @@ class OffPolicyMARLAgents(MARLAgents):
 
     def exploration(self,
                     batch_size: int,
-                    pi_actions_dict: dict,
-                    avail_actions_list: Optional[List[dict]] = None):
+                    pi_actions_dict: dict | list,
+                    avail_actions_list: Optional[List[dict]] = None) -> List[dict]:
         """Apply exploration strategy to policy actions.
 
         This method modifies the actions produced by the policy according to the configured exploration mechanism.
@@ -259,7 +259,7 @@ class OffPolicyMARLAgents(MARLAgents):
                     avail_actions_list: Optional[List[dict]] = None,
                     rnn_states: Optional[Dict[str, RNN_State]] = None,
                     test_mode: Optional[bool] = False,
-                    **kwargs) -> dict:
+                    **kwargs) -> MARLActionOutput:
         """Compute actions for all agents given vectorized observations.
 
         This method performs a forward pass through the current multi-agent policy to obtain actions for each agent in
@@ -302,7 +302,10 @@ class OffPolicyMARLAgents(MARLAgents):
         if not test_mode:  # get random actions
             actions_list = self.exploration(batch_size, actions_list, avail_actions_list)
 
-        return {"rnn_states": rnn_states_new, "actions": actions_list}
+        return MARLActionOutput(
+            env_actions=actions_list,
+            rnn_states=rnn_states_new
+        )
 
     def train(self, train_steps: int) -> dict:
         """Run the main multi-agent off-policy training loop.
@@ -355,7 +358,7 @@ class OffPolicyMARLAgents(MARLAgents):
         state = self.train_envs.buf_state.copy() if self.use_global_state else None
         for _ in tqdm(range(train_steps)):
             policy_out = self.get_actions(obs_list=obs_list, avail_actions_list=avail_actions, test_mode=False)
-            actions_list = policy_out['actions']
+            actions_list = policy_out.env_actions
             next_obs_list, rewards_list, terminated_list, truncated, info = self.train_envs.step(actions_list)
             next_state = self.train_envs.buf_state.copy() if self.use_global_state else None
             next_avail_actions = self.train_envs.buf_avail_actions if self.use_actions_mask else None
@@ -466,7 +469,8 @@ class OffPolicyMARLAgents(MARLAgents):
                                           avail_actions_list=avail_actions,
                                           rnn_states=rnn_states,
                                           test_mode=test_mode)
-            rnn_states, actions_list = policy_out['rnn_states'], policy_out['actions']
+            actions_list = policy_out.env_actions
+            rnn_states = policy_out.rnn_states
             next_obs_list, rewards_list, terminated_list, truncated, info = envs.step(actions_list)
             next_state = envs.buf_state.copy() if self.use_global_state else None
             next_avail_actions = envs.buf_avail_actions if self.use_actions_mask else None

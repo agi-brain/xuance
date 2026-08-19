@@ -8,6 +8,7 @@ from xuance.torch import Module
 from xuance.torch.utils import ActivationFunctions
 from xuance.torch.agents import OffPolicyAgent
 from xuance.torch.rl_models import DeterministicActor, ActionValueCritic
+from xuance.torch.rl_models.modules import ActionOutput
 from xuance.torch.rl_models.architectures import DeterministicActorCritic
 
 
@@ -70,7 +71,7 @@ class DDPG_Agent(OffPolicyAgent):
         return model
 
     def get_actions(self, observations: np.ndarray,
-                    test_mode: Optional[bool] = False):
+                    test_mode: Optional[bool] = False) -> ActionOutput:
         """Returns actions and values.
 
         Parameters:
@@ -85,4 +86,6 @@ class DDPG_Agent(OffPolicyAgent):
             actions = actions_output.detach().cpu().numpy()
         else:
             actions = self.exploration(actions_output.detach().cpu().numpy())
-        return {"actions": actions}
+        return ActionOutput(
+            env_actions=actions
+        )

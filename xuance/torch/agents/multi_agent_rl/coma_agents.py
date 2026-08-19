@@ -14,6 +14,7 @@ from xuance.torch.utils import AgentGroupedTensor
 from xuance.torch.agents import OnPolicyMARLAgents
 from xuance.torch.rl_models import CategoricalActor
 from xuance.torch.rl_models import CounterfactualCentralizedCritic as Critic
+from xuance.torch.rl_models.modules import MARLActionOutput
 from xuance.torch.rl_models.architectures import CounterfactualMultiAgentActorCritic
 
 
@@ -171,15 +172,17 @@ class COMA_Agents(OnPolicyMARLAgents):
                                                 for k in self.agent_keys}
         self.memory.store(**experience_data)
 
-    def get_actions(self,
-                    obs_list: List[dict],
-                    state: Optional[np.ndarray] = None,
-                    avail_actions_list: Optional[List[dict]] = None,
-                    rnn_states_actor: Optional[dict] = None,
-                    rnn_states_critic: Optional[dict] = None,
-                    test_mode: Optional[bool] = False,
-                    deterministic: Optional[bool] = False,
-                    **kwargs):
+    def get_actions(
+            self,
+            obs_list: List[dict],
+            state: Optional[np.ndarray] = None,
+            avail_actions_list: Optional[List[dict]] = None,
+            rnn_states_actor: Optional[dict] = None,
+            rnn_states_critic: Optional[dict] = None,
+            test_mode: Optional[bool] = False,
+            deterministic: Optional[bool] = False,
+            **kwargs
+    ) -> MARLActionOutput:
         """Compute actions (and optional value/log-prob outputs) for multi-agent execution.
 
         This method performs a forward pass through the current multi-agent actor-critic policy to produce actions for
@@ -263,8 +266,12 @@ class COMA_Agents(OnPolicyMARLAgents):
         }
         actions_list = [{k: actions.agent_wise[k][e].reshape([]) for k in self.agent_keys} for e in range(batch_size)]
 
-        return {"rnn_states_actor": rnn_states_actor_new, "rnn_states_critic": rnn_states_critic_new,
-                "actions": actions_list, "log_pi": None, "values": values_dict}
+        return MARLActionOutput(
+            env_actions=actions_list,
+            values=values_dict,
+            rnn_states_actor=rnn_states_actor_new,
+            rnn_states_critic=rnn_states_critic_new
+        )
 
     def values_next(self,
                     i_env: int,
@@ -386,8 +393,9 @@ class COMA_Agents(OnPolicyMARLAgents):
         for _ in tqdm(range(train_steps)):
             policy_out = self.get_actions(obs_list=obs_list, state=state, avail_actions_list=avail_actions,
                                           test_mode=False)
-            actions_list, log_pi_a_list = policy_out['actions'], policy_out['log_pi']
-            values_dict = policy_out['values']
+            actions_list = policy_out.env_actions
+            log_pi_a_dict = policy_out.log_probs
+            values_dict = policy_out.values
             next_obs_list, rewards_list, terminated_list, truncated, info = self.train_envs.step(actions_list)
             next_state = self.train_envs.buf_state.copy() if self.use_global_state else None
             next_avail_actions = self.train_envs.buf_avail_actions if self.use_actions_mask else None
@@ -399,7 +407,7 @@ class COMA_Agents(OnPolicyMARLAgents):
                                         terminals=terminated_list, truncations=truncated, infos=info,
                                         train_steps=train_steps, values_dict=values_dict)
 
-            self.store_experience(obs_list, avail_actions, actions_list, log_pi_a_list, rewards_list, values_dict,
+            self.store_experience(obs_list, avail_actions, actions_list, log_pi_a_dict, rewards_list, values_dict,
                                   terminated_list, info, **{'state': state})
             if self.memory.full:
                 for i in range(self.n_envs):
@@ -510,9 +518,11 @@ class COMA_Agents(OnPolicyMARLAgents):
             policy_out = self.get_actions(obs_list=obs_list, state=state, avail_actions_list=avail_actions,
                                           rnn_states_actor=rnn_states_actor, rnn_states_critic=rnn_states_critic,
                                           test_mode=test_mode, deterministic=deterministic_policy)
-            rnn_states_actor, rnn_states_critic = policy_out['rnn_states_actor'], policy_out['rnn_states_critic']
-            actions_list, log_pi_a_list = policy_out['actions'], policy_out['log_pi']
-            values_dict = policy_out['values']
+            actions_list = policy_out.env_actions
+            log_pi_a_dict = policy_out.log_probs
+            values_dict = policy_out.values
+            rnn_states_actor = policy_out.rnn_states_actor
+            rnn_states_critic = policy_out.rnn_states_critic
             next_obs_list, rewards_list, terminated_list, truncated, info = envs.step(actions_list)
             next_state = envs.buf_state if self.use_global_state else None
             next_avail_actions = envs.buf_avail_actions if self.use_actions_mask else None
@@ -522,7 +532,7 @@ class COMA_Agents(OnPolicyMARLAgents):
                     for idx, img in enumerate(images):
                         videos[idx].append(img)
             else:
-                self.store_experience(obs_list, avail_actions, actions_list, log_pi_a_list, rewards_list, values_dict,
+                self.store_experience(obs_list, avail_actions, actions_list, log_pi_a_dict, rewards_list, values_dict,
                                       terminated_list, info, **{'state': state})
 
             self.callback.on_test_step(envs=envs, policy=self.model, images=images, test_mode=test_mode,

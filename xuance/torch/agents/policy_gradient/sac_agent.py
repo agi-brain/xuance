@@ -10,6 +10,7 @@ from xuance.torch.utils import ActivationFunctions
 from xuance.torch.agents import OffPolicyAgent
 from xuance.torch.rl_models import (
     CategoricalActor, SAC_GaussianActor, TwinActionValueCritic, TwinDiscreteActionValueCritic)
+from xuance.torch.rl_models.modules import ActionOutput
 from xuance.torch.rl_models.architectures import SoftActorCritic, SoftActorCriticDiscrete
 
 
@@ -77,9 +78,11 @@ class SAC_Agent(OffPolicyAgent):
 
         return model
 
-    def get_actions(self,
-                    observations: np.ndarray,
-                    test_mode: Optional[bool] = False):
+    def get_actions(
+            self,
+            observations: np.ndarray,
+            test_mode: Optional[bool] = False
+    ) -> ActionOutput:
         """Returns actions and values.
 
         Parameters:
@@ -94,4 +97,4 @@ class SAC_Agent(OffPolicyAgent):
         """
         actions_output = self.model.act(observations)
         actions = actions_output.detach().cpu().numpy()
-        return {"actions": actions}
+        return ActionOutput(env_actions=actions)

@@ -1,6 +1,6 @@
 import torch
 from dataclasses import dataclass, field
-from typing import Any, Optional, Dict
+from typing import Any, Optional, Dict, List
 from xuance.torch import Tensor
 from xuance.torch.utils import AgentGroupedTensor
 
@@ -66,6 +66,40 @@ class MultiAgentModelOutput:
     rep_out: Dict[str, RepresentationOutput] | None = None
     actor_rep_out: Dict[str, RepresentationOutput] | None = None
     critic_rep_out: Dict[str, RepresentationOutput] | None = None
+
+
+@dataclass(slots=True)
+class ActionOutput:
+    env_actions: List[Any]
+
+    # Original actions that output by the model
+    policy_actions: Optional[Tensor] = None
+
+    distributions: Optional[torch.distributions] | None = None
+
+    log_probs: Optional[Any] = None
+    values: Optional[Any] = None
+
+    # Auxiliary output for special algorithms
+    auxiliary: Any = field(default_factory=dict)
+
+
+@dataclass(slots=True)
+class MARLActionOutput:
+    env_actions: list
+
+    # Original actions that output by the model
+    policy_actions: Optional[AgentGroupedTensor] = None
+
+    rnn_states: Optional[Dict[str, RNN_State]] = None
+    rnn_states_actor: Optional[Dict[str, RNN_State]] = None
+    rnn_states_critic: Dict[str, RNN_State] | Dict[str, Dict[str, RNN_State]] = None
+
+    log_probs: dict = None
+    values: dict = None
+
+    # Auxiliary output for special algorithms
+    auxiliary: Dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass

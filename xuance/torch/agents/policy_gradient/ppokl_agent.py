@@ -1,5 +1,6 @@
 from tqdm import tqdm
 from copy import deepcopy
+from xuance.torch.rl_models.modules import ActionOutput
 from xuance.torch.agents.policy_gradient.ppo_agent import PPO_Agent
 
 
@@ -16,7 +17,7 @@ class PPOKL_Agent(PPO_Agent):
     def auxiliary_info_shape(self):
         return {"old_dist": None}
 
-    def get_aux_info(self, policy_output: dict = None):
+    def get_aux_info(self, policy_output: ActionOutput = None):
         """Returns auxiliary information.
 
         Parameters:
@@ -25,7 +26,7 @@ class PPOKL_Agent(PPO_Agent):
         Returns:
             aux_info (dict): The auxiliary information.
         """
-        aux_info = {"old_dist": policy_output['dists']}
+        aux_info = {"old_dist": policy_output.distributions}
         return aux_info
 
     def train(self, train_steps):
@@ -35,7 +36,8 @@ class PPOKL_Agent(PPO_Agent):
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
             policy_out = self.get_actions(obs, return_dists=True, return_logpi=False)
-            acts, vals = policy_out['actions'], policy_out['values']
+            acts = policy_out.env_actions
+            vals = policy_out.values
             next_obs, rewards, terminals, truncations, infos = self.train_envs.step(acts)
             aux_info = self.get_aux_info(policy_out)
 

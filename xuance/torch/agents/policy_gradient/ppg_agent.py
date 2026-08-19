@@ -10,8 +10,9 @@ from xuance.torch import Module
 from xuance.torch.utils import ActivationFunctions
 from xuance.torch.rl_models.modules import split_distributions
 from xuance.torch.agents import OnPolicyAgent
-from xuance.torch.rl_models import CategoricalActor, GaussianActor, PhasicActorCritic
+from xuance.torch.rl_models import CategoricalActor, GaussianActor
 from xuance.torch.rl_models import StateValueCritic as Critic
+from xuance.torch.rl_models.modules import ActionOutput
 from xuance.torch.rl_models.architectures import PhasicActorCritic
 
 
@@ -84,8 +85,13 @@ class PPG_Agent(OnPolicyAgent):
 
         return model
 
-    def get_actions(self, observations: np.ndarray, deterministic: bool = False,
-                    return_dists: bool = False, return_logpi: bool = False):
+    def get_actions(
+            self,
+            observations: np.ndarray,
+            deterministic: bool = False,
+            return_dists: bool = False,
+            return_logpi: bool = False
+    ) -> ActionOutput:
         """Returns actions and values.
 
         Parameters:
@@ -107,13 +113,18 @@ class PPG_Agent(OnPolicyAgent):
         dists = split_distributions(policy_dists) if return_dists else None
         actions = actions.detach().cpu().numpy()
         values = values.detach().cpu().numpy()
-        return {"actions": actions, "values": values, "dists": dists, "log_pi": log_pi}
+        return ActionOutput(
+            env_actions=actions,
+            values=values,
+            distributions=dists,
+            log_probs=log_pi
+        )
 
     @property
     def auxiliary_info_shape(self):
         return {"old_dist": None}
 
-    def get_aux_info(self, policy_output: dict = None):
+    def get_aux_info(self, policy_output: ActionOutput = None):
         """Returns auxiliary information.
 
         Parameters:
@@ -122,7 +133,7 @@ class PPG_Agent(OnPolicyAgent):
         Returns:
             aux_info (dict): The auxiliary information.
         """
-        aux_info = {"old_dist": policy_output["dists"]}
+        aux_info = {"old_dist": policy_output.distributions}
         return aux_info
 
     def train(self, train_steps):
@@ -132,7 +143,8 @@ class PPG_Agent(OnPolicyAgent):
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
             policy_out = self.get_actions(obs, return_dists=True, return_logpi=False)
-            acts, rets = policy_out['actions'], policy_out['values']
+            acts = policy_out.env_actions
+            rets = policy_out.values
             next_obs, rewards, terminals, truncations, infos = self.train_envs.step(acts)
             aux_info = self.get_aux_info(policy_out)
 

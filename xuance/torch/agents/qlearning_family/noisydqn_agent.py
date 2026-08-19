@@ -7,6 +7,7 @@ from xuance.common import Optional, DummyOffPolicyBuffer, DummyOffPolicyBuffer_A
 from xuance.environment import DummyVecEnv, SubprocVecEnv
 from xuance.torch import Module
 from xuance.torch.agents import Agent
+from xuance.torch.rl_models.modules import ActionOutput
 from xuance.torch.rl_models.architectures import NoisyDeepQNetwork
 
 
@@ -59,10 +60,10 @@ class NoisyDQN_Agent(Agent):
 
         return model
 
-    def get_actions(self, obs):
+    def get_actions(self, obs) -> ActionOutput:
         self.model.noise_scale = self.noise_scale
         actions = self.model.act(obs)
-        return actions.detach().cpu().numpy()
+        return ActionOutput(env_actions=actions.detach().cpu().numpy())
 
     def train_epochs(self, n_epochs=1):
         train_info = {}
@@ -78,7 +79,7 @@ class NoisyDQN_Agent(Agent):
         for _ in tqdm(range(train_steps)):
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
-            acts = self.get_actions(obs)
+            acts = self.get_actions(obs).env_actions
             next_obs, rewards, terminals, truncations, infos = self.train_envs.step(acts)
 
             self.callback.on_train_step(self.current_step, envs=self.train_envs, model=self.model,
@@ -150,7 +151,7 @@ class NoisyDQN_Agent(Agent):
         while current_episode < test_episodes:
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
-            acts = self.get_actions(obs)
+            acts = self.get_actions(obs).env_actions
             next_obs, rewards, terminals, truncations, infos = test_envs.step(acts)
             if self.config.render_mode == "rgb_array" and self.render:
                 images = test_envs.render(self.config.render_mode)

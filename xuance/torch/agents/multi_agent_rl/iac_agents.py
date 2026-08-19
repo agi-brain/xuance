@@ -11,7 +11,7 @@ from xuance.torch.utils import ActivationFunctions
 from xuance.torch.agents import OnPolicyMARLAgents
 from xuance.torch.rl_models import CategoricalActor, GaussianActor
 from xuance.torch.rl_models import StateValueCritic as Critic
-from xuance.torch.rl_models.modules import RNN_State
+from xuance.torch.rl_models.modules import RNN_State, MARLActionOutput
 from xuance.torch.rl_models.architectures import IndependentActorCritic
 
 
@@ -143,15 +143,17 @@ class IAC_Agents(OnPolicyMARLAgents):
                                                 for k in self.agent_keys}
         self.memory.store(**experience_data)
 
-    def get_actions(self,
-                    obs_list: List[dict],
-                    state: Optional[np.ndarray] = None,
-                    avail_actions_list: Optional[List[dict]] = None,
-                    rnn_states_actor: Optional[Dict[str, RNN_State]] = None,
-                    rnn_states_critic: Optional[Dict[str, RNN_State]] = None,
-                    test_mode: Optional[bool] = False,
-                    deterministic: bool = False,
-                    **kwargs):
+    def get_actions(
+            self,
+            obs_list: List[dict],
+            state: Optional[np.ndarray] = None,
+            avail_actions_list: Optional[List[dict]] = None,
+            rnn_states_actor: Optional[Dict[str, RNN_State]] = None,
+            rnn_states_critic: Optional[Dict[str, RNN_State]] = None,
+            test_mode: Optional[bool] = False,
+            deterministic: bool = False,
+            **kwargs
+    ) -> MARLActionOutput:
         """
         Returns actions for agents.
 
@@ -203,6 +205,10 @@ class IAC_Agents(OnPolicyMARLAgents):
                 values.grouped_tensor = {k: v.cpu().numpy() for k, v in values.grouped_tensor.items()}
                 values_dict = {k: v.reshape(batch_size) for k, v in values.agent_wise.items()}
 
-        return {"rnn_states_actor": rnn_states_actor_new, "rnn_states_critic": rnn_states_critic_new,
-                "actions": actions_list, "log_pi": None, "values": values_dict}
+        return MARLActionOutput(
+            env_actions=actions_list,
+            values=values_dict,
+            rnn_states_actor=rnn_states_actor_new,
+            rnn_states_critic=rnn_states_critic_new
+        )
 

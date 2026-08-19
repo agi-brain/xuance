@@ -13,7 +13,7 @@ from xuance.torch.utils import AgentGroupedTensor
 from xuance.torch.agents import OnPolicyMARLAgents
 from xuance.torch.rl_models import CategoricalActor as Actor
 from xuance.torch.rl_models import MeanFieldStateValueCritic as Critic
-from xuance.torch.rl_models.modules import RNN_State
+from xuance.torch.rl_models.modules import RNN_State, MARLActionOutput
 from xuance.torch.rl_models.architectures import MeanFiledActorCritic
 
 
@@ -180,17 +180,19 @@ class MFAC_Agents(OnPolicyMARLAgents):
                                            for k in self.agent_keys}
         self.memory.store(**experience_data)
 
-    def get_actions(self,
-                    obs_list: List[dict],
-                    agent_mask: Optional[List[dict]] = None,
-                    act_mean_list: Optional[List[dict]] = None,
-                    state: Optional[np.ndarray] = None,
-                    avail_actions_list: Optional[List[dict]] = None,
-                    rnn_states_actor: Optional[Dict[str, RNN_State]] = None,
-                    rnn_states_critic: Optional[Dict[str, RNN_State]] = None,
-                    test_mode: Optional[bool] = False,
-                    deterministic: bool = False,
-                    **kwargs):
+    def get_actions(
+            self,
+            obs_list: List[dict],
+            agent_mask: Optional[List[dict]] = None,
+            act_mean_list: Optional[List[dict]] = None,
+            state: Optional[np.ndarray] = None,
+            avail_actions_list: Optional[List[dict]] = None,
+            rnn_states_actor: Optional[Dict[str, RNN_State]] = None,
+            rnn_states_critic: Optional[Dict[str, RNN_State]] = None,
+            test_mode: Optional[bool] = False,
+            deterministic: bool = False,
+            **kwargs
+    ) -> MARLActionOutput:
         """
         Returns actions for agents.
 
@@ -257,9 +259,14 @@ class MFAC_Agents(OnPolicyMARLAgents):
             {k: v[e].reshape([]) for k, v in actions.agent_wise.items()} for e in range(batch_size)
         ]
 
-        return {"rnn_states_actor": rnn_states_actor_new, "rnn_states_critic": rnn_states_critic_new,
-                "actions": actions_list, "actions_mean": actions_mean_dict,
-                "log_pi": log_pi_a_dict, "values": values_dict}
+        return MARLActionOutput(
+            env_actions=actions_list,
+            log_probs=log_pi_a_dict,
+            values=values_dict,
+            rnn_states_actor=rnn_states_actor_new,
+            rnn_states_critic=rnn_states_critic_new,
+            auxiliary={"actions_mean": actions_mean_dict}
+        )
 
     def values_next(
             self,
@@ -342,9 +349,10 @@ class MFAC_Agents(OnPolicyMARLAgents):
             policy_out = self.get_actions(obs_list=obs_list, state=state,
                                           agent_mask=agent_mask_list, act_mean_list=actions_mean_list,
                                           avail_actions_list=avail_actions, test_mode=False)
-            actions_list, log_pi_a_list = policy_out['actions'], policy_out['log_pi']
-            actions_mean_next_list = policy_out['actions_mean']
-            values_dict = policy_out['values']
+            actions_list = policy_out.env_actions
+            log_pi_a_dict = policy_out.log_probs
+            values_dict = policy_out.values
+            actions_mean_next_list = policy_out.auxiliary["actions_mean"]
             next_obs_list, rewards_list, terminated_list, truncated, info = self.train_envs.step(actions_list)
             next_state = self.train_envs.buf_state if self.use_global_state else None
             next_avail_actions = self.train_envs.buf_avail_actions if self.use_actions_mask else None
@@ -357,7 +365,7 @@ class MFAC_Agents(OnPolicyMARLAgents):
                                         terminals=terminated_list, truncations=truncated, infos=info,
                                         train_steps=train_steps, values_dict=values_dict)
 
-            self.store_experience(obs_list, avail_actions, actions_list, log_pi_a_list, rewards_list, values_dict,
+            self.store_experience(obs_list, avail_actions, actions_list, log_pi_a_dict, rewards_list, values_dict,
                                   terminated_list, info,
                                   **{'state': state, 'actions_mean': actions_mean_list})
             if self.memory.full:
@@ -457,10 +465,12 @@ class MFAC_Agents(OnPolicyMARLAgents):
                                           agent_mask=agent_mask_list, act_mean_list=actions_mean_list,
                                           rnn_states_actor=rnn_states_actor, rnn_states_critic=rnn_states_critic,
                                           test_mode=test_mode, deterministic=deterministic_policy)
-            rnn_states_actor, rnn_states_critic = policy_out['rnn_states_actor'], policy_out['rnn_states_critic']
-            actions_list, log_pi_a_list = policy_out['actions'], policy_out['log_pi']
-            actions_mean_next_list = policy_out['actions_mean']
-            values_dict = policy_out['values']
+            actions_list = policy_out.env_actions
+            log_pi_a_dict = policy_out.log_probs
+            values_dict = policy_out.values
+            actions_mean_next_list = policy_out.auxiliary["actions_mean"]
+            rnn_states_actor = policy_out.rnn_states_actor
+            rnn_states_critic = policy_out.rnn_states_critic
             next_obs_list, rewards_list, terminated_list, truncated, info = envs.step(actions_list)
             next_state = envs.buf_state if self.use_global_state else None
             next_avail_actions = envs.buf_avail_actions if self.use_actions_mask else None
@@ -470,7 +480,7 @@ class MFAC_Agents(OnPolicyMARLAgents):
                     for idx, img in enumerate(images):
                         videos[idx].append(img)
             else:
-                self.store_experience(obs_list, avail_actions, actions_list, log_pi_a_list, rewards_list, values_dict,
+                self.store_experience(obs_list, avail_actions, actions_list, log_pi_a_dict, rewards_list, values_dict,
                                       terminated_list, info, **{'state': state, 'actions_mean': actions_mean_list})
 
             self.callback.on_test_step(envs=envs, model=self.model, images=images, test_mode=test_mode,

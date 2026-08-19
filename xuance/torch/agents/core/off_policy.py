@@ -9,6 +9,7 @@ from xuance.environment import DummyVecEnv, SubprocVecEnv
 from xuance.torch import Module
 from xuance.torch.agents.base import Agent
 from xuance.torch.utils import TensorOffPolicyBuffer, TensorOffPolicyBufferAtari, TensorEnvWrapper
+from xuance.torch.rl_models.modules import ActionOutput
 
 
 class OffPolicyAgent(Agent):
@@ -159,8 +160,10 @@ class OffPolicyAgent(Agent):
                 explore_actions = pi_actions.detach().cpu().numpy()
             return explore_actions
 
-    def get_actions(self, observations: np.ndarray,
-                    test_mode: Optional[bool] = False) -> dict:
+    def get_actions(
+            self, observations: np.ndarray,
+            test_mode: Optional[bool] = False
+    ) -> ActionOutput:
         """Returns actions and values.
 
         Parameters:
@@ -181,7 +184,8 @@ class OffPolicyAgent(Agent):
                 actions = actions_output.detach().cpu().numpy()
         else:
             actions = self.exploration(actions_output)
-        return {"actions": actions}
+
+        return ActionOutput(env_actions=actions)
 
     def train_epochs(self, n_epochs=1) -> dict:
         train_info = {}
@@ -227,7 +231,7 @@ class OffPolicyAgent(Agent):
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
             policy_out = self.get_actions(obs, test_mode=False)
-            actions = policy_out['actions']
+            actions = policy_out.env_actions
             next_obs, rewards, terminals, truncations, infos = self.train_envs.step(actions)
 
             self.callback.on_train_step(self.current_step, envs=self.train_envs, model=self.model,
@@ -326,7 +330,7 @@ class OffPolicyAgent(Agent):
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
             policy_out = self.get_actions(obs, test_mode=True)
-            next_obs, rewards, terminals, truncations, infos = test_envs.step(policy_out['actions'])
+            next_obs, rewards, terminals, truncations, infos = test_envs.step(policy_out.env_actions)
             if self.config.render_mode == "rgb_array" and self.render:
                 images = test_envs.render(self.config.render_mode)
                 for idx, img in enumerate(images):

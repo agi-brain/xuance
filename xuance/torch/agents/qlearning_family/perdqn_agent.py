@@ -56,7 +56,7 @@ class PerDQN_Agent(DQN_Agent):
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
             policy_out = self.get_actions(obs, test_mode=False)
-            acts = policy_out['actions']
+            acts = policy_out.env_actions
             next_obs, rewards, terminals, truncations, infos = self.train_envs.step(acts)
 
             self.callback.on_train_step(self.current_step, envs=self.train_envs, model=self.model,

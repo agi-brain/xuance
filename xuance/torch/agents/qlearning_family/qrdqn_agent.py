@@ -1,10 +1,8 @@
-import torch
 from argparse import Namespace
 from gymnasium.spaces import Space
 from xuance.common import Optional, BaseCallback
 from xuance.environment import DummyVecEnv, SubprocVecEnv
 from xuance.torch import Module
-from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
 from xuance.torch.agents.qlearning_family.dqn_agent import DQN_Agent
 from xuance.torch.rl_models.architectures import QRDeepQNetwork
 
@@ -28,11 +26,6 @@ class QRDQN_Agent(DQN_Agent):
         super(QRDQN_Agent, self).__init__(config, envs, observation_space, action_space, callback)
 
     def _build_model(self) -> Module:
-        normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None
-        initializer = torch.nn.init.orthogonal_
-        activation = ActivationFunctions[self.config.activation]
-        device = self.device
-
         # build representation.
         representation = self._build_representation(self.config.representation, self.observation_space, self.config)
 

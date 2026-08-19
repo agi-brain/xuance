@@ -1,4 +1,3 @@
-import torch
 import numpy as np
 from tqdm import tqdm
 from copy import deepcopy
@@ -7,8 +6,8 @@ from gymnasium.spaces import Space
 from xuance.common import Optional, RecurrentOffPolicyBuffer, EpisodeBuffer, BaseCallback
 from xuance.environment import DummyVecEnv, SubprocVecEnv
 from xuance.torch import Module
-from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
 from xuance.torch.agents import OffPolicyAgent
+from xuance.torch.rl_models.modules import ActionOutput
 from xuance.torch.rl_models.architectures import DeepRecurrentQNetwork
 
 
@@ -46,11 +45,6 @@ class DRQN_Agent(OffPolicyAgent):
         return Buffer
 
     def _build_model(self) -> Module:
-        normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None
-        initializer = torch.nn.init.orthogonal_
-        activation = ActivationFunctions[self.config.activation]
-        device = self.device
-
         # build representation.
         representation = self._build_representation(self.config.representation, self.observation_space, self.config)
 
@@ -62,14 +56,14 @@ class DRQN_Agent(OffPolicyAgent):
             dropout=self.config.dropout,
             action_space=self.action_space,
             rnn=self.config.rnn,
-            initializer=initializer,
+            initializer=self.initializer,
             device=self.device,
             use_distributed_training=self.distributed_training
         )
 
         return model
 
-    def get_actions(self, obs, egreedy=0.0, rnn_states=None):
+    def get_actions(self, obs, egreedy=0.0, rnn_states=None) -> ActionOutput:
         rnn_states_new, model_output = self.model(obs[:, None], rnn_states)
         argmax_action = model_output.actions
         random_action = np.random.choice(self.action_space.n, self.n_envs)
@@ -77,7 +71,11 @@ class DRQN_Agent(OffPolicyAgent):
             actions = random_action
         else:
             actions = argmax_action.detach().cpu().numpy()
-        return {"actions": actions, "rnn_states_next": rnn_states_new}
+
+        return ActionOutput(
+            env_actions=actions,
+            auxiliary={"rnn_states_next": rnn_states_new}
+        )
 
     def train(self, train_steps: int) -> dict:
         train_info = {}
@@ -91,7 +89,8 @@ class DRQN_Agent(OffPolicyAgent):
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
             policy_out = self.get_actions(obs, self.egreedy, self.rnn_states)
-            acts, self.rnn_states = policy_out['actions'], policy_out['rnn_states_next']
+            acts = policy_out.env_actions
+            self.rnn_states = policy_out.auxiliary['rnn_states_next']
             try:
                 next_obs, rewards, terminals, truncations, infos = self.train_envs.step(acts)
             except:
@@ -171,7 +170,8 @@ class DRQN_Agent(OffPolicyAgent):
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
             policy_out = self.get_actions(obs, egreedy=0.0, rnn_states=rnn_states)
-            acts, rnn_states = policy_out['actions'], policy_out['rnn_states_next']
+            acts = policy_out.env_actions
+            rnn_states = policy_out.auxiliary['rnn_states_next']
             next_obs, rewards, terminals, truncations, infos = test_envs.step(acts)
             if self.config.render_mode == "rgb_array" and self.render:
                 images = test_envs.render(self.config.render_mode)

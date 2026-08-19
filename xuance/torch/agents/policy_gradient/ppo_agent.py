@@ -11,6 +11,7 @@ from xuance.torch.agents import OnPolicyAgent
 from xuance.torch.rl_models import CategoricalActor, GaussianActor
 from xuance.torch.rl_models import StateValueCritic as Critic
 from xuance.torch.rl_models import ActorCritic
+from xuance.torch.rl_models.modules import ActionOutput
 
 
 class PPO_Agent(OnPolicyAgent):
@@ -75,7 +76,7 @@ class PPO_Agent(OnPolicyAgent):
     def auxiliary_info_shape(self):
         return {"old_logp": ()}
 
-    def get_aux_info(self, policy_output: dict = None):
+    def get_aux_info(self, policy_output: ActionOutput = None):
         """Returns auxiliary information.
 
         Parameters:
@@ -84,7 +85,7 @@ class PPO_Agent(OnPolicyAgent):
         Returns:
             aux_info (dict): The auxiliary information.
         """
-        aux_info = {"old_logp": policy_output['log_pi']}
+        aux_info = {"old_logp": policy_output.log_probs}
         return aux_info
 
     def train(self, train_steps):
@@ -94,7 +95,8 @@ class PPO_Agent(OnPolicyAgent):
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
             policy_out = self.get_actions(obs, return_dists=False, return_logpi=True)
-            acts, value, logps = policy_out['actions'], policy_out['values'], policy_out['log_pi']
+            acts = policy_out.env_actions
+            value = policy_out.values
             next_obs, rewards, terminals, truncations, infos = self.train_envs.step(acts)
             aux_info = self.get_aux_info(policy_out)
 

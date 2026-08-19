@@ -15,14 +15,14 @@ args = Namespace(dl_toolbox='torch', device=device,
 env_name = "mpe"
 env_id = "simple_spread_v3"
 
-args.use_rnn = False
-args.use_parameter_sharing = False
-args.use_actions_mask = False
+# args.use_rnn = False
+# args.use_parameter_sharing = False
+# args.use_actions_mask = False
 
-if args.use_rnn:
-    args.representation = "Basic_RNN"
-else:
-    args.representation = "Basic_MLP"
+# if args.use_rnn:
+#     args.representation = "Basic_RNN"
+# else:
+#     args.representation = "Basic_MLP"
 
 
 class TestValueBaseAlgo(unittest.TestCase):

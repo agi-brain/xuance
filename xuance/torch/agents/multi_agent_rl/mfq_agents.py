@@ -12,7 +12,7 @@ from xuance.torch import Module, ModuleDict
 from xuance.torch.agents import OffPolicyMARLAgents
 from xuance.torch.utils import AgentGroupedTensor
 from xuance.torch.rl_models import MeanFieldActionValueCritic
-from xuance.torch.rl_models.modules import RNN_State
+from xuance.torch.rl_models.modules import RNN_State, MARLActionOutput
 from xuance.torch.rl_models.heads import IndependentMixer
 from xuance.torch.rl_models.architectures import MeanFieldQNetwork
 
@@ -169,13 +169,15 @@ class MFQ_Agents(OffPolicyMARLAgents):
                                                 for k in self.agent_keys}
         self.memory.store(**experience_data)
 
-    def get_actions(self,
+    def get_actions(
+            self,
                     obs_list: List[dict],
                     agent_mask: Optional[List[dict]] = None,
                     act_mean_list: Optional[List[dict]] = None,
                     avail_actions_list: Optional[List[dict]] = None,
                     rnn_states: Optional[Dict[str, RNN_State]] = None,
-                    test_mode: Optional[bool] = False):
+                    test_mode: Optional[bool] = False
+    ) -> MARLActionOutput:
         batch_size = len(obs_list)
         mean_actions_input, agent_mask_tensor = self._build_inputs_mean_mask(agent_mask, act_mean_list)
         obs_input, agent_indices, avail_actions_input = self._build_inputs(obs_list, avail_actions_list)
@@ -203,7 +205,11 @@ class MFQ_Agents(OffPolicyMARLAgents):
         if not test_mode:  # get random actions
             actions_list = self.exploration(batch_size, actions_list, avail_actions_list)
 
-        return {"rnn_states": rnn_states_new, "actions": actions_list, "actions_mean": actions_mean_list}
+        return MARLActionOutput(
+            env_actions=actions_list,
+            rnn_states=rnn_states_new,
+            auxiliary={"actions_mean": actions_mean_list}
+        )
 
     def train(self, train_steps: int) -> dict:
         train_info = {}
@@ -237,8 +243,8 @@ class MFQ_Agents(OffPolicyMARLAgents):
             policy_out = self.get_actions(obs_list=obs_list, agent_mask=agent_mask_list,
                                           act_mean_list=actions_mean_list,
                                           avail_actions_list=avail_actions, test_mode=False)
-            actions_list = policy_out['actions']
-            actions_mean_next_list = policy_out['actions_mean']
+            actions_list = policy_out.env_actions
+            actions_mean_next_list = policy_out.auxiliary["actions_mean"]
             next_obs_list, rewards_list, terminated_list, truncated, info = self.train_envs.step(actions_list)
             next_state = self.train_envs.buf_state.copy() if self.use_global_state else None
             next_avail_actions = self.train_envs.buf_avail_actions if self.use_actions_mask else None
@@ -342,8 +348,9 @@ class MFQ_Agents(OffPolicyMARLAgents):
                                           avail_actions_list=avail_actions,
                                           rnn_states=rnn_states,
                                           test_mode=test_mode)
-            rnn_states, actions_list = policy_out['rnn_states'], policy_out['actions']
-            actions_mean_next_list = policy_out['actions_mean']
+            actions_list = policy_out.env_actions
+            actions_mean_next_list = policy_out.auxiliary["actions_mean"]
+            rnn_states = policy_out.rnn_states
             next_obs_list, rewards_list, terminated_list, truncated, info = envs.step(actions_list)
             next_state = envs.buf_state.copy() if self.use_global_state else None
             next_avail_actions = envs.buf_avail_actions if self.use_actions_mask else None

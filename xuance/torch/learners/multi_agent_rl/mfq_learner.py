@@ -34,10 +34,10 @@ class MFQ_Learner(OffPolicyMultiAgentLearner):
                 for agent in self.agent_keys
             }
         else:
-            actions_mean_next_tensor = None
+            actions_mean_next_agent_wise = None
 
         return (AgentGroupedTensor.from_agent_wise(actions_mean_agent_wise, self.agent_grouping),
-                AgentGroupedTensor.from_agent_wise(actions_mean_next_tensor, self.agent_grouping))
+                AgentGroupedTensor.from_agent_wise(actions_mean_next_agent_wise, self.agent_grouping))
 
     def update(self, sample):
         self.iterations += 1

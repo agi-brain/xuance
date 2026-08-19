@@ -11,7 +11,7 @@ from xuance.torch.utils import ActivationFunctions
 from xuance.torch.agents import OnPolicyMARLAgents
 from xuance.torch.rl_models import CategoricalActor, GaussianActor
 from xuance.torch.rl_models import StateValueCritic as Critic
-from xuance.torch.rl_models.modules import RNN_State
+from xuance.torch.rl_models.modules import RNN_State, MARLActionOutput
 from xuance.torch.rl_models.heads import VDN_Mixer, QMIX_Mixer
 from xuance.torch.rl_models.architectures import ValueDecompositionActorCritic
 
@@ -158,15 +158,17 @@ class VDAC_Agents(OnPolicyMARLAgents):
                                                 for k in self.agent_keys}
         self.memory.store(**experience_data)
 
-    def get_actions(self,
-                    obs_list: List[dict],
-                    state: Optional[np.ndarray] = None,
-                    avail_actions_list: Optional[List[dict]] = None,
-                    rnn_states_actor: Dict[str, RNN_State] = None,
-                    rnn_states_critic: Dict[str, RNN_State] = None,
-                    test_mode: Optional[bool] = False,
-                    deterministic: Optional[bool] = False,
-                    **kwargs):
+    def get_actions(
+            self,
+            obs_list: List[dict],
+            state: Optional[np.ndarray] = None,
+            avail_actions_list: Optional[List[dict]] = None,
+            rnn_states_actor: Dict[str, RNN_State] = None,
+            rnn_states_critic: Dict[str, RNN_State] = None,
+            test_mode: Optional[bool] = False,
+            deterministic: Optional[bool] = False,
+            **kwargs
+    ) -> MARLActionOutput:
         """
         Returns actions for agents.
 
@@ -220,8 +222,12 @@ class VDAC_Agents(OnPolicyMARLAgents):
                 values_tot = self.model.values_tot(values_individual, state).cpu().numpy().reshape(batch_size)
                 values_dict = {k: values_tot for k in self.agent_keys}
 
-        return {"rnn_states_actor": rnn_states_actor_new, "rnn_states_critic": rnn_states_critic_new,
-                "actions": actions_list, "log_pi": None, "values": values_dict}
+        return MARLActionOutput(
+            env_actions=actions_list,
+            values=values_dict,
+            rnn_states_actor=rnn_states_actor_new,
+            rnn_states_critic=rnn_states_critic_new
+        )
 
     def values_next(self,
                     i_env: int,
