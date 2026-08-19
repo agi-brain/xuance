@@ -10,7 +10,7 @@ class ActorCritic(Module):
                  actor: Module,
                  critic: Module,
                  **kwargs):
-        super().__init__(**kwargs)
+        super().__init__()
         self.actor = actor
         self.critic = critic
 
@@ -34,6 +34,41 @@ class ActorCritic(Module):
             actions = actor_output.distributions.deterministic_sample()
         else:
             actions = actor_output.distributions.stochastic_sample()
+        return actions
+
+
+class SharedActorCritic(Module):
+    def __init__(self,
+                 representation: Module,
+                 actor: Module,
+                 critic: Module,
+                 **kwargs):
+        super().__init__()
+        self.representation = representation
+        self.actor = actor
+        self.critic = critic
+
+    def forward(self,
+                observation: Union[Tensor, dict],
+                **kwargs) -> ModelOutput:
+        rep_out = self.representation(observation, **kwargs)
+        pi_distributions = self.actor(rep_out.embeddings, **kwargs)
+        values = self.critic(rep_out.embeddings, **kwargs)
+        return ModelOutput(distributions=pi_distributions,
+                           values=values,
+                           rep_out=rep_out)
+
+    def act(self,
+            observation: Union[Tensor, dict],
+            deterministic: bool = False,
+            **kwargs) -> Tensor:
+        rep_out = self.representation(observation, **kwargs)
+        pi_distributions = self.actor(rep_out.embeddings, **kwargs)
+
+        if deterministic:
+            actions = pi_distributions.deterministic_sample()
+        else:
+            actions = pi_distributions.stochastic_sample()
         return actions
 
 

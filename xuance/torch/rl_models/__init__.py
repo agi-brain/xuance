@@ -31,6 +31,7 @@ from .modules import IdentityEncoder, IdentityFeatureFusion, build_identity_enco
 # Architectures
 from xuance.torch.rl_models.architectures.single_agent.actor_critic import (
     ActorCritic,
+    SharedActorCritic,
     PhasicActorCritic,
     SoftActorCritic,
     SoftActorCriticDiscrete,

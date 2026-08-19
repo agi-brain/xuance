@@ -8,9 +8,10 @@ from xuance.environment import DummyVecEnv, SubprocVecEnv
 from xuance.torch import Module
 from xuance.torch.utils import ActivationFunctions
 from xuance.torch.agents import OnPolicyAgent
+from xuance.torch.rl_models.heads import GaussianActorHead, CategoricalActorHead, ValueHead
 from xuance.torch.rl_models import CategoricalActor, GaussianActor
 from xuance.torch.rl_models import StateValueCritic as Critic
-from xuance.torch.rl_models import ActorCritic
+from xuance.torch.rl_models import ActorCritic, SharedActorCritic
 from xuance.torch.rl_models.modules import ActionOutput
 
 
@@ -37,38 +38,57 @@ class PPO_Agent(OnPolicyAgent):
         self.learner = self._build_learner(self.config, self.model, self.callback)  # build learner
 
     def _build_model(self) -> Module:
+        shared_representation = getattr(self.config, "shared_representation", True)
+
         # build representation.
         representation = self._build_representation(self.config.representation, self.observation_space, self.config)
 
         # build actor network
-        actor_input = dict(
-            representation=representation,
-            actor_hidden_size=self.config.actor_hidden_size,
-            action_space=self.action_space,
-            normalizer=self.normalize_fn,
-            initializer=self.initializer,
-            activation=self.activation,
-            device=self.device
-        )
-        if isinstance(self.action_space, gymnasium.spaces.Box):
-            Actor = GaussianActor
-            actor_input['activation_action'] = ActivationFunctions[self.config.activation_action]
-        elif isinstance(self.action_space, gymnasium.spaces.Discrete):
-            Actor = CategoricalActor
+        actor_input = dict(normalizer=self.normalize_fn,
+                           initializer=self.initializer,
+                           activation=self.activation,
+                           device=self.device)
+        if shared_representation:
+            actor_input.update(dict(feature_dim=representation.output_shapes['state'][0],
+                                    hidden_size=self.config.actor_hidden_size))
+            if isinstance(self.action_space, gymnasium.spaces.Box):
+                actor_input.update(dict(action_dim=self.action_space.shape[0],
+                                        activation_action=ActivationFunctions[self.config.activation_action], ))
+                actor = GaussianActorHead(**actor_input)
+            elif isinstance(self.action_space, gymnasium.spaces.Discrete):
+                actor_input.update(dict(action_dim=self.action_space.n))
+                actor = CategoricalActorHead(**actor_input)
+            else:
+                raise NotImplementedError
         else:
-            raise NotImplementedError
-        actor = Actor(**actor_input)
+            actor_input.update(dict(representation=representation,
+                                    actor_hidden_size=self.config.actor_hidden_size,
+                                    action_space=self.action_space))
+            if isinstance(self.action_space, gymnasium.spaces.Box):
+                actor_input.update(dict(activation_action=ActivationFunctions[self.config.activation_action], ))
+                actor = GaussianActor(**actor_input)
+            elif isinstance(self.action_space, gymnasium.spaces.Discrete):
+                actor = CategoricalActor(**actor_input)
+            else:
+                raise NotImplementedError
 
-        # build critic network
-        critic = Critic(representation=deepcopy(representation),
-                        critic_hidden_size=self.config.critic_hidden_size,
-                        normalizer=self.normalize_fn,
-                        initializer=self.initializer,
-                        activation=self.activation,
-                        device=self.device)
-
-        # build the RL model
-        model = ActorCritic(actor=actor, critic=critic)
+        # build critic network and the RL model
+        if shared_representation:
+            critic = ValueHead(feature_dim=representation.output_shapes['state'][0],
+                               hidden_size=self.config.critic_hidden_size,
+                               normalizer=self.normalize_fn,
+                               initializer=self.initializer,
+                               activation=self.activation,
+                               device=self.device)
+            model = SharedActorCritic(representation=representation, actor=actor, critic=critic)
+        else:
+            critic = Critic(representation=deepcopy(representation),
+                            critic_hidden_size=self.config.critic_hidden_size,
+                            normalizer=self.normalize_fn,
+                            initializer=self.initializer,
+                            activation=self.activation,
+                            device=self.device)
+            model = ActorCritic(actor=actor, critic=critic)
 
         return model
 
