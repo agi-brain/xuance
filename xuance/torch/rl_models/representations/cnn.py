@@ -4,6 +4,7 @@ import numpy as np
 from typing import Sequence, Optional, Union, Callable
 from xuance.torch import Module, Tensor
 from xuance.torch.rl_models.modules.layers import cnn_block, mlp_block, ModuleType
+from xuance.torch.rl_models.modules.outputs import RepresentationOutput
 
 
 # process the input observations with stacks of CNN layers
@@ -45,7 +46,8 @@ class Basic_CNN(Module):
         observations = observations / 255.0
         tensor_observation = torch.as_tensor(observations, dtype=torch.float32,
                                              device=self.device).permute((0, 3, 1, 2))
-        return {'state': self.model(tensor_observation)}
+
+        return RepresentationOutput(embeddings=self.model(tensor_observation))
 
 
 class AC_CNN_Atari(Module):
@@ -97,4 +99,4 @@ class AC_CNN_Atari(Module):
         observations = observations / 255.0
         tensor_observation = torch.as_tensor(observations, dtype=torch.float32,
                                              device=self.device).permute((0, 3, 1, 2))
-        return {'state': self.model(tensor_observation)}
+        return RepresentationOutput(embeddings=self.model(tensor_observation))
