@@ -16,3 +16,20 @@ from .centralized_critics import (
     TwinCentralizedActionValueCritic,
     CounterfactualCentralizedCritic
 )
+
+__all__ = [
+    "StateValueCritic",
+    "ActionValueCritic",
+    "DiscreteActionValueCritic",
+    "HybridActionValueCritic",
+    "MeanFieldStateValueCritic",
+    "MeanFieldActionValueCritic",
+
+    "TwinActionValueCritic",
+    "TwinDiscreteActionValueCritic",
+
+    "CentralizedStateValueCritic",
+    "CentralizedActionValueCritic",
+    "TwinCentralizedActionValueCritic",
+    "CounterfactualCentralizedCritic"
+]
