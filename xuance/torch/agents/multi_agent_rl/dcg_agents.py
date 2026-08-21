@@ -106,6 +106,7 @@ class DCG_Agents(OffPolicyMARLAgents):
 
         return model
 
+    @torch.no_grad()
     def get_actions(
             self,
             obs_list: List[dict],
@@ -129,25 +130,24 @@ class DCG_Agents(OffPolicyMARLAgents):
         """
         batch_size = len(obs_list)
         obs_input, agent_indices, avail_actions_input = self._build_inputs(obs_list, avail_actions_list)
-        with torch.no_grad():
-            rnn_states_new, hidden_states = self.model.get_hidden_states(observations=obs_input,
-                                                                         agent_indices=agent_indices,
-                                                                         rnn_states=rnn_states,
-                                                                         use_target_net=False)
-            if self.use_actions_mask:
-                if self.use_parameter_sharing:
-                    avail_actions_input = avail_actions_input[self.model_keys[0]].reshape(batch_size, self.n_agents, -1)
-                else:
-                    avail_actions_input = np.stack(itemgetter(*self.agent_keys)(avail_actions_input),
-                                                   axis=-2).reshape(batch_size, self.n_agents, -1)
-            hidden_states = hidden_states.reshape([batch_size, self.n_agents, -1])
-            actions = self.learner.act(hidden_states, avail_actions=avail_actions_input.grouped_tensor)
+        rnn_states_new, hidden_states = self.model.get_hidden_states(observations=obs_input,
+                                                                     agent_indices=agent_indices,
+                                                                     rnn_states=rnn_states,
+                                                                     use_target_net=False)
+        if self.use_actions_mask:
+            if self.use_parameter_sharing:
+                avail_actions_input = avail_actions_input[self.model_keys[0]].reshape(batch_size, self.n_agents, -1)
+            else:
+                avail_actions_input = np.stack(itemgetter(*self.agent_keys)(avail_actions_input),
+                                               axis=-2).reshape(batch_size, self.n_agents, -1)
+        hidden_states = hidden_states.reshape([batch_size, self.n_agents, -1])
+        actions = self.learner.act(hidden_states, avail_actions=avail_actions_input.grouped_tensor)
 
-        actions_out = actions.reshape([batch_size, self.n_agents]).cpu().detach().numpy()
+        actions_out = actions.reshape([batch_size, self.n_agents]).cpu().numpy()
         actions_list = [{k: actions_out[e, i] for i, k in enumerate(self.agent_keys)} for e in range(batch_size)]
 
         if not test_mode:  # get random actions
-            actions_dict = self.exploration(batch_size, actions_list, avail_actions_list)
+            actions_list = self.exploration(batch_size, actions_list, avail_actions_list)
 
         return MARLActionOutput(
             env_actions=actions_list,

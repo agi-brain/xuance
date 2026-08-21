@@ -169,6 +169,7 @@ class MFQ_Agents(OffPolicyMARLAgents):
                                                 for k in self.agent_keys}
         self.memory.store(**experience_data)
 
+    @torch.no_grad()
     def get_actions(
             self,
                     obs_list: List[dict],
@@ -182,12 +183,11 @@ class MFQ_Agents(OffPolicyMARLAgents):
         mean_actions_input, agent_mask_tensor = self._build_inputs_mean_mask(agent_mask, act_mean_list)
         obs_input, agent_indices, avail_actions_input = self._build_inputs(obs_list, avail_actions_list)
 
-        with torch.no_grad():
-            model_output = self.model(observations=obs_input,
-                                      agent_indices=agent_indices,
-                                      mean_actions=mean_actions_input,
-                                      avail_actions=avail_actions_input,
-                                      rnn_states=rnn_states)
+        model_output = self.model(observations=obs_input,
+                                  agent_indices=agent_indices,
+                                  mean_actions=mean_actions_input,
+                                  avail_actions=avail_actions_input,
+                                  rnn_states=rnn_states)
         rnn_states_new = model_output.rnn_states
         actions = model_output.actions
 
@@ -195,11 +195,11 @@ class MFQ_Agents(OffPolicyMARLAgents):
                                                           agent_mask_tensor=agent_mask_tensor,
                                                           batch_size=batch_size)
 
-        actions.grouped_tensor = {k: actions.grouped_tensor[k].reshape(batch_size, n).cpu().detach().numpy()
+        actions.grouped_tensor = {k: actions.grouped_tensor[k].reshape(batch_size, n).cpu().numpy()
                                   for k, n in self.n_group_agents.items()}
         actions_list = [{k: actions.agent_wise[k][i] for k in self.agent_keys} for i in range(batch_size)]
 
-        actions_mean_masked = {k: v.cpu().detach().numpy() for k, v in actions_mean_masked.items()}
+        actions_mean_masked = {k: v.cpu().numpy() for k, v in actions_mean_masked.items()}
         actions_mean_list = [{k: v[e] for k, v in actions_mean_masked.items()} for e in range(batch_size)]
 
         if not test_mode:  # get random actions

@@ -254,6 +254,7 @@ class OffPolicyMARLAgents(MARLAgents):
             explore_actions = pi_actions_dict
         return explore_actions
 
+    @torch.no_grad()
     def get_actions(self,
                     obs_list: List[dict],
                     avail_actions_list: Optional[List[dict]] = None,
@@ -287,15 +288,14 @@ class OffPolicyMARLAgents(MARLAgents):
         """
         batch_size = len(obs_list)
         obs_input, agent_indices_input, avail_actions_input = self._build_inputs(obs_list, avail_actions_list)
-        with torch.no_grad():
-            model_output = self.model(observations=obs_input,
-                                      agent_indices=agent_indices_input,
-                                      avail_actions=avail_actions_input,
-                                      rnn_states=rnn_states)
-            rnn_states_new = model_output.rnn_states
-            actions = model_output.actions
+        model_output = self.model(observations=obs_input,
+                                  agent_indices=agent_indices_input,
+                                  avail_actions=avail_actions_input,
+                                  rnn_states=rnn_states)
+        rnn_states_new = model_output.rnn_states
+        actions = model_output.actions
 
-        actions.grouped_tensor = {k: actions.grouped_tensor[k].reshape(batch_size, n).cpu().detach().numpy()
+        actions.grouped_tensor = {k: actions.grouped_tensor[k].reshape(batch_size, n).cpu().numpy()
                                   for k, n in self.n_group_agents.items()}
         actions_list = [{k: actions.agent_wise[k][i] for k in self.agent_keys} for i in range(batch_size)]
 

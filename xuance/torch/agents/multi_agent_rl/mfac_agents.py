@@ -180,6 +180,7 @@ class MFAC_Agents(OnPolicyMARLAgents):
                                            for k in self.agent_keys}
         self.memory.store(**experience_data)
 
+    @torch.no_grad()
     def get_actions(
             self,
             obs_list: List[dict],
@@ -220,14 +221,14 @@ class MFAC_Agents(OnPolicyMARLAgents):
         mean_actions_input, agent_mask_array = self._build_inputs_mean_mask(agent_mask, act_mean_list)
         obs_input, agent_indices, avail_actions_input = self._build_inputs(obs_list, avail_actions_list)
         agent_mask_tensor = torch.tensor(agent_mask_array, dtype=torch.float32, device=self.device)
-        with torch.no_grad():
-            model_output = self.model(observations=obs_input,
-                                      agent_indices=agent_indices,
-                                      avail_actions=avail_actions_input,
-                                      rnn_states=rnn_states_actor,
-                                      deterministic=deterministic)
-            rnn_states_actor_new = model_output.actor_rnn_states
-            actions = model_output.actions
+
+        model_output = self.model(observations=obs_input,
+                                  agent_indices=agent_indices,
+                                  avail_actions=avail_actions_input,
+                                  rnn_states=rnn_states_actor,
+                                  deterministic=deterministic)
+        rnn_states_actor_new = model_output.actor_rnn_states
+        actions = model_output.actions
 
         if not test_mode:
             for group, agent_keys in self.groups.items():
@@ -236,15 +237,14 @@ class MFAC_Agents(OnPolicyMARLAgents):
                 for i, agent in enumerate(agent_keys):
                     log_pi_a_dict[agent] = log_pi_a[:, i].cpu().numpy()
 
-            with torch.no_grad():
-                values_model_output = self.model.get_values(observations=obs_input,
-                                                            mean_actions=mean_actions_input,
-                                                            agent_indices=agent_indices,
-                                                            rnn_states=rnn_states_critic)
-                rnn_states_critic_new = values_model_output.critic_rnn_states
-                values = values_model_output.values
-                values.grouped_tensor = {k: v.cpu().numpy() for k, v in values.grouped_tensor.items()}
-                values_dict = {k: v.reshape(batch_size) for k, v in values.agent_wise.items()}
+            values_model_output = self.model.get_values(observations=obs_input,
+                                                        mean_actions=mean_actions_input,
+                                                        agent_indices=agent_indices,
+                                                        rnn_states=rnn_states_critic)
+            rnn_states_critic_new = values_model_output.critic_rnn_states
+            values = values_model_output.values
+            values.grouped_tensor = {k: v.cpu().numpy() for k, v in values.grouped_tensor.items()}
+            values_dict = {k: v.reshape(batch_size) for k, v in values.agent_wise.items()}
 
         actions_mean_masked = self.model.get_mean_actions(actions=actions.agent_wise,
                                                           agent_mask_tensor=agent_mask_tensor,
@@ -268,6 +268,7 @@ class MFAC_Agents(OnPolicyMARLAgents):
             auxiliary={"actions_mean": actions_mean_dict}
         )
 
+    @torch.no_grad()
     def values_next(
             self,
             i_env: int,
@@ -304,16 +305,16 @@ class MFAC_Agents(OnPolicyMARLAgents):
 
         mean_actions_input, _ = self._build_inputs_mean_mask([agent_mask], [act_mean_dict])
         obs_input, agent_indices, _ = self._build_inputs([obs_dict])
-        with torch.no_grad():
-            values_model_output = self.model.get_values(state=state if self.use_global_state else None,
-                                                        observations=obs_input,
-                                                        agent_indices=agent_indices,
-                                                        mean_actions=mean_actions_input,
-                                                        rnn_states=rnn_states_critic_i)
-            rnn_states_critic_new_i = values_model_output.critic_rnn_states
-            values = values_model_output.values
-            values.grouped_tensor = {k: v.cpu().numpy() for k, v in values.grouped_tensor.items()}
-            values_dict = {k: v.reshape([]) for k, v in values.agent_wise.items()}
+
+        values_model_output = self.model.get_values(state=state if self.use_global_state else None,
+                                                    observations=obs_input,
+                                                    agent_indices=agent_indices,
+                                                    mean_actions=mean_actions_input,
+                                                    rnn_states=rnn_states_critic_i)
+        rnn_states_critic_new_i = values_model_output.critic_rnn_states
+        values = values_model_output.values
+        values.grouped_tensor = {k: v.cpu().numpy() for k, v in values.grouped_tensor.items()}
+        values_dict = {k: v.reshape([]) for k, v in values.agent_wise.items()}
 
         return rnn_states_critic_new_i, values_dict
 

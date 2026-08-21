@@ -104,17 +104,17 @@ class PDQN_Agent(Agent):
 
         return model
 
+    @torch.no_grad()
     def get_actions(self, obs):
-        with torch.no_grad():
-            obs = torch.as_tensor(obs, device=self.device).float()
-            con_actions = self.model.con_action(obs)
-            rnd = np.random.rand()
-            if rnd < self.epsilon:
-                disaction = np.random.choice(self.num_disact)
-            else:
-                q = self.model.Qeval(obs.unsqueeze(0), con_actions.unsqueeze(0))
-                q = q.detach().cpu().data.numpy()
-                disaction = np.argmax(q)
+        obs = torch.as_tensor(obs, device=self.device).float()
+        con_actions = self.model.con_action(obs)
+        rnd = np.random.rand()
+        if rnd < self.epsilon:
+            disaction = np.random.choice(self.num_disact)
+        else:
+            q = self.model.Qeval(obs.unsqueeze(0), con_actions.unsqueeze(0))
+            q = q.cpu().data.numpy()
+            disaction = np.argmax(q)
 
         con_actions = con_actions.cpu().data.numpy()
         offset = np.array([self.conact_sizes[i] for i in range(disaction)], dtype=int).sum()

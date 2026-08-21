@@ -204,6 +204,7 @@ class OnPolicyMARLAgents(MARLAgents):
         return (self.model.init_actor_rnn_states_item(i_env, rnn_states_actor),
                 self.model.init_critic_rnn_states_item(i_env, rnn_states_critic))
 
+    @torch.no_grad()
     def get_actions(
             self,
             obs_list: List[dict],
@@ -255,14 +256,13 @@ class OnPolicyMARLAgents(MARLAgents):
         rnn_states_critic_new, values_out, log_pi_a_dict, values_dict = {}, {}, {}, {}
 
         obs_input, agent_indices, avail_actions_input = self._build_inputs(obs_list, avail_actions_list)
-        with torch.no_grad():
-            model_output = self.model(observations=obs_input,
-                                      agent_indices=agent_indices,
-                                      avail_actions=avail_actions_input,
-                                      rnn_states=rnn_states_actor,
-                                      deterministic=deterministic)
-            rnn_states_actor_new = model_output.actor_rnn_states
-            actions = model_output.actions
+        model_output = self.model(observations=obs_input,
+                                  agent_indices=agent_indices,
+                                  avail_actions=avail_actions_input,
+                                  rnn_states=rnn_states_actor,
+                                  deterministic=deterministic)
+        rnn_states_actor_new = model_output.actor_rnn_states
+        actions = model_output.actions
 
         if not test_mode:
             for group, agent_keys in self.groups.items():
@@ -271,15 +271,14 @@ class OnPolicyMARLAgents(MARLAgents):
                 for i, agent in enumerate(agent_keys):
                     log_pi_a_dict[agent] = log_pi_a[:, i].cpu().numpy()
 
-            with torch.no_grad():
-                values_model_output = self.model.get_values(state=state if self.use_global_state else None,
-                                                            observations=obs_input,
-                                                            agent_indices=agent_indices,
-                                                            rnn_states=rnn_states_critic)
-                rnn_states_critic_new = values_model_output.critic_rnn_states
-                values = values_model_output.values
-                values.grouped_tensor = {k: v.cpu().numpy() for k, v in values.grouped_tensor.items()}
-                values_dict = {k: v.reshape(batch_size) for k, v in values.agent_wise.items()}
+            values_model_output = self.model.get_values(state=state if self.use_global_state else None,
+                                                        observations=obs_input,
+                                                        agent_indices=agent_indices,
+                                                        rnn_states=rnn_states_critic)
+            rnn_states_critic_new = values_model_output.critic_rnn_states
+            values = values_model_output.values
+            values.grouped_tensor = {k: v.cpu().numpy() for k, v in values.grouped_tensor.items()}
+            values_dict = {k: v.reshape(batch_size) for k, v in values.agent_wise.items()}
 
         if self.continuous_control:
             actions.grouped_tensor = {
@@ -306,6 +305,7 @@ class OnPolicyMARLAgents(MARLAgents):
             rnn_states_critic=rnn_states_critic_new
         )
 
+    @torch.no_grad()
     def values_next(
             self,
             i_env: int,
@@ -345,15 +345,14 @@ class OnPolicyMARLAgents(MARLAgents):
             rnn_states_critic_i = None
 
         obs_input, agent_indices, _ = self._build_inputs([obs_dict])
-        with torch.no_grad():
-            values_model_output = self.model.get_values(state=state if self.use_global_state else None,
-                                                        observations=obs_input,
-                                                        agent_indices=agent_indices,
-                                                        rnn_states=rnn_states_critic_i)
-            rnn_states_critic_new_i = values_model_output.critic_rnn_states
-            values = values_model_output.values
-            values.grouped_tensor = {k: v.cpu().numpy() for k, v in values.grouped_tensor.items()}
-            values_dict = {k: v.reshape([]) for k, v in values.agent_wise.items()}
+        values_model_output = self.model.get_values(state=state if self.use_global_state else None,
+                                                    observations=obs_input,
+                                                    agent_indices=agent_indices,
+                                                    rnn_states=rnn_states_critic_i)
+        rnn_states_critic_new_i = values_model_output.critic_rnn_states
+        values = values_model_output.values
+        values.grouped_tensor = {k: v.cpu().numpy() for k, v in values.grouped_tensor.items()}
+        values_dict = {k: v.reshape([]) for k, v in values.agent_wise.items()}
 
         return rnn_states_critic_new_i, values_dict
 

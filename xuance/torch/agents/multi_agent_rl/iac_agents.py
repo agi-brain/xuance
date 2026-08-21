@@ -143,6 +143,7 @@ class IAC_Agents(OnPolicyMARLAgents):
                                                 for k in self.agent_keys}
         self.memory.store(**experience_data)
 
+    @torch.no_grad()
     def get_actions(
             self,
             obs_list: List[dict],
@@ -177,14 +178,13 @@ class IAC_Agents(OnPolicyMARLAgents):
         rnn_states_critic_new, values_dict = {}, {}
 
         obs_input, agent_indices, avail_actions_input = self._build_inputs(obs_list, avail_actions_list)
-        with torch.no_grad():
-            model_output = self.model(observations=obs_input,
-                                      agent_indices=agent_indices,
-                                      avail_actions=avail_actions_input,
-                                      rnn_states=rnn_states_actor,
-                                      deterministic=deterministic)
-            rnn_states_actor_new = model_output.actor_rnn_states
-            actions = model_output.actions
+        model_output = self.model(observations=obs_input,
+                                  agent_indices=agent_indices,
+                                  avail_actions=avail_actions_input,
+                                  rnn_states=rnn_states_actor,
+                                  deterministic=deterministic)
+        rnn_states_actor_new = model_output.actor_rnn_states
+        actions = model_output.actions
 
         actions.grouped_tensor = {k: actions.grouped_tensor[k].reshape(batch_size, n).cpu().numpy()
                                   for k, n in self.n_group_agents.items()}
@@ -196,14 +196,13 @@ class IAC_Agents(OnPolicyMARLAgents):
                             for e in range(batch_size)]
 
         if not test_mode:
-            with torch.no_grad():
-                values_model_output = self.model.get_values(observations=obs_input,
-                                                            agent_indices=agent_indices,
-                                                            rnn_states=rnn_states_critic)
-                rnn_states_critic_new = values_model_output.critic_rnn_states
-                values = values_model_output.values
-                values.grouped_tensor = {k: v.cpu().numpy() for k, v in values.grouped_tensor.items()}
-                values_dict = {k: v.reshape(batch_size) for k, v in values.agent_wise.items()}
+            values_model_output = self.model.get_values(observations=obs_input,
+                                                        agent_indices=agent_indices,
+                                                        rnn_states=rnn_states_critic)
+            rnn_states_critic_new = values_model_output.critic_rnn_states
+            values = values_model_output.values
+            values.grouped_tensor = {k: v.cpu().numpy() for k, v in values.grouped_tensor.items()}
+            values_dict = {k: v.reshape(batch_size) for k, v in values.agent_wise.items()}
 
         return MARLActionOutput(
             env_actions=actions_list,

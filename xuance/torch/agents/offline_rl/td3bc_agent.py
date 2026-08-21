@@ -59,10 +59,10 @@ class TD3_BC_Agent(OfflineAgent):
 
         return policy
 
+    @torch.no_grad()
     def get_actions(self, observations: np.ndarray):
-        with torch.no_grad():
-            _, actions = self.policy(observations)
-            actions = actions.cpu().numpy()
+        _, actions = self.policy(observations)
+        actions = actions.cpu().numpy()
         return {"actions": actions}
 
     def test(self, env_fn, test_episodes):

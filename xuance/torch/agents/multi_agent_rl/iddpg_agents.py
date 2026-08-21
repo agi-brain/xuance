@@ -103,6 +103,7 @@ class IDDPG_Agents(OffPolicyMARLAgents):
 
         return model
 
+    @torch.no_grad()
     def get_actions(
             self,
             obs_list: List[dict],
@@ -126,14 +127,14 @@ class IDDPG_Agents(OffPolicyMARLAgents):
         """
         batch_size = len(obs_list)
         obs_input, agent_indices, _ = self._build_inputs(obs_list, avail_actions_list)
-        with torch.no_grad():
-            model_output = self.model(observations=obs_input,
-                                      agent_indices=agent_indices,
-                                      rnn_states=rnn_states)
-            rnn_states_new = model_output.actor_rnn_states
-            actions = model_output.actions
-            actions.grouped_tensor = {k: actions.grouped_tensor[k].reshape(batch_size, n, -1).cpu().numpy()
-                                      for k, n in self.n_group_agents.items()}
+
+        model_output = self.model(observations=obs_input,
+                                  agent_indices=agent_indices,
+                                  rnn_states=rnn_states)
+        rnn_states_new = model_output.actor_rnn_states
+        actions = model_output.actions
+        actions.grouped_tensor = {k: actions.grouped_tensor[k].reshape(batch_size, n, -1).cpu().numpy()
+                                  for k, n in self.n_group_agents.items()}
 
         if not test_mode:
             actions_dict = self.exploration(batch_size, actions.agent_wise)

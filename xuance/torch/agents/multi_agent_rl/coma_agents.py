@@ -172,6 +172,7 @@ class COMA_Agents(OnPolicyMARLAgents):
                                                 for k in self.agent_keys}
         self.memory.store(**experience_data)
 
+    @torch.no_grad()
     def get_actions(
             self,
             obs_list: List[dict],
@@ -223,16 +224,15 @@ class COMA_Agents(OnPolicyMARLAgents):
         rnn_states_critic_new, values_dict, actions_out = {}, {}, None
 
         obs_input, agent_indices, avail_actions_input = self._build_inputs(obs_list, avail_actions_list)
-        with torch.no_grad():
-            model_output = self.model(observations=obs_input,
-                                      agent_indices=agent_indices,
-                                      avail_actions=avail_actions_input,
-                                      rnn_states=rnn_states_actor,
-                                      epsilon=self.egreedy,
-                                      deterministic=deterministic,
-                                      test_mode=test_mode)
-            rnn_states_actor_new = model_output.actor_rnn_states
-            actions = model_output.actions
+        model_output = self.model(observations=obs_input,
+                                  agent_indices=agent_indices,
+                                  avail_actions=avail_actions_input,
+                                  rnn_states=rnn_states_actor,
+                                  epsilon=self.egreedy,
+                                  deterministic=deterministic,
+                                  test_mode=test_mode)
+        rnn_states_actor_new = model_output.actor_rnn_states
+        actions = model_output.actions
 
         if not test_mode:  # calculate target values
             if self.use_rnn:
@@ -246,20 +246,19 @@ class COMA_Agents(OnPolicyMARLAgents):
                     [one_hot(v, self.action_space[k].n) for k, v in actions.agent_wise.items()], dim=1
                 ).reshape([batch_size, -1])
 
-            with torch.no_grad():
-                values_model_output = self.model.get_values(states=state,
-                                                            observations=obs_input,
-                                                            joint_actions=joint_actions,
-                                                            agent_indices=agent_indices,
-                                                            rnn_states=rnn_states_critic,
-                                                            target=True)
-                rnn_states_critic_new = values_model_output.critic_rnn_states
-                values = values_model_output.values
-                values.grouped_tensor = {
-                    k: values.group(k).gather(-1, actions.group(k)).reshape([batch_size, -1]).cpu().numpy()
-                    for k in self.group_keys
-                }
-                values_dict = values.agent_wise
+            values_model_output = self.model.get_values(states=state,
+                                                        observations=obs_input,
+                                                        joint_actions=joint_actions,
+                                                        agent_indices=agent_indices,
+                                                        rnn_states=rnn_states_critic,
+                                                        target=True)
+            rnn_states_critic_new = values_model_output.critic_rnn_states
+            values = values_model_output.values
+            values.grouped_tensor = {
+                k: values.group(k).gather(-1, actions.group(k)).reshape([batch_size, -1]).cpu().numpy()
+                for k in self.group_keys
+            }
+            values_dict = values.agent_wise
 
         actions.grouped_tensor = {
             k: actions.grouped_tensor[k].reshape(batch_size, n).cpu().numpy() for k, n in self.n_group_agents.items()
@@ -273,6 +272,7 @@ class COMA_Agents(OnPolicyMARLAgents):
             rnn_states_critic=rnn_states_critic_new
         )
 
+    @torch.no_grad()
     def values_next(self,
                     i_env: int,
                     obs_dict: dict,
@@ -325,19 +325,18 @@ class COMA_Agents(OnPolicyMARLAgents):
             state = torch.as_tensor(np.array(state), device=self.device).reshape(1, -1)
             joint_actions = torch.stack([one_hot(v, self.action_space[k].n)
                                          for k, v in actions_agent_wise.items()], dim=0).reshape([1, -1])
-        with torch.no_grad():
-            values_model_output = self.model.get_values(states=state,
-                                                        observations=obs_input,
-                                                        joint_actions=joint_actions,
-                                                        agent_indices=agent_indices,
-                                                        rnn_states=rnn_states_critic_i,
-                                                        target=True)
-            rnn_states_critic_new_i = values_model_output.critic_rnn_states
-            values = values_model_output.values
-            values.grouped_tensor = {
-                k: v.gather(-1, actions_grouped.group(k)).cpu().numpy() for k, v in values.grouped_tensor.items()
-            }
-            values_dict = {k: v.reshape([]) for k, v in values.agent_wise.items()}
+        values_model_output = self.model.get_values(states=state,
+                                                    observations=obs_input,
+                                                    joint_actions=joint_actions,
+                                                    agent_indices=agent_indices,
+                                                    rnn_states=rnn_states_critic_i,
+                                                    target=True)
+        rnn_states_critic_new_i = values_model_output.critic_rnn_states
+        values = values_model_output.values
+        values.grouped_tensor = {
+            k: v.gather(-1, actions_grouped.group(k)).cpu().numpy() for k, v in values.grouped_tensor.items()
+        }
+        values_dict = {k: v.reshape([]) for k, v in values.agent_wise.items()}
 
         return rnn_states_critic_new_i, values_dict
 

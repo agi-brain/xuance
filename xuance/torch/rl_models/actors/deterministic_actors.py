@@ -24,8 +24,8 @@ class DeterministicActor(Module):
         if isinstance(action_space, Box):
             self.action_space = action_space
             self.action_dim = action_space.shape[0]
-            self.action_low = Tensor(action_space.low)
-            self.action_high = Tensor(action_space.high)
+            self.action_low = torch.as_tensor(action_space.low, device=device)
+            self.action_high = torch.as_tensor(action_space.high, device=device)
         else:
             raise ValueError('action_space must be Box')
         self.representation = representation

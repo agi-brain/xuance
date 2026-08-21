@@ -1,4 +1,5 @@
 import numpy as np
+import torch
 from tqdm import tqdm
 from copy import deepcopy
 from argparse import Namespace
@@ -63,6 +64,7 @@ class DRQN_Agent(OffPolicyAgent):
 
         return model
 
+    @torch.no_grad()
     def get_actions(self, obs, egreedy=0.0, rnn_states=None) -> ActionOutput:
         rnn_states_new, model_output = self.model(obs[:, None], rnn_states)
         argmax_action = model_output.actions
@@ -70,7 +72,7 @@ class DRQN_Agent(OffPolicyAgent):
         if np.random.rand() < egreedy:
             actions = random_action
         else:
-            actions = argmax_action.detach().cpu().numpy()
+            actions = argmax_action.cpu().numpy()
 
         return ActionOutput(
             env_actions=actions,

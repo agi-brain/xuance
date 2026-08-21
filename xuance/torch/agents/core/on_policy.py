@@ -1,4 +1,5 @@
 import numpy as np
+import torch
 from tqdm import tqdm
 from copy import deepcopy
 from argparse import Namespace
@@ -124,6 +125,7 @@ class OnPolicyAgent(Agent):
         values_next = policy_out.values
         return values_next
 
+    @torch.no_grad()
     def get_actions(self, observations: np.ndarray, deterministic: bool = False,
                     return_dists: bool = False, return_logpi: bool = False) -> ActionOutput:
         """Compute actions and value estimates for a batch of observations.
@@ -153,13 +155,12 @@ class OnPolicyAgent(Agent):
         actions = policy_dists.deterministic_sample() if deterministic else policy_dists.stochastic_sample()
         dists = split_distributions(policy_dists) if return_dists else None
         if self.is_tensor_memory:
-            log_pi = policy_dists.log_prob(actions).detach() if return_logpi else None
-            actions = actions.detach()
-            values = 0 if values is None else values.detach()
+            log_pi = policy_dists.log_prob(actions) if return_logpi else None
+            values = 0 if values is None else values
         else:
-            log_pi = policy_dists.log_prob(actions).detach().cpu().numpy() if return_logpi else None
-            actions = actions.detach().cpu().numpy()
-            values = 0 if values is None else values.detach().cpu().numpy()
+            log_pi = policy_dists.log_prob(actions).cpu().numpy() if return_logpi else None
+            actions = actions.cpu().numpy()
+            values = 0 if values is None else values.cpu().numpy()
         return ActionOutput(
                 env_actions=actions,
                 values=values,

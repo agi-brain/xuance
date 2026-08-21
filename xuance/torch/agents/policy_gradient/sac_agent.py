@@ -2,6 +2,8 @@ import gymnasium
 import numpy as np
 from copy import deepcopy
 from argparse import Namespace
+
+import torch
 from gymnasium.spaces import Space
 from xuance.common import Optional, BaseCallback
 from xuance.environment import DummyVecEnv, SubprocVecEnv
@@ -78,6 +80,7 @@ class SAC_Agent(OffPolicyAgent):
 
         return model
 
+    @torch.no_grad()
     def get_actions(
             self,
             observations: np.ndarray,
@@ -96,5 +99,5 @@ class SAC_Agent(OffPolicyAgent):
             log_pi: Log of stochastic actions.
         """
         actions_output = self.model.act(observations)
-        actions = actions_output.detach().cpu().numpy()
+        actions = actions_output.cpu().numpy()
         return ActionOutput(env_actions=actions)

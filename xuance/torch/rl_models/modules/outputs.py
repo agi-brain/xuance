@@ -70,7 +70,7 @@ class MultiAgentModelOutput:
 
 @dataclass(slots=True)
 class ActionOutput:
-    env_actions: List[Any]
+    env_actions: Any
 
     # Original actions that output by the model
     policy_actions: Optional[Tensor] = None

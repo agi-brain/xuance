@@ -334,25 +334,26 @@ class Agent(ABC):
         return representation
 
     @abstractmethod
-    def _build_model(self) -> Module:
+    def _build_model(self, *args, **kwargs) -> Module:
         raise NotImplementedError
 
-    def _build_learner(self, *args):
+    def _build_learner(self, *args, **kwargs):
         return REGISTRY_Learners[self.config.learner](*args)
 
     @abstractmethod
-    def get_actions(self, observations):
+    def get_actions(self, *args, **kwargs):
         raise NotImplementedError
 
     @abstractmethod
-    def train(self, train_steps: int) -> dict:
+    def train(self, train_steps: int, **kwargs) -> dict:
         raise NotImplementedError
 
     @abstractmethod
     def test(self,
              test_episodes: int,
              test_envs: Optional[DummyVecEnv | SubprocVecEnv] = None,
-             close_envs: bool = True):
+             close_envs: bool = True,
+             **kwargs):
         raise NotImplementedError
 
     def finish(self):

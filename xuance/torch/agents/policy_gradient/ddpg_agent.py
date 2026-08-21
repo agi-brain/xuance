@@ -1,3 +1,4 @@
+import torch
 import numpy as np
 from copy import deepcopy
 from argparse import Namespace
@@ -69,23 +70,3 @@ class DDPG_Agent(OffPolicyAgent):
         model = DeterministicActorCritic(actor=actor, critic=critic)
 
         return model
-
-    def get_actions(self, observations: np.ndarray,
-                    test_mode: Optional[bool] = False) -> ActionOutput:
-        """Returns actions and values.
-
-        Parameters:
-            observations (np.ndarray): The observation.
-            test_mode (Optional[bool]): True for testing without noises.
-
-        Returns:
-            actions: The actions to be executed.
-        """
-        actions_output = self.model.act(observations)
-        if test_mode:
-            actions = actions_output.detach().cpu().numpy()
-        else:
-            actions = self.exploration(actions_output.detach().cpu().numpy())
-        return ActionOutput(
-            env_actions=actions
-        )

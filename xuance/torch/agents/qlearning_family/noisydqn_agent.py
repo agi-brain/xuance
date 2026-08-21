@@ -1,4 +1,5 @@
 import numpy as np
+import torch.ao.quantization.utils
 from tqdm import tqdm
 from copy import deepcopy
 from argparse import Namespace
@@ -60,10 +61,11 @@ class NoisyDQN_Agent(Agent):
 
         return model
 
+    @torch.no_grad()
     def get_actions(self, obs) -> ActionOutput:
         self.model.noise_scale = self.noise_scale
         actions = self.model.act(obs)
-        return ActionOutput(env_actions=actions.detach().cpu().numpy())
+        return ActionOutput(env_actions=actions.cpu().numpy())
 
     def train_epochs(self, n_epochs=1):
         train_info = {}

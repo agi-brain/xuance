@@ -376,7 +376,7 @@ class MARLAgents(ABC):
                 AgentGroupedTensor(avail_actions, self.agent_grouping))
 
     @abstractmethod
-    def get_actions(self, **kwargs):
+    def get_actions(self, *args, **kwargs):
         raise NotImplementedError
 
     @abstractmethod

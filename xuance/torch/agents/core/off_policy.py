@@ -6,7 +6,7 @@ from argparse import Namespace
 from gymnasium.spaces import Space
 from xuance.common import Optional, DummyOffPolicyBuffer, DummyOffPolicyBuffer_Atari, BaseCallback
 from xuance.environment import DummyVecEnv, SubprocVecEnv
-from xuance.torch import Module
+from xuance.torch import Module, Tensor
 from xuance.torch.agents.base import Agent
 from xuance.torch.utils import TensorOffPolicyBuffer, TensorOffPolicyBufferAtari, TensorEnvWrapper
 from xuance.torch.rl_models.modules import ActionOutput
@@ -126,64 +126,48 @@ class OffPolicyAgent(Agent):
         else:
             return
 
-    def exploration(self, pi_actions):
+    def exploration(self, pi_actions: Tensor) -> Tensor:
         """Returns the actions for exploration.
 
         Parameters:
             pi_actions: The original output actions.
 
         Returns:
-            explore_actions: The actions with noisy values.
+            explore_actions: The actions for exploration.
         """
-        if self.is_tensor_memory:
-            if self.e_greedy is not None:
-                explore_mask = torch.rand(self.n_envs, device=self.device) < self.e_greedy
-                random_actions = torch.randint(0, self.action_space.n, size=(self.n_envs,), device=self.device)
-                explore_actions = torch.where(explore_mask, random_actions, pi_actions)
-            elif self.noise_scale is not None:
-                explore_actions = pi_actions + torch.randn_like(pi_actions) * self.noise_scale
-                explore_actions = torch.clamp(explore_actions, self.actions_low_tensor, self.actions_high_tensor)
-            else:
-                explore_actions = pi_actions.detach()
-            return explore_actions
+        if self.e_greedy is not None:
+            explore_mask = torch.rand(self.n_envs, device=self.device) < self.e_greedy
+            random_actions = torch.randint(0, self.action_space.n, size=(self.n_envs,), device=self.device)
+            explore_actions = torch.where(explore_mask, random_actions, pi_actions)
+        elif self.noise_scale is not None:
+            explore_actions = pi_actions + torch.randn_like(pi_actions, device=self.device) * self.noise_scale
+            explore_actions = torch.clamp(explore_actions, self.actions_low_tensor, self.actions_high_tensor)
         else:
-            if self.e_greedy is not None:
-                random_actions = np.random.choice(self.action_space.n, self.n_envs)
-                if np.random.rand() < self.e_greedy:
-                    explore_actions = random_actions
-                else:
-                    explore_actions = pi_actions.detach().cpu().numpy()
-            elif self.noise_scale is not None:
-                explore_actions = pi_actions + np.random.normal(size=pi_actions.shape) * self.noise_scale
-                explore_actions = np.clip(explore_actions, self.actions_low, self.actions_high)
-            else:
-                explore_actions = pi_actions.detach().cpu().numpy()
-            return explore_actions
+            explore_actions = pi_actions
 
+        return explore_actions
+
+    @torch.no_grad()
     def get_actions(
-            self, observations: np.ndarray,
-            test_mode: Optional[bool] = False
+            self,
+            observations: np.ndarray | Tensor,
+            test_mode: bool = False
     ) -> ActionOutput:
-        """Returns actions and values.
+        """Returns actions for the given observations.
 
-        Parameters:
-            observations (np.ndarray): The observation.
-            test_mode (Optional[bool]): True for testing without noises.
+        Args:
+            observations: Observations used by the policy to generate actions.
+            test_mode: Whether to disable exploration noise for evaluation.
 
         Returns:
-            actions: The actions to be executed.
-            values: The evaluated values.
-            dists: The policy distributions.
-            log_pi: Log of stochastic actions.
+            The ActionOutput containing actions to be executed in the environment.
         """
-        actions_output = self.model.act(observations)
-        if test_mode:
-            if self.is_tensor_memory:
-                actions = actions_output.detach()
-            else:
-                actions = actions_output.detach().cpu().numpy()
-        else:
-            actions = self.exploration(actions_output)
+        actions = self.model.act(observations)
+        if not test_mode:
+            actions = self.exploration(actions)
+
+        if not self.is_tensor_memory:
+            actions = actions.cpu().numpy()
 
         return ActionOutput(env_actions=actions)
 

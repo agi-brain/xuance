@@ -1,5 +1,6 @@
 import gymnasium
 import numpy as np
+import torch
 from tqdm import tqdm
 from copy import deepcopy
 from argparse import Namespace
@@ -85,6 +86,7 @@ class PPG_Agent(OnPolicyAgent):
 
         return model
 
+    @torch.no_grad()
     def get_actions(
             self,
             observations: np.ndarray,
@@ -111,8 +113,8 @@ class PPG_Agent(OnPolicyAgent):
         actions = policy_dists.deterministic_sample() if deterministic else policy_dists.stochastic_sample()
         log_pi = policy_dists.log_prob(actions) if return_logpi else None
         dists = split_distributions(policy_dists) if return_dists else None
-        actions = actions.detach().cpu().numpy()
-        values = values.detach().cpu().numpy()
+        actions = actions.cpu().numpy()
+        values = values.cpu().numpy()
         return ActionOutput(
             env_actions=actions,
             values=values,

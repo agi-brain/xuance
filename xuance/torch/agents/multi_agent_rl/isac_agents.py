@@ -113,6 +113,7 @@ class ISAC_Agents(OffPolicyMARLAgents):
 
         return model
 
+    @torch.no_grad()
     def get_actions(
             self,
             obs_list: List[dict],
@@ -137,13 +138,13 @@ class ISAC_Agents(OffPolicyMARLAgents):
         batch_size = len(obs_list)
 
         obs_input, agent_indices, avail_actions_input = self._build_inputs(obs_list, avail_actions_list)
-        with torch.no_grad():
-            model_output = self.model(observations=obs_input,
-                                      agent_indices=agent_indices,
-                                      avail_actions=avail_actions_input,
-                                      rnn_states=rnn_states)
-            rnn_states_new = model_output.actor_rnn_states
-            actions = model_output.actions
+
+        model_output = self.model(observations=obs_input,
+                                  agent_indices=agent_indices,
+                                  avail_actions=avail_actions_input,
+                                  rnn_states=rnn_states)
+        rnn_states_new = model_output.actor_rnn_states
+        actions = model_output.actions
 
         if self.continuous_control:
             actions.grouped_tensor = {
