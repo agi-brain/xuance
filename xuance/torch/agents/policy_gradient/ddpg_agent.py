@@ -1,5 +1,3 @@
-import torch
-import numpy as np
 from copy import deepcopy
 from argparse import Namespace
 from gymnasium.spaces import Space
@@ -9,7 +7,6 @@ from xuance.torch import Module
 from xuance.torch.utils import ActivationFunctions
 from xuance.torch.agents import OffPolicyAgent
 from xuance.torch.rl_models import DeterministicActor, ActionValueCritic
-from xuance.torch.rl_models.modules import ActionOutput
 from xuance.torch.rl_models.architectures import DeterministicActorCritic
 
 
