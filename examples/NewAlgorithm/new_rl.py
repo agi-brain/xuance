@@ -6,10 +6,11 @@ from xuance.common import load_yaml
 from xuance.environment import make_envs
 from xuance.torch.agents import OffPolicyAgent
 from xuance.torch.learners import Learner, REGISTRY_Learners
+from xuance.torch.rl_models.modules import ModelOutput
 
 
 # Step 1: Create a policy.
-class MyPolicy(nn.Module):
+class MyModel(nn.Module):
     """
     An example of self-defined policy.
 
@@ -23,7 +24,7 @@ class MyPolicy(nn.Module):
     """
 
     def __init__(self, representation: nn.Module, hidden_dim: int, n_actions: int, device: torch.device):
-        super(MyPolicy, self).__init__()
+        super(MyModel, self).__init__()
         self.representation = representation  # Specify the representation.
         self.feature_dim = self.representation.output_shapes['state'][0]  # Dimension of the representation's output.
         self.q_net = nn.Sequential(
@@ -31,31 +32,45 @@ class MyPolicy(nn.Module):
             nn.ReLU(),
             nn.Linear(hidden_dim, n_actions),
         ).to(device)  # The Q network.
+        self.target_representation = deepcopy(self.representation)
         self.target_q_net = deepcopy(self.q_net)  # Target Q network.
 
-    def forward(self, observation):
+    def forward(self, observation) -> ModelOutput:
         output_rep = self.representation(observation)  # Get the output of the representation module.
-        output = self.q_net(output_rep['state'])  # Get the output of the Q network.
+        output = self.q_net(output_rep.embeddings)  # Get the output of the Q network.
         argmax_action = output.argmax(dim=-1)  # Get greedy actions.
-        return output_rep, argmax_action, output
+        return ModelOutput(
+            rep_out=output_rep,
+            actions=argmax_action,
+            values=output
+        )
 
-    def target(self, observation):
+    def act(self, observation):
+        return self(observation).actions
+
+    def target(self, observation) -> ModelOutput:
         outputs_target = self.representation(observation)  # Get the output of the representation module.
-        Q_target = self.target_q_net(outputs_target['state'])  # Get the output of the target Q network.
+        Q_target = self.target_q_net(outputs_target.embeddings)  # Get the output of the target Q network.
         argmax_action = Q_target.argmax(dim=-1)  # Get greedy actions that output by target Q network.
-        return outputs_target, argmax_action.detach(), Q_target.detach()
+        return ModelOutput(
+            rep_out=outputs_target,
+            actions=argmax_action.detach(),
+            values=Q_target.detach()
+        )
 
     def copy_target(self):  # Reset the parameters of target Q network as the Q network.
+        for ep, tp in zip(self.representation.parameters(), self.target_representation.parameters()):
+            tp.data.copy_(ep)
         for ep, tp in zip(self.q_net.parameters(), self.target_q_net.parameters()):
             tp.data.copy_(ep)
 
 
 # Step 2: Create the learner.
 class MyLearner(Learner):
-    def __init__(self, config, policy, callback):
-        super(MyLearner, self).__init__(config, policy, callback)
+    def __init__(self, config, model, callback):
+        super(MyLearner, self).__init__(config, model, callback)
         # Build the optimizer.
-        self.optimizer = torch.optim.Adam(self.policy.parameters(), self.config.learning_rate, eps=1e-5)
+        self.optimizer = torch.optim.Adam(self.model.parameters(), self.config.learning_rate, eps=1e-5)
         self.loss = nn.MSELoss()  # Build a loss function.
         self.sync_frequency = config.sync_frequency  # The period to synchronize the target network.
 
@@ -70,8 +85,10 @@ class MyLearner(Learner):
         ter_batch = torch.as_tensor(samples['terminals'], dtype=torch.float, device=self.device)
 
         # Feedforward steps.
-        _, _, q_eval = self.policy(obs_batch)
-        _, _, q_next = self.policy.target(next_batch)
+        model_output = self.model(obs_batch)
+        q_eval = model_output.values
+        target_model_output = self.model.target(next_batch)
+        q_next = target_model_output.values
         q_next_action = q_next.max(dim=-1).values
         q_eval_action = q_eval.gather(-1, act_batch.long().unsqueeze(-1)).reshape(-1)
         target_value = rew_batch + (1 - ter_batch) * self.gamma * q_next_action
@@ -84,7 +101,7 @@ class MyLearner(Learner):
 
         # Synchronize the target network
         if self.iterations % self.sync_frequency == 0:
-            self.policy.copy_target()
+            self.model.copy_target()
 
         # Set the variables you need to observe.
         info.update({'loss': loss.item(),
@@ -98,17 +115,17 @@ class MyLearner(Learner):
 class MyAgent(OffPolicyAgent):
     def __init__(self, config, envs, callback=None):
         super(MyAgent, self).__init__(config, envs, callback)
-        self.policy = self._build_policy()  # Build the policy module.
+        self.model = self._build_model()  # Build the policy module.
         self.memory = self._build_memory()  # Build the replay buffer.
         REGISTRY_Learners['MyLearner'] = MyLearner  # Registry your pre-defined learner.
-        self.learner = self._build_learner(self.config, self.policy, self.callback)  # Build the learner.
+        self.learner = self._build_learner(self.config, self.model, self.callback)  # Build the learner.
 
-    def _build_policy(self):
+    def _build_model(self) -> nn.Module:
         # First create the representation module.
         representation = self._build_representation("Basic_MLP", self.observation_space, self.config)
         # Build your custom policy module.
-        policy = MyPolicy(representation, 64, self.action_space.n, self.config.device)
-        return policy
+        model = MyModel(representation, 64, self.action_space.n, self.config.device)
+        return model
 
 
 if __name__ == '__main__':

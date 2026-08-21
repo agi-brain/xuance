@@ -10,7 +10,6 @@ from xuance.environment import make_envs, DummyVecMultiAgentEnv, SubprocVecMulti
 from xuance.torch.agents import OffPolicyMARLAgents
 from xuance.torch.learners import LearnerMAS, REGISTRY_Learners
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
-from xuance.torch.policies import REGISTRY_Policy
 from xuance.torch import Module
 
 
