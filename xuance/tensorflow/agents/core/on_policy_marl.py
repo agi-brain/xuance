@@ -1,13 +1,16 @@
+import torch
 import numpy as np
 from tqdm import tqdm
 from copy import deepcopy
 from argparse import Namespace
 from operator import itemgetter
 from gymnasium.spaces import Space
-from xuance.common import Tuple, List, MARL_OnPolicyBuffer, MARL_OnPolicyBuffer_RNN, Optional, MultiAgentBaseCallback
+from typing import Tuple, List, Optional, Dict
+from xuance.common import MARL_OnPolicyBuffer, MARL_OnPolicyBuffer_RNN, MultiAgentBaseCallback
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
 from xuance.tensorflow import Module
 from xuance.tensorflow.agents.base import MARLAgents
+from xuance.tensorflow.rl_models.modules import RNN_State, MARLActionOutput
 
 
 class OnPolicyMARLAgents(MARLAgents):
@@ -18,14 +21,14 @@ class OnPolicyMARLAgents(MARLAgents):
     components such as trajectory buffers, rollout collection, advantage/return estimation (GAE),
     and multi-epoch policy/value updates.
 
-    The agent group can be used in both training and evaluation-only scenarios. When initialized without environments
+    The agent group can be used in both training and evaluation-only scenarios. When initializerd without environments
     (`envs=None`), the agent group relies on explicitly provided `state_space`, `observation_space`, and `action_space`
     to build networks, which is useful for inference or standalone evaluation.
 
     Args:
         config (Namespace): Configuration object containing hyperparameters, algorithm settings, and runtime options.
         envs (Optional[DummyVecMultiAgentEnv | SubprocVecMultiAgentEnv]): Vectorized multi-agent environments used for
-            training. If None, the agent group will not initialize training environments and must be provided with
+            training. If None, the agent group will not initializer training environments and must be provided with
             `state_space` (when `use_global_state=True`), `observation_space`, and `action_space`.
         num_agents (Optional[int]): Number of agents in the environment. If None, this value will be inferred from
             `envs` when available.
@@ -94,11 +97,21 @@ class OnPolicyMARLAgents(MARLAgents):
         Buffer = MARL_OnPolicyBuffer_RNN if self.use_rnn else MARL_OnPolicyBuffer
         return Buffer(**input_buffer)
 
-    def _build_policy(self) -> Module:
+    def _build_model(self) -> Module:
         raise NotImplementedError
 
-    def store_experience(self, obs_dict, avail_actions, actions_dict, log_pi_a, rewards_dict, values_dict,
-                         terminals_dict, info, **kwargs) -> None:
+    def store_experience(
+            self,
+            obs_list: List[dict],
+            avail_actions: Optional[List[dict]],
+            actions_list: List[dict],
+            log_pi_a: dict,
+            rewards_list: List[dict],
+            values_dict: dict,
+            terminals_list: List[dict],
+            info: List[dict],
+            **kwargs
+    ) -> None:
         """Store a batch of multi-agent transitions into the on-policy buffer.
 
         This method converts per-environment dictionaries (one dict per vector environment) into per-agent batched
@@ -107,32 +120,32 @@ class OnPolicyMARLAgents(MARLAgents):
         support episode-aware bookkeeping.
 
         Args:
-            obs_dict (List[dict]): Observations for each parallel environment.
+            obs_list (List[dict]): Observations for each parallel environment.
                 Each element is a dict keyed by `self.agent_keys`.
             avail_actions (Optional[List[dict]]): Available-action masks for each parallel environment when
                 `use_actions_mask=True`. Each element is a dict keyed by `self.agent_keys`.
                 Can be None when action masking is disabled.
-            actions_dict (List[dict]): Actions executed by each agent for each parallel environment.
+            actions_list (List[dict]): Actions executed by each agent for each parallel environment.
                 Each element is a dict keyed by `self.agent_keys`.
             log_pi_a (dict): Log-probabilities of the actions under the current policy
                 (typically computed during rollout collection).
-            rewards_dict (List[dict]): Rewards for each agent for each parallel environment.
+            rewards_list (List[dict]): Rewards for each agent for each parallel environment.
                 Each element is a dict keyed by `self.agent_keys`.
             values_dict (dict): Value estimates produced by the critic for each agent
                 (used for advantage/return computation).
-            terminals_dict (List[dict]): Termination flags for each agent for each parallel environment.
+            terminals_list (List[dict]): Termination flags for each agent for each parallel environment.
                 Each element is a dict keyed by `self.agent_keys`.
             info (List[dict]): Environment info for each parallel environment at the current step.
                 Must contain `agent_mask` for each agent key.
             **kwargs: Optional extra fields. When `use_global_state=True`, this method expects `state` to be provided.
         """
         experience_data = {
-            'obs': {k: np.array([data[k] for data in obs_dict]) for k in self.agent_keys},
-            'actions': {k: np.array([data[k] for data in actions_dict]) for k in self.agent_keys},
+            'obs': {k: np.array([data[k] for data in obs_list]) for k in self.agent_keys},
+            'actions': {k: np.array([data[k] for data in actions_list]) for k in self.agent_keys},
             'log_pi_old': log_pi_a,
-            'rewards': {k: np.array([data[k] for data in rewards_dict]) for k in self.agent_keys},
+            'rewards': {k: np.array([data[k] for data in rewards_list]) for k in self.agent_keys},
             'values': values_dict,
-            'terminals': {k: np.array([data[k] for data in terminals_dict]) for k in self.agent_keys},
+            'terminals': {k: np.array([data[k] for data in terminals_list]) for k in self.agent_keys},
             'agent_mask': {k: np.array([data['agent_mask'][k] for data in info]) for k in self.agent_keys},
         }
         if self.use_rnn:
@@ -144,8 +157,8 @@ class OnPolicyMARLAgents(MARLAgents):
                                                 for k in self.agent_keys}
         self.memory.store(**experience_data)
 
-    def init_rnn_hidden(self, n_envs) -> Tuple[Optional[dict], Optional[dict]]:
-        """Initialize RNN hidden states for vectorized multi-agent execution.
+    def init_rnn_states(self, n_envs) -> Tuple[Optional[dict], Optional[dict]]:
+        """initializer RNN hidden states for vectorized multi-agent execution.
 
         This method creates initial hidden states for the RNN-based actor and critic representations when `self.use_rnn`
         is enabled. The batch size depends on whether parameter sharing is used:
@@ -157,59 +170,52 @@ class OnPolicyMARLAgents(MARLAgents):
             n_envs (int): Number of parallel environments.
 
         Returns:
-            Tuple[Optional[dict], Optional[dict]]: A tuple of `(rnn_hidden_actor, rnn_hidden_critic)`.
+            Tuple[Optional[dict], Optional[dict]]: A tuple of `(rnn_states_actor, rnn_states_critic)`.
                 Each element is a dict keyed by `self.model_keys` when `self.use_rnn` is True; otherwise both are None.
         """
-        rnn_hidden_actor, rnn_hidden_critic = None, None
-        if self.use_rnn:
-            batch = n_envs * self.n_agents if self.use_parameter_sharing else n_envs
-            rnn_hidden_actor = {k: self.policy.actor_representation[k].init_hidden(batch) for k in self.model_keys}
-            rnn_hidden_critic = {k: self.policy.critic_representation[k].init_hidden(batch) for k in self.model_keys}
-        return rnn_hidden_actor, rnn_hidden_critic
+        return self.model.init_actor_rnn_states(n_envs), self.model.init_critic_rnn_states(n_envs)
 
-    def init_hidden_item(self,
-                         i_env: int,
-                         rnn_hidden_actor: Optional[dict] = None,
-                         rnn_hidden_critic: Optional[dict] = None) -> Tuple[Optional[dict], Optional[dict]]:
+    def init_rnn_states_item(
+            self,
+            i_env: int,
+            rnn_states_actor: Optional[Dict[str, RNN_State]] = None,
+            rnn_states_critic: Optional[Dict[str, RNN_State]] = None
+    ) -> Tuple[Dict[str, RNN_State], Dict[str, RNN_State] | None]:
         """Reset RNN hidden states for a specific environment index.
 
-        This method re-initializes the RNN hidden states corresponding to the `i_env`-th vectorized environment.
+        This method re-initializers the RNN hidden states corresponding to the `i_env`-th vectorized environment.
         When parameter sharing is enabled, the hidden state batch is arranged as `(n_envs * n_agents, ...)`, so
         this method resets the contiguous slice for all agents in that environment.
         Otherwise, it resets the single hidden-state entry for `i_env` for each model key.
 
         Args:
             i_env (int): Index of the vectorized environment to reset.
-            rnn_hidden_actor (Optional[dict]): Current actor RNN hidden states keyed by `self.model_keys`.
+            rnn_states_actor (Optional[dict]): Current actor RNN hidden states keyed by `self.model_keys`.
                 This object is updated in-place.
-            rnn_hidden_critic (Optional[dict]): Current critic RNN hidden states keyed by `self.model_keys`.
+            rnn_states_critic (Optional[dict]): Current critic RNN hidden states keyed by `self.model_keys`.
                 This object is updated in-place. Can be None when critic hidden states are not tracked.
 
         Returns:
-            Tuple[Optional[dict], Optional[dict]]: Updated `(rnn_hidden_actor, rnn_hidden_critic)` with
+            Tuple[Optional[dict], Optional[dict]]: Updated `(rnn_states_actor, rnn_states_critic)` with
                 the `i_env` entries reset.
         """
-        assert self.use_rnn is True, "This method cannot be called when self.use_rnn is False."
-        if self.use_parameter_sharing:
-            b_index = np.arange(i_env * self.n_agents, (i_env + 1) * self.n_agents)
-        else:
-            b_index = [i_env, ]
-        for k in self.model_keys:
-            rnn_hidden_actor[k] = self.policy.actor_representation[k].init_hidden_item(b_index, *rnn_hidden_actor[k])
-        if rnn_hidden_critic is None:
-            return rnn_hidden_actor, None
-        for k in self.model_keys:
-            rnn_hidden_critic[k] = self.policy.critic_representation[k].init_hidden_item(b_index, *rnn_hidden_critic[k])
-        return rnn_hidden_actor, rnn_hidden_critic
+        if rnn_states_critic is None:
+            return self.model.init_actor_rnn_states_item(i_env, rnn_states_actor), None
+        return (self.model.init_actor_rnn_states_item(i_env, rnn_states_actor),
+                self.model.init_critic_rnn_states_item(i_env, rnn_states_critic))
 
-    def get_actions(self,
-               obs_dict: List[dict],
-               state: Optional[np.ndarray] = None,
-               avail_actions_dict: Optional[List[dict]] = None,
-               rnn_hidden_actor: Optional[dict] = None,
-               rnn_hidden_critic: Optional[dict] = None,
-               test_mode: Optional[bool] = False,
-               **kwargs) -> dict:
+    @torch.no_grad()
+    def get_actions(
+            self,
+            obs_list: List[dict],
+            state: Optional[np.ndarray] = None,
+            avail_actions_list: Optional[List[dict]] = None,
+            rnn_states_actor: Optional[dict] = None,
+            rnn_states_critic: Optional[dict] = None,
+            test_mode: Optional[bool] = False,
+            deterministic: bool = False,
+            **kwargs
+    ) -> MARLActionOutput:
         """Compute actions (and optional value/log-prob outputs) for multi-agent execution.
 
         This method performs a forward pass through the current multi-agent actor-critic policy to produce actions for
@@ -219,25 +225,26 @@ class OnPolicyMARLAgents(MARLAgents):
         During evaluation (`test_mode=True`), critic values and log-probabilities are not computed to reduce overhead.
 
         Args:
-            obs_dict (List[dict]): Observations for each parallel environment.
+            obs_list (List[dict]): Observations for each parallel environment.
                 Each element is a dict keyed by `self.agent_keys`.
             state (Optional[np.ndarray]): Global state array used by centralized critics when `use_global_state=True`.
                 The expected shape depends on the environment wrapper.
-            avail_actions_dict (Optional[List[dict]]): Available-action masks for each parallel environment when
+            avail_actions_list (Optional[List[dict]]): Available-action masks for each parallel environment when
                 `use_actions_mask=True`. Each element is a dict keyed by `self.agent_keys`.
                 Can be None when action masking is disabled.
-            rnn_hidden_actor (Optional[dict]): Current actor RNN hidden states keyed by `self.model_keys`.
+            rnn_states_actor (Optional[dict]): Current actor RNN hidden states keyed by `self.model_keys`.
                 Required when `self.use_rnn` is True.
-            rnn_hidden_critic (Optional[dict]): Current critic RNN hidden states keyed by `self.model_keys`.
+            rnn_states_critic (Optional[dict]): Current critic RNN hidden states keyed by `self.model_keys`.
                 Required when `self.use_rnn` is True and values are requested.
             test_mode (bool): Whether to run in evaluation mode. When True, only actions are produced and
                 training-specific outputs (values/log_pi) are omitted.
+            deterministic (bool): True for deterministic policy and False for stochastic policy.
 
         Returns:
             dict: A dictionary containing:
-                - rnn_hidden_actor (Optional[dict]): Updated actor RNN hidden states when `self.use_rnn` is True;
+                - rnn_states_actor (Optional[dict]): Updated actor RNN hidden states when `self.use_rnn` is True;
                     otherwise the value returned by the policy (typically None).
-                - rnn_hidden_critic (Optional[dict]): Updated critic RNN hidden states when computed;
+                - rnn_states_critic (Optional[dict]): Updated critic RNN hidden states when computed;
                     otherwise an empty dict.
                 - actions (List[dict]): Actions for each parallel environment. Each element is a dict keyed by
                     `self.agent_keys`.
@@ -245,65 +252,67 @@ class OnPolicyMARLAgents(MARLAgents):
                     otherwise an empty dict.
                 - values (dict): Critic value estimates for each agent when `test_mode=False`; otherwise an empty dict.
         """
-        n_env = len(obs_dict)
-        rnn_hidden_critic_new, values_out, log_pi_a_dict, values_dict = {}, {}, {}, {}
+        batch_size = len(obs_list)
+        rnn_states_critic_new, values_out, log_pi_a_dict, values_dict = {}, {}, {}, {}
 
-        obs_input, agents_id, avail_actions_input = self._build_inputs(obs_dict, avail_actions_dict)
-        if self.continuous_control:
-            rnn_hidden_actor_new, pi_mu, pi_std = self.policy(observation=obs_input,
-                                                              agent_ids=agents_id,
-                                                              avail_actions=avail_actions_input,
-                                                              rnn_hidden=rnn_hidden_actor)
-        else:
-            rnn_hidden_actor_new, pi_logits = self.policy(observation=obs_input,
-                                                          agent_ids=agents_id,
-                                                          avail_actions=avail_actions_input,
-                                                          rnn_hidden=rnn_hidden_actor)
+        obs_input, agent_indices, avail_actions_input = self._build_inputs(obs_list, avail_actions_list)
+        model_output = self.model(observations=obs_input,
+                                  agent_indices=agent_indices,
+                                  avail_actions=avail_actions_input,
+                                  rnn_states=rnn_states_actor,
+                                  deterministic=deterministic)
+        rnn_states_actor_new = model_output.actor_rnn_states
+        actions = model_output.actions
+
         if not test_mode:
-            rnn_hidden_critic_new, values_out = self.policy.get_values(observation=obs_input,
-                                                                       agent_ids=agents_id,
-                                                                       rnn_hidden=rnn_hidden_critic)
+            for group, agent_keys in self.groups.items():
+                # shape: batch_size * N_agents
+                log_pi_a = model_output.distributions[group].log_prob(actions.packed(group)).reshape(batch_size, -1)
+                for i, agent in enumerate(agent_keys):
+                    log_pi_a_dict[agent] = log_pi_a[:, i].cpu().numpy()
 
-        if self.use_parameter_sharing:
-            key = self.agent_keys[0]
-            if self.continuous_control:
-                pi_dists = self.policy.actor[key].distribution(mu=pi_mu[key], std=pi_std[key])
-                actions_sample = pi_dists.stochastic_sample()
-                actions_out = actions_sample.numpy().reshape(n_env, self.n_agents, -1)
-            else:
-                pi_dists = self.policy.actor[key].distribution(logits=pi_logits[key])
-                actions_sample = pi_dists.stochastic_sample()
-                actions_out = actions_sample.numpy().reshape(n_env, self.n_agents)
-            actions_dict = [{k: actions_out[e, i] for i, k in enumerate(self.agent_keys)} for e in range(n_env)]
-            if not test_mode:
-                log_pi_a = pi_dists.log_prob(actions_sample).numpy().reshape(n_env, self.n_agents)
-                log_pi_a_dict = {k: log_pi_a[:, i] for i, k in enumerate(self.agent_keys)}
-                values_out[key] = values_out[key].numpy().reshape(n_env, self.n_agents)
-                values_dict = {k: values_out[key][:, i] for i, k in enumerate(self.agent_keys)}
+            values_model_output = self.model.get_values(state=state if self.use_global_state else None,
+                                                        observations=obs_input,
+                                                        agent_indices=agent_indices,
+                                                        rnn_states=rnn_states_critic)
+            rnn_states_critic_new = values_model_output.critic_rnn_states
+            values = values_model_output.values
+            values.grouped_tensor = {k: v.cpu().numpy() for k, v in values.grouped_tensor.items()}
+            values_dict = {k: v.reshape(batch_size) for k, v in values.agent_wise.items()}
+
+        if self.continuous_control:
+            actions.grouped_tensor = {
+                k: actions.grouped_tensor[k].reshape(batch_size, n, -1).cpu().numpy() for k, n in
+                self.n_group_agents.items()
+            }
+            actions_list = [{
+                k: actions.agent_wise[k][e].reshape([-1]) for k in self.agent_keys
+            } for e in range(batch_size)]
         else:
-            if self.continuous_control:
-                pi_dists = {k: self.policy.actor[k].distribution(pi_mu[k], pi_std[k]) for k in self.agent_keys}
-                actions_sample = {k: pi_dists[k].stochastic_sample() for k in self.agent_keys}
-                actions_dict = [{k: actions_sample[k].numpy()[e].reshape([-1]) for k in self.agent_keys}
-                                for e in range(n_env)]
-            else:
-                pi_dists = {k: self.policy.actor[k].distribution(logits=pi_logits[k]) for k in self.agent_keys}
-                actions_sample = {k: pi_dists[k].stochastic_sample() for k in self.agent_keys}
-                actions_dict = [{k: actions_sample[k].numpy()[e].reshape([]) for k in self.agent_keys}
-                                for e in range(n_env)]
-            if not test_mode:
-                log_pi_a_dict = {k: pi_dists[k].log_prob(actions_sample[k]).reshape([n_env])
-                                 for i, k in enumerate(self.agent_keys)}
-                values_dict = {k: values_out[k].numpy().reshape([n_env]) for k in self.agent_keys}
+            actions.grouped_tensor = {
+                k: actions.grouped_tensor[k].reshape(batch_size, n).cpu().numpy() for k, n in
+                self.n_group_agents.items()
+            }
+            actions_list = [{
+                k: actions.agent_wise[k][e].reshape([]) for k in self.agent_keys
+            } for e in range(batch_size)]
 
-        return {"rnn_hidden_actor": rnn_hidden_actor_new, "rnn_hidden_critic": rnn_hidden_critic_new,
-                "actions": actions_dict, "log_pi": log_pi_a_dict, "values": values_dict}
+        return MARLActionOutput(
+            env_actions=actions_list,
+            log_probs=log_pi_a_dict,
+            values=values_dict,
+            rnn_states_actor=rnn_states_actor_new,
+            rnn_states_critic=rnn_states_critic_new
+        )
 
-    def values_next(self,
-                    i_env: int,
-                    obs_dict: dict,
-                    state: Optional[np.ndarray] = None,
-                    rnn_hidden_critic: Optional[dict] = None) -> Tuple[Optional[dict], Optional[dict]]:
+    @torch.no_grad()
+    def values_next(
+            self,
+            i_env: int,
+            obs_dict: dict,
+            state: Optional[np.ndarray] = None,
+            rnn_states_critic: Dict[str, RNN_State] = None
+    ) -> Tuple[Dict[str, RNN_State], Dict[str, np.ndarray]]:
         """Compute bootstrapped critic values for an environment that reached a boundary.
 
         This method evaluates the critic on the terminal/next observations of a specific
@@ -316,48 +325,36 @@ class OnPolicyMARLAgents(MARLAgents):
                 This dict is keyed by `self.agent_keys`.
             state (Optional[np.ndarray]): Global state for the selected environment when `use_global_state=True`.
                 If provided, it should correspond to the same `i_env` instance.
-            rnn_hidden_critic (Optional[dict]): Current critic RNN hidden states keyed by `self.model_keys`.
+            rnn_states_critic (Optional[dict]): Current critic RNN hidden states keyed by `self.model_keys`.
                 Required when `self.use_rnn` is True.
 
         Returns:
-            Tuple[Optional[dict], dict]: A tuple of `(rnn_hidden_critic_new, values_dict)`:
-                - rnn_hidden_critic_new (Optional[dict]): Updated critic hidden states for the selected environment
+            Tuple[Optional[dict], dict]: A tuple of `(rnn_states_critic_new, values_dict)`:
+                - rnn_states_critic_new (Optional[dict]): Updated critic hidden states for the selected environment
                     when `self.use_rnn` is True; otherwise the value returned by the critic (typically None).
                 - values_dict (dict): Per-agent critic value estimates keyed by `self.agent_keys`.
         """
-        n_env = 1
-        rnn_hidden_critic_i = None
-        if self.use_parameter_sharing:
-            key = self.agent_keys[0]
-            batch_size = n_env * self.n_agents
-            if self.use_rnn:
-                hidden_item_index = np.arange(i_env * self.n_agents, (i_env + 1) * self.n_agents)
-                rnn_hidden_critic_i = {key: self.policy.critic_representation[key].get_hidden_item(
-                    hidden_item_index, *rnn_hidden_critic[key])}
-                obs_array = np.array(itemgetter(*self.agent_keys)(obs_dict))
-                obs_input = {key: obs_array.reshape([batch_size, 1, -1])}
-                agents_id = np.eye(self.n_agents, dtype=np.float32)[None].repeat(n_env, 0).reshape(batch_size, 1, -1)
-            else:
-                obs_input = {key: np.array([itemgetter(*self.agent_keys)(obs_dict)]).reshape(batch_size, -1)}
-                agents_id = np.eye(self.n_agents, dtype=np.float32)[None].repeat(n_env, 0).reshape([batch_size, -1])
-
-            rnn_hidden_critic_new, values_out = self.policy.get_values(observation=obs_input,
-                                                                       agent_ids=agents_id,
-                                                                       rnn_hidden=rnn_hidden_critic_i)
-            values_out = values_out[key].numpy().reshape(self.n_agents)
-            values_dict = {k: values_out[i] for i, k in enumerate(self.agent_keys)}
-
+        if self.use_rnn:
+            rnn_states_critic_i = {}
+            for group, n_agents in self.n_group_agents.items():
+                hidden_item_index = np.arange(i_env * n_agents, (i_env + 1) * n_agents)
+                rnn_states_critic_i[group] = self.model.critics[
+                    group].representation.obs_representation.get_rnn_states_item(
+                    hidden_item_index, rnn_states_critic[group])
         else:
-            if self.use_rnn:
-                rnn_hidden_critic_i = {k: self.policy.critic_representation[k].get_hidden_item(
-                    [i_env, ], *rnn_hidden_critic[k]) for k in self.agent_keys}
-            obs_input = {k: obs_dict[k][None, :] for k in self.agent_keys} if self.use_rnn else obs_dict
+            rnn_states_critic_i = None
 
-            rnn_hidden_critic_new, values_out = self.policy.get_values(observation=obs_input,
-                                                                       rnn_hidden=rnn_hidden_critic_i)
-            values_dict = {k: values_out[k].numpy().reshape([]) for k in self.agent_keys}
+        obs_input, agent_indices, _ = self._build_inputs([obs_dict])
+        values_model_output = self.model.get_values(state=state if self.use_global_state else None,
+                                                    observations=obs_input,
+                                                    agent_indices=agent_indices,
+                                                    rnn_states=rnn_states_critic_i)
+        rnn_states_critic_new_i = values_model_output.critic_rnn_states
+        values = values_model_output.values
+        values.grouped_tensor = {k: v.cpu().numpy() for k, v in values.grouped_tensor.items()}
+        values_dict = {k: v.reshape([]) for k, v in values.agent_wise.items()}
 
-        return rnn_hidden_critic_new, values_dict
+        return rnn_states_critic_new_i, values_dict
 
     def train(self, train_steps: int) -> dict:
         """Run the main multi-agent on-policy training loop.
@@ -376,7 +373,7 @@ class OnPolicyMARLAgents(MARLAgents):
 
         Notes:
             - This method assumes that training environments (`self.train_envs`) and the trajectory buffer `self.memory`
-                have already been initialized.
+                have already been initializerd.
             - When the buffer becomes full, the agent finalizes trajectories by computing bootstrapped terminal values
                 via `values_next` and calling `finish_path`, then performs `n_epochs` optimization passes over
                 mini-batches using `train_epochs`.
@@ -389,67 +386,69 @@ class OnPolicyMARLAgents(MARLAgents):
                 step_start, step_last = deepcopy(self.current_step), deepcopy(self.current_step)
                 n_steps_all = train_steps * self.n_envs
                 while step_last - step_start < n_steps_all:
-                    self.run_episodes(None, n_episodes=self.n_envs, test_mode=False)
+                    self.run_episodes(n_episodes=self.n_envs, test_mode=False, close_envs=False)
                     update_info = self.train_epochs(n_epochs=self.n_epochs)
                     self.log_infos(update_info, self.current_step)
                     train_info.update(update_info)
 
-                    self.callback.on_train_epochs_end(self.current_step, policy=self.policy, memory=self.memory,
+                    self.callback.on_train_epochs_end(self.current_step, policy=self.model, memory=self.memory,
                                                       current_episode=self.current_episode, train_steps=train_steps,
                                                       update_info=update_info)
 
                     process_bar.update((self.current_step - step_last) // self.n_envs)
                     step_last = deepcopy(self.current_step)
                 process_bar.update(train_steps - process_bar.last_print_n)
-                self.callback.on_train_step_end(self.current_step, envs=self.train_envs, policy=self.policy,
+                self.callback.on_train_step_end(self.current_step, envs=self.train_envs, policy=self.model,
                                                 train_steps=train_steps, train_info=train_info)
             return train_info
 
-        obs_dict = self.train_envs.buf_obs
+        obs_list = self.train_envs.buf_obs
         avail_actions = self.train_envs.buf_avail_actions if self.use_actions_mask else None
         state = self.train_envs.buf_state if self.use_global_state else None
         for _ in tqdm(range(train_steps)):
-            policy_out = self.get_actions(obs_dict=obs_dict, state=state, avail_actions_dict=avail_actions, test_mode=False)
-            actions_dict, log_pi_a_dict = policy_out['actions'], policy_out['log_pi']
-            values_dict = policy_out['values']
-            next_obs_dict, rewards_dict, terminated_dict, truncated, info = self.train_envs.step(actions_dict)
+            policy_out = self.get_actions(obs_list=obs_list, state=state, avail_actions_list=avail_actions,
+                                          test_mode=False)
+            actions_list = policy_out.env_actions
+            log_pi_a_dict = policy_out.log_probs
+            values_dict = policy_out.values
+            next_obs_list, rewards_list, terminated_list, truncated, info = self.train_envs.step(actions_list)
             next_state = self.train_envs.buf_state if self.use_global_state else None
             next_avail_actions = self.train_envs.buf_avail_actions if self.use_actions_mask else None
 
-            self.callback.on_train_step(self.current_step, envs=self.train_envs, policy=self.policy,
-                                        obs=obs_dict, policy_out=policy_out, acts=actions_dict, next_obs=next_obs_dict,
-                                        rewards=rewards_dict, state=state, next_state=next_state,
+            self.callback.on_train_step(self.current_step, envs=self.train_envs, policy=self.model,
+                                        obs=obs_list, policy_out=policy_out, acts=actions_list, next_obs=next_obs_list,
+                                        rewards=rewards_list, state=state, next_state=next_state,
                                         avail_actions=avail_actions, next_avail_actions=next_avail_actions,
-                                        terminals=terminated_dict, truncations=truncated, infos=info,
+                                        terminals=terminated_list, truncations=truncated, infos=info,
                                         train_steps=train_steps, values_dict=values_dict)
 
-            self.store_experience(obs_dict, avail_actions, actions_dict, log_pi_a_dict, rewards_dict, values_dict,
-                                  terminated_dict, info, **{'state': state})
+            self.store_experience(obs_list, avail_actions, actions_list, log_pi_a_dict, rewards_list, values_dict,
+                                  terminated_list, info, **{'state': state})
             if self.memory.full:
                 for i in range(self.n_envs):
-                    if all(terminated_dict[i].values()):
+                    if all(terminated_list[i].values()):
                         value_next = {key: 0.0 for key in self.agent_keys}
                     else:
-                        state_i = state[i] if self.use_global_state else None
-                        _, value_next = self.values_next(i_env=i, obs_dict=next_obs_dict[i], state=state_i)
-                    self.memory.finish_path(i_env=i, value_next=value_next,
+                        next_state_i = next_state[i] if self.use_global_state else None
+                        _, value_next = self.values_next(i_env=i, obs_dict=next_obs_list[i], state=next_state_i)
+                    self.memory.finish_path(i_env=i, agent_grouping=self.agent_grouping, value_next=value_next,
                                             value_normalizer=self.learner.value_normalizer)
             update_info = self.train_epochs(n_epochs=self.n_epochs)
             self.log_infos(update_info, self.current_step)
             train_info.update(update_info)
-            obs_dict, avail_actions = deepcopy(next_obs_dict), deepcopy(next_avail_actions)
+            obs_list, avail_actions = deepcopy(next_obs_list), deepcopy(next_avail_actions)
             state = deepcopy(next_state) if self.use_global_state else None
 
             for i in range(self.n_envs):
-                if all(terminated_dict[i].values()) or truncated[i]:
-                    if all(terminated_dict[i].values()):
+                if all(terminated_list[i].values()) or truncated[i]:
+                    if all(terminated_list[i].values()):
                         value_next = {key: 0.0 for key in self.agent_keys}
                     else:
                         state_i = state[i] if self.use_global_state else None
-                        _, value_next = self.values_next(i_env=i, obs_dict=obs_dict[i], state=state_i)
-                    self.memory.finish_path(i_env=i, value_next=value_next,
+                        _, value_next = self.values_next(i_env=i, obs_dict=obs_list[i], state=state_i)
+                    self.memory.finish_path(i_env=i, agent_grouping=self.agent_grouping, value_next=value_next,
                                             value_normalizer=self.learner.value_normalizer)
-                    obs_dict[i] = info[i]["reset_obs"]
+                    obs_list[i] = info[i]["reset_obs"]
                     self.train_envs.buf_obs[i] = info[i]["reset_obs"]
                     if self.use_actions_mask:
                         avail_actions[i] = info[i]["reset_avail_actions"]
@@ -460,30 +459,31 @@ class OnPolicyMARLAgents(MARLAgents):
                     self.current_episode[i] += 1
                     if self.use_wandb:
                         episode_info = {
-                            f"Train-Results/Episode-Steps/env-%d" % i: info[i]["episode_step"],
-                            f"Train-Results/Episode-Rewards/env-%d" % i: info[i]["episode_score"]
+                            f"Train-Results/Episode-Steps/rank_{self.rank}/env-%d" % i: info[i]["episode_step"],
+                            f"Train-Results/Episode-Rewards/rank_{self.rank}/env-%d" % i: info[i]["episode_score"]
                         }
                     else:
                         episode_info = {
-                            f"Train-Results/Episode-Steps": {"env-%d" % i: info[i]["episode_step"]},
-                            f"Train-Results/Episode-Rewards": {
+                            f"Train-Results/Episode-Steps/rank_{self.rank}": {"env-%d" % i: info[i]["episode_step"]},
+                            f"Train-Results/Episode-Rewards/rank_{self.rank}": {
                                 "env-%d" % i: np.mean(itemgetter(*self.agent_keys)(info[i]["episode_score"]))}
                         }
                     self.log_infos(episode_info, self.current_step)
                     train_info.update(episode_info)
-                    self.callback.on_train_episode_info(envs=self.train_envs, policy=self.policy, env_id=i,
-                                                        infos=info, use_wandb=self.use_wandb,
+                    self.callback.on_train_episode_info(envs=self.train_envs, policy=self.model, env_id=i,
+                                                        infos=info, rank=self.rank, use_wandb=self.use_wandb,
                                                         current_step=self.current_step,
                                                         current_episode=self.current_episode,
                                                         train_steps=train_steps)
 
             self.current_step += self.n_envs
-            self.callback.on_train_step_end(self.current_step, envs=self.train_envs, policy=self.policy,
+            self.callback.on_train_step_end(self.current_step, envs=self.train_envs, policy=self.model,
                                             train_steps=train_steps, train_info=train_info)
         return train_info
 
     def run_episodes(self,
                      n_episodes: int = 1,
+                     deterministic_policy: bool = False,
                      run_envs: Optional[DummyVecMultiAgentEnv | SubprocVecMultiAgentEnv] = None,
                      test_mode: bool = False,
                      close_envs: bool = True) -> list:
@@ -497,6 +497,8 @@ class OnPolicyMARLAgents(MARLAgents):
 
         Args:
             n_episodes (int): Number of completed episodes to run across all parallel environments.
+            deterministic_policy (bool): True for evaluating the deterministic policy,
+                and False for evaluating the stochastic policy.
             run_envs (Optional[DummyVecMultiAgentEnv | SubprocVecMultiAgentEnv]): Vectorized environments to run.
                 If None, `self.train_envs` is used.
             test_mode (bool): Whether to run in evaluation mode. When True, the trajectory buffer is not written and
@@ -511,7 +513,7 @@ class OnPolicyMARLAgents(MARLAgents):
         num_envs = envs.num_envs
         videos, episode_videos, images = [[] for _ in range(num_envs)], [], None
         _current_episode, _current_step, scores, best_score = 0, 0, [], -np.inf
-        obs_dict, info = envs.reset()
+        obs_list, info = envs.reset()
         avail_actions = envs.buf_avail_actions if self.use_actions_mask else None
         state = envs.buf_state if self.use_global_state else None
         if test_mode:
@@ -522,17 +524,18 @@ class OnPolicyMARLAgents(MARLAgents):
         else:
             if self.use_rnn:
                 self.memory.clear_episodes()
-        rnn_hidden_actor, rnn_hidden_critic = self.init_rnn_hidden(num_envs)
+        rnn_states_actor, rnn_states_critic = self.init_rnn_states(num_envs)
 
         while _current_episode < n_episodes:
-            step_info = {}
-            policy_out = self.get_actions(obs_dict=obs_dict, state=state, avail_actions_dict=avail_actions,
-                                     rnn_hidden_actor=rnn_hidden_actor, rnn_hidden_critic=rnn_hidden_critic,
-                                     test_mode=test_mode)
-            rnn_hidden_actor, rnn_hidden_critic = policy_out['rnn_hidden_actor'], policy_out['rnn_hidden_critic']
-            actions_dict, log_pi_a_dict = policy_out['actions'], policy_out['log_pi']
-            values_dict = policy_out['values']
-            next_obs_dict, rewards_dict, terminated_dict, truncated, info = envs.step(actions_dict)
+            policy_out = self.get_actions(obs_list=obs_list, state=state, avail_actions_list=avail_actions,
+                                          rnn_states_actor=rnn_states_actor, rnn_states_critic=rnn_states_critic,
+                                          test_mode=test_mode, deterministic=deterministic_policy)
+            actions_list = policy_out.env_actions
+            log_pi_a_dict = policy_out.log_probs
+            values_dict = policy_out.values
+            rnn_states_actor = policy_out.rnn_states_actor
+            rnn_states_critic = policy_out.rnn_states_critic
+            next_obs_list, rewards_list, terminated_list, truncated, info = envs.step(actions_list)
             next_state = envs.buf_state if self.use_global_state else None
             next_avail_actions = envs.buf_avail_actions if self.use_actions_mask else None
             if test_mode:
@@ -541,42 +544,44 @@ class OnPolicyMARLAgents(MARLAgents):
                     for idx, img in enumerate(images):
                         videos[idx].append(img)
             else:
-                self.store_experience(obs_dict, avail_actions, actions_dict, log_pi_a_dict, rewards_dict, values_dict,
-                                      terminated_dict, info, **{'state': state})
+                self.store_experience(obs_list, avail_actions, actions_list, log_pi_a_dict, rewards_list, values_dict,
+                                      terminated_list, info, **{'state': state})
 
-            self.callback.on_test_step(envs=envs, policy=self.policy, images=images, test_mode=test_mode,
-                                       obs=obs_dict, policy_out=policy_out, acts=actions_dict,
-                                       next_obs=next_obs_dict, rewards=rewards_dict,
-                                       terminals=terminated_dict, truncations=truncated, infos=info,
+            self.callback.on_test_step(envs=envs, policy=self.model, images=images, test_mode=test_mode,
+                                       obs=obs_list, policy_out=policy_out, acts=actions_list,
+                                       next_obs=next_obs_list, rewards=rewards_list,
+                                       terminals=terminated_list, truncations=truncated, infos=info,
                                        state=state, next_state=next_state,
                                        current_train_step=self.current_step, n_episodes=n_episodes,
                                        current_step=_current_step, current_episode=_current_episode)
 
-            obs_dict, avail_actions = deepcopy(next_obs_dict), deepcopy(next_avail_actions)
+            obs_list, avail_actions = deepcopy(next_obs_list), deepcopy(next_avail_actions)
             state = deepcopy(next_state) if self.use_global_state else None
 
             for i in range(num_envs):
-                if all(terminated_dict[i].values()) or truncated[i]:
+                if all(terminated_list[i].values()) or truncated[i]:
                     _current_episode += 1
                     episode_score = float(np.mean(itemgetter(*self.agent_keys)(info[i]["episode_score"])))
                     scores.append(episode_score)
                     if test_mode:
                         if self.use_rnn:
-                            rnn_hidden_actor, _ = self.init_hidden_item(i, rnn_hidden_actor)
+                            rnn_states_actor, _ = self.init_rnn_states_item(i, rnn_states_actor)
                         if best_score < episode_score:
                             best_score = episode_score
                             episode_videos = videos[i].copy()
                     else:
-                        if all(terminated_dict[i].values()):
+                        if all(terminated_list[i].values()):
                             value_next = {key: 0.0 for key in self.agent_keys}
                         else:
-                            _, value_next = self.values_next(i_env=i, obs_dict=obs_dict[i], state=state[i],
-                                                             rnn_hidden_critic=rnn_hidden_critic)
-                        self.memory.finish_path(i_env=i, i_step=info[i]['episode_step'], value_next=value_next,
+                            _, value_next = self.values_next(i_env=i, obs_dict=obs_list[i],
+                                                             state=None if state is None else state[i],
+                                                             rnn_states_critic=rnn_states_critic)
+                        self.memory.finish_path(i_env=i, i_step=info[i]['episode_step'],
+                                                agent_grouping=self.agent_grouping, value_next=value_next,
                                                 value_normalizer=self.learner.value_normalizer)
                         if self.use_rnn:
-                            rnn_hidden_actor, rnn_hidden_critic = self.init_hidden_item(i, rnn_hidden_actor,
-                                                                                        rnn_hidden_critic)
+                            rnn_states_actor, rnn_states_critic = self.init_rnn_states_item(i, rnn_states_actor,
+                                                                                            rnn_states_critic)
                         if self.use_wandb:
                             episode_info = {
                                 "Train-Results/Episode-Steps/env-%d" % i: info[i]["episode_step"],
@@ -590,13 +595,13 @@ class OnPolicyMARLAgents(MARLAgents):
                             }
                         self.current_step += info[i]["episode_step"]
                         self.log_infos(episode_info, self.current_step)
-                        self.callback.on_train_episode_info(envs=envs, policy=self.policy, env_id=i,
-                                                            infos=info, use_wandb=self.use_wandb,
+                        self.callback.on_train_episode_info(envs=envs, policy=self.model, env_id=i,
+                                                            infos=info, rank=self.rank, use_wandb=self.use_wandb,
                                                             current_step=self.current_step,
                                                             current_episode=self.current_episode,
                                                             n_episodes=n_episodes)
 
-                    obs_dict[i] = info[i]["reset_obs"]
+                    obs_list[i] = info[i]["reset_obs"]
                     envs.buf_obs[i] = info[i]["reset_obs"]
                     if self.use_actions_mask:
                         avail_actions[i] = info[i]["reset_avail_actions"]
@@ -615,7 +620,7 @@ class OnPolicyMARLAgents(MARLAgents):
             }
             self.log_infos(test_info, self.current_step)
 
-            self.callback.on_test_end(envs=envs, policy=self.policy,
+            self.callback.on_test_end(envs=envs, policy=self.model,
                                       current_train_step=self.current_step,
                                       current_step=_current_step, current_episode=_current_episode,
                                       scores=scores, best_score=best_score)
@@ -648,8 +653,8 @@ class OnPolicyMARLAgents(MARLAgents):
                     end = start + self.batch_size
                     sample_idx = indexes[start:end]
                     sample = self.memory.sample(sample_idx)
-                    info_train = self.learner.update_rnn(sample) if self.use_rnn else self.learner.update(sample)
-            self.callback.on_train_epochs_end(self.current_step, policy=self.policy, memory=self.memory,
+                    info_train = self.learner.update(sample)
+            self.callback.on_train_epochs_end(self.current_step, policy=self.model, memory=self.memory,
                                               current_episode=self.current_episode, n_epochs=n_epochs,
                                               buffer_size=self.buffer_size, update_info=info_train)
             self.memory.clear()
@@ -657,6 +662,7 @@ class OnPolicyMARLAgents(MARLAgents):
 
     def test(self,
              test_episodes: int,
+             deterministic_policy: bool = True,
              test_envs: Optional[DummyVecMultiAgentEnv | SubprocVecMultiAgentEnv] = None,
              close_envs: bool = True) -> list:
         """Evaluate the current multi-agent policy for a number of episodes.
@@ -667,6 +673,8 @@ class OnPolicyMARLAgents(MARLAgents):
 
         Args:
             test_episodes (int): Number of completed episodes to evaluate across all parallel environments.
+            deterministic_policy (bool): True for evaluating the deterministic policy,
+                and False for evaluating the stochastic policy.
             test_envs (Optional[DummyVecMultiAgentEnv | SubprocVecMultiAgentEnv]): Vectorized multi-agent environments
                 used for evaluation. If None, `self.train_envs` is used.
             close_envs (bool): Whether to close `test_envs` before returning. Set this to False if `test_envs` is
@@ -679,6 +687,7 @@ class OnPolicyMARLAgents(MARLAgents):
             n_episodes=test_episodes,
             run_envs=test_envs,
             test_mode=True,
+            deterministic_policy=deterministic_policy,
             close_envs=close_envs
         )
         return scores

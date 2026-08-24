@@ -15,10 +15,11 @@ from .maddpg_agents import MADDPG_Agents
 from .masac_agents import MASAC_Agents
 from .ippo_agents import IPPO_Agents
 from .mappo_agents import MAPPO_Agents
+from .itd3_agents import ITD3_Agents
 from .matd3_agents import MATD3_Agents
 from .mfac_agents import MFAC_Agents
 
 
-# from .commnet_agents import CommNet_Agents
-# from .ic3net_agents import IC3Net_Agents
-# from .tarmac_agents import TarMAC_Agents
+from .commnet_agents import CommNet_Agents
+from .ic3net_agents import IC3Net_Agents
+from .tarmac_agents import TarMAC_Agents

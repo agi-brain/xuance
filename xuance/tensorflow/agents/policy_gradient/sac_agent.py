@@ -1,12 +1,19 @@
+import gymnasium
 import numpy as np
+from copy import deepcopy
 from argparse import Namespace
+
+import torch
 from gymnasium.spaces import Space
 from xuance.common import Optional, BaseCallback
 from xuance.environment import DummyVecEnv, SubprocVecEnv
 from xuance.tensorflow import Module
-from xuance.tensorflow.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions
-from xuance.tensorflow.policies import REGISTRY_Policy
+from xuance.tensorflow.utils import ActivationFunctions
 from xuance.tensorflow.agents import OffPolicyAgent
+from xuance.tensorflow.rl_models import (
+    CategoricalActor, SAC_GaussianActor, TwinActionValueCritic, TwinDiscreteActionValueCritic)
+from xuance.tensorflow.rl_models.modules import ActionOutput
+from xuance.tensorflow.rl_models.architectures import SoftActorCritic, SoftActorCriticDiscrete
 
 
 class SAC_Agent(OffPolicyAgent):
@@ -28,39 +35,57 @@ class SAC_Agent(OffPolicyAgent):
     ):
         super(SAC_Agent, self).__init__(config, envs, observation_space, action_space, callback)
 
-        self.policy = self._build_policy()  # build policy
+        self.model = self._build_model()  # build RL model
         self.memory = self._build_memory()  # build memory
-        self.learner = self._build_learner(self.config, self.policy, self.callback)
+        self.learner = self._build_learner(self.config, self.model, self.callback)
 
-    def _build_policy(self) -> Module:
-        normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None
-        initializer = InitializeFunctions[self.config.initialize] if hasattr(self.config, "initialize") else None
-        activation = ActivationFunctions[self.config.activation]
-
+    def _build_model(self) -> Module:
         # build representations.
         representation = self._build_representation(self.config.representation, self.observation_space, self.config)
 
-        # build policy
-        if self.config.policy == "Gaussian_SAC":
-            policy = REGISTRY_Policy["Gaussian_SAC"](
-                action_space=self.action_space, representation=representation,
-                actor_hidden_size=self.config.actor_hidden_size, critic_hidden_size=self.config.critic_hidden_size,
-                normalize=normalize_fn, initialize=initializer,
-                activation=activation, activation_action=ActivationFunctions[self.config.activation_action],
-                use_distributed_training=self.distributed_training)
-        elif self.config.policy == "Categorical_SAC":
-            policy = REGISTRY_Policy["Categorical_SAC"](
-                action_space=self.action_space, representation=representation,
-                actor_hidden_size=self.config.actor_hidden_size, critic_hidden_size=self.config.critic_hidden_size,
-                normalize=normalize_fn, initialize=initializer, activation=activation,
-                use_distributed_training=self.distributed_training)
+        # build actor network
+        actor_input = dict(
+            representation=representation,
+            actor_hidden_size=self.config.actor_hidden_size,
+            action_space=self.action_space,
+            normalizer=self.normalizer_fn,
+            initializer=self.initializer,
+            activation=self.activation,
+            device=self.device
+        )
+        if isinstance(self.action_space, gymnasium.spaces.Box):
+            Actor = SAC_GaussianActor
+            actor_input['activation_action'] = ActivationFunctions[self.config.activation_action]
+            Critic = TwinActionValueCritic
+            Architecture = SoftActorCritic
+        elif isinstance(self.action_space, gymnasium.spaces.Discrete):
+            Actor = CategoricalActor
+            Critic = TwinDiscreteActionValueCritic
+            Architecture = SoftActorCriticDiscrete
         else:
-            raise AttributeError(f"SAC currently does not support the policy named {self.config.policy}.")
+            raise NotImplementedError
+        actor = Actor(**actor_input)
 
-        return policy
+        # build critic network
+        critic = Critic(representation=deepcopy(representation),
+                        action_space=self.action_space,
+                        critic_hidden_size=self.config.critic_hidden_size,
+                        normalizer=self.normalizer_fn,
+                        initializer=self.initializer,
+                        activation=self.activation,
+                        device=self.device)
 
-    def get_actions(self, observations: np.ndarray,
-               test_mode: Optional[bool] = False):
+        # build the RL model
+        model = Architecture(actor=actor, critic=critic)
+
+        return model
+
+    @torch.no_grad()
+    def get_actions(
+            self,
+            observations: np.ndarray,
+            test_mode: Optional[bool] = False
+    ) -> ActionOutput:
         """Returns actions and values.
 
         Parameters:
@@ -73,11 +98,6 @@ class SAC_Agent(OffPolicyAgent):
             dists: The policy distributions.
             log_pi: Log of stochastic actions.
         """
-        if self.policy.is_continuous:
-            _, act_sample, _ = self.policy(observations)
-        else:
-            _, logits = self.policy(observations)
-            policy_dists = self.policy.actor.distribution(logits=logits)
-            act_sample = policy_dists.stochastic_sample()
-        actions = act_sample.numpy()
-        return {"actions": actions}
+        actions_output = self.model.act(observations)
+        actions = actions_output.cpu().numpy()
+        return ActionOutput(env_actions=actions)

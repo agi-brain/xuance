@@ -9,14 +9,14 @@ from gymnasium import Space
 from torch.nn import Module, ModuleDict
 
 from xuance.common.memory_tools_marl import IC3Net_OnPolicyBuffer_RNN
-from xuance.torch.communications import IC3NetComm
+from xuance.tensorflow.communications import IC3NetComm
 
-from xuance.torch import REGISTRY_Policy
-from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
+# from xuance.tensorflow import REGISTRY_Policy
+from xuance.tensorflow.utils import normalizerFunctions, ActivationFunctions
 
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv, space2shape
 from xuance.common import MultiAgentBaseCallback
-from xuance.torch.agents.multi_agent_rl.commnet_agents import CommNet_Agents
+from xuance.tensorflow.agents.multi_agent_rl.commnet_agents import CommNet_Agents
 
 
 class IC3Net_Agents(CommNet_Agents):
@@ -76,15 +76,15 @@ class IC3Net_Agents(CommNet_Agents):
             communicator[key] = IC3NetComm(**input_communicator)
         return communicator
 
-    def _build_policy(self) -> Module:
-        normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None
+    def _build_model(self) -> Module:
+        normalizer_fn = normalizerFunctions[self.config.normalizer] if hasattr(self.config, "normalizer") else None
         initializer = torch.nn.init.orthogonal_
         activation = ActivationFunctions[self.config.activation]
         device = self.device
         agent = self.config.agent
         max_length = max(space.shape[0] for space in self.observation_space.values())
         self.observation_space = {agent: gym.spaces.Box(-np.inf, np.inf, (max_length,), dtype=np.float32)
-                          for agent in self.observation_space}
+                                  for agent in self.observation_space}
         # build representations
         communicator = self._build_communicator(self.observation_space)
         space_actor_in = {agent: gym.spaces.Box(-np.inf, np.inf, (self.config.recurrent_hidden_size,), dtype=np.float32)
@@ -103,44 +103,49 @@ class IC3Net_Agents(CommNet_Agents):
                 action_space=self.action_space, n_agents=self.n_agents,
                 representation_actor=A_representation, representation_critic=C_representation,
                 actor_hidden_size=self.config.actor_hidden_size, critic_hidden_size=self.config.critic_hidden_size,
-                normalize=normalize_fn, initialize=initializer, activation=activation,
+                normalizer=normalizer_fn, initializer=initializer, activation=activation,
                 device=device, use_distributed_training=self.distributed_training,
                 use_parameter_sharing=self.use_parameter_sharing, model_keys=self.model_keys,
                 use_rnn=self.use_rnn, rnn=self.config.rnn if self.use_rnn else None,
-                communicator=communicator, agent_keys=self.agent_keys, comm_passes=self.config.comm_passes, config=self.config)
+                communicator=communicator, agent_keys=self.agent_keys, comm_passes=self.config.comm_passes,
+                config=self.config)
             self.continuous_control = False
         else:
             raise AttributeError(f"{agent} currently does not support the policy named {self.config.policy}.")
-        return policy
+        return model
 
     def get_actions(self,
-               obs_dict: List[dict],
-               state: Optional[np.ndarray] = None,
-               avail_actions_dict: Optional[List[dict]] = None,
-               rnn_hidden_actor: Optional[dict] = None,
-               rnn_hidden_critic: Optional[dict] = None,
-               test_mode: Optional[bool] = False,
-               info: dict = None,
-               **kwargs):
+                    obs_dict: List[dict],
+                    state: Optional[np.ndarray] = None,
+                    avail_actions_dict: Optional[List[dict]] = None,
+                    rnn_states_actor: Optional[dict] = None,
+                    rnn_states_critic: Optional[dict] = None,
+                    test_mode: Optional[bool] = False,
+                    deterministic: bool = False,
+                    info: dict = None,
+                    **kwargs):
         n_env = len(obs_dict)
-        rnn_hidden_critic_new, values_out, log_pi_a_dict, values_dict, log_pi_gate_dict = {}, {}, {}, {}, {}
+        rnn_states_critic_new, values_out, log_pi_a_dict, values_dict, log_pi_gate_dict = {}, {}, {}, {}, {}
         obs_input, agents_id, avail_actions_input = self._build_inputs(obs_dict, avail_actions_dict)
         alive_ally = {k: np.stack([int(data['agent_mask'][k]) for data in info]).reshape([n_env, 1, -1]) for k in
-                            self.agent_keys}
-        rnn_hidden_actor_new, pi_dists, gate_log_prob = self.policy(observation=obs_input,
-                                                     agent_ids=agents_id,
-                                                     avail_actions=avail_actions_input,
-                                                     rnn_hidden=rnn_hidden_actor,
-                                                     alive_ally=alive_ally)
+                      self.agent_keys}
+        rnn_states_actor_new, pi_dists, gate_log_prob = self.policy(observation=obs_input,
+                                                                    agent_ids=agents_id,
+                                                                    avail_actions=avail_actions_input,
+                                                                    rnn_states=rnn_states_actor,
+                                                                    alive_ally=alive_ally)
         if not test_mode:
             critic_input = self._build_critic_inputs(batch_size=n_env, obs_batch=obs_input, state=state)
-            rnn_hidden_critic_new, values_out = self.policy.get_values(observation=critic_input,
+            rnn_states_critic_new, values_out = self.policy.get_values(observation=critic_input,
                                                                        agent_ids=agents_id,
-                                                                       rnn_hidden=rnn_hidden_critic)
+                                                                       rnn_states=rnn_states_critic)
 
         if self.use_parameter_sharing:
             key = self.agent_keys[0]
-            actions_sample = pi_dists[key].stochastic_sample()
+            if deterministic:
+                actions_sample = pi_dists[key].deterministic_sample()
+            else:
+                actions_sample = pi_dists[key].stochastic_sample()
             if self.continuous_control:
                 actions_out = actions_sample.reshape(n_env, self.n_agents, -1)
             else:
@@ -150,14 +155,16 @@ class IC3Net_Agents(CommNet_Agents):
             if not test_mode:
                 log_pi_a = pi_dists[key].log_prob(actions_sample).cpu().detach().numpy()
                 log_pi_a = log_pi_a.reshape(n_env, self.n_agents)
-                key = self.model_keys[0]
                 gate_log_prob = gate_log_prob[key].reshape(n_env, self.n_agents).cpu().detach().numpy()
                 log_pi_a_dict = {k: log_pi_a[:, i] for i, k in enumerate(self.agent_keys)}
                 log_pi_gate_dict = {k: gate_log_prob[:, i] for i, k in enumerate(self.agent_keys)}
                 values_out[key] = values_out[key].reshape(n_env, self.n_agents)
                 values_dict = {k: values_out[key][:, i].cpu().detach().numpy() for i, k in enumerate(self.agent_keys)}
         else:
-            actions_sample = {k: pi_dists[k].stochastic_sample() for k in self.agent_keys}
+            actions_sample = {
+                k: pi_dists[k].deterministic_sample() if deterministic else pi_dists[k].stochastic_sample()
+                for k in self.agent_keys
+            }
             if self.continuous_control:
                 actions_dict = [{k: actions_sample[k].cpu().detach().numpy()[e].reshape([-1]) for k in self.agent_keys}
                                 for e in range(n_env)]
@@ -171,8 +178,9 @@ class IC3Net_Agents(CommNet_Agents):
                 log_pi_gate_dict = {k: log_pi_gate[k].reshape([n_env]) for i, k in enumerate(self.agent_keys)}
                 values_dict = {k: values_out[k].cpu().detach().numpy().reshape([n_env]) for k in self.agent_keys}
 
-        return {"rnn_hidden_actor": rnn_hidden_actor_new, "rnn_hidden_critic": rnn_hidden_critic_new,
-                "actions": actions_dict, "log_pi": log_pi_a_dict, "gate_log_pi": log_pi_gate_dict ,"values": values_dict}
+        return {"rnn_states_actor": rnn_states_actor_new, "rnn_states_critic": rnn_states_critic_new,
+                "actions": actions_dict, "log_pi": log_pi_a_dict, "gate_log_pi": log_pi_gate_dict,
+                "values": values_dict}
 
     def store_experience(self, obs_dict, avail_actions, actions_dict, log_pi_a, rewards_dict, values_dict,
                          terminals_dict, info, **kwargs):
@@ -198,6 +206,7 @@ class IC3Net_Agents(CommNet_Agents):
 
     def run_episodes(self,
                      n_episodes: int = 1,
+                     deterministic_policy: bool = False,
                      run_envs: Optional[DummyVecMultiAgentEnv | SubprocVecMultiAgentEnv] = None,
                      test_mode: bool = False,
                      close_envs: bool = True) -> list:
@@ -216,16 +225,17 @@ class IC3Net_Agents(CommNet_Agents):
         else:
             if self.use_rnn:
                 self.memory.clear_episodes()
-        rnn_hidden_actor, rnn_hidden_critic = self.init_rnn_hidden(num_envs)
+        rnn_states_actor, rnn_states_critic = self.init_rnn_states(num_envs)
         info = [{'agent_mask': {k: True for k in self.agent_keys}} for _ in range(num_envs)]
         while episode_count < n_episodes:
             step_info = {}
             obs_dict = [self.pad_observation(obs) for obs in obs_dict]
             policy_out = self.get_actions(obs_dict=obs_dict, state=state, avail_actions_dict=avail_actions,
-                                     rnn_hidden_actor=rnn_hidden_actor, rnn_hidden_critic=rnn_hidden_critic,
-                                     test_mode=test_mode, info=info)
-            rnn_hidden_actor, rnn_hidden_critic = policy_out['rnn_hidden_actor'], policy_out['rnn_hidden_critic']
-            actions_dict, log_pi_a_dict, log_pi_gate_dict = policy_out['actions'], policy_out['log_pi'], policy_out['gate_log_pi']
+                                          rnn_states_actor=rnn_states_actor, rnn_states_critic=rnn_states_critic,
+                                          test_mode=test_mode, deterministic=deterministic_policy, info=info)
+            rnn_states_actor, rnn_states_critic = policy_out['rnn_states_actor'], policy_out['rnn_states_critic']
+            actions_dict, log_pi_a_dict, log_pi_gate_dict = policy_out['actions'], policy_out['log_pi'], policy_out[
+                'gate_log_pi']
             values_dict = policy_out['values']
             next_obs_dict, rewards_dict, terminated_dict, truncated, info = envs.step(actions_dict)
             next_state = envs.buf_state if self.use_global_state else None
@@ -248,7 +258,7 @@ class IC3Net_Agents(CommNet_Agents):
                     scores.append(episode_score)
                     if test_mode:
                         if self.use_rnn:
-                            rnn_hidden_actor, _ = self.init_hidden_item(i, rnn_hidden_actor)
+                            rnn_states_actor, _ = self.init_rnn_states_item(i, rnn_states_actor)
                         if best_score < episode_score:
                             best_score = episode_score
                             episode_videos = videos[i].copy()
@@ -258,12 +268,12 @@ class IC3Net_Agents(CommNet_Agents):
                         else:
                             _, value_next = self.values_next(i_env=i, obs_dict=obs_dict[i],
                                                              state=None if state is None else state[i],
-                                                             rnn_hidden_critic=rnn_hidden_critic)
+                                                             rnn_states_critic=rnn_states_critic)
                         self.memory.finish_path(i_env=i, i_step=info[i]['episode_step'], value_next=value_next,
                                                 value_normalizer=self.learner.value_normalizer)
                         if self.use_rnn:
-                            rnn_hidden_actor, rnn_hidden_critic = self.init_hidden_item(i, rnn_hidden_actor,
-                                                                                        rnn_hidden_critic)
+                            rnn_states_actor, rnn_states_critic = self.init_rnn_states_item(i, rnn_states_actor,
+                                                                                        rnn_states_critic)
                         if self.use_wandb:
                             step_info["Train-Results/Episode-Steps/env-%d" % i] = info[i]["episode_step"]
                             step_info["Train-Results/Episode-Rewards/env-%d" % i] = info[i]["episode_score"]

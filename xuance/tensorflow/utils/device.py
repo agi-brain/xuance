@@ -19,7 +19,6 @@ def set_device(expected_device: str):
         if the requested device is unavailable.
     """
     device = expected_device
-    os.environ["TF_USE_LEGACY_KERAS"] = "1"  # Configure TensorFlow to use the legacy Keras 2 for tf.keras imports.
     if expected_device.upper() == "GPU":
         if len(tf.config.list_physical_devices('GPU')) == 0:
             device = "CPU"

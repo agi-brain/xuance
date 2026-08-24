@@ -197,15 +197,20 @@ class MARLAgents(ABC):
         self.log_dir = log_dir
 
         # predefine necessary components
-        self.model_keys = [self.agent_keys[0]] if self.use_parameter_sharing else self.agent_keys
         self.model: Optional[nn.Module] = None
         self.learner: Optional[LearnerMAS] = None
         self.memory: Optional[object] = None
         self.callback = callback or MultiAgentBaseCallback()
 
-        self.meta_data = dict(algo=self.config.agent, env=self.config.env_name, env_id=self.config.env_id,
-                              dl_toolbox=self.config.dl_toolbox, device=self.device, seed=self.config.seed,
-                              xuance_version=xuance.__version__)
+        self.meta_data = dict(
+            algo=self.config.agent,
+            env=self.config.env_name,
+            env_id=self.config.env_id,
+            dl_toolbox=self.config.dl_toolbox,
+            device=self.device,
+            seed=self.config.seed,
+            xuance_version=xuance.__version__
+        )
 
     def set_agent_group(self, agent_keys):
         if self.use_parameter_sharing:
@@ -282,9 +287,9 @@ class MARLAgents(ABC):
         input_representations = dict(
             input_shape=space2shape(input_space),
             hidden_sizes=getattr(config, "representation_hidden_size", None),
-            normalize=NormalizeFunctions[config.normalize] if hasattr(config, "normalize") else None,
-            initialize=nn.init.orthogonal_,
-            activation=ActivationFunctions[config.activation],
+            normalize=self.normalize_fn,
+            initialize=self.initializer,
+            activation=self.activation,
             kernels=getattr(config, "kernels", None),
             strides=getattr(config, "strides", None),
             filters=getattr(config, "filters", None),

@@ -3,10 +3,10 @@ COMA: Counterfactual Multi-Agent Policy Gradients
 Paper link: https://ojs.aaai.org/index.php/AAAI/article/view/11794
 Implementation: TensorFlow 2.X
 """
-from tensorflow import one_hot
 from argparse import Namespace
-from xuance.tensorflow import tf, tk, Module
-from xuance.common import List
+from typing import List
+from tensorflow import one_hot
+from xuance.tensorflow import tf, keras, Module
 from xuance.tensorflow.learners.multi_agent_rl.iac_learner import IAC_Learner
 
 
@@ -28,13 +28,13 @@ class COMA_Learner(IAC_Learner):
     def build_optimizer(self):
         if ("macOS" in self.os_name) and ("arm" in self.os_name):  # For macOS with Apple's M-series chips.
             self.optimizer = {
-                'actor': tk.optimizers.legacy.Adam(self.config.learning_rate_actor),
-                'critic': tk.optimizers.legacy.Adam(self.config.learning_rate_critic),
+                'actor': keras.optimizers.legacy.Adam(self.config.learning_rate_actor),
+                'critic': keras.optimizers.legacy.Adam(self.config.learning_rate_critic),
             }
         else:
             self.optimizer = {
-                'actor': tk.optimizers.Adam(self.config.learning_rate_actor),
-                'critic': tk.optimizers.Adam(self.config.learning_rate_critic)
+                'actor': keras.optimizers.Adam(self.config.learning_rate_actor),
+                'critic': keras.optimizers.Adam(self.config.learning_rate_critic)
             }
 
     # @tf.function

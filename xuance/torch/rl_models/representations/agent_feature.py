@@ -1,11 +1,12 @@
-from torch import Tensor, nn
+from torch import Tensor
+from torch.nn import Module
 from xuance.torch.rl_models.modules.outputs import RepresentationOutput
 from xuance.torch.rl_models.modules.identity_encoder import IdentityEncoder, IdentityFeatureFusion
 
 
-class AgentFeatureEncoder(nn.Module):
+class AgentFeatureEncoder(Module):
     def __init__(self,
-                 representation: nn.Module,
+                 representation: Module,
                  identity_encoder: IdentityEncoder,
                  fusion: IdentityFeatureFusion):
         super().__init__()

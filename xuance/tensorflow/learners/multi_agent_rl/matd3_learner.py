@@ -6,7 +6,7 @@ import numpy as np
 from argparse import Namespace
 from operator import itemgetter
 from xuance.common import List
-from xuance.tensorflow import tf, tk, Module
+from xuance.tensorflow import tf, keras, Module
 from xuance.tensorflow.learners import LearnerMAS
 
 
@@ -26,13 +26,13 @@ class MATD3_Learner(LearnerMAS):
     def build_optimizer(self):
         if ("macOS" in self.os_name) and ("arm" in self.os_name):  # For macOS with Apple's M-series chips.
             self.optimizer = {
-                key: {'actor': tk.optimizers.legacy.Adam(self.config.learning_rate_actor),
-                      'critic': tk.optimizers.legacy.Adam(self.config.learning_rate_critic)}
+                key: {'actor': keras.optimizers.legacy.Adam(self.config.learning_rate_actor),
+                      'critic': keras.optimizers.legacy.Adam(self.config.learning_rate_critic)}
                 for key in self.model_keys}
         else:
             self.optimizer = {
-                key: {'actor': tk.optimizers.Adam(self.config.learning_rate_actor),
-                      'critic': tk.optimizers.Adam(self.config.learning_rate_critic)}
+                key: {'actor': keras.optimizers.Adam(self.config.learning_rate_actor),
+                      'critic': keras.optimizers.Adam(self.config.learning_rate_critic)}
                 for key in self.model_keys}
 
     @tf.function

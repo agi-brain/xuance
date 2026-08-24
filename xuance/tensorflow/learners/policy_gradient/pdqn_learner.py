@@ -4,14 +4,14 @@ Paper link: https://arxiv.org/pdf/1810.06394.pdf
 Implementation: TensorFlow2
 """
 from xuance.common import Sequence
-from xuance.tensorflow import tf, tk, Module
+from xuance.tensorflow import tf, keras, Module
 from xuance.tensorflow.learners import Learner
 
 
 class PDQN_Learner(Learner):
     def __init__(self,
                  policy: Module,
-                 optimizers: Sequence[tk.optimizers.Optimizer],
+                 optimizers: Sequence[keras.optimizers.Optimizer],
                  device: str = "cpu:0",
                  model_dir: str = "./",
                  gamma: float = 0.99,
@@ -19,7 +19,7 @@ class PDQN_Learner(Learner):
         self.tau = tau
         self.gamma = gamma
         super(PDQN_Learner, self).__init__(policy, optimizers, device, model_dir)
-        self.mse_loss = tk.losses.MeanSquaredError()
+        self.mse_loss = keras.losses.MeanSquaredError()
 
     def update(self, obs_batch, act_batch, rew_batch, next_batch, terminal_batch):
         self.iterations += 1

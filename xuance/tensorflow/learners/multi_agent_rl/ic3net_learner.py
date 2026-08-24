@@ -191,7 +191,7 @@ class IC3Net_Learner(CommNet_Learner):
                                                                            self.value_clip_range)
                 if self.use_value_norm:
                     self.value_normalizer[key].update(value_target.reshape(-1, 1))
-                    value_target = self.value_normalizer[key].normalize(value_target.reshape(-1, 1))
+                    value_target = self.value_normalizer[key].normalizer(value_target.reshape(-1, 1))
                     value_target = value_target.reshape(bs_rnn, seq_len)
                 if self.use_huber_loss:
                     loss_v = self.huber_loss(value_pred_i, value_target)
@@ -204,7 +204,7 @@ class IC3Net_Learner(CommNet_Learner):
             else:
                 if self.use_value_norm:
                     self.value_normalizer[key].update(value_target)
-                    value_target = self.value_normalizer[key].normalize(value_target)
+                    value_target = self.value_normalizer[key].normalizer(value_target)
                 if self.use_huber_loss:
                     loss_v = self.huber_loss(value_pred_i, value_target)
                 else:

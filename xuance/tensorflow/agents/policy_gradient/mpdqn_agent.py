@@ -1,10 +1,14 @@
+import numpy as np
+from copy import deepcopy
 from argparse import Namespace
+from gymnasium import spaces
 from xuance.environment.single_agent_env import Gym_Env
 from xuance.common import Optional, BaseCallback
 from xuance.tensorflow import Module
-from xuance.tensorflow.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions
-from xuance.tensorflow.policies import REGISTRY_Policy
+from xuance.tensorflow.utils import ActivationFunctions
 from xuance.tensorflow.agents.policy_gradient.pdqn_agent import PDQN_Agent
+from xuance.tensorflow.rl_models import DeterministicActor, HybridActionValueCritic
+from xuance.tensorflow.rl_models.architectures import MultipassParameterizedDQN
 
 
 class MPDQN_Agent(PDQN_Agent):
@@ -19,29 +23,39 @@ class MPDQN_Agent(PDQN_Agent):
                  config: Namespace,
                  envs: Gym_Env,
                  callback: Optional[BaseCallback] = None):
-        super(MPDQN_Agent, self).__init__(config, envs, observation_space, action_space, callback)
+        super(MPDQN_Agent, self).__init__(config, envs, callback)
 
-    def _build_policy(self) -> Module:
-        normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None
-        initializer = InitializeFunctions[self.config.initialize] if hasattr(self.config, "initialize") else None
-        activation = ActivationFunctions[self.config.activation]
-
+    def _build_model(self) -> Module:
         # build representation.
         representation = self._build_representation(self.config.representation, self.observation_space, self.config)
 
-        # build policy.
-        if self.config.policy == "MPDQN_Policy":
-            policy = REGISTRY_Policy["MPDQN_Policy"](
-                observation_space=self.observation_space, action_space=self.action_space,
-                representation=representation,
-                conactor_hidden_size=self.config.conactor_hidden_size,
-                qnetwork_hidden_size=self.config.qnetwork_hidden_size,
-                normalize=normalize_fn, initialize=initializer, activation=activation,
-                activation_action=ActivationFunctions[self.config.activation_action],
-                use_distributed_training=self.distributed_training)
-        else:
-            raise AttributeError(
-                f"{self.config.agent} currently does not support the policy named {self.config.policy}.")
+        # build the RL model.
+        continuous_actor = DeterministicActor(
+            representation=representation,
+            actor_hidden_size=self.config.conactor_hidden_size,
+            action_space=spaces.Box(low=-np.inf, high=np.inf, shape=(self.conact_size,)),
+            normalizer=self.normalizer_fn,
+            initializer=self.initializer,
+            activation=self.activation,
+            activation_action=ActivationFunctions[self.config.activation_action],
+            device=self.device
+        )
 
-        return policy
+        q_network = HybridActionValueCritic(
+            representation=deepcopy(representation),
+            action_space=self.action_space,
+            critic_hidden_size=self.config.qnetwork_hidden_size,
+            normalizer=self.normalizer_fn,
+            initializer=self.initializer,
+            activation=self.activation,
+            device=self.device
+        )
+
+        model = MultipassParameterizedDQN(
+            continuous_actor=continuous_actor,
+            q_network=q_network,
+            conact_sizes=self.conact_sizes
+        )
+
+        return model
 

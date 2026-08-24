@@ -4,7 +4,7 @@ Paper link: http://proceedings.mlr.press/v119/boehmer20a/boehmer20a.pdf
 Implementation: TensorFlow 2.X
 """
 from argparse import Namespace
-from xuance.tensorflow import tf, tk, Module
+from xuance.tensorflow import tf, keras, Module
 from xuance.tensorflow.learners import LearnerMAS
 
 
@@ -12,7 +12,7 @@ class DCG_Learner(LearnerMAS):
     def __init__(self,
                  config: Namespace,
                  policy: Module,
-                 optimizer: tk.optimizers.Optimizer,
+                 optimizer: keras.optimizers.Optimizer,
                  device: str = "cpu:0",
                  model_dir: str = "./",
                  gamma: float = 0.99,
@@ -24,7 +24,7 @@ class DCG_Learner(LearnerMAS):
         self.dim_hidden_state = policy.representation.output_shapes['state'][0]
         self.sync_frequency = sync_frequency
         super(DCG_Learner, self).__init__(config, policy, optimizer, device, model_dir)
-        self.mse_loss = tk.losses.MeanSquaredError()
+        self.mse_loss = keras.losses.MeanSquaredError()
 
     def get_hidden_states(self, obs_n, *rnn_hidden, use_target_net=False):
         if self.use_rnn:
@@ -82,7 +82,7 @@ class DCG_Learner(LearnerMAS):
                 joint_backward = (utility[:, self.policy.graph.edges_to, :] - msg_ij).unsqueeze(dim=-1) + f_ji_mean
                 msg_ij = joint_forward.max(dim=-2).values
                 msg_ji = joint_backward.max(dim=-2).values
-                if self.args.msg_normalized:
+                if self.args.msg_normalizerd:
                     msg_ij -= msg_ij.mean(dim=-1, keepdim=True)
                     msg_ji -= msg_ji.mean(dim=-1, keepdim=True)
 

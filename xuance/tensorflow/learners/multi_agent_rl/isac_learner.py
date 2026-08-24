@@ -4,7 +4,7 @@ Implementation: TensorFlow 2.X
 """
 from argparse import Namespace
 from xuance.common import List
-from xuance.tensorflow import tf, tk, Module
+from xuance.tensorflow import tf, keras, Module
 from xuance.tensorflow.learners import LearnerMAS
 from xuance.tensorflow.learners.policy_gradient.sac_learner import AlphaLayer
 
@@ -27,21 +27,21 @@ class ISAC_Learner(LearnerMAS):
             self.alpha_layer = {key: AlphaLayer() for key in self.model_keys}
             self.alpha = {key: tf.exp(self.alpha_layer[key].log_alpha) for key in self.model_keys}
             if ("macOS" in self.os_name) and ("arm" in self.os_name):  # For macOS with Apple's M-series chips.
-                self.alpha_optimizer = {key: tk.optimizers.legacy.Adam(config.learning_rate_actor)
+                self.alpha_optimizer = {key: keras.optimizers.legacy.Adam(config.learning_rate_actor)
                                         for key in self.model_keys}
             else:
-                self.alpha_optimizer = {key: tk.optimizers.Adam(config.learning_rate_actor) for key in self.model_keys}
+                self.alpha_optimizer = {key: keras.optimizers.Adam(config.learning_rate_actor) for key in self.model_keys}
 
     def build_optimizer(self):
         if ("macOS" in self.os_name) and ("arm" in self.os_name):  # For macOS with Apple's M-series chips.
             self.optimizer = {
-                key: {'actor': tk.optimizers.legacy.Adam(self.config.learning_rate_actor),
-                      'critic': tk.optimizers.legacy.Adam(self.config.learning_rate_critic)}
+                key: {'actor': keras.optimizers.legacy.Adam(self.config.learning_rate_actor),
+                      'critic': keras.optimizers.legacy.Adam(self.config.learning_rate_critic)}
                 for key in self.model_keys}
         else:
             self.optimizer = {
-                key: {'actor': tk.optimizers.Adam(self.config.learning_rate_actor),
-                      'critic': tk.optimizers.Adam(self.config.learning_rate_critic)}
+                key: {'actor': keras.optimizers.Adam(self.config.learning_rate_actor),
+                      'critic': keras.optimizers.Adam(self.config.learning_rate_critic)}
                 for key in self.model_keys}
 
     # @tf.function

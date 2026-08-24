@@ -5,7 +5,7 @@ Implementation: TensorFlow2
 """
 import numpy as np
 from argparse import Namespace
-from xuance.tensorflow import tf, tk, Module
+from xuance.tensorflow import tf, keras, Module
 from xuance.tensorflow.learners import Learner
 
 
@@ -18,18 +18,18 @@ class QRDQN_Learner(Learner):
         if ("macOS" in self.os_name) and ("arm" in self.os_name):  # For macOS with Apple's M-series chips.
             if self.distributed_training:
                 with self.policy.mirrored_strategy.scope():
-                    self.optimizer = tk.optimizers.legacy.Adam(config.learning_rate)
+                    self.optimizer = keras.optimizers.legacy.Adam(config.learning_rate)
             else:
-                self.optimizer = tk.optimizers.legacy.Adam(config.learning_rate)
+                self.optimizer = keras.optimizers.legacy.Adam(config.learning_rate)
         else:
             if self.distributed_training:
                 with self.policy.mirrored_strategy.scope():
-                    self.optimizer = tk.optimizers.Adam(config.learning_rate)
+                    self.optimizer = keras.optimizers.Adam(config.learning_rate)
             else:
-                self.optimizer = tk.optimizers.Adam(config.learning_rate)
+                self.optimizer = keras.optimizers.Adam(config.learning_rate)
         self.gamma = config.gamma
         self.sync_frequency = config.sync_frequency
-        self.mse_loss = tk.losses.MeanSquaredError()
+        self.mse_loss = keras.losses.MeanSquaredError()
 
     @tf.function
     def forward_fn(self, obs_batch, act_batch, next_batch, rew_batch, ter_batch):

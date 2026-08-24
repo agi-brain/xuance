@@ -1,17 +1,22 @@
+import keras
 import tensorflow as tf
-import tensorflow.keras as tk
+from typing import Type
 from tensorflow import Tensor
-from tensorflow.keras import Model as Module
+from xuance.tensorflow.utils.module import Module, ModuleList, ModuleDict
 from xuance.tensorflow.utils import set_device, collect_device_info
-from xuance.tensorflow.representations import REGISTRY_Representation
-from xuance.tensorflow.policies import REGISTRY_Policy
+
+ModuleType = Type[Module]
+
+from xuance.tensorflow.rl_models.representations import REGISTRY_Representation
 from xuance.tensorflow.learners import REGISTRY_Learners
 from xuance.tensorflow.agents import REGISTRY_Agents
 
 __all__ = [
-    "tf", "tk",
+    "tf",
+    "keras",
     "Tensor",
-    "Module",
+    "Module", "ModuleDict", "ModuleList",
+    "ModuleType",
     "set_device", "collect_device_info",
-    "REGISTRY_Representation", "REGISTRY_Policy", "REGISTRY_Learners", "REGISTRY_Agents"
+    "REGISTRY_Representation", "REGISTRY_Learners", "REGISTRY_Agents"
 ]

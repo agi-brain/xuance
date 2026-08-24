@@ -7,7 +7,7 @@ Implementation: TensorFlow 2.X
 from argparse import Namespace
 from operator import itemgetter
 from xuance.common import List
-from xuance.tensorflow import tf, tk, Module
+from xuance.tensorflow import tf, keras, Module
 from xuance.tensorflow.learners import LearnerMAS
 
 
@@ -23,13 +23,13 @@ class QMIX_Learner(LearnerMAS):
         self.gamma = config.gamma
         self.sync_frequency = config.sync_frequency
         self.n_actions = {k: self.policy.action_space[k].n for k in self.model_keys}
-        self.mse_loss = tk.losses.MeanSquaredError()
+        self.mse_loss = keras.losses.MeanSquaredError()
 
     def build_optimizer(self):
         if ("macOS" in self.os_name) and ("arm" in self.os_name):  # For macOS with Apple's M-series chips.
-            self.optimizer = tk.optimizers.legacy.Adam(self.config.learning_rate)
+            self.optimizer = keras.optimizers.legacy.Adam(self.config.learning_rate)
         else:
-            self.optimizer = tk.optimizers.Adam(self.config.learning_rate)
+            self.optimizer = keras.optimizers.Adam(self.config.learning_rate)
 
     @tf.function
     def forward_fn(self, bs, state, obs, actions, rewards_tot, state_next, obs_next, terminals_tot,

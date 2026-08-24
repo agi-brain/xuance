@@ -3,8 +3,8 @@ from tqdm import tqdm
 from argparse import Namespace
 from gymnasium.spaces import Space
 from xuance.common import Optional, DummyOffPolicyBuffer, OfflineBuffer_D4RL, BaseCallback
-from xuance.torch import Module
-from xuance.torch.agents.base import Agent
+from xuance.tensorflow import Module
+from xuance.tensorflow.agents.base import Agent
 
 
 class OfflineAgent(Agent):

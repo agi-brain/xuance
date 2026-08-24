@@ -1,11 +1,13 @@
+import gymnasium
 from argparse import Namespace
 from gymnasium.spaces import Space
 from xuance.common import List, Optional, MultiAgentBaseCallback
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
-from xuance.tensorflow import Module
-from xuance.tensorflow.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions
-from xuance.tensorflow.policies import REGISTRY_Policy
+from xuance.tensorflow import Module, ModuleDict
+from xuance.tensorflow.utils import ActivationFunctions
 from xuance.tensorflow.agents.multi_agent_rl.isac_agents import ISAC_Agents
+from xuance.tensorflow.rl_models import CategoricalActor, SAC_GaussianActor, TwinCentralizedActionValueCritic
+from xuance.tensorflow.rl_models.architectures import MultiAgentSoftActorCritic
 
 
 class MASAC_Agents(ISAC_Agents):
@@ -16,6 +18,7 @@ class MASAC_Agents(ISAC_Agents):
         envs: the vectorized environments.
         callback: A user-defined callback function object to inject custom logic during training.
     """
+
     def __init__(
             self,
             config: Namespace,
@@ -31,37 +34,70 @@ class MASAC_Agents(ISAC_Agents):
             config, envs, num_agents, agent_keys, state_space, observation_space, action_space, callback
         )
 
-    def _build_policy(self) -> Module:
+    def _build_model(self) -> Module:
         """
-        Build representation(s) and policy(ies) for agent(s)
+        Build the MARL model.
 
         Returns:
-            policy (Module): A dict of policies.
+            model (torch.nn.Module): The MARL model.
         """
-        normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None
-        initializer = InitializeFunctions[self.config.initialize] if hasattr(self.config, "initialize") else None
-        activation = ActivationFunctions[self.config.activation]
-        agent = self.config.agent
-
-        # build representations
-        A_representation = self._build_representation(self.config.representation, self.observation_space, self.config)
-        critic_in = [sum(self.observation_space[k].shape) + sum(self.action_space[k].shape) for k in self.agent_keys]
-        space_critic_in = {k: (sum(critic_in),) for k in self.agent_keys}
-        C_representation = self._build_representation(self.config.representation, space_critic_in, self.config)
-
-        # build policies
-        if self.config.policy == "Gaussian_MASAC_Policy":
-            policy = REGISTRY_Policy["Gaussian_MASAC_Policy"](
-                action_space=self.action_space, n_agents=self.n_agents,
-                actor_representation=A_representation, critic_representation=C_representation,
-                actor_hidden_size=self.config.actor_hidden_size,
-                critic_hidden_size=self.config.critic_hidden_size,
-                normalize=normalize_fn, initialize=initializer, activation=activation,
-                activation_action=ActivationFunctions[self.config.activation_action],
-                use_parameter_sharing=self.use_parameter_sharing, model_keys=self.model_keys,
-                use_rnn=self.use_rnn, rnn=self.config.rnn if self.use_rnn else None)
+        actor_input = dict(
+            actor_hidden_size=self.config.actor_hidden_size,
+            normalizer=self.normalizer_fn,
+            initializer=self.initializer,
+            activation=self.activation,
+            device=self.device
+        )
+        if isinstance(self.action_space[self.agent_keys[0]], gymnasium.spaces.Box):
+            Actor = SAC_GaussianActor
+            actor_input['activation_action'] = ActivationFunctions[self.config.activation_action]
             self.continuous_control = True
+        elif isinstance(self.action_space[self.agent_keys[0]], gymnasium.spaces.Discrete):
+            Actor = CategoricalActor
+            self.continuous_control = False
         else:
-            raise AttributeError(f"{agent} currently does not support the policy named {self.config.policy}.")
+            raise NotImplementedError
 
-        return policy
+        actor_networks = ModuleDict()
+        critic_networks = ModuleDict()
+        joint_obs_space = (sum([sum(self.observation_space[k].shape) for k in self.agent_keys]),)
+        for group_key, group_agents in self.groups.items():
+            reference_agent = group_agents[0]
+            # build agent feature encoder as actor representations
+            actor_feature_encoder = self._build_agent_feature_encoder(
+                representation_choice=self.config.representation,
+                group_agents=group_agents,
+                input_space=self.observation_space[reference_agent]
+            )
+            # build inner-group shared actor-network
+            actor_input['representation'] = actor_feature_encoder
+            actor_input['action_space'] = self.action_space[reference_agent]
+            actor_networks[group_key] = Actor(**actor_input)
+            # build critic feature encoder as critic representations
+            critic_feature_encoder = self._build_agent_feature_encoder(
+                representation_choice=self.config.representation,
+                group_agents=group_agents,
+                input_space=joint_obs_space
+            )
+            # build inner-group shared critic-network
+            critic_networks[group_key] = TwinCentralizedActionValueCritic(
+                representation=critic_feature_encoder,
+                action_space=self.action_space,
+                critic_hidden_size=self.config.critic_hidden_size,
+                normalizer=self.normalizer_fn,
+                initializer=self.initializer,
+                activation=self.activation,
+                device=self.device
+            )
+
+        # build the RL model
+        model = MultiAgentSoftActorCritic(
+            grouping=self.agent_grouping,
+            actors=actor_networks,
+            critics=critic_networks,
+            use_rnn=self.use_rnn,
+            device=self.device,
+            use_distributed_training=self.distributed_training
+        )
+
+        return model

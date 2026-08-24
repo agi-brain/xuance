@@ -2,7 +2,7 @@ import numpy as np
 
 
 class ValueNorm:
-    """ Normalize a vector of observations - across the first norm_axes dimensions"""
+    """ normalizer a vector of observations - across the first norm_axes dimensions"""
 
     def __init__(self, input_shape, norm_axes=1, beta=0.99999, per_element_update=False, epsilon=1e-5):
         super(ValueNorm, self).__init__()
@@ -44,7 +44,7 @@ class ValueNorm:
         self.running_mean_sq = self.running_mean_sq.__mul__(weight).__add__(batch_sq_mean * (1.0 - weight))
         self.debiasing_term = self.debiasing_term.__mul__(weight).__add__(1.0 * (1.0 - weight))
 
-    def normalize(self, input_vector):
+    def normalizer(self, input_vector):
         # Make sure input is float32
         input_vector = input_vector  # not elegant, but works in most cases
 
@@ -53,8 +53,8 @@ class ValueNorm:
 
         return out
 
-    def denormalize(self, input_vector):
-        """ Transform normalized data back into original distribution """
+    def denormalizer(self, input_vector):
+        """ Transform normalizerd data back into original distribution """
         input_vector = input_vector  # not elegant, but works in most cases
 
         mean, var = self.running_mean_var()

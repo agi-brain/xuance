@@ -1,6 +1,6 @@
 import torch
 from dataclasses import dataclass, field
-from typing import Any, Optional, Dict, List
+from typing import Any, Optional, Dict
 from xuance.torch import Tensor
 from xuance.torch.utils import AgentGroupedTensor
 

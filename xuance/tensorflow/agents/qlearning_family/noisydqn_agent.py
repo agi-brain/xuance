@@ -1,4 +1,5 @@
 import numpy as np
+import torch.ao.quantization.utils
 from tqdm import tqdm
 from copy import deepcopy
 from argparse import Namespace
@@ -6,9 +7,9 @@ from gymnasium.spaces import Space
 from xuance.common import Optional, DummyOffPolicyBuffer, DummyOffPolicyBuffer_Atari, BaseCallback
 from xuance.environment import DummyVecEnv, SubprocVecEnv
 from xuance.tensorflow import Module
-from xuance.tensorflow.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions
-from xuance.tensorflow.policies import REGISTRY_Policy
 from xuance.tensorflow.agents import Agent
+from xuance.tensorflow.rl_models.modules import ActionOutput
+from xuance.tensorflow.rl_models.architectures import NoisyDeepQNetwork
 
 
 class NoisyDQN_Agent(Agent):
@@ -26,8 +27,8 @@ class NoisyDQN_Agent(Agent):
         self.noise_scale = config.start_noise
         self.delta_noise = (self.start_noise - self.end_noise) / (self.config.decay_step_noise / self.n_envs)
 
-        # Build policy, optimizer, scheduler.
-        self.policy = self._build_policy()
+        # Build RL model.
+        self.model = self._build_model()
 
         # Create experience replay buffer.
         input_buffer = dict(observation_space=self.observation_space,
@@ -40,38 +41,37 @@ class NoisyDQN_Agent(Agent):
         self.atari = True if config.env_name == "Atari" else False
         Buffer = DummyOffPolicyBuffer_Atari if self.atari else DummyOffPolicyBuffer
         self.memory = Buffer(**input_buffer)
-        self.learner = self._build_learner(self.config, self.policy, self.callback)
+        self.learner = self._build_learner(self.config, self.model, self.callback)
 
-    def _build_policy(self) -> Module:
-        normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None
-        initializer = InitializeFunctions[self.config.initialize] if hasattr(self.config, "initialize") else None
-        activation = ActivationFunctions[self.config.activation]
-
+    def _build_model(self) -> Module:
         # build representation.
         representation = self._build_representation(self.config.representation, self.observation_space, self.config)
 
-        # build policy.
-        if self.config.policy == "Noisy_Q_network":
-            policy = REGISTRY_Policy["Noisy_Q_network"](
-                action_space=self.action_space, representation=representation, hidden_size=self.config.q_hidden_size,
-                normalize=normalize_fn, initialize=initializer, activation=activation,
-                use_distributed_training=self.distributed_training)
-        else:
-            raise AttributeError(f"{self.config.agent} currently does not support the policy named {self.config.policy}.")
+        # build the RL model.
+        model = NoisyDeepQNetwork(
+            representation=representation,
+            hidden_size=self.config.q_hidden_size,
+            action_space=self.action_space,
+            normalizer=self.normalizer_fn,
+            initializer=self.initializer,
+            activation=self.activation,
+            device=self.device,
+            use_distributed_training=self.distributed_training
+        )
 
-        return policy
+        return model
 
-    def get_actions(self, obs):
-        self.policy.noise_scale = self.noise_scale
-        _, argmax_action, _ = self.policy(obs)
-        action = argmax_action.numpy()
-        return action
+    @torch.no_grad()
+    def get_actions(self, obs) -> ActionOutput:
+        self.model.noise_scale = self.noise_scale
+        actions = self.model.act(obs)
+        return ActionOutput(env_actions=actions.cpu().numpy())
 
     def train_epochs(self, n_epochs=1):
         train_info = {}
         for _ in range(n_epochs):
             samples = self.memory.sample()
-            self.policy.noise_scale = self.noise_scale
+            self.model.noise_scale = self.noise_scale
             train_info = self.learner.update(**samples)
         return train_info
 
@@ -81,10 +81,10 @@ class NoisyDQN_Agent(Agent):
         for _ in tqdm(range(train_steps)):
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
-            acts = self.get_actions(obs)
+            acts = self.get_actions(obs).env_actions
             next_obs, rewards, terminals, truncations, infos = self.train_envs.step(acts)
 
-            self.callback.on_train_step(self.current_step, envs=self.train_envs, policy=self.policy,
+            self.callback.on_train_step(self.current_step, envs=self.train_envs, model=self.model,
                                         obs=obs, acts=acts, next_obs=next_obs, rewards=rewards,
                                         terminals=terminals, truncations=truncations, infos=infos,
                                         train_steps=train_steps)
@@ -94,7 +94,7 @@ class NoisyDQN_Agent(Agent):
                 update_info = self.train_epochs(n_epochs=self.n_epochs)
                 self.log_infos(update_info, self.current_step)
                 train_info.update(update_info)
-                self.callback.on_train_epochs_end(self.current_step, policy=self.policy, memory=self.memory,
+                self.callback.on_train_epochs_end(self.current_step, model=self.model, memory=self.memory,
                                                   current_episode=self.current_episode, train_steps=train_steps,
                                                   update_info=update_info)
 
@@ -109,18 +109,18 @@ class NoisyDQN_Agent(Agent):
                         self.current_episode[i] += 1
                         if self.use_wandb:
                             episode_info = {
-                                f"Episode-Steps/env-{i}": infos[i]["episode_step"],
-                                f"Train-Episode-Rewards/env-{i}": infos[i]["episode_score"]
+                                f"Episode-Steps/rank_{self.rank}/env-{i}": infos[i]["episode_step"],
+                                f"Train-Episode-Rewards/rank_{self.rank}/env-{i}": infos[i]["episode_score"]
                             }
                         else:
                             episode_info = {
-                                f"Episode-Steps": {f"env-{i}": infos[i]["episode_step"]},
-                                f"Train-Episode-Rewards": {f"env-{i}": infos[i]["episode_score"]}
+                                f"Episode-Steps/rank_{self.rank}": {f"env-{i}": infos[i]["episode_step"]},
+                                f"Train-Episode-Rewards/rank_{self.rank}": {f"env-{i}": infos[i]["episode_score"]}
                             }
                         self.log_infos(episode_info, self.current_step)
                         train_info.update(episode_info)
-                        self.callback.on_train_episode_info(envs=self.train_envs, policy=self.policy, env_id=i,
-                                                            infos=infos, use_wandb=self.use_wandb,
+                        self.callback.on_train_episode_info(envs=self.train_envs, model=self.model, env_id=i,
+                                                            infos=infos, rank=self.rank, use_wandb=self.use_wandb,
                                                             current_step=self.current_step,
                                                             current_episode=self.current_episode,
                                                             train_steps=train_steps)
@@ -129,8 +129,8 @@ class NoisyDQN_Agent(Agent):
             if self.noise_scale > self.end_noise:
                 self.noise_scale = self.noise_scale - self.delta_noise
             if terminals[0]:
-                self.policy.update_noise(self.noise_scale)
-            self.callback.on_train_step_end(self.current_step, envs=self.train_envs, policy=self.policy,
+                self.model.update_noise(self.noise_scale)
+            self.callback.on_train_step_end(self.current_step, envs=self.train_envs, model=self.model,
                                             train_steps=train_steps, train_info=train_info)
         return train_info
 
@@ -149,18 +149,18 @@ class NoisyDQN_Agent(Agent):
             for idx, img in enumerate(images):
                 videos[idx].append(img)
 
-        self.policy.noise_scale = 0.0
+        self.model.noise_scale = 0.0
         while current_episode < test_episodes:
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
-            acts = self.get_actions(obs)
+            acts = self.get_actions(obs).env_actions
             next_obs, rewards, terminals, truncations, infos = test_envs.step(acts)
             if self.config.render_mode == "rgb_array" and self.render:
                 images = test_envs.render(self.config.render_mode)
                 for idx, img in enumerate(images):
                     videos[idx].append(img)
 
-            self.callback.on_test_step(envs=test_envs, policy=self.policy, images=images,
+            self.callback.on_test_step(envs=test_envs, model=self.model, images=images,
                                        obs=obs, acts=acts, next_obs=next_obs, rewards=rewards,
                                        terminals=terminals, truncations=truncations, infos=infos,
                                        current_train_step=self.current_step,
@@ -192,7 +192,7 @@ class NoisyDQN_Agent(Agent):
         }
         self.log_infos(test_info, self.current_step)
 
-        self.callback.on_test_end(envs=test_envs, policy=self.policy,
+        self.callback.on_test_end(envs=test_envs, model=self.model,
                                   current_train_step=self.current_step,
                                   current_step=current_step, current_episode=current_episode,
                                   scores=scores, best_score=best_score)

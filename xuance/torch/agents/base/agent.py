@@ -294,7 +294,10 @@ class Agent(ABC):
             return rewards
 
     def _to_tensor(self, x):
-        return None if x is None else torch.as_tensor(x, device=self.device)
+        if x is None:
+            return None
+        else:
+            return torch.as_tensor(x, device=self.device)
 
     def _build_representation(self, representation_key: str,
                               input_space: Space[Any],
@@ -313,9 +316,9 @@ class Agent(ABC):
         input_representations = dict(
             input_shape=space2shape(input_space),
             hidden_sizes=getattr(config, "representation_hidden_size", None),
-            normalize=NormalizeFunctions[config.normalize] if hasattr(config, "normalize") else None,
-            initialize=nn.init.orthogonal_,
-            activation=ActivationFunctions[config.activation],
+            normalize=self.normalize_fn,
+            initialize=self.initializer,
+            activation=self.activation,
             kernels=getattr(config, "kernels", None),
             strides=getattr(config, "strides", None),
             filters=getattr(config, "filters", None),
@@ -327,7 +330,8 @@ class Agent(ABC):
             depth=getattr(config, "depth", None),
             heads=getattr(config, "heads", None),
             FFN_dim=getattr(config, "FFN_dim", None),
-            device=self.device)
+            device=self.device
+        )
         representation = REGISTRY_Representation[representation_key](**input_representations)
         if representation_key not in REGISTRY_Representation:
             raise AttributeError(f"{representation_key} is not registered in REGISTRY_Representation.")

@@ -1,0 +1,91 @@
+from argparse import Namespace
+from gymnasium.spaces import Space
+from xuance.common import List, Optional, MultiAgentBaseCallback
+from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
+from xuance.tensorflow import Module, ModuleDict
+from xuance.tensorflow.utils import ActivationFunctions
+from xuance.tensorflow.agents.multi_agent_rl.iddpg_agents import IDDPG_Agents
+from xuance.tensorflow.rl_models import DeterministicActor, TwinActionValueCritic
+from xuance.tensorflow.rl_models.architectures import IndependentTwinDelayedActorCritic
+
+
+class ITD3_Agents(IDDPG_Agents):
+    """The implementation of Independent TD3 agents.
+
+    Args:
+        config: the Namespace variable that provides hyperparameters and other settings.
+        envs: the vectorized environments.
+        callback: A user-defined callback function object to inject custom logic during training.
+    """
+
+    def __init__(
+            self,
+            config: Namespace,
+            envs: Optional[DummyVecMultiAgentEnv | SubprocVecMultiAgentEnv] = None,
+            num_agents: Optional[int] = None,
+            agent_keys: Optional[List[str]] = None,
+            state_space: Optional[Space] = None,
+            observation_space: Optional[Space] = None,
+            action_space: Optional[Space] = None,
+            callback: Optional[MultiAgentBaseCallback] = None
+    ):
+        super(ITD3_Agents, self).__init__(
+            config, envs, num_agents, agent_keys, state_space, observation_space, action_space, callback
+        )
+
+    def _build_model(self) -> Module:
+        """
+        Build the MARL model.
+
+        Returns:
+            model (torch.nn.Module): The MARL model.
+        """
+        actor_networks = ModuleDict()
+        critic_networks = ModuleDict()
+        for group_key, group_agents in self.groups.items():
+            reference_agent = group_agents[0]
+            # build agent feature encoder as actor representations
+            actor_feature_encoder = self._build_agent_feature_encoder(
+                representation_choice=self.config.representation,
+                group_agents=group_agents,
+                input_space=self.observation_space[reference_agent]
+            )
+            # build inner-group shared actor-network
+            actor_networks[group_key] = DeterministicActor(
+                representation=actor_feature_encoder,
+                actor_hidden_size=self.config.actor_hidden_size,
+                action_space=self.action_space[reference_agent],
+                normalizer=self.normalizer_fn,
+                initializer=self.initializer,
+                activation=self.activation,
+                activation_action=ActivationFunctions[self.config.activation_action],
+                device=self.device
+            )
+            # build critic feature encoder as critic representations
+            critic_feature_encoder = self._build_agent_feature_encoder(
+                representation_choice=self.config.representation,
+                group_agents=group_agents,
+                input_space=self.observation_space[reference_agent]
+            )
+            # build inner-group shared critic-network
+            critic_networks[group_key] = TwinActionValueCritic(
+                representation=critic_feature_encoder,
+                action_space=self.action_space[reference_agent],
+                critic_hidden_size=self.config.critic_hidden_size,
+                normalizer=self.normalizer_fn,
+                initializer=self.initializer,
+                activation=self.activation,
+                device=self.device
+            )
+
+        # build the RL model
+        model = IndependentTwinDelayedActorCritic(
+            grouping=self.agent_grouping,
+            actors=actor_networks,
+            critics=critic_networks,
+            use_rnn=self.use_rnn,
+            device=self.device,
+            use_distributed_training=self.distributed_training
+        )
+
+        return model

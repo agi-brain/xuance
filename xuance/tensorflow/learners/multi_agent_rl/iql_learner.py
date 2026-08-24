@@ -4,7 +4,7 @@ Implementation: TensorFlow 2.X
 """
 from argparse import Namespace
 from xuance.common import List
-from xuance.tensorflow import tf, tk, Module
+from xuance.tensorflow import tf, keras, Module
 from xuance.tensorflow.learners import LearnerMAS
 
 
@@ -23,9 +23,9 @@ class IQL_Learner(LearnerMAS):
 
     def build_optimizer(self):
         if ("macOS" in self.os_name) and ("arm" in self.os_name):  # For macOS with Apple's M-series chips.
-            self.optimizer = {k: tk.optimizers.legacy.Adam(self.config.learning_rate) for k in self.model_keys}
+            self.optimizer = {k: keras.optimizers.legacy.Adam(self.config.learning_rate) for k in self.model_keys}
         else:
-            self.optimizer = {k: tk.optimizers.Adam(self.config.learning_rate) for k in self.model_keys}
+            self.optimizer = {k: keras.optimizers.Adam(self.config.learning_rate) for k in self.model_keys}
 
     @tf.function
     def forward_fn(self, *args):

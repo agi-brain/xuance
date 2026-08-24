@@ -1,13 +1,27 @@
+import torch
 import numpy as np
+from torch.nn import Module
 from argparse import Namespace
+from operator import itemgetter
 from gymnasium.spaces import Space
 from xuance.common import List, Optional, MultiAgentBaseCallback
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
-from xuance.tensorflow import tk
-from xuance.tensorflow.agents import MARLAgents
+from xuance.tensorflow import ModuleDict
+from xuance.tensorflow.agents import OffPolicyMARLAgents
+from xuance.tensorflow.rl_models.modules import MARLActionOutput
+from xuance.tensorflow.rl_models.heads import ValueHead, DCG_Utility, DCG_Payoff, Coordination_Graph
+from xuance.tensorflow.rl_models.architectures import DeepCoordinationGraph
 
 
-class DCG_Agents(MARLAgents):
+class DCG_Agents(OffPolicyMARLAgents):
+    """The implementation of DCG agents.
+
+    Args:
+        config: the Namespace variable that provides hyperparameters and other settings.
+        envs: the vectorized environments.
+        callback: A user-defined callback function object to inject custom logic during training.
+    """
+
     def __init__(
             self,
             config: Namespace,
@@ -22,101 +36,120 @@ class DCG_Agents(MARLAgents):
         super(DCG_Agents, self).__init__(
             config, envs, num_agents, agent_keys, state_space, observation_space, action_space, callback
         )
-        self.gamma = config.gamma
-        self.start_greedy, self.end_greedy = config.start_greedy, config.end_greedy
-        self.egreedy = self.start_greedy
+        self.state_space = envs.state_space
+        self.use_global_state = True if config.agent == "DCG_S" else False
         self.delta_egreedy = (self.start_greedy - self.end_greedy) / config.decay_step_greedy
 
-        input_representation = get_repre_in(config)
-        self.use_rnn = config.use_rnn
-        if self.use_rnn:
-            kwargs_rnn = {"N_recurrent_layers": config.N_recurrent_layers,
-                          "dropout": config.dropout,
-                          "rnn": config.rnn}
-            representation = REGISTRY_Representation[config.representation](*input_representation, **kwargs_rnn)
-        else:
-            representation = REGISTRY_Representation[config.representation](*input_representation)
-        repre_state_dim = representation.output_shapes['state'][0]
-        from xuance.tensorflow.policies.coordination_graph import DCG_utility, DCG_payoff, Coordination_Graph
-        utility = DCG_utility(repre_state_dim, config.hidden_utility_dim, config.dim_act)
-        payoffs = DCG_payoff(repre_state_dim * 2, config.hidden_payoff_dim, config.dim_act, config)
-        dcgraph = Coordination_Graph(config.n_agents, config.graph_type)
-        dcgraph.set_coordination_graph()
-        if config.env_name == "StarCraft2":
-            action_space = config.action_space
-        else:
-            action_space = config.action_space[config.agent_keys[0]]
-        if config.agent == "DCG_S":
-            policy = REGISTRY_Policy[config.policy](action_space,
-                                                    config.state_space.shape[0], representation,
-                                                    utility, payoffs, dcgraph, config.hidden_bias_dim,
-                                                    None, None, tk.layers.Activation('relu'), device,
-                                                    use_rnn=config.use_rnn,
-                                                    rnn=config.rnn)
-        else:
-            policy = REGISTRY_Policy[config.policy](action_space,
-                                                    config.state_space.shape[0], representation,
-                                                    utility, payoffs, dcgraph, None,
-                                                    None, None, tk.layers.Activation('relu'), device,
-                                                    use_rnn=config.use_rnn,
-                                                    rnn=config.rnn)
-        lr_scheduler = MyLinearLR(config.learning_rate, start_factor=1.0, end_factor=self.end_factor_lr_decay,
-                                  total_iters=get_total_iters(config.agent_name, config))
-        optimizer = tk.optimizers.Adam(lr_scheduler)
-        self.observation_space = envs.observation_space
-        self.action_space = envs.action_space
-        self.representation_info_shape = policy.representation.output_shapes
-        self.auxiliary_info_shape = {}
+        # build policy, optimizers, schedulers
+        self.model = self._build_model()  # build the MARL model
+        self.memory = self._build_memory()  # build memory
+        self.learner = self._build_learner(self.config, self.agent_grouping, self.model, self.callback)
 
-        if config.state_space is not None:
-            config.dim_state, state_shape = config.state_space.shape, config.state_space.shape
-        else:
-            config.dim_state, state_shape = None, None
-
-        buffer = MARL_OffPolicyBuffer_RNN if self.use_rnn else MARL_OffPolicyBuffer
-        input_buffer = (config.n_agents, state_shape, config.obs_shape, config.act_shape, config.rew_shape,
-                        config.done_shape, envs.num_envs, config.buffer_size, config.batch_size)
-        memory = buffer(*input_buffer, max_episode_steps=envs.max_episode_steps, dim_act=config.dim_act)
-
+    def _build_learner(self, *args):
         from xuance.tensorflow.learners.multi_agent_rl.dcg_learner import DCG_Learner
-        learner = DCG_Learner(config, policy, optimizer,
-                              config.device, config.model_dir, config.gamma, config.sync_frequency)
+        return DCG_Learner(*args)
 
-        super(DCG_Agents, self).__init__(config, envs, policy, memory, learner, device,
-                                         config.log_dir, config.model_dir)
-        self.on_policy = False
+    def _build_model(self) -> Module:
+        """
+        Build the MARL model.
 
-    def act(self, obs_n, *rnn_hidden, avail_actions=None, test_mode=False):
-        batch_size = obs_n.shape[0]
-        obs_n = tf.convert_to_tensor(obs_n)
-        obs_in = tf.reshape(obs_n, [batch_size * self.n_agents, 1, -1])
-        rnn_hidden_next, hidden_states = self.learner.get_hidden_states(obs_in, *rnn_hidden)
-        greedy_actions = self.learner.act(tf.reshape(hidden_states, [batch_size, self.n_agents, -1]),
-                                          avail_actions=avail_actions)
-        greedy_actions = greedy_actions.numpy()
+        Returns:
+            model (torch.nn.Module): The MARL model.
+        """
+        representations = ModuleDict()
+        for group_key, group_agents in self.groups.items():
+            reference_agent = group_agents[0]
+            # build agent feature encoder as representations
+            representations[group_key] = self._build_agent_feature_encoder(
+                representation_choice=self.config.representation,
+                group_agents=group_agents,
+                input_space=self.observation_space[reference_agent]
+            )
 
-        if test_mode:
-            return rnn_hidden_next, greedy_actions
+        repre_state_dim = representations[self.group_keys[0]].output_shapes['state'][0]
+        max_action_dim = max([self.action_space[key].n for key in self.agent_keys])
+        utility = DCG_Utility(repre_state_dim, self.config.hidden_utility_dim, max_action_dim, self.device)
+        payoffs = DCG_Payoff(repre_state_dim * 2, self.config.hidden_payoff_dim, max_action_dim,
+                             self.config.low_rank_payoff, self.config.payoff_rank, self.device)
+        dcg_graph = Coordination_Graph(self.n_agents, self.config.graph_type, self.device)
+        dcg_graph.set_coordination_graph()
+
+        if self.config.agent == "DCG_S":
+            hidden_size_bias = self.config.hidden_bias_dim
+            dcg_s = True
+            state_dim = self.state_space.shape[0]
+            self.bias = ValueHead(
+                feature_dim=state_dim,
+                hidden_size=hidden_size_bias,
+                normalizer=self.normalizer_fn,
+                initializer=self.initializer,
+                activation=self.activation,
+                device=self.device
+            )
         else:
-            if avail_actions is None:
-                random_actions = np.random.choice(self.dim_act, [self.nenvs, self.n_agents])
-            else:
-                random_actions = CategoricalDistribution(tf.convert_to_tensor(avail_actions)).stochastic_sample().numpy()
-            if np.random.rand() < self.egreedy:
-                return rnn_hidden_next, random_actions
-            else:
-                return rnn_hidden_next, greedy_actions
+            dcg_s = False
+            self.bias = None
 
-    def train(self, i_step, n_epochs=1):
-        if self.egreedy >= self.end_greedy:
-            self.egreedy = self.start_greedy - self.delta_egreedy * i_step
-        info_train = {}
-        if i_step > self.start_training:
-            for i_epoch in range(n_epochs):
-                sample = self.memory.sample()
-                if self.use_rnn:
-                    info_train = self.learner.update_recurrent(sample)
-                else:
-                    info_train = self.learner.update(sample)
-        info_train["epsilon-greedy"] = self.egreedy
-        return info_train
+        model = DeepCoordinationGraph(
+            grouping=self.agent_grouping,
+            action_space=self.action_space,
+            representation=representations,
+            utility=utility,
+            payoffs=payoffs,
+            dcg_graph=dcg_graph,
+            dcg_s=dcg_s,
+            bias=self.bias,
+            use_rnn=self.use_rnn,
+            device=self.device,
+            use_distributed_training=self.distributed_training
+        )
+
+        return model
+
+    @torch.no_grad()
+    def get_actions(
+            self,
+            obs_list: List[dict],
+            avail_actions_list: Optional[List[dict]] = None,
+            rnn_states: Optional[dict] = None,
+            test_mode: Optional[bool] = False,
+            **kwargs
+    ) -> MARLActionOutput:
+        """
+        Returns actions for agents.
+
+        Parameters:
+            obs_list (List[dict]): Observations for each agent in self.agent_keys.
+            avail_actions_list (Optional[List[dict]]): Actions mask values, default is None.
+            rnn_states (Optional[dict]): The hidden variables of the RNN.
+            test_mode (Optional[bool]): True for testing without noises.
+
+        Returns:
+            rnn_states (dict): The new hidden states for RNN (if self.use_rnn=True).
+            actions_dict (dict): The output actions.
+        """
+        batch_size = len(obs_list)
+        obs_input, agent_indices, avail_actions_input = self._build_inputs(obs_list, avail_actions_list)
+        rnn_states_new, hidden_states = self.model.get_hidden_states(observations=obs_input,
+                                                                     agent_indices=agent_indices,
+                                                                     rnn_states=rnn_states,
+                                                                     use_target_net=False)
+        if self.use_actions_mask:
+            if self.use_parameter_sharing:
+                avail_actions_input = avail_actions_input[self.model_keys[0]].reshape(batch_size, self.n_agents, -1)
+            else:
+                avail_actions_input = np.stack(itemgetter(*self.agent_keys)(avail_actions_input),
+                                               axis=-2).reshape(batch_size, self.n_agents, -1)
+        hidden_states = hidden_states.reshape([batch_size, self.n_agents, -1])
+        actions = self.learner.act(hidden_states, avail_actions=avail_actions_input.grouped_tensor)
+
+        actions_out = actions.reshape([batch_size, self.n_agents]).cpu().numpy()
+        actions_list = [{k: actions_out[e, i] for i, k in enumerate(self.agent_keys)} for e in range(batch_size)]
+
+        if not test_mode:  # get random actions
+            actions_list = self.exploration(batch_size, actions_list, avail_actions_list)
+
+        return MARLActionOutput(
+            env_actions=actions_list,
+            rnn_states=rnn_states_new
+        )

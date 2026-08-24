@@ -1,8 +1,7 @@
 import torch
 import torch.nn as nn
 import numpy as np
-from xuance.common import Optional, Sequence, Tuple, Type, Union, Callable, Any
-
+from typing import Optional, Sequence, Tuple, Type, Union, Callable, Any
 
 ModuleType = Type[nn.Module]
 
@@ -21,14 +20,19 @@ def mlp_block(input_dim: int,
               device: Optional[Union[str, int, torch.device]] = None) -> Tuple[Sequence[ModuleType], Tuple[int]]:
     block = []
     linear = nn.Linear(input_dim, output_dim, device=device)
+
     if initialize is not None:
         initialize(linear.weight)
         nn.init.constant_(linear.bias, 0)
+
     block.append(linear)
+
     if activation is not None:
         block.append(activation())
+
     if normalize is not None:
         block.append(normalize(output_dim, device=device))
+
     return block, (output_dim,)
 
 
@@ -41,11 +45,19 @@ def cnn_block(input_shape: Sequence[int],
               initialize: Optional[Callable[[torch.Tensor], torch.Tensor]] = None,
               device: Optional[Union[str, int, torch.device]] = None
               ) -> Tuple[Sequence[ModuleType], Tuple]:
+    """Build a CNN block."""
     assert len(input_shape) == 3  # CxHxW
     C, H, W = input_shape
     padding = int((kernel_size - stride) // 2)
     block = []
-    cnn = nn.Conv2d(C, filter, kernel_size, stride, padding=padding, device=device)
+    cnn = nn.Conv2d(
+        in_channels=C,
+        out_channels=filter,
+        kernel_size=kernel_size,
+        stride=stride,
+        padding=padding,
+        device=device
+    )
     if initialize is not None:
         initialize(cnn.weight)
         nn.init.constant_(cnn.bias, 0)
@@ -122,11 +134,11 @@ def lstm_block(input_dim: int,
 
 class Moments(nn.Module):
     def __init__(
-        self,
-        decay: float = 0.99,
-        max_: float = 1e8,
-        percentile_low: float = 0.05,
-        percentile_high: float = 0.95,
+            self,
+            decay: float = 0.99,
+            max_: float = 1e8,
+            percentile_low: float = 0.05,
+            percentile_high: float = 0.95,
     ) -> None:
         super().__init__()
         self._decay = decay
@@ -144,4 +156,3 @@ class Moments(nn.Module):
         self.high = self._decay * self.high + (1 - self._decay) * high
         invscale = torch.max(1 / self._max, self.high - self.low)
         return self.low.detach(), invscale.detach()
-

@@ -5,7 +5,7 @@ Implementation: TensorFlow2
 """
 import numpy as np
 from argparse import Namespace
-from xuance.tensorflow import tf, tk, Module
+from xuance.tensorflow import tf, keras, Module
 from xuance.tensorflow.learners import Learner
 
 
@@ -18,15 +18,15 @@ class C51_Learner(Learner):
         if ("macOS" in self.os_name) and ("arm" in self.os_name):  # For macOS with Apple's M-series chips.
             if self.distributed_training:
                 with self.policy.mirrored_strategy.scope():
-                    self.optimizer = tk.optimizers.legacy.Adam(config.learning_rate)
+                    self.optimizer = keras.optimizers.legacy.Adam(config.learning_rate)
             else:
-                self.optimizer = tk.optimizers.legacy.Adam(config.learning_rate)
+                self.optimizer = keras.optimizers.legacy.Adam(config.learning_rate)
         else:
             if self.distributed_training:
                 with self.policy.mirrored_strategy.scope():
-                    self.optimizer = tk.optimizers.Adam(config.learning_rate)
+                    self.optimizer = keras.optimizers.Adam(config.learning_rate)
             else:
-                self.optimizer = tk.optimizers.Adam(config.learning_rate)
+                self.optimizer = keras.optimizers.Adam(config.learning_rate)
         self.gamma = config.gamma
         self.sync_frequency = config.sync_frequency
 

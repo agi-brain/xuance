@@ -6,13 +6,13 @@ import torch
 from gymnasium import Space
 from torch.nn import Module, ModuleDict
 
-from xuance.torch import REGISTRY_Policy
-from xuance.torch.communications.attention_comm import TarMAC
-from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
+# from xuance.tensorflow import REGISTRY_Policy
+from xuance.tensorflow.communications.attention_comm import TarMAC
+from xuance.tensorflow.utils import normalizerFunctions, ActivationFunctions
 from xuance.common import MultiAgentBaseCallback
 
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv, space2shape
-from xuance.torch.agents.multi_agent_rl.ic3net_agents import IC3Net_Agents
+from xuance.tensorflow.agents.multi_agent_rl.ic3net_agents import IC3Net_Agents
 
 
 class TarMAC_Agents(IC3Net_Agents):
@@ -51,8 +51,8 @@ class TarMAC_Agents(IC3Net_Agents):
             communicator[key] = TarMAC(**input_communicator)
         return communicator
 
-    def _build_policy(self) -> Module:
-        normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None
+    def _build_model(self) -> Module:
+        normalizer_fn = normalizerFunctions[self.config.normalizer] if hasattr(self.config, "normalizer") else None
         initializer = torch.nn.init.orthogonal_
         activation = ActivationFunctions[self.config.activation]
         device = self.device
@@ -78,7 +78,7 @@ class TarMAC_Agents(IC3Net_Agents):
                 action_space=self.action_space, n_agents=self.n_agents,
                 representation_actor=A_representation, representation_critic=C_representation,
                 actor_hidden_size=self.config.actor_hidden_size, critic_hidden_size=self.config.critic_hidden_size,
-                normalize=normalize_fn, initialize=initializer, activation=activation,
+                normalizer=normalizer_fn, initializer=initializer, activation=activation,
                 device=device, use_distributed_training=self.distributed_training,
                 use_parameter_sharing=self.use_parameter_sharing, model_keys=self.model_keys,
                 use_rnn=self.use_rnn, rnn=self.config.rnn if self.use_rnn else None,
@@ -87,4 +87,4 @@ class TarMAC_Agents(IC3Net_Agents):
             self.continuous_control = False
         else:
             raise AttributeError(f"{agent} currently does not support the policy named {self.config.policy}.")
-        return policy
+        return model

@@ -5,9 +5,10 @@ Implementation: TensorFlow2
 """
 import numpy as np
 from argparse import Namespace
-from xuance.tensorflow import tf, tk, Module
+
+from xuance.tensorflow import tf, keras, Module
 from xuance.tensorflow.learners import Learner
-from xuance.tensorflow.utils import merge_distributions
+from xuance.tensorflow.rl_models.modules import merge_distributions
 
 
 class PPG_Learner(Learner):
@@ -19,21 +20,21 @@ class PPG_Learner(Learner):
         if ("macOS" in self.os_name) and ("arm" in self.os_name):  # For macOS with Apple's M-series chips.
             if self.distributed_training:
                 with self.policy.mirrored_strategy.scope():
-                    self.optimizer = tk.optimizers.legacy.Adam(config.learning_rate)
+                    self.optimizer = keras.optimizers.legacy.Adam(config.learning_rate)
             else:
-                self.optimizer = tk.optimizers.legacy.Adam(config.learning_rate)
+                self.optimizer = keras.optimizers.legacy.Adam(config.learning_rate)
         else:
             if self.distributed_training:
                 with self.policy.mirrored_strategy.scope():
-                    self.optimizer = tk.optimizers.Adam(config.learning_rate)
+                    self.optimizer = keras.optimizers.Adam(config.learning_rate)
             else:
-                self.optimizer = tk.optimizers.Adam(config.learning_rate)
+                self.optimizer = keras.optimizers.Adam(config.learning_rate)
         self.ent_coef = config.ent_coef
         self.clip_range = config.clip_range
         self.kl_beta = config.kl_beta
         self.policy_iterations = 0
         self.value_iterations = 0
-        self.mse_loss = tk.losses.MeanSquaredError()
+        self.mse_loss = keras.losses.MeanSquaredError()
         self.is_continuous = self.policy.is_continuous
 
     @tf.function

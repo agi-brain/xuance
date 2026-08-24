@@ -1,13 +1,13 @@
 import torch
 from dataclasses import dataclass
-from typing import Dict
+from typing import Dict, Optional
 from xuance.common import AgentGrouping
 from xuance.torch import Tensor
 
 
 @dataclass
 class AgentGroupedTensor:
-    grouped_tensor: Dict[str, Tensor]
+    grouped_tensor: Optional[Dict[str, Tensor]]
     grouping: AgentGrouping
 
     @property
@@ -18,17 +18,19 @@ class AgentGroupedTensor:
             for index, agent in enumerate(agents)
         }
 
-    def group(self, group: str) -> Tensor | None:
+    def group(self, group: str) -> Optional[Tensor]:
         """[B, N_group, ...]"""
         if self.grouped_tensor is None:
             return None
         return self.grouped_tensor[group]
 
-    def packed(self, group: str) -> Tensor | None:
+    def packed(self, group: str) -> Optional[Tensor]:
         """[B, N_group, ...] -> [B*N_group, ...]"""
         if self.grouped_tensor is None:
             return None
+
         x = self.grouped_tensor[group]
+
         return x.flatten(0, 1)
 
     def agent(self, agent: str) -> Tensor | None:

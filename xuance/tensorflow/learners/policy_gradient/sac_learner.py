@@ -5,7 +5,7 @@ Implementation: TensorFlow2
 """
 import numpy as np
 from argparse import Namespace
-from xuance.tensorflow import tf, tk, Module
+from xuance.tensorflow import tf, keras, Module
 from xuance.tensorflow.learners import Learner
 
 
@@ -24,24 +24,24 @@ class SAC_Learner(Learner):
         if ("macOS" in self.os_name) and ("arm" in self.os_name):  # For macOS with Apple's M-series chips.
             if self.distributed_training:
                 with self.policy.mirrored_strategy.scope():
-                    self.optimizer = {'actor': tk.optimizers.legacy.Adam(config.learning_rate_actor),
-                                      'critic': tk.optimizers.legacy.Adam(config.learning_rate_critic)}
+                    self.optimizer = {'actor': keras.optimizers.legacy.Adam(config.learning_rate_actor),
+                                      'critic': keras.optimizers.legacy.Adam(config.learning_rate_critic)}
             else:
-                self.optimizer = {'actor': tk.optimizers.legacy.Adam(config.learning_rate_actor),
-                                  'critic': tk.optimizers.legacy.Adam(config.learning_rate_critic)}
+                self.optimizer = {'actor': keras.optimizers.legacy.Adam(config.learning_rate_actor),
+                                  'critic': keras.optimizers.legacy.Adam(config.learning_rate_critic)}
         else:
             if self.distributed_training:
                 with self.policy.mirrored_strategy.scope():
-                    self.optimizer = {'actor': tk.optimizers.Adam(config.learning_rate_actor),
-                                      'critic': tk.optimizers.Adam(config.learning_rate_critic)}
+                    self.optimizer = {'actor': keras.optimizers.Adam(config.learning_rate_actor),
+                                      'critic': keras.optimizers.Adam(config.learning_rate_critic)}
             else:
-                self.optimizer = {'actor': tk.optimizers.Adam(config.learning_rate_actor),
-                                  'critic': tk.optimizers.Adam(config.learning_rate_critic)}
+                self.optimizer = {'actor': keras.optimizers.Adam(config.learning_rate_actor),
+                                  'critic': keras.optimizers.Adam(config.learning_rate_critic)}
         self.tau = config.tau
         self.gamma = config.gamma
         self.alpha = config.alpha
         self.use_automatic_entropy_tuning = config.use_automatic_entropy_tuning
-        self.mse_loss = tk.losses.MeanSquaredError()
+        self.mse_loss = keras.losses.MeanSquaredError()
         if self.use_automatic_entropy_tuning:
             self.target_entropy = -np.prod(policy.action_space.shape).item()
             if self.distributed_training:
@@ -49,16 +49,16 @@ class SAC_Learner(Learner):
                     self.alpha_layer = AlphaLayer()
                     self.alpha = tf.exp(self.alpha_layer.log_alpha)
                     if ("macOS" in self.os_name) and ("arm" in self.os_name):  # For macOS with Apple's M-series chips.
-                        self.alpha_optimizer = tk.optimizers.legacy.Adam(config.learning_rate_actor)
+                        self.alpha_optimizer = keras.optimizers.legacy.Adam(config.learning_rate_actor)
                     else:
-                        self.alpha_optimizer = tk.optimizers.Adam(config.learning_rate_actor)
+                        self.alpha_optimizer = keras.optimizers.Adam(config.learning_rate_actor)
             else:
                 self.alpha_layer = AlphaLayer()
                 self.alpha = tf.exp(self.alpha_layer.log_alpha)
                 if ("macOS" in self.os_name) and ("arm" in self.os_name):  # For macOS with Apple's M-series chips.
-                    self.alpha_optimizer = tk.optimizers.legacy.Adam(config.learning_rate_actor)
+                    self.alpha_optimizer = keras.optimizers.legacy.Adam(config.learning_rate_actor)
                 else:
-                    self.alpha_optimizer = tk.optimizers.Adam(config.learning_rate_actor)
+                    self.alpha_optimizer = keras.optimizers.Adam(config.learning_rate_actor)
 
     @tf.function
     def actor_forward_fn(self, obs_batch):

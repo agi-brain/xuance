@@ -1,6 +1,10 @@
 import random
 import numpy as np
-from xuance.tensorflow import tf, tk, Module, Tensor
+
+import keras
+import tensorflow as tf
+from tensorflow import Tensor
+from xuance.tensorflow.utils.module import Module
 
 
 def update_linear_decay(optimizer, step, total_steps, initial_lr, end_factor):
@@ -45,7 +49,7 @@ def assign_from_flat_params(flat_params: Tensor, model: Module) -> Module:
     return model
 
 
-class MyLinearLR(tk.optimizers.schedules.LearningRateSchedule):
+class MyLinearLR(keras.optimizers.schedules.LearningRateSchedule):
     def __init__(self, initial_learning_rate, start_factor, end_factor, total_iters):
         self.initial_learning_rate = initial_learning_rate
         self.start_factor = start_factor

@@ -1,12 +1,12 @@
 import math
-from numbers import Number
 import torch
 import numpy as np
+from numbers import Number
+from typing import Callable
 from abc import ABC, abstractmethod
 from torch.nn.functional import softplus, one_hot, softmax
 from torch.distributions import Categorical, Bernoulli, Normal, constraints
 from torch.distributions.utils import broadcast_all
-from xuance.common import Callable
 from xuance.torch import Tensor
 from xuance.torch.utils.operations import sym_log, sym_exp
 

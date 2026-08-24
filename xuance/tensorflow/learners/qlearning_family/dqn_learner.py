@@ -5,56 +5,47 @@ Implementation: TensorFlow2
 """
 import numpy as np
 from argparse import Namespace
-from xuance.tensorflow import tf, tk, Module
+from xuance.tensorflow import tf, keras, Module
 from xuance.tensorflow.learners import Learner
 
 
 class DQN_Learner(Learner):
     def __init__(self,
                  config: Namespace,
-                 policy: Module,
+                 model: Module,
                  callback):
-        super(DQN_Learner, self).__init__(config, policy, callback)
-        if ("macOS" in self.os_name) and ("arm" in self.os_name):  # For macOS with Apple's M-series chips.
-            if self.distributed_training:
-                with self.policy.mirrored_strategy.scope():
-                    self.optimizer = tk.optimizers.legacy.Adam(config.learning_rate)
-            else:
-                self.optimizer = tk.optimizers.legacy.Adam(config.learning_rate)
-        else:
-            if self.distributed_training:
-                with self.policy.mirrored_strategy.scope():
-                    self.optimizer = tk.optimizers.Adam(config.learning_rate)
-            else:
-                self.optimizer = tk.optimizers.Adam(config.learning_rate)
+        super(DQN_Learner, self).__init__(config, model, callback)
+        self.optimizer = keras.optimizers.Adam(config.learning_rate)
         self.gamma = config.gamma
         self.sync_frequency = config.sync_frequency
-        self.n_actions = self.policy.action_dim
-        self.mse_loss = tk.losses.MeanSquaredError()
+        self.n_actions = self.model.n_actions
+        self.mse_loss = keras.losses.MeanSquaredError()
 
     @tf.function
     def forward_fn(self, obs_batch, act_batch, next_batch, rew_batch, ter_batch):
         with tf.GradientTape() as tape:
-            _, _, evalQ = self.policy(obs_batch)
-            _, _, targetQ = self.policy.target(next_batch)
+            evalQ = self.model(obs_batch, training=True).values
+            targetQ = self.model.target(next_batch).values
             targetQ = tf.math.reduce_max(targetQ, axis=-1)
-            targetQ = rew_batch + self.gamma * (1 - ter_batch) * targetQ
+            rew_batch = tf.cast(rew_batch, targetQ.dtype)
+            ter_batch = tf.cast(ter_batch, targetQ.dtype)
+            targetQ = rew_batch + self.gamma * (1.0 - ter_batch) * targetQ
             targetQ = tf.stop_gradient(targetQ)
 
-            predictQ = tf.math.reduce_sum(evalQ * tf.one_hot(act_batch, evalQ.shape[1]), axis=-1)
+            predictQ = tf.gather(evalQ, act_batch, axis=-1, batch_dims=1)
 
             loss = self.mse_loss(targetQ, predictQ)
-            gradients = tape.gradient(loss, self.policy.trainable_variables)
+            gradients = tape.gradient(loss, self.model.trainable_variables)
             if self.use_grad_clip:
                 self.optimizer.apply_gradients([
                     (tf.clip_by_norm(grad, self.grad_clip_norm), var)
-                    for (grad, var) in zip(gradients, self.policy.trainable_variables)
+                    for (grad, var) in zip(gradients, self.model.trainable_variables)
                     if grad is not None
                 ])
             else:
                 self.optimizer.apply_gradients([
                     (grad, var)
-                    for (grad, var) in zip(gradients, self.policy.trainable_variables)
+                    for (grad, var) in zip(gradients, self.model.trainable_variables)
                     if grad is not None
                 ])
         return predictQ, loss
@@ -62,9 +53,10 @@ class DQN_Learner(Learner):
     @tf.function
     def learn(self, *inputs):
         if self.distributed_training:
-            predictQ, loss = self.policy.mirrored_strategy.run(self.forward_fn, args=inputs)
-            return (self.policy.mirrored_strategy.reduce(tf.distribute.ReduceOp.SUM, predictQ, axis=None),
-                    self.policy.mirrored_strategy.reduce(tf.distribute.ReduceOp.SUM, loss, axis=None))
+            strategy = tf.distribute.get_strategy()
+            predictQ, loss = strategy.run(self.forward_fn, args=inputs)
+            return (strategy.reduce(tf.distribute.ReduceOp.MEAN, predictQ, axis=None),
+                    strategy.reduce(tf.distribute.ReduceOp.MEAN, loss, axis=None))
         else:
             return self.forward_fn(*inputs)
 
@@ -76,18 +68,18 @@ class DQN_Learner(Learner):
         rew_batch = samples['rewards']
         ter_batch = samples['terminals']
         info = self.callback.on_update_start(self.iterations,
-                                             policy=self.policy, obs=obs_batch, act=act_batch,
+                                             model=self.model, obs=obs_batch, act=act_batch,
                                              next_obs=next_batch, rew=rew_batch, termination=ter_batch)
 
         predictQ, loss = self.learn(obs_batch, act_batch, next_batch, rew_batch, ter_batch)
         if self.iterations % self.sync_frequency == 0:
-            self.policy.copy_target()
+            self.model.copy_target()
 
         info.update({
             "Qloss": loss.numpy(),
             "predictQ": tf.math.reduce_mean(predictQ).numpy(),
         })
 
-        info.update(self.callback.on_update_end(self.iterations, policy=self.policy, info=info,
+        info.update(self.callback.on_update_end(self.iterations, model=self.model, info=info,
                                                 predictQ=predictQ, loss=loss))
         return info

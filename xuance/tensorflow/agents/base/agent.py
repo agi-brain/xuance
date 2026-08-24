@@ -7,11 +7,16 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from argparse import Namespace
 from gymnasium.spaces import Dict, Space
-from torch.utils.tensorboard import SummaryWriter
 from xuance.common import get_time_string, create_directory, RunningMeanStd, EPS, Optional, BaseCallback
 from xuance.environment import DummyVecEnv, SubprocVecEnv, space2shape
-from xuance.tensorflow import REGISTRY_Representation, REGISTRY_Learners, Module, tk
-from xuance.tensorflow.utils import NormalizeFunctions, ActivationFunctions, set_seed, set_device
+
+import tensorflow as tf
+from xuance.tensorflow import Module
+from xuance.tensorflow import REGISTRY_Representation, REGISTRY_Learners
+from xuance.tensorflow.utils import (normalizerFunctions, ActivationFunctions, initializerFunctions,
+                                     set_seed,
+                                     set_device,
+                                     TensorEnvWrapper, TensorRunningMeanStd)
 
 
 class Agent(ABC):
@@ -22,7 +27,7 @@ class Agent(ABC):
     learner, and training/testing logic, while environments are managed
     externally by the runner or provided explicitly by the user.
 
-    The agent can be initialized either with training environments (`envs`)
+    The agent can be initializerd either with training environments (`envs`)
     or, for inference/testing-only scenarios, without environments but with
     explicit observation and action spaces.
 
@@ -30,7 +35,7 @@ class Agent(ABC):
         config (Namespace): Configuration object containing hyperparameters,
             runtime settings, and environment specifications.
         envs (Optional[DummyVecEnv | SubprocVecEnv]): Vectorized environments
-            used for training. If None, the agent will not initialize training
+            used for training. If None, the agent will not initializer training
             environments and must be provided with `observation_space` and
             `action_space` to build networks.
         observation_space (Optional[gymnasium.spaces.Space]): Observation space
@@ -61,11 +66,26 @@ class Agent(ABC):
             callback: Optional[BaseCallback] = None
     ):
         set_seed(config.seed)
+
         # Training settings.
         self.config = config
-        self.use_rnn = config.use_rnn if hasattr(config, "use_rnn") else False
-        self.use_actions_mask = config.use_actions_mask if hasattr(config, "use_actions_mask") else False
-        self.distributed_training = config.distributed_training
+        self.use_rnn = getattr(config, "use_rnn", False)
+        self.use_actions_mask = getattr(config, "use_actions_mask", False)
+        self.is_tensor_memory = getattr(config, "use_tensor_memory", False)
+        self.distributed_training = getattr(config, "distributed_training", False)
+
+        # TensorFlow distributed execution should normally be configured by
+        # the runner via tf.distribute.Strategy.
+        self.strategy = getattr(config, "strategy", None)
+        if self.distributed_training:
+            if self.strategy is None:
+                self.strategy = tf.distribute.get_strategy()
+            self.world_size = int(self.strategy.num_replicas_in_sync)
+            self.rank = int(os.environ.get("RANK", 0))
+        else:
+            self.strategy = tf.distribute.get_strategy()
+            self.world_size = 1
+            self.rank = 0
 
         self.gamma = config.gamma
         self.start_training = getattr(config, "start_training", 1)
@@ -74,14 +94,22 @@ class Agent(ABC):
         self.device = self.config.device = set_device(self.config.device)
 
         # Environment attributes.
-        self.train_envs = envs
+        if self.is_tensor_memory and envs is not None:
+            self.train_envs = TensorEnvWrapper(envs)
+        else:
+            self.train_envs = envs
+
         self.render = config.render
         self.fps = config.fps
+
         if self.train_envs is None:
             if observation_space is None or action_space is None:
-                raise ValueError("Please provide the observation_space and action_space when the envs is not provided."
-                                 "Or the networks cannot be built."
-                                 "You can get them from test_envs.observation_space and test_envs.action_space.")
+                raise ValueError(
+                    "Please provide the observation_space and action_space when "
+                    "the envs is not provided. Or the networks cannot be built. "
+                    "You can get them from test_envs.observation_space and "
+                    "test_envs.action_space."
+                )
             self.n_envs = self.config.parallels
             self.observation_space = observation_space
             self.action_space = action_space
@@ -92,19 +120,42 @@ class Agent(ABC):
             self.episode_length = self.config.episode_length = self.train_envs.max_episode_steps
             self.observation_space = self.train_envs.observation_space
             self.action_space = self.train_envs.action_space
+
         self.current_step = 0
         self.current_episode = np.zeros((self.n_envs,), np.int32)
 
-        # Set normalizations for observations and rewards.
-        self.obs_rms = RunningMeanStd(shape=space2shape(self.observation_space))
-        self.ret_rms = RunningMeanStd(shape=())
+        # Observation/reward normalization.
+        if self.is_tensor_memory:
+            self.obs_rms = TensorRunningMeanStd(
+                shape=space2shape(self.observation_space),
+                device=self.device,
+                distributed=self.distributed_training,
+            )
+            self.ret_rms = TensorRunningMeanStd(
+                shape=(),
+                device=self.device,
+                distributed=self.distributed_training,
+            )
+            with tf.device(self.device):
+                self.returns = tf.zeros((self.n_envs,), dtype=tf.float32)
+        else:
+            self.obs_rms = RunningMeanStd(shape=space2shape(self.observation_space))
+            self.ret_rms = RunningMeanStd(shape=())
+            self.returns = np.zeros((self.n_envs,), np.float32)
+
         self.use_obsnorm = config.use_obsnorm
         self.use_rewnorm = config.use_rewnorm
         self.obsnorm_range = config.obsnorm_range
         self.rewnorm_range = config.rewnorm_range
-        self.returns = np.zeros((self.train_envs.num_envs,), np.float32)
+
+        # Network helpers.
+        self.normalizer_fn = normalizerFunctions[self.config.normalizer] if hasattr(self.config, "normalizer") else None
+        self.initializer = initializerFunctions[getattr(self.config, "initializer", "orthogonal")]
+        self.activation = ActivationFunctions[self.config.activation]
 
         # Prepare directories.
+        # Multi-worker string synchronization should preferably be done in the runner.
+        # If a common timestamp is supplied, all workers use it.
         time_string = get_time_string()
         seed = f"seed_{self.config.seed}_"
         self.model_dir_load = config.model_dir
@@ -113,122 +164,222 @@ class Agent(ABC):
         # Create logger.
         if config.logger == "tensorboard":
             log_dir = os.path.join(os.getcwd(), config.log_dir, seed + time_string)
-            create_directory(log_dir)
-            self.writer = SummaryWriter(log_dir)
+            if self.rank == 0:
+                create_directory(log_dir)
+            self.writer = tf.summary.create_file_writer(log_dir)
             self.use_wandb = False
+
         elif config.logger == "wandb":
             config_dict = vars(config)
             log_dir = config.log_dir
             wandb_dir = Path(os.path.join(os.getcwd(), config.log_dir))
-            create_directory(str(wandb_dir))
-            wandb.init(config=config_dict,
-                       project=config.project_name,
-                       entity=config.wandb_user_name,
-                       notes=socket.gethostname(),
-                       dir=wandb_dir,
-                       group=config.env_id,
-                       job_type=config.agent,
-                       name=time_string,
-                       reinit=True,
-                       settings=wandb.Settings(start_method="fork")
-                       )
-            # os.environ["WANDB_SILENT"] = "True"
+            if self.rank == 0:
+                create_directory(str(wandb_dir))
+                wandb.init(
+                    config=config_dict,
+                    project=config.project_name,
+                    entity=config.wandb_user_name,
+                    notes=socket.gethostname(),
+                    dir=wandb_dir,
+                    group=config.env_id,
+                    job_type=config.agent,
+                    name=time_string,
+                    reinit=True,
+                )
             self.use_wandb = True
         else:
             raise AttributeError("No logger is implemented.")
         self.log_dir = log_dir
 
         # Prepare necessary components.
-        self.policy: Optional[Module] = None
-        self.learner: Optional[Module] = None
+        self.model: Optional[Module] = None
+        self.learner: Optional[object] = None
         self.memory: Optional[object] = None
         self.callback = callback or BaseCallback()
 
-        self.meta_data = dict(algo=self.config.agent, env=self.config.env_name, env_id=self.config.env_id,
-                              dl_toolbox=self.config.dl_toolbox, device=self.device, seed=self.config.seed,
-                              xuance_version=xuance.__version__)
+        self.meta_data = dict(
+            algo=self.config.agent,
+            env=self.config.env_name,
+            env_id=self.config.env_id,
+            dl_toolbox=self.config.dl_toolbox,
+            device=self.device,
+            seed=self.config.seed,
+            xuance_version=xuance.__version__,
+        )
+
+    @staticmethod
+    def _tensor_stat_to_numpy(stat):
+        if isinstance(stat, dict):
+            return {
+                k: v.numpy() if isinstance(v, (tf.Tensor, tf.Variable)) else np.asarray(v)
+                for k, v in stat.items()
+            }
+        if isinstance(stat, (tf.Tensor, tf.Variable)):
+            return stat.numpy()
+        return np.asarray(stat)
+
+    @staticmethod
+    def _assign_tensor_stat(target, values):
+        if isinstance(target, dict):
+            for key, value in values.items():
+                if isinstance(target[key], tf.Variable):
+                    target[key].assign(value)
+                else:
+                    target[key] = value
+        elif isinstance(target, tf.Variable):
+            target.assign(values)
 
     def save_model(self, model_name, model_path=None):
-        # save the neural networks
-        if not os.path.exists(self.model_dir_save):
-            os.makedirs(self.model_dir_save)
+        if self.distributed_training and self.rank > 0:
+            return
+
         model_path = self.model_dir_save if model_path is None else model_path
         if not os.path.exists(model_path):
             os.makedirs(model_path)
+
         self.learner.save_model(os.path.join(model_path, model_name))
-        # save the observation status
+
         if self.use_obsnorm:
             obs_norm_path = os.path.join(model_path, "obs_rms.npy")
-            observation_stat = {'count': self.obs_rms.count,
-                                'mean': self.obs_rms.mean,
-                                'var': self.obs_rms.var}
-            np.save(obs_norm_path, observation_stat)
+            observation_stat = {
+                "count": self._tensor_stat_to_numpy(self.obs_rms.count),
+                "mean": self._tensor_stat_to_numpy(self.obs_rms.mean),
+                "var": self._tensor_stat_to_numpy(self.obs_rms.var),
+            }
+            np.save(obs_norm_path, observation_stat, allow_pickle=True)
 
     def load_model(self, path, model=None):
-        # load neural networks
         path_loaded = self.learner.load_model(path, model)
-        # recover observation status
+
         if self.use_obsnorm:
             obs_norm_path = os.path.join(path_loaded, "obs_rms.npy")
-            if os.path.exists(obs_norm_path):
-                observation_stat = np.load(obs_norm_path, allow_pickle=True).item()
-                self.obs_rms.count = observation_stat['count']
-                self.obs_rms.mean = observation_stat['mean']
-                self.obs_rms.var = observation_stat['var']
+            if not os.path.exists(obs_norm_path):
+                raise RuntimeError(
+                    f"Failed to load observation status file 'obs_rms.npy' from {obs_norm_path}!"
+                )
+
+            observation_stat = np.load(obs_norm_path, allow_pickle=True).item()
+            if self.is_tensor_memory:
+                self._assign_tensor_stat(self.obs_rms.count, observation_stat["count"])
+                self._assign_tensor_stat(self.obs_rms.mean, observation_stat["mean"])
+                self._assign_tensor_stat(self.obs_rms.var, observation_stat["var"])
             else:
-                raise RuntimeError(f"Failed to load observation status file 'obs_rms.npy' from {obs_norm_path}!")
+                self.obs_rms.count = observation_stat["count"]
+                self.obs_rms.mean = observation_stat["mean"]
+                self.obs_rms.var = observation_stat["var"]
 
     def log_infos(self, info: dict, x_index: int):
-        """
-        info: (dict) information to be visualized
-        n_steps: current step
-        """
         if self.use_wandb:
+            if self.rank != 0:
+                return
             for k, v in info.items():
                 if v is None:
                     continue
+                if isinstance(v, (tf.Tensor, tf.Variable)):
+                    v = v.numpy()
                 wandb.log({k: v}, step=x_index)
         else:
-            for k, v in info.items():
-                if v is None:
-                    continue
-                try:
-                    self.writer.add_scalar(k, v, x_index)
-                except:
-                    self.writer.add_scalars(k, v, x_index)
+            with self.writer.as_default():
+                for k, v in info.items():
+                    if v is None:
+                        continue
+                    if isinstance(v, dict):
+                        for sub_k, sub_v in v.items():
+                            if isinstance(sub_v, (tf.Tensor, tf.Variable)):
+                                sub_v = sub_v.numpy()
+                            tf.summary.scalar(f"{k}/{sub_k}", sub_v, step=x_index)
+                    else:
+                        if isinstance(v, (tf.Tensor, tf.Variable)):
+                            v = v.numpy()
+                        tf.summary.scalar(k, v, step=x_index)
+                self.writer.flush()
 
     def log_videos(self, info: dict, fps: int, x_index: int = 0):
         if self.use_wandb:
+            if self.rank != 0:
+                return
             for k, v in info.items():
                 if v is None:
                     continue
-                wandb.log({k: wandb.Video(v, fps=fps, format='gif')}, step=x_index)
+                wandb.log({k: wandb.Video(v, fps=fps, format="gif")}, step=x_index)
         else:
-            for k, v in info.items():
-                if v is None:
-                    continue
-                self.writer.add_video(k, v, fps=fps, global_step=x_index)
+            # tf.summary has no direct SummaryWriter.add_video equivalent.
+            # Log representative first frames as images instead.
+            with self.writer.as_default():
+                for k, v in info.items():
+                    if v is None:
+                        continue
+                    value = tf.convert_to_tensor(v)
+                    if value.shape.rank == 5:
+                        frame = value[:, 0]
+                        if frame.shape.rank == 4 and frame.shape[1] in (1, 3, 4):
+                            frame = tf.transpose(frame, [0, 2, 3, 1])
+                        tf.summary.image(k, frame, step=x_index, max_outputs=4)
+                self.writer.flush()
 
     def _process_observation(self, observations):
-        if self.use_obsnorm:
-            if isinstance(self.observation_space, Dict):
-                for key in self.observation_space.spaces.keys():
-                    observations[key] = np.clip(
-                        (observations[key] - self.obs_rms.mean[key]) / (self.obs_rms.std[key] + EPS),
-                        -self.obsnorm_range, self.obsnorm_range)
-            else:
-                observations = np.clip((observations - self.obs_rms.mean) / (self.obs_rms.std + EPS),
-                                       -self.obsnorm_range, self.obsnorm_range)
-            return observations
-        else:
+        if not self.use_obsnorm:
             return observations
 
-    def _process_reward(self, rewards):
-        if self.use_rewnorm:
-            std = np.clip(self.ret_rms.std, 0.1, 100)
-            return np.clip(rewards / std, -self.rewnorm_range, self.rewnorm_range)
+        if isinstance(self.observation_space, Dict):
+            for key in self.observation_space.spaces.keys():
+                if self.is_tensor_memory:
+                    eps = tf.cast(EPS, observations[key].dtype)
+                    observations[key] = tf.clip_by_value(
+                        (observations[key] - self.obs_rms.mean[key]) /
+                        (self.obs_rms.std[key] + eps),
+                        -self.obsnorm_range,
+                        self.obsnorm_range,
+                    )
+                else:
+                    observations[key] = np.clip(
+                        (observations[key] - self.obs_rms.mean[key]) /
+                        (self.obs_rms.std[key] + EPS),
+                        -self.obsnorm_range,
+                        self.obsnorm_range,
+                    )
         else:
+            if self.is_tensor_memory:
+                eps = tf.cast(EPS, observations.dtype)
+                observations = tf.clip_by_value(
+                    (observations - self.obs_rms.mean) /
+                    (self.obs_rms.std + eps),
+                    -self.obsnorm_range,
+                    self.obsnorm_range,
+                )
+            else:
+                observations = np.clip(
+                    (observations - self.obs_rms.mean) /
+                    (self.obs_rms.std + EPS),
+                    -self.obsnorm_range,
+                    self.obsnorm_range,
+                )
+        return observations
+
+    def _process_reward(self, rewards):
+        if not self.use_rewnorm:
             return rewards
+
+        if self.is_tensor_memory:
+            std = tf.clip_by_value(self.ret_rms.std, 0.1, 100.0)
+            return tf.clip_by_value(
+                rewards / std,
+                -self.rewnorm_range,
+                self.rewnorm_range,
+            )
+        else:
+            std = np.clip(self.ret_rms.std, 0.1, 100.0)
+            return np.clip(
+                rewards / std,
+                -self.rewnorm_range,
+                self.rewnorm_range,
+            )
+
+    def _to_tensor(self, x):
+        if x is None:
+            return None
+        with tf.device(self.device):
+            return tf.convert_to_tensor(x)
 
     def _build_representation(self, representation_key: str,
                               input_space: Optional[Space],
@@ -246,44 +397,58 @@ class Agent(ABC):
         """
         input_representations = dict(
             input_shape=space2shape(input_space),
-            hidden_sizes=config.representation_hidden_size if hasattr(config, "representation_hidden_size") else None,
-            normalize=NormalizeFunctions[config.normalize] if hasattr(config, "normalize") else None,
-            initialize=tk.initializers.Orthogonal(gain=1.0),
-            activation=ActivationFunctions[config.activation],
-            kernels=config.kernels if hasattr(config, "kernels") else None,
-            strides=config.strides if hasattr(config, "strides") else None,
-            filters=config.filters if hasattr(config, "filters") else None,
-            fc_hidden_sizes=config.fc_hidden_sizes if hasattr(config, "fc_hidden_sizes") else None)
+            hidden_sizes=getattr(config, "representation_hidden_size", None),
+            normalizer=self.normalizer_fn,
+            initializer=self.initializer,
+            activation=self.activation,
+            kernels=getattr(config, "kernels", None),
+            strides=getattr(config, "strides", None),
+            filters=getattr(config, "filters", None),
+            fc_hidden_sizes=getattr(config, "fc_hidden_sizes", None),
+            image_patch_size=getattr(config, "image_patch_size", None),
+            frame_patch_size=getattr(config, "frame_patch_size", None),
+            final_dim=getattr(config, "final_dim", None),
+            embedding_dim=getattr(config, "embedding_dim", None),
+            depth=getattr(config, "depth", None),
+            heads=getattr(config, "heads", None),
+            FFN_dim=getattr(config, "FFN_dim", None),
+        )
+        input_representations = {
+            key: value for key, value in input_representations.items()
+            if value is not None
+        }
         representation = REGISTRY_Representation[representation_key](**input_representations)
         if representation_key not in REGISTRY_Representation:
             raise AttributeError(f"{representation_key} is not registered in REGISTRY_Representation.")
         return representation
 
     @abstractmethod
-    def _build_policy(self) -> Module:
+    def _build_model(self, *args, **kwargs) -> Module:
         raise NotImplementedError
 
-    def _build_learner(self, *args):
+    def _build_learner(self, *args, **kwargs):
         return REGISTRY_Learners[self.config.learner](*args)
 
     @abstractmethod
-    def get_actions(self, observations):
+    def get_actions(self, *args, **kwargs):
         raise NotImplementedError
 
     @abstractmethod
-    def train(self, train_steps: int) -> dict:
+    def train(self, train_steps: int, **kwargs) -> dict:
         raise NotImplementedError
 
     @abstractmethod
     def test(self,
              test_episodes: int,
              test_envs: Optional[DummyVecEnv | SubprocVecEnv] = None,
-             close_envs: bool = True):
+             close_envs: bool = True,
+             **kwargs):
         raise NotImplementedError
 
     def finish(self):
         if self.use_wandb:
-            wandb.finish()
+            if self.rank == 0:
+                wandb.finish()
         else:
+            self.writer.flush()
             self.writer.close()
-        self.train_envs.close()

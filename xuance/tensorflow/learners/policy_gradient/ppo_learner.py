@@ -4,7 +4,7 @@ Paper link: https://arxiv.org/pdf/1707.06347.pdf
 Implementation: TensorFlow2
 """
 from argparse import Namespace
-from xuance.tensorflow import tf, tk, Module
+from xuance.tensorflow import tf, keras, Module
 from xuance.tensorflow.learners import Learner
 
 
@@ -14,7 +14,7 @@ class PPO_Learner(Learner):
                  policy: Module,
                  callback):
         super(PPO_Learner, self).__init__(config, policy, callback)
-        self.scheduler = tk.optimizers.schedules.PolynomialDecay(
+        self.scheduler = keras.optimizers.schedules.PolynomialDecay(
             initial_learning_rate=config.learning_rate,
             decay_steps=self.total_iters,
             end_learning_rate=config.learning_rate * self.end_factor_lr_decay,
@@ -23,15 +23,15 @@ class PPO_Learner(Learner):
         if ("macOS" in self.os_name) and ("arm" in self.os_name):  # For macOS with Apple's M-series chips.
             if self.distributed_training:
                 with self.policy.mirrored_strategy.scope():
-                    self.optimizer = tk.optimizers.legacy.Adam(learning_rate=self.scheduler, epsilon=1e-5)
+                    self.optimizer = keras.optimizers.legacy.Adam(learning_rate=self.scheduler, epsilon=1e-5)
             else:
-                self.optimizer = tk.optimizers.legacy.Adam(learning_rate=self.scheduler, epsilon=1e-5)
+                self.optimizer = keras.optimizers.legacy.Adam(learning_rate=self.scheduler, epsilon=1e-5)
         else:
             if self.distributed_training:
                 with self.policy.mirrored_strategy.scope():
-                    self.optimizer = tk.optimizers.Adam(learning_rate=self.scheduler, epsilon=1e-5)
+                    self.optimizer = keras.optimizers.Adam(learning_rate=self.scheduler, epsilon=1e-5)
             else:
-                self.optimizer = tk.optimizers.Adam(learning_rate=self.scheduler, epsilon=1e-5)
+                self.optimizer = keras.optimizers.Adam(learning_rate=self.scheduler, epsilon=1e-5)
         self.vf_coef = config.vf_coef
         self.ent_coef = config.ent_coef
         self.clip_range = config.clip_range

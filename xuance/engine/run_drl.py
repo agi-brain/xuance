@@ -79,17 +79,18 @@ class RunnerDRL(RunnerBase):
             self.config.action_space = self.envs.action_space
 
         # Build agent if not injected externally
-        if getattr(self.config, 'dl_toolbox', 'torch'):
+        dl_toolbox = getattr(self.config, "dl_toolbox", "torch").lower()
+        if dl_toolbox == "torch":
             from xuance.torch.agents import REGISTRY_Agents
             from xuance.torch.utils import collect_device_info
-        elif getattr(self.config, 'dl_toolbox', 'tensorflow'):
+        elif dl_toolbox == "tensorflow":
             from xuance.tensorflow.agents import REGISTRY_Agents
             from xuance.tensorflow.utils import collect_device_info
-        elif getattr(self.config, 'dl_toolbox', 'mindspore'):
+        elif dl_toolbox == "mindspore":
             from xuance.mindspore.agents import REGISTRY_Agents
             from xuance.mindspore.utils import collect_device_info
         else:
-            raise NotImplementedError
+            raise ValueError(f"Unsupported dl_toolbox: {dl_toolbox}")
         self.collect_device_info = collect_device_info
         self.agent = REGISTRY_Agents[self.config.agent](self.config, self.envs) if agent is None else agent
 
@@ -102,7 +103,7 @@ class RunnerDRL(RunnerBase):
         n_train_steps = max(1, running_steps // self.n_envs)
         self.agent.train(n_train_steps)
         self.rprint("Finish training.")
-        self.agent.save_model(model_name="final_train_model.pth")
+        self.agent.save_model(model_name="final_train_model")
 
     def _run_test(self, **kwargs):
         config_test = deepcopy(self.config)
@@ -200,7 +201,7 @@ class RunnerDRL(RunnerBase):
                                         "std": np.std(test_scores),
                                         "step": self.agent.current_step}
                     # save best model
-                    self.agent.save_model(model_name="best_model.pth", model_path=best_model_path)
+                    self.agent.save_model(model_name="best_model", model_path=best_model_path)
                     best_model_time_iso = datetime.now().astimezone().isoformat()
 
         # End benchmarking.

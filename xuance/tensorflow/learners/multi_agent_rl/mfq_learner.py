@@ -7,7 +7,7 @@ Implementation: TensorFlow 2.X
 from operator import itemgetter
 from argparse import Namespace
 from xuance.common import List, Optional
-from xuance.tensorflow import tf, tk, Module
+from xuance.tensorflow import tf, keras, Module
 from xuance.tensorflow.learners import LearnerMAS
 
 
@@ -27,9 +27,9 @@ class MFQ_Learner(LearnerMAS):
 
     def build_optimizer(self):
         if ("macOS" in self.os_name) and ("arm" in self.os_name):  # For macOS with Apple's M-series chips.
-            self.optimizer = {k: tk.optimizers.legacy.Adam(self.config.learning_rate) for k in self.model_keys}
+            self.optimizer = {k: keras.optimizers.legacy.Adam(self.config.learning_rate) for k in self.model_keys}
         else:
-            self.optimizer = {k: tk.optimizers.Adam(self.config.learning_rate) for k in self.model_keys}
+            self.optimizer = {k: keras.optimizers.Adam(self.config.learning_rate) for k in self.model_keys}
 
     def build_actions_mean_input(self, sample: Optional[dict], use_parameter_sharing: Optional[bool] = False):
         batch_size = sample['batch_size']

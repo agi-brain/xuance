@@ -7,8 +7,8 @@ import numpy as np
 from argparse import Namespace
 from operator import itemgetter
 from xuance.common import List
-from xuance.tensorflow import tk, Module
-from xuance.tensorflow import tf
+
+from xuance.tensorflow import tf, keras, Module
 from xuance.tensorflow.learners.multi_agent_rl.iac_learner import IAC_Learner
 
 
@@ -90,11 +90,11 @@ class VDAC_Learner(IAC_Learner):
                                                                 -self.value_clip_range, self.value_clip_range)
                     if self.use_value_norm:
                         self.value_normalizer[key].update(tf.reshape(value_target, [bs, 1]))
-                        value_target = tf.reshape(self.value_normalizer[key].normalize(tf.reshape(value_target,
+                        value_target = tf.reshape(self.value_normalizer[key].normalizer(tf.reshape(value_target,
                                                                                                   [bs, 1])), [bs])
                     if self.use_huber_loss:
-                        loss_v = tk.losses.huber(value_target, value_pred_i, self.huber_delta)
-                        loss_v_clipped = tk.losses.huber(value_target, value_clipped, self.huber_delta)
+                        loss_v = keras.losses.huber(value_target, value_pred_i, self.huber_delta)
+                        loss_v_clipped = keras.losses.huber(value_target, value_clipped, self.huber_delta)
                     else:
                         loss_v = (value_pred_i - value_target) ** 2
                         loss_v_clipped = (value_clipped - value_target) ** 2
@@ -103,9 +103,9 @@ class VDAC_Learner(IAC_Learner):
                 else:
                     if self.use_value_norm:
                         self.value_normalizer[key].update(value_target)
-                        value_target = self.value_normalizer[key].normalize(value_target)
+                        value_target = self.value_normalizer[key].normalizer(value_target)
                     if self.use_huber_loss:
-                        loss_v = tk.losses.huber(value_target, value_pred_i, self.huber_delta) * mask_values
+                        loss_v = keras.losses.huber(value_target, value_pred_i, self.huber_delta) * mask_values
                     else:
                         loss_v = ((value_pred_i - value_target) ** 2) * mask_values
                     loss_c.append(tf.reduce_sum(loss_v) / mask_values_sum)

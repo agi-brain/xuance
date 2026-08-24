@@ -4,7 +4,7 @@ Paper link: https://arxiv.org/pdf/1509.02971.pdf
 Implementation: TensorFlow2
 """
 from argparse import Namespace
-from xuance.tensorflow import tf, tk, Module
+from xuance.tensorflow import tf, keras, Module
 from xuance.tensorflow.learners import Learner
 
 
@@ -17,23 +17,23 @@ class DDPG_Learner(Learner):
         if ("macOS" in self.os_name) and ("arm" in self.os_name):  # For macOS with Apple's M-series chips.
             if self.distributed_training:
                 with self.policy.mirrored_strategy.scope():
-                    self.optimizer = {'actor': tk.optimizers.legacy.Adam(config.learning_rate_actor),
-                                      'critic': tk.optimizers.legacy.Adam(config.learning_rate_critic)}
+                    self.optimizer = {'actor': keras.optimizers.legacy.Adam(config.learning_rate_actor),
+                                      'critic': keras.optimizers.legacy.Adam(config.learning_rate_critic)}
             else:
-                self.optimizer = {'actor': tk.optimizers.legacy.Adam(config.learning_rate_actor),
-                                  'critic': tk.optimizers.legacy.Adam(config.learning_rate_critic)}
+                self.optimizer = {'actor': keras.optimizers.legacy.Adam(config.learning_rate_actor),
+                                  'critic': keras.optimizers.legacy.Adam(config.learning_rate_critic)}
 
         else:
             if self.distributed_training:
                 with self.policy.mirrored_strategy.scope():
-                    self.optimizer = {'actor': tk.optimizers.Adam(config.learning_rate_actor),
-                                      'critic': tk.optimizers.Adam(config.learning_rate_critic)}
+                    self.optimizer = {'actor': keras.optimizers.Adam(config.learning_rate_actor),
+                                      'critic': keras.optimizers.Adam(config.learning_rate_critic)}
             else:
-                self.optimizer = {'actor': tk.optimizers.Adam(config.learning_rate_actor),
-                                  'critic': tk.optimizers.Adam(config.learning_rate_critic)}
+                self.optimizer = {'actor': keras.optimizers.Adam(config.learning_rate_actor),
+                                  'critic': keras.optimizers.Adam(config.learning_rate_critic)}
         self.tau = config.tau
         self.gamma = config.gamma
-        self.mse_loss = tk.losses.MeanSquaredError()
+        self.mse_loss = keras.losses.MeanSquaredError()
 
     @tf.function
     def actor_forward_fn(self, obs_batch):

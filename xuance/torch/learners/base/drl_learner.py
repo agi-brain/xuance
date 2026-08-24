@@ -62,6 +62,7 @@ class Learner(ABC):
         return total_iters
 
     def save_model(self, model_path):
+        model_path += ".pth"
         if type(self.optimizer) is dict:
             torch.save(
                 {
@@ -94,6 +95,7 @@ class Learner(ABC):
 
     def load_model(self, path, model=None):
         target_path = os.path.join(path, model) if model is not None else path
+        target_path += ".pth"
         if os.path.isfile(target_path):  # load the specified model file
             model_path = target_path
             dir_name = os.path.dirname(model_path)

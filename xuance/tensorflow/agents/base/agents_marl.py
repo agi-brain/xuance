@@ -6,14 +6,17 @@ import numpy as np
 from abc import ABC, abstractmethod
 from pathlib import Path
 from argparse import Namespace
-from operator import itemgetter
+from typing import Optional, List, Dict, Union, Tuple
 from gymnasium.spaces import Space
-from torch.utils.tensorboard import SummaryWriter
-from xuance.common import get_time_string, create_directory, Optional, List, Dict, Union, MultiAgentBaseCallback
+from xuance.common import get_time_string, create_directory, MultiAgentBaseCallback, AgentGrouping
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv, space2shape
+import tensorflow as tf
 from xuance.tensorflow import Module, REGISTRY_Representation, REGISTRY_Learners
-from xuance.tensorflow.learners import learner
-from xuance.tensorflow.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions, set_seed, set_device
+from xuance.tensorflow.learners import LearnerMAS
+from xuance.tensorflow.utils import (normalizerFunctions, ActivationFunctions, initializerFunctions, AgentGroupedTensor,
+                                     set_seed, set_device)
+from xuance.tensorflow.rl_models import AgentFeatureEncoder
+from xuance.tensorflow.rl_models import IdentityFeatureFusion, build_identity_encoder
 
 
 class MARLAgents(ABC):
@@ -67,19 +70,35 @@ class MARLAgents(ABC):
             callback: Optional[MultiAgentBaseCallback] = None
     ):
         set_seed(config.seed)
+
         # Training settings.
         self.config = config
+        self.use_cnn = getattr(config, "use_cnn", False)
         self.use_rnn = getattr(config, "use_rnn", False)
         self.use_parameter_sharing = config.use_parameter_sharing
         self.use_actions_mask = getattr(config, "use_actions_mask", False)
         self.use_global_state = getattr(config, "use_global_state", False)
-        self.distributed_training = config.distributed_training
+
+        # TensorFlow distributed execution is normally controlled through
+        # tf.distribute.Strategy at runner level.
+        self.distributed_training = getattr(config, "distributed_training", False)
+        self.strategy = getattr(config, "strategy", None)
+
+        if self.distributed_training:
+            if self.strategy is None:
+                self.strategy = tf.distribute.get_strategy()
+            self.world_size = int(self.strategy.num_replicas_in_sync)
+            self.rank = int(os.environ.get("RANK", 0))
+        else:
+            self.strategy = tf.distribute.get_strategy()
+            self.world_size = 1
+            self.rank = 0
 
         self.gamma = config.gamma
         self.start_training = getattr(config, "start_training", 1)
         self.training_frequency = getattr(config, "training_frequency", 1)
         self.n_epochs = getattr(config, "n_epochs", 1)
-        self.device = self.config.device = set_device(self.config.dl_toolbox, self.config.device)
+        self.device = self.config.device = set_device(self.config.device)
 
         # Environment attributes.
         self.train_envs = envs
@@ -115,7 +134,28 @@ class MARLAgents(ABC):
         self.current_step = 0
         self.current_episode = np.zeros((self.n_envs,), np.int32)
 
+        # Agent grouping.
+        self.agent_grouping = self.set_agent_group(
+            self.agent_keys
+        )
+        self.groups = self.agent_grouping.groups
+        self.group_keys = self.agent_grouping.group_keys
+        self.n_group_agents = {k: len(self.groups[k]) for k in self.group_keys}
+
+        with tf.device(self.device):
+            self.agent_indices = {
+                k: tf.convert_to_tensor(self.agent_grouping.agent_indices(k), dtype=tf.int64)
+                for k in self.group_keys
+            }
+
+        # Network helpers.
+        self.normalizer_fn = normalizerFunctions[self.config.normalizer] if hasattr(self.config, "normalizer") else None
+        self.initializer = initializerFunctions[getattr(self.config, "initializer", "orthogonal")]
+        self.activation = ActivationFunctions[self.config.activation]
+
         # Prepare directories.
+        # A common time string can be passed by the runner for
+        # multi-worker training through config.run_time_string.
         time_string = get_time_string()
         seed = f"seed_{config.seed}_"
         self.model_dir_load = config.model_dir
@@ -124,89 +164,132 @@ class MARLAgents(ABC):
         # Create logger.
         if config.logger == "tensorboard":
             log_dir = os.path.join(os.getcwd(), config.log_dir, seed + time_string)
-            create_directory(log_dir)
-            self.writer = SummaryWriter(log_dir)
+
+            if self.rank == 0:
+                create_directory(log_dir)
+
+            self.writer = tf.summary.create_file_writer(log_dir)
             self.use_wandb = False
+
         elif config.logger == "wandb":
             config_dict = vars(config)
             log_dir = config.log_dir
             wandb_dir = Path(os.path.join(os.getcwd(), config.log_dir))
-            create_directory(str(wandb_dir))
-            wandb.init(config=config_dict,
-                       project=config.project_name,
-                       entity=config.wandb_user_name,
-                       notes=socket.gethostname(),
-                       dir=wandb_dir,
-                       group=config.env_id,
-                       job_type=config.agent,
-                       name=time_string,
-                       reinit=True,
-                       settings=wandb.Settings(start_method="fork")
-                       )
-            # os.environ["WANDB_SILENT"] = "True"
+
+            if self.rank == 0:
+                create_directory(str(wandb_dir))
+                wandb.init(
+                    config=config_dict,
+                    project=config.project_name,
+                    entity=config.wandb_user_name,
+                    notes=socket.gethostname(),
+                    dir=wandb_dir,
+                    group=config.env_id,
+                    job_type=config.agent,
+                    name=time_string,
+                    reinit=True,
+                )
             self.use_wandb = True
+
         else:
             raise AttributeError("No logger is implemented.")
         self.log_dir = log_dir
 
-        # predefine necessary components
-        self.model_keys = [self.agent_keys[0]] if self.use_parameter_sharing else self.agent_keys
-        self.policy: Optional[Module] = None
-        self.learner: Optional[learner] = None
+        # Predefine necessary components.
+        self.model: Optional[Module] = None
+        self.learner: Optional[LearnerMAS] = None
         self.memory: Optional[object] = None
         self.callback = callback or MultiAgentBaseCallback()
 
-        self.meta_data = dict(algo=self.config.agent, env=self.config.env_name, env_id=self.config.env_id,
-                              dl_toolbox=self.config.dl_toolbox, device=self.device, seed=self.config.seed,
-                              xuance_version=xuance.__version__)
+        self.meta_data = dict(
+            algo=self.config.agent,
+            env=self.config.env_name,
+            env_id=self.config.env_id,
+            dl_toolbox=self.config.dl_toolbox,
+            device=self.device,
+            seed=self.config.seed,
+            xuance_version=xuance.__version__,
+        )
 
+    def set_agent_group(self, agent_keys):
+        if self.use_parameter_sharing:
+            return AgentGrouping.shared(agent_keys)
+        return AgentGrouping.independent(agent_keys)
+
+    @abstractmethod
     def store_experience(self, *args, **kwargs):
         raise NotImplementedError
 
     def save_model(self, model_name, model_path=None):
-        # save the neural networks
+        if self.distributed_training and self.rank > 0:
+            return
+
         model_path = self.model_dir_save if model_path is None else model_path
+
         if not os.path.exists(model_path):
             os.makedirs(model_path)
+
         self.learner.save_model(os.path.join(model_path, model_name))
 
     def load_model(self, path, model=None):
         self.learner.load_model(path, model)
 
     def log_infos(self, info: dict, x_index: int):
-        """
-        info: (dict) information to be visualized
-        n_steps: current step
-        """
+        """Log scalar or grouped information."""
         if self.use_wandb:
-            for k, v in info.items():
-                if v is None:
+            if self.rank != 0:
+                return
+            for key, value in info.items():
+                if value is None:
                     continue
-                wandb.log({k: v}, step=x_index)
+                if isinstance(value, (tf.Tensor, tf.Variable)):
+                    value = value.numpy()
+                wandb.log({key: value}, step=x_index)
         else:
-            for k, v in info.items():
-                if v is None:
-                    continue
-                try:
-                    self.writer.add_scalar(k, v, x_index)
-                except:
-                    self.writer.add_scalars(k, v, x_index)
+            with self.writer.as_default():
+                for key, value in info.items():
+                    if value is None:
+                        continue
+                    if isinstance(value, dict):
+                        for sub_key, sub_value in value.items():
+                            if isinstance(sub_value, (tf.Tensor, tf.Variable)):
+                                sub_value = sub_value.numpy()
+                            tf.summary.scalar(f"{key}/{sub_key}", sub_value, step=x_index)
+                    else:
+                        if isinstance(value, (tf.Tensor, tf.Variable)):
+                            value = value.numpy()
+                        tf.summary.scalar(key, value, step=x_index)
+                self.writer.flush()
 
     def log_videos(self, info: dict, fps: int, x_index: int = 0):
         if self.use_wandb:
-            for k, v in info.items():
-                if v is None:
+            if self.rank != 0:
+                return
+            for key, value in info.items():
+                if value is None:
                     continue
-                wandb.log({k: wandb.Video(v, fps=fps, format='gif')}, step=x_index)
+                wandb.log({key: wandb.Video(value, fps=fps, format="gif")}, step=x_index)
         else:
-            for k, v in info.items():
-                if v is None:
-                    continue
-                self.writer.add_video(k, v, fps=fps, global_step=x_index)
+            # TensorFlow summary has no direct equivalent of
+            # SummaryWriter.add_video(). Log representative frames.
+            with self.writer.as_default():
+                for key, value in info.items():
+                    if value is None:
+                        continue
+                    value = tf.convert_to_tensor(value)
+                    # Common RL video shape:
+                    # [N, T, C, H, W].
+                    if value.shape.rank == 5:
+                        frame = value[:, 0]
+                        if frame.shape.rank == 4 and frame.shape[1] in (1, 3, 4):
+                            frame = tf.transpose(frame, [0, 2, 3, 1])
+                        tf.summary.image(key, frame, step=x_index, max_outputs=4)
+                self.writer.flush()
 
-    def _build_representation(self, representation_key: str,
-                              input_space: Union[Dict[str, Space], tuple],
-                              config: Namespace):
+    def _build_representation(self,
+                              representation_choice: str,
+                              input_space: Union[Dict[str, Space], Dict[str, tuple]],
+                              config: Namespace) -> Module:
         """
         Build representation for policies.
 
@@ -219,91 +302,109 @@ class MARLAgents(ABC):
         """
 
         # build representations
-        representation = {}
-        for key in self.model_keys:
-            if self.use_rnn:
-                hidden_sizes = {'fc_hidden_sizes': self.config.fc_hidden_sizes,
-                                'recurrent_hidden_size': self.config.recurrent_hidden_size}
-            else:
-                hidden_sizes = config.representation_hidden_size if hasattr(config,
-                                                                            "representation_hidden_size") else None
-            input_representations = dict(
-                input_shape=space2shape(input_space[key]),
-                hidden_sizes=hidden_sizes,
-                normalize=NormalizeFunctions[config.normalize] if hasattr(config, "normalize") else None,
-                initialize=InitializeFunctions[config.initialize] if hasattr(self.config, "initialize") else None,
-                activation=ActivationFunctions[config.activation],
-                kernels=config.kernels if hasattr(config, "kernels") else None,
-                strides=config.strides if hasattr(config, "strides") else None,
-                filters=config.filters if hasattr(config, "filters") else None,
-                fc_hidden_sizes=config.fc_hidden_sizes if hasattr(config, "fc_hidden_sizes") else None,
-                N_recurrent_layers=config.N_recurrent_layers if hasattr(config, "N_recurrent_layers") else None,
-                rnn=config.rnn if hasattr(config, "rnn") else None,
-                dropout=config.dropout if hasattr(config, "dropout") else None,
-                device=self.device)
-            representation[key] = REGISTRY_Representation[representation_key](**input_representations)
-            if representation_key not in REGISTRY_Representation:
-                raise AttributeError(f"{representation_key} is not registered in REGISTRY_Representation.")
+        input_representations = dict(
+            input_shape=space2shape(input_space),
+            hidden_sizes=getattr(config, "representation_hidden_size", None),
+            normalizer=self.normalizer_fn,
+            initializer=self.initializer,
+            activation=self.activation,
+            kernels=getattr(config, "kernels", None),
+            strides=getattr(config, "strides", None),
+            filters=getattr(config, "filters", None),
+            fc_hidden_sizes=getattr(config, "fc_hidden_sizes", None),
+            N_recurrent_layers=getattr(config, "N_recurrent_layers", None),
+            recurrent_hidden_size=getattr(config, "recurrent_hidden_size", None),
+            rnn=getattr(config, "rnn", None),
+            dropout=getattr(config, "dropout", None),
+            device=self.device)
+        representation = REGISTRY_Representation[representation_choice](**input_representations)
+        if representation_choice not in REGISTRY_Representation:
+            raise AttributeError(f"{representation_choice} is not registered in REGISTRY_Representation.")
         return representation
 
-    def _build_policy(self) -> Module:
+    def _build_agent_feature_encoder(
+            self,
+            representation_choice: str,
+            group_agents: Tuple[str, ...],
+            input_space: Union[Dict[str, Space], Dict[str, tuple], tuple]
+    ) -> AgentFeatureEncoder:
+        # build representations
+        representation = self._build_representation(representation_choice,
+                                                    input_space,
+                                                    self.config)
+        # build identity encoder
+        agent_identity_encoder = build_identity_encoder(
+            num_identities=len(group_agents),
+            mode=getattr(self.config, "identity_embedding_mode", 'none'),
+            embedding_dim=getattr(self.config, "identity_embedding_dim", None),
+        )
+        # build feature fusion
+        identity_feature_fusion = IdentityFeatureFusion(
+            observation_feature_dim=representation.output_shapes['state'][0],
+            identity_feature_dim=agent_identity_encoder.output_dim,
+            mode=getattr(self.config, "identity_feature_fusion_mode", "concat")
+        )
+        # build feature encoder
+        return AgentFeatureEncoder(
+            representation=representation,
+            identity_encoder=agent_identity_encoder,
+            fusion=identity_feature_fusion
+        )
+
+    @abstractmethod
+    def _build_model(self) -> Module:
         raise NotImplementedError
 
     def _build_learner(self, *args):
         return REGISTRY_Learners[self.config.learner](*args)
 
     def _build_inputs(self,
-                      obs_dict: List[dict],
-                      avail_actions_dict: Optional[List[dict]] = None):
-        """
-        Build inputs for representations before calculating actions.
+                      obs_list: List[dict],
+                      avail_actions_list: Optional[List[dict]] = None
+                      ):
+        """Build inputs for representations before calculating actions.
 
-        Parameters:
-            obs_dict (List[dict]): Observations for each agent in self.agent_keys.
-            avail_actions_dict (Optional[List[dict]]): Actions mask values, default is None.
+        Args:
+            obs_list: Observations of all vectorized environments.
+            avail_actions_list: Available-action masks.
 
         Returns:
-            obs_input: The represented observations.
-            agents_id: The agent id (One-Hot variables).
+            Tuple containing grouped observations, agent indices,
+            and grouped available-action masks.
         """
-        batch_size = len(obs_dict)
-        bs = batch_size * self.n_agents if self.use_parameter_sharing else batch_size
-        avail_actions_input = None
+        batch_size = len(obs_list)
+        obs_input = {}
+        agent_indices = {}
+        avail_actions = {} if self.use_actions_mask else None
 
-        if self.use_parameter_sharing:
-            key = self.agent_keys[0]
-            obs_array = np.array([itemgetter(*self.agent_keys)(data) for data in obs_dict])
-            agents_id = np.eye(self.n_agents, dtype=np.float32)[None].repeat(batch_size, axis=0)
-            avail_actions_array = np.array([itemgetter(*self.agent_keys)(data)
-                                            for data in avail_actions_dict]) if self.use_actions_mask else None
-            if self.use_rnn:
-                obs_input = {key: obs_array.reshape([bs, 1, -1])}
-                agents_id = agents_id.reshape(bs, 1, -1)
+        with tf.device(self.device):
+            for group, group_agents in self.groups.items():
+                obs_array = np.array([[obs[k] for k in group_agents] for obs in obs_list])
+                obs_input[group] = tf.convert_to_tensor(obs_array)
+
+                # [n_agents] -> [batch_size, n_agents, 1]
+                indices = tf.tile(self.agent_indices[group][None, :], [batch_size, 1])
+                indices = tf.reshape(indices, [batch_size, -1, 1])
+                agent_indices[group] = indices
+
+                if self.use_rnn:
+                    # sequence length T = 1
+                    obs_input[group] = tf.expand_dims(obs_input[group], axis=2)
+                    agent_indices[group] = tf.expand_dims(agent_indices[group], axis=2)
+
                 if self.use_actions_mask:
-                    avail_actions_input = {key: avail_actions_array.reshape([bs, 1, -1])}
-            else:
-                obs_input = {key: obs_array.reshape([bs, -1])}
-                agents_id = agents_id.reshape(bs, -1)
-                if self.use_actions_mask:
-                    avail_actions_input = {key: avail_actions_array.reshape([bs, -1])}
-        else:
-            agents_id = None
-            if self.use_rnn:
-                obs_input = {k: np.stack([data[k] for data in obs_dict]).reshape([bs, 1, -1]) for k in
-                             self.agent_keys}
-                if self.use_actions_mask:
-                    avail_actions_input = {
-                        k: np.stack([data[k] for data in avail_actions_dict]).reshape([bs, 1, -1])
-                        for k in self.agent_keys}
-            else:
-                obs_input = {k: np.stack([data[k] for data in obs_dict]).reshape(bs, -1) for k in self.agent_keys}
-                if self.use_actions_mask:
-                    avail_actions_input = {k: np.array([data[k] for data in avail_actions_dict]).reshape([bs, -1])
-                                           for k in self.agent_keys}
-        return obs_input, agents_id, avail_actions_input
+                    avail_array = np.array([[avail_a[k] for k in group_agents] for avail_a in avail_actions_list])
+                    avail_actions[group] = tf.convert_to_tensor(avail_array)
+
+                    if self.use_rnn:
+                        avail_actions[group] = tf.expand_dims(avail_actions[group], axis=2)
+
+        return (AgentGroupedTensor(obs_input, self.agent_grouping),
+                AgentGroupedTensor(agent_indices, self.agent_grouping),
+                AgentGroupedTensor(avail_actions, self.agent_grouping))
 
     @abstractmethod
-    def get_actions(self, **kwargs):
+    def get_actions(self, *args, **kwargs):
         raise NotImplementedError
 
     @abstractmethod
@@ -320,10 +421,11 @@ class MARLAgents(ABC):
 
     def finish(self):
         if self.use_wandb:
-            wandb.finish()
+            if self.rank == 0:
+                wandb.finish()
         else:
+            self.writer.flush()
             self.writer.close()
-        self.train_envs.close()
 
 
 class RandomAgents(object):
@@ -334,7 +436,7 @@ class RandomAgents(object):
         self.action_space = self.args.action_space
         self.nenvs = envs.num_envs
 
-    def get_actions(self, obs_n, episode, test_mode, noise=False):
+    def get_actions(self, *args, **kwargs):
         rand_a = [[self.action_space[agent].sample() for agent in self.agent_keys] for e in range(self.nenvs)]
         random_actions = np.array(rand_a)
         return random_actions

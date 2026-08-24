@@ -1,12 +1,13 @@
-import numpy as np
+from copy import deepcopy
 from argparse import Namespace
 from gymnasium.spaces import Space
 from xuance.common import Optional, BaseCallback
 from xuance.environment import DummyVecEnv, SubprocVecEnv
 from xuance.tensorflow import Module
-from xuance.tensorflow.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions
-from xuance.tensorflow.policies import REGISTRY_Policy
+from xuance.tensorflow.utils import ActivationFunctions
 from xuance.tensorflow.agents import OffPolicyAgent
+from xuance.tensorflow.rl_models import DeterministicActor, ActionValueCritic
+from xuance.tensorflow.rl_models.architectures import DeterministicActorCritic
 
 
 class DDPG_Agent(OffPolicyAgent):
@@ -31,44 +32,38 @@ class DDPG_Agent(OffPolicyAgent):
         self.noise_scale = config.start_noise
         self.delta_noise = (self.start_noise - self.end_noise) / (config.running_steps / self.n_envs)
 
-        self.policy = self._build_policy()  # build policy
+        self.model = self._build_model()  # build model
         self.memory = self._build_memory()  # build memory
-        self.learner = self._build_learner(self.config, self.policy, self.callback)  # build learner
+        self.learner = self._build_learner(self.config, self.model, self.callback)  # build learner
 
-    def _build_policy(self) -> Module:
-        normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None
-        initializer = InitializeFunctions[self.config.initialize] if hasattr(self.config, "initialize") else None
-        activation = ActivationFunctions[self.config.activation]
-
+    def _build_model(self) -> Module:
         # build representations.
         representation = self._build_representation(self.config.representation, self.observation_space, self.config)
 
-        # build policy
-        if self.config.policy == "DDPG_Policy":
-            policy = REGISTRY_Policy["DDPG_Policy"](
-                action_space=self.action_space, representation=representation,
-                actor_hidden_size=self.config.actor_hidden_size, critic_hidden_size=self.config.critic_hidden_size,
-                normalize=normalize_fn, initialize=initializer,
-                activation=activation, activation_action=ActivationFunctions[self.config.activation_action],
-                use_distributed_training=self.distributed_training)
-        else:
-            raise AttributeError(f"DDPG currently does not support the policy named {self.config.policy}.")
+        # build actor network
+        actor = DeterministicActor(
+            representation=representation,
+            actor_hidden_size=self.config.actor_hidden_size,
+            action_space=self.action_space,
+            normalizer=self.normalizer_fn,
+            initializer=self.initializer,
+            activation=self.activation,
+            activation_action=ActivationFunctions[self.config.activation_action],
+            device=self.device
+        )
 
-        return policy
+        # build critic network
+        critic = ActionValueCritic(
+            representation=deepcopy(representation),
+            action_space=self.action_space,
+            critic_hidden_size=self.config.critic_hidden_size,
+            normalizer=self.normalizer_fn,
+            initializer=self.initializer,
+            activation=self.activation,
+            device=self.device
+        )
 
-    def get_actions(self, observations: np.ndarray, test_mode: Optional[bool] = False):
-        """Returns actions and values.
+        # build the RL model
+        model = DeterministicActorCritic(actor=actor, critic=critic)
 
-        Parameters:
-            observations (np.ndarray): The observation.
-            test_mode (Optional[bool]): True for testing without noises.
-
-        Returns:
-            actions: The actions to be executed.
-        """
-        _, actions_output = self.policy(observations)
-        if test_mode:
-            actions = actions_output.numpy()
-        else:
-            actions = self.exploration(actions_output.numpy())
-        return {"actions": actions}
+        return model

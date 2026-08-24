@@ -3,10 +3,9 @@ import torch
 import torch.nn as nn
 from pathlib import Path
 from abc import abstractmethod
-from xuance.common import Optional, Dict, AgentGrouping
+from xuance.common import Optional, AgentGrouping
 from argparse import Namespace
-from operator import itemgetter
-from xuance.torch import Tensor, Module
+from xuance.torch import Module
 from xuance.torch.utils import ValueNorm
 from xuance.torch.rl_models.modules import OnPolicyMARLBatch, OffPolicyMARLBatch
 from xuance.torch.learners.base.drl_learner import Learner
@@ -80,6 +79,7 @@ class LearnerMAS(Learner):
         raise NotImplementedError
 
     def save_model(self, model_path):
+        model_path += ".pth"
         if type(self.optimizer) is dict:
             if type(list(self.optimizer.values())[0]) is dict:
                 torch.save(
@@ -112,6 +112,7 @@ class LearnerMAS(Learner):
 
     def load_model(self, path, model=None):
         target_path = os.path.join(path, model) if model is not None else path
+        target_path += ".pth"
         if os.path.isfile(target_path):  # load the specified model file
             model_path = target_path
             dir_name = os.path.dirname(model_path)
@@ -189,10 +190,15 @@ class OnPolicyMultiAgentLearner(LearnerMAS):
                  callback):
         super(OnPolicyMultiAgentLearner, self).__init__(config, agent_grouping, model, callback)
         self.build_optimizer()
-        self.use_value_clip, self.value_clip_range = config.use_value_clip, config.value_clip_range
-        self.use_huber_loss, self.huber_delta = config.use_huber_loss, config.huber_delta
+
+        self.use_value_clip = config.use_value_clip
+        self.value_clip_range = config.value_clip_range
+        self.use_huber_loss = config.use_huber_loss
+        self.huber_delta = config.huber_delta
         self.use_value_norm = config.use_value_norm
-        self.vf_coef, self.ent_coef = config.vf_coef, config.ent_coef
+        self.vf_coef = config.vf_coef
+        self.ent_coef = config.ent_coef
+
         self.mse_loss = nn.MSELoss()
         self.huber_loss = nn.HuberLoss(reduction="none", delta=self.huber_delta)
         if self.use_value_norm:
