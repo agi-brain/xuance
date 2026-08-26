@@ -3,8 +3,7 @@ from xuance.tensorflow import tf, keras, Tensor, Module
 from xuance.tensorflow.rl_models.modules import mlp_block
 from xuance.tensorflow.rl_models.modules.distributions import (CategoricalDistribution,
                                                                DiagGaussianDistribution,
-                                                               ActivatedDiagGaussianDistribution
-)
+                                                               ActivatedDiagGaussianDistribution)
 
 
 class CategoricalActorHead(Module):

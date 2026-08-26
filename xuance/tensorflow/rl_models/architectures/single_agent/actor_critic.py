@@ -1,6 +1,4 @@
 from typing import Union
-from copy import deepcopy
-
 from xuance.tensorflow import tf, Module, Tensor
 from xuance.tensorflow.rl_models.modules import ModelOutput
 
@@ -110,7 +108,7 @@ class SoftActorCritic(ActorCritic):
                  critic: Module,
                  **kwargs):
         super().__init__(actor, critic, **kwargs)
-        self.target_critic = deepcopy(critic)
+        self.target_critic = critic.clone(trainable=False, name="target_critic")
 
     def call(self,
              observation: Union[Tensor, dict],
@@ -154,9 +152,8 @@ class SoftActorCritic(ActorCritic):
         return outputs_critic.values_1, outputs_critic.values_2
 
     def soft_update(self, tau=0.005):
-        for ep, tp in zip(self.critic.parameters(), self.target_critic.parameters()):
-            tp.data.mul_(1 - tau)
-            tp.data.add_(tau * ep.data)
+        for ep, tp in zip(self.critic.variables, self.target_critic.variables):
+            tp.assign((1 - tau) * tp + tau * ep)
 
 
 class SoftActorCriticDiscrete(SoftActorCritic):
@@ -209,9 +206,8 @@ class SoftActorCriticDiscrete(SoftActorCritic):
         return outputs_critic.values_1, outputs_critic.values_2
 
     def soft_update(self, tau=0.005):
-        for ep, tp in zip(self.critic.parameters(), self.target_critic.parameters()):
-            tp.data.mul_(1 - tau)
-            tp.data.add_(tau * ep.data)
+        for ep, tp in zip(self.critic.variables, self.target_critic.variables):
+            tp.assign((1 - tau) * tp + tau * ep)
 
 
 class DeterministicActorCritic(Module):
@@ -222,8 +218,8 @@ class DeterministicActorCritic(Module):
         super().__init__(**kwargs)
         self.actor = actor
         self.critic = critic
-        self.target_actor = deepcopy(actor)
-        self.target_critic = deepcopy(critic)
+        self.target_actor = actor.clone(trainable=False, name="target_actor")
+        self.target_critic = critic.clone(trainable=False, name="target_critic")
 
     def call(self,
              observations: Union[Tensor, dict],
@@ -253,12 +249,10 @@ class DeterministicActorCritic(Module):
         return self.critic(observation, outputs_actor.actions).values
 
     def soft_update(self, tau=0.005):
-        for ep, tp in zip(self.actor.parameters(), self.target_actor.parameters()):
-            tp.data.mul_(1 - tau)
-            tp.data.add_(tau * ep.data)
-        for ep, tp in zip(self.critic.parameters(), self.target_critic.parameters()):
-            tp.data.mul_(1 - tau)
-            tp.data.add_(tau * ep.data)
+        for ep, tp in zip(self.actor.variables, self.target_actor.variables):
+            tp.assign((1 - tau) * tp + tau * ep)
+        for ep, tp in zip(self.critic.variables, self.target_critic.variables):
+            tp.assign((1 - tau) * tp + tau * ep)
 
 
 class TwinDelayedActorCritic(Module):
@@ -271,8 +265,8 @@ class TwinDelayedActorCritic(Module):
         super().__init__(**kwargs)
         self.actor = actor
         self.critic = critic
-        self.target_actor = deepcopy(self.actor)
-        self.target_critic = deepcopy(self.critic)
+        self.target_actor = actor.clone(trainable=False, name="target_actor")
+        self.target_critic = critic.clone(trainable=False, name="target_critic")
         self.target_policy_noise = target_policy_noise
         self.target_noise_clip = target_noise_clip
 
@@ -311,9 +305,7 @@ class TwinDelayedActorCritic(Module):
         return (q_eval_a + q_eval_b) / 2.0
 
     def soft_update(self, tau=0.005):
-        for ep, tp in zip(self.actor.parameters(), self.target_actor.parameters()):
-            tp.data.mul_(1 - tau)
-            tp.data.add_(tau * ep.data)
-        for ep, tp in zip(self.critic.parameters(), self.target_critic.parameters()):
-            tp.data.mul_(1 - tau)
-            tp.data.add_(tau * ep.data)
+        for ep, tp in zip(self.actor.variables, self.target_actor.variables):
+            tp.assign((1 - tau) * tp + tau * ep)
+        for ep, tp in zip(self.critic.variables, self.target_critic.variables):
+            tp.assign((1 - tau) * tp + tau * ep)

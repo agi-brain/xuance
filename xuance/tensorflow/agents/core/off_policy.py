@@ -125,6 +125,7 @@ class OffPolicyAgent(Agent):
         else:
             return
 
+    @tf.function
     def exploration(self, pi_actions: Tensor) -> Tensor:
         """Returns the actions for exploration.
 
@@ -160,6 +161,10 @@ class OffPolicyAgent(Agent):
 
         return explore_actions
 
+    @tf.function(reduce_retracing=True)
+    def _rollout_step(self, observations: Tensor, **kwargs) -> Tensor:
+        raise NotImplementedError
+
     def get_actions(
             self,
             observations: np.ndarray | Tensor,
@@ -174,14 +179,16 @@ class OffPolicyAgent(Agent):
         Returns:
             The ActionOutput containing actions to be executed in the environment.
         """
-        actions = self.model.act(observations)
-        if not test_mode:
-            actions = self.exploration(actions)
+        actions, explored_actions = self._rollout_step(observations)
+        if test_mode:
+            env_actions = actions
+        else:
+            env_actions = explored_actions
 
         if not self.is_tensor_memory:
-            actions = actions.numpy()
+            env_actions = env_actions.numpy()
 
-        return ActionOutput(env_actions=actions)
+        return ActionOutput(env_actions=env_actions)
 
     def train_epochs(self, n_epochs=1) -> dict:
         train_info = {}

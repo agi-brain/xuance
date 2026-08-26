@@ -1,9 +1,8 @@
-from copy import deepcopy
 from typing import Type, Sequence, Optional, Union, Dict
 from gymnasium.spaces import Box, Discrete
 from xuance.tensorflow import tf, keras, Tensor, Module
-from xuance.torch.rl_models.heads import ValueHead, QValueHead
-from xuance.torch.rl_models.modules import TwinCriticOutput, RNN_State
+from xuance.tensorflow.rl_models.heads import ValueHead, QValueHead
+from xuance.tensorflow.rl_models.modules import TwinCriticOutput, RNN_State
 
 
 class TwinActionValueCritic(Module):
@@ -14,7 +13,6 @@ class TwinActionValueCritic(Module):
                  normalizer: Optional[Type[Module]] = None,
                  initializer: Optional[keras.initializers.Initializer] = None,
                  activation: Optional[Type[Module]] = None,
-                 device: str = None,
                  **kwargs) -> None:
         super().__init__()
         if isinstance(action_space, Box):
@@ -23,7 +21,7 @@ class TwinActionValueCritic(Module):
         else:
             raise ValueError('action_space must be Box.')
         self.representation_1 = representation
-        self.representation_2 = deepcopy(representation)
+        self.representation_2 = representation.clone(copy_weights=False, trainable=True, name='representation_2')
 
         self.representation_info_shape = representation.output_shapes
         self.feature_dim = self.representation_info_shape['state'][0] + self.action_dim
@@ -33,7 +31,6 @@ class TwinActionValueCritic(Module):
             normalizer=normalizer,
             initializer=initializer,
             activation=activation,
-            device=device,
             **kwargs,
         )
 
@@ -69,7 +66,6 @@ class TwinDiscreteActionValueCritic(Module):
                  normalizer: Optional[Type[Module]] = None,
                  initializer: Optional[keras.initializers.Initializer] = None,
                  activation: Optional[Type[Module]] = None,
-                 device: str = None,
                  **kwargs) -> None:
         super().__init__()
         if isinstance(action_space, Discrete):
@@ -78,7 +74,7 @@ class TwinDiscreteActionValueCritic(Module):
         else:
             raise ValueError('action_space must be Box.')
         self.representation_1 = representation
-        self.representation_2 = deepcopy(representation)
+        self.representation_2 = representation.clone(copy_weights=False, trainable=True, name='representation_2')
 
         self.representation_info_shape = representation.output_shapes
         self.feature_dim = self.representation_info_shape['state'][0]
@@ -89,7 +85,6 @@ class TwinDiscreteActionValueCritic(Module):
             normalizer=normalizer,
             initializer=initializer,
             activation=activation,
-            device=device,
             **kwargs,
         )
 

@@ -242,10 +242,10 @@ class Agent(ABC):
             for k, v in info.items():
                 if v is None:
                     continue
-                try:
-                    self.writer.add_scalar(k, v, x_index)
-                except:
+                if isinstance(v, dict):
                     self.writer.add_scalars(k, v, x_index)
+                else:
+                    self.writer.add_scalar(k, v, x_index)
 
     def log_videos(self, info: dict, fps: int, x_index: int = 0):
         if self.use_wandb:

@@ -202,7 +202,7 @@ class VDAC_Agents(OnPolicyMARLAgents):
         rnn_states_actor_new = model_output.actor_rnn_states
         actions = model_output.actions
 
-        actions.grouped_tensor = {k: actions.grouped_tensor[k].reshape(batch_size, n).cpu().numpy()
+        actions.grouped_tensor = {k: actions.grouped_tensor[k].reshape(batch_size, n).numpy()
                                   for k, n in self.n_group_agents.items()}
         if self.continuous_control:
             actions_list = [{k: actions.agent_wise[k][e].reshape([-1]) for k in self.agent_keys}
@@ -219,7 +219,7 @@ class VDAC_Agents(OnPolicyMARLAgents):
             values_individual = values_model_output.values.agent_wise
             if state is not None:
                 state = torch.as_tensor(state, device=self.device)
-            values_tot = self.model.values_tot(values_individual, state).cpu().numpy().reshape(batch_size)
+            values_tot = self.model.values_tot(values_individual, state).numpy().reshape(batch_size)
             values_dict = {k: values_tot for k in self.agent_keys}
 
         return MARLActionOutput(
@@ -265,7 +265,7 @@ class VDAC_Agents(OnPolicyMARLAgents):
                                                     rnn_states=rnn_states_critic_i)
         rnn_states_critic_new_i = values_model_output.critic_rnn_states
         values_individual = values_model_output.values.agent_wise
-        values_tot = self.model.values_tot(values_individual, state).cpu().numpy().reshape([])
+        values_tot = self.model.values_tot(values_individual, state).numpy().reshape([])
         values_dict = {k: values_tot for k in self.agent_keys}
 
         return rnn_states_critic_new_i, values_dict

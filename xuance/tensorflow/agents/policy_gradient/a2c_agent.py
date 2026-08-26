@@ -3,7 +3,6 @@
 # This can be a first RL algorithm code for the starters.
 import gymnasium
 from argparse import Namespace
-from copy import deepcopy
 from gymnasium.spaces import Space
 from xuance.common import Optional, BaseCallback
 from xuance.environment import DummyVecEnv, SubprocVecEnv
@@ -49,7 +48,6 @@ class A2C_Agent(OnPolicyAgent):
             normalizer=self.normalizer_fn,
             initializer=self.initializer,
             activation=self.activation,
-            device=self.device
         )
         if isinstance(self.action_space, gymnasium.spaces.Box):
             Actor = GaussianActor
@@ -61,12 +59,12 @@ class A2C_Agent(OnPolicyAgent):
         actor = Actor(**actor_input)
 
         # build critic network
-        critic = Critic(representation=deepcopy(representation),
+        critic = Critic(representation=representation.clone(copy_weights=False, trainable=True,
+                                                            name="critic_representation"),
                         critic_hidden_size=self.config.critic_hidden_size,
                         normalizer=self.normalizer_fn,
                         initializer=self.initializer,
-                        activation=self.activation,
-                        device=self.device)
+                        activation=self.activation)
 
         # build the RL model
         model = ActorCritic(actor=actor, critic=critic)

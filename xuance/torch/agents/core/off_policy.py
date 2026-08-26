@@ -162,7 +162,7 @@ class OffPolicyAgent(Agent):
         Returns:
             The ActionOutput containing actions to be executed in the environment.
         """
-        actions = self.model.act(observations)
+        actions = self.model(observations).actions
         if not test_mode:
             actions = self.exploration(actions)
 

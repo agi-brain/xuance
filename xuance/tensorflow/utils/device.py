@@ -9,8 +9,6 @@ def set_device(expected_device: str):
     Set the computing device for a given deep learning framework.
 
     Args:
-        dl_toolbox (str): The deep learning framework to use.
-            Options: "torch", "tensorflow", "mindspore".
         expected_device (str): The desired computing device.
             Options: "cuda", "GPU", "gpu", "Ascend", "cpu", "CPU.
 

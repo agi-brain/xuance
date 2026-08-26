@@ -37,7 +37,6 @@ class DuelDQN_Agent(DQN_Agent):
             normalizer=self.normalizer_fn,
             initializer=self.initializer,
             activation=self.activation,
-            device=self.device,
             use_distributed_training=self.distributed_training
         )
 

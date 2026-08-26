@@ -74,7 +74,7 @@ class DuelingQValueHead(Module):
             mlp, input_shape = mlp_block(input_shape[0], h // 2, normalizer, activation, initializer)
             v_layers.extend(mlp)
         v_layers.extend(mlp_block(input_shape[0], 1, None, None, normalizer)[0])
-        self.v_model = keras.Sequential(*v_layers)
+        self.v_model = keras.Sequential(v_layers)
 
         a_layers = []
         input_shape = (feature_dim,)
@@ -82,7 +82,7 @@ class DuelingQValueHead(Module):
             a_mlp, input_shape = mlp_block(input_shape[0], h // 2, normalizer, activation, initializer)
             a_layers.extend(a_mlp)
         a_layers.extend(mlp_block(input_shape[0], n_actions, None, None, normalizer)[0])
-        self.a_model = keras.Sequential(*a_layers)
+        self.a_model = keras.Sequential(a_layers)
 
     def call(self,
              features: Tensor,
@@ -90,7 +90,7 @@ class DuelingQValueHead(Module):
              **kwargs) -> Tensor:
         values = self.v_model(features)
         advantages = self.a_model(features)
-        q_values = values + (advantages - advantages.mean(dim=-1).unsqueeze(dim=-1))
+        q_values = values + (advantages - tf.reduce_mean(advantages, axis=-1, keepdims=True))
         if avail_actions is not None:
             q_values = tf.where(tf.equal(avail_actions, 0), tf.cast(-1e10, q_values.dtype), q_values)
         return q_values
@@ -139,7 +139,7 @@ class C51QValueHead(Module):
              features: Tensor,
              avail_actions: Optional[Tensor] = None,
              **kwargs) -> Tensor:
-        logits = self.model(features).view(-1, self.n_actions, self.atom_num)
+        logits = tf.reshape(self.model(features), [-1, self.n_actions, self.atom_num])
         if avail_actions is not None:
             logits = tf.where(tf.equal(avail_actions, 0), tf.cast(-1e10, logits.dtype), logits)
         dist_probs = tf.nn.softmax(logits, axis=-1)
@@ -164,7 +164,8 @@ class QuantileRegressionQValueHead(C51QValueHead):
              features: Tensor,
              avail_actions: Optional[Tensor] = None,
              **kwargs) -> Tensor:
-        quantiles = self.model(features).reshape(-1, self.n_actions, self.atom_num)
+        quantiles = self.model(features)
+        quantiles = tf.reshape(quantiles, [-1, self.n_actions, self.atom_num])
         return quantiles
 
 
@@ -204,7 +205,7 @@ class RecurrentQValueHead(Module):
         )
 
         fc_layer = mlp_block(recurrent_hidden_size, self.n_actions, None, None, None)[0]
-        self.q_value = keras.Sequential(*fc_layer)
+        self.q_value = keras.Sequential(fc_layer)
 
     def call(self,
              features: Tensor,

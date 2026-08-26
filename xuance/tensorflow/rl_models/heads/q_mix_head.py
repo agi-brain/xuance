@@ -1,9 +1,6 @@
 from gymnasium.spaces import Discrete
 from typing import Optional, Dict
-
-import tensorflow as tf
-from tensorflow import Tensor
-from xuance.tensorflow.utils.module import Module
+from xuance.tensorflow import tf, Tensor, Module
 
 
 class IndependentMixer(Module):

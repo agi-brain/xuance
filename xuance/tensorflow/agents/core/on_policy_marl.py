@@ -1,4 +1,3 @@
-import torch
 import numpy as np
 from tqdm import tqdm
 from copy import deepcopy
@@ -204,7 +203,6 @@ class OnPolicyMARLAgents(MARLAgents):
         return (self.model.init_actor_rnn_states_item(i_env, rnn_states_actor),
                 self.model.init_critic_rnn_states_item(i_env, rnn_states_critic))
 
-    @torch.no_grad()
     def get_actions(
             self,
             obs_list: List[dict],
@@ -269,7 +267,7 @@ class OnPolicyMARLAgents(MARLAgents):
                 # shape: batch_size * N_agents
                 log_pi_a = model_output.distributions[group].log_prob(actions.packed(group)).reshape(batch_size, -1)
                 for i, agent in enumerate(agent_keys):
-                    log_pi_a_dict[agent] = log_pi_a[:, i].cpu().numpy()
+                    log_pi_a_dict[agent] = log_pi_a[:, i].numpy()
 
             values_model_output = self.model.get_values(state=state if self.use_global_state else None,
                                                         observations=obs_input,
@@ -277,12 +275,12 @@ class OnPolicyMARLAgents(MARLAgents):
                                                         rnn_states=rnn_states_critic)
             rnn_states_critic_new = values_model_output.critic_rnn_states
             values = values_model_output.values
-            values.grouped_tensor = {k: v.cpu().numpy() for k, v in values.grouped_tensor.items()}
+            values.grouped_tensor = {k: v.numpy() for k, v in values.grouped_tensor.items()}
             values_dict = {k: v.reshape(batch_size) for k, v in values.agent_wise.items()}
 
         if self.continuous_control:
             actions.grouped_tensor = {
-                k: actions.grouped_tensor[k].reshape(batch_size, n, -1).cpu().numpy() for k, n in
+                k: actions.grouped_tensor[k].reshape(batch_size, n, -1).numpy() for k, n in
                 self.n_group_agents.items()
             }
             actions_list = [{
@@ -290,7 +288,7 @@ class OnPolicyMARLAgents(MARLAgents):
             } for e in range(batch_size)]
         else:
             actions.grouped_tensor = {
-                k: actions.grouped_tensor[k].reshape(batch_size, n).cpu().numpy() for k, n in
+                k: actions.grouped_tensor[k].reshape(batch_size, n).numpy() for k, n in
                 self.n_group_agents.items()
             }
             actions_list = [{
@@ -305,7 +303,6 @@ class OnPolicyMARLAgents(MARLAgents):
             rnn_states_critic=rnn_states_critic_new
         )
 
-    @torch.no_grad()
     def values_next(
             self,
             i_env: int,
@@ -351,7 +348,7 @@ class OnPolicyMARLAgents(MARLAgents):
                                                     rnn_states=rnn_states_critic_i)
         rnn_states_critic_new_i = values_model_output.critic_rnn_states
         values = values_model_output.values
-        values.grouped_tensor = {k: v.cpu().numpy() for k, v in values.grouped_tensor.items()}
+        values.grouped_tensor = {k: v.numpy() for k, v in values.grouped_tensor.items()}
         values_dict = {k: v.reshape([]) for k, v in values.agent_wise.items()}
 
         return rnn_states_critic_new_i, values_dict

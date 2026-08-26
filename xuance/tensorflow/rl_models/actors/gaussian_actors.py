@@ -1,8 +1,8 @@
 from typing import Type, Sequence, Optional, Union
 from gymnasium.spaces import Space, Box
 from xuance.tensorflow import keras, Tensor, Module
-from xuance.torch.rl_models.heads import GaussianActorHead, SAC_GaussianActorHead
-from xuance.torch.rl_models.modules import StochasticActorOutput
+from xuance.tensorflow.rl_models.heads import GaussianActorHead, SAC_GaussianActorHead
+from xuance.tensorflow.rl_models.modules import StochasticActorOutput
 
 
 class GaussianActor(Module):
@@ -36,7 +36,6 @@ class GaussianActor(Module):
             initializer=initializer,
             activation=activation,
             activation_action=activation_action,
-            device=device,
             **kwargs
         )
 

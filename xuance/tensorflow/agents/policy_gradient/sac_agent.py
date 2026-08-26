@@ -50,8 +50,7 @@ class SAC_Agent(OffPolicyAgent):
             action_space=self.action_space,
             normalizer=self.normalizer_fn,
             initializer=self.initializer,
-            activation=self.activation,
-            device=self.device
+            activation=self.activation
         )
         if isinstance(self.action_space, gymnasium.spaces.Box):
             Actor = SAC_GaussianActor
@@ -72,8 +71,7 @@ class SAC_Agent(OffPolicyAgent):
                         critic_hidden_size=self.config.critic_hidden_size,
                         normalizer=self.normalizer_fn,
                         initializer=self.initializer,
-                        activation=self.activation,
-                        device=self.device)
+                        activation=self.activation)
 
         # build the RL model
         model = Architecture(actor=actor, critic=critic)
@@ -99,5 +97,5 @@ class SAC_Agent(OffPolicyAgent):
             log_pi: Log of stochastic actions.
         """
         actions_output = self.model.act(observations)
-        actions = actions_output.cpu().numpy()
+        actions = actions_output.numpy()
         return ActionOutput(env_actions=actions)

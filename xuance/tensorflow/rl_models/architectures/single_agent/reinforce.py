@@ -1,5 +1,4 @@
 from typing import Union
-
 from xuance.tensorflow import Module, Tensor
 from xuance.tensorflow.rl_models.modules import ModelOutput
 

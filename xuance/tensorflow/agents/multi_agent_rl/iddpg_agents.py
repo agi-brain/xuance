@@ -133,7 +133,7 @@ class IDDPG_Agents(OffPolicyMARLAgents):
                                   rnn_states=rnn_states)
         rnn_states_new = model_output.actor_rnn_states
         actions = model_output.actions
-        actions.grouped_tensor = {k: actions.grouped_tensor[k].reshape(batch_size, n, -1).cpu().numpy()
+        actions.grouped_tensor = {k: actions.grouped_tensor[k].reshape(batch_size, n, -1).numpy()
                                   for k, n in self.n_group_agents.items()}
 
         if not test_mode:

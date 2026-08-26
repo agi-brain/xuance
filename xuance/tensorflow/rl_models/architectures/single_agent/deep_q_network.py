@@ -1,5 +1,3 @@
-import os
-from copy import deepcopy
 from gymnasium.spaces import Space, Discrete
 from typing import Type, Sequence, Optional, Union, Tuple
 from xuance.tensorflow import tf, keras, Tensor, Module
@@ -26,8 +24,7 @@ class DeepQNetwork(Module):
         else:
             raise ValueError('action_space must be Discrete')
         self.representation = representation
-        self.target_representation = representation.clone(copy_weights=True, trainable=False,
-                                                          name="target_representation")
+        self.target_representation = representation.clone(trainable=False, name="target_representation")
         self.representation_info_shape = representation.output_shapes
 
         self.eval_Q_head = self.q_head_cls(
@@ -38,7 +35,7 @@ class DeepQNetwork(Module):
             initializer=initializer,
             activation=activation,
         )
-        self.target_Q_head = self.eval_Q_head.clone(copy_weights=True, trainable=False, name="target_q_head")
+        self.target_Q_head = self.eval_Q_head.clone(trainable=False, name="target_q_head")
 
     def call(self,
              observation: Union[Tensor, dict],
@@ -52,31 +49,6 @@ class DeepQNetwork(Module):
             rep_out=rep_output
         )
 
-    def act(self,
-            observation: Union[Tensor, dict],
-            deterministic: bool = True,
-            epsilon_greedy: float = 0.0,
-            **kwargs) -> Tensor:
-        greedy_actions = self(observation).actions
-
-        if deterministic or epsilon_greedy <= 0.0:
-            actions = greedy_actions
-        else:
-            random_actions = tf.random.uniform(
-                shape=tf.shape(greedy_actions),
-                minval=0,
-                maxval=self.n_actions,
-                dtype=greedy_actions.dtype,
-            )
-            random_mask = tf.random.uniform(
-                shape=tf.shape(greedy_actions),
-                minval=0.0,
-                maxval=1.0,
-                dtype=tf.float32,
-            ) < epsilon_greedy
-            actions = tf.where(random_mask, random_actions, greedy_actions)
-        return actions
-
     def target(self,
                observation: Union[Tensor, dict],
                **kwargs) -> ModelOutput:
@@ -85,8 +57,10 @@ class DeepQNetwork(Module):
         return ModelOutput(values=target_q_values)
 
     def copy_target(self):
-        self.target_representation.set_weights(self.representation.get_weights())
-        self.target_Q_head.set_weights(self.eval_Q_head.get_weights())
+        for ep, tp in zip(self.representation.variables, self.target_representation.variables):
+            tp.assign(ep)
+        for ep, tp in zip(self.eval_Q_head.variables, self.target_Q_head.variables):
+            tp.assign(ep)
 
 
 class DuelingDeepQNetwork(DeepQNetwork):
@@ -104,32 +78,36 @@ class NoisyDeepQNetwork(DeepQNetwork):
         """Updates the noises for network parameters."""
         self.eval_noise_parameter = []
         self.target_noise_parameter = []
-        for parameter in self.eval_Q_head.parameters():
-            self.eval_noise_parameter.append(tf.randn_like(parameter) * noisy_bound)
-            self.target_noise_parameter.append(tf.randn_like(parameter) * noisy_bound)
+        for parameter in self.eval_Q_head.variables:
+            self.eval_noise_parameter.append(
+                tf.random.normal(tf.shape(parameter), dtype=parameter.dtype) * noisy_bound
+            )
+            self.target_noise_parameter.append(
+                tf.random.normal(tf.shape(parameter), dtype=parameter.dtype) * noisy_bound
+            )
 
     def call(self,
              observation: Union[Tensor, dict],
              **kwargs) -> ModelOutput:
         self.update_noise(self.noise_scale)
-        for parameter, noise_param in zip(self.eval_Q_head.parameters(), self.eval_noise_parameter):
-            parameter.data.copy_(parameter.data + noise_param)
-        return super().forward(observation, **kwargs)
+        for parameter, noise_param in zip(self.eval_Q_head.variables, self.eval_noise_parameter):
+            parameter.assign_add(noise_param)
+        return super().call(observation, **kwargs)
 
     def act(self,
             observation: Union[Tensor, dict],
             **kwargs) -> Tensor:
         self.update_noise(self.noise_scale)
-        for parameter, noise_param in zip(self.eval_Q_head.parameters(), self.eval_noise_parameter):
-            parameter.data.copy_(parameter.data + noise_param)
+        for parameter, noise_param in zip(self.eval_Q_head.variables, self.eval_noise_parameter):
+            parameter.assign_add(noise_param)
         return super().act(observation=observation, deterministic=True)
 
     def target(self,
                observation: Union[Tensor, dict],
                **kwargs) -> ModelOutput:
         self.update_noise(self.noise_scale)
-        for parameter, noise_param in zip(self.target_Q_head.parameters(), self.target_noise_parameter):
-            parameter.data.copy_(parameter.data + noise_param)
+        for parameter, noise_param in zip(self.target_Q_head.variables, self.target_noise_parameter):
+            parameter.assign_add(noise_param)
         return super().target(observation, **kwargs)
 
 
@@ -152,7 +130,7 @@ class C51DeepQNetwork(Module):
         else:
             raise ValueError('action_space must be Discrete')
         self.representation = representation
-        self.target_representation = deepcopy(representation)
+        self.target_representation = representation.clone(trainable=False, name='target_representation')
         self.representation_info_shape = representation.output_shapes
 
         self.atom_num = atom_num
@@ -168,26 +146,23 @@ class C51DeepQNetwork(Module):
             initializer=initializer,
             activation=activation,
         )
-        self.target_Z_head = deepcopy(self.eval_Z_head)
-        self.supports = torch.nn.Parameter(torch.linspace(self.v_min, self.v_max, self.atom_num),
-                                           requires_grad=False).to(device)
+        self.target_Z_head = self.eval_Z_head.clone(trainable=False, name='target_Z_head')
+        self.supports = self.add_weight(name="supports", shape=(self.atom_num,),
+                                        initializer=tf.keras.initializers.Constant(
+                                            tf.linspace(self.v_min, self.v_max, self.atom_num).numpy()),
+                                        trainable=False, dtype=tf.float32)
         self.delta_z = (v_max - v_min) / (atom_num - 1)
 
         # Prepare DDP module.
         self.distributed_training = use_distributed_training
-        if self.distributed_training:
-            self.rank = int(os.environ["RANK"])
-            if self.representation._get_name() != "Basic_Identical":
-                self.representation = DistributedDataParallel(module=self.representation, device_ids=[self.rank])
-            self.eval_Z_head = DistributedDataParallel(module=self.eval_Z_head, device_ids=[self.rank])
 
     def call(self,
              observation: Union[Tensor, dict],
              **kwargs) -> ModelOutput:
         rep_output = self.representation(observation)
         eval_Z = self.eval_Z_head(rep_output.embeddings)
-        eval_Q = (self.supports * eval_Z).sum(-1)
-        greedy_actions = eval_Q.argmax(dim=-1)
+        eval_Q = tf.reduce_sum(self.supports * eval_Z, axis=-1)
+        greedy_actions = tf.argmax(eval_Q, axis=-1, output_type=tf.int32)
         return ModelOutput(
             actions=greedy_actions,
             values=eval_Z,
@@ -199,14 +174,16 @@ class C51DeepQNetwork(Module):
             deterministic: bool = True,
             epsilon_greedy: float = 0.0,
             **kwargs) -> Tensor:
-        greedy_actions = self(observation).actions
+        greedy_actions = self.call(observation).actions
 
         if deterministic or epsilon_greedy <= 0.0:
             actions = greedy_actions
         else:
-            random_actions = torch.randint(low=0, high=self.n_actions, size=greedy_actions.shape, device=self.device)
-            random_mask = torch.rand(greedy_actions.shape, device=self.device) < epsilon_greedy
-            actions = torch.where(random_mask, random_actions, greedy_actions)
+            random_actions = tf.random.uniform(shape=tf.shape(greedy_actions), minval=0, maxval=self.n_actions,
+                                               dtype=greedy_actions.dtype)
+            random_mask = tf.random.uniform(shape=tf.shape(greedy_actions), minval=0.0, maxval=1.0,
+                                            dtype=tf.float32) < epsilon_greedy
+            actions = tf.where(random_mask, random_actions, greedy_actions)
         return actions
 
     def target(self,
@@ -214,15 +191,15 @@ class C51DeepQNetwork(Module):
                **kwargs) -> ModelOutput:
         target_rep_output = self.target_representation(observation)
         target_Z = self.target_Z_head(target_rep_output.embeddings)
-        target_Q = (self.supports * target_Z).sum(-1)
-        argmax_action = target_Q.argmax(dim=-1)
+        target_Q = tf.reduce_sum(self.supports * target_Z, axis=-1)
+        argmax_action = tf.argmax(target_Q, axis=-1, output_type=tf.int32)
         return ModelOutput(actions=argmax_action, values=target_Z)
 
     def copy_target(self):
-        for ep, tp in zip(self.representation.parameters(), self.target_representation.parameters()):
-            tp.data.copy_(ep)
-        for ep, tp in zip(self.eval_Z_head.parameters(), self.target_Z_head.parameters()):
-            tp.data.copy_(ep)
+        for ep, tp in zip(self.representation.variables, self.target_representation.variables):
+            tp.assign(ep)
+        for ep, tp in zip(self.eval_Z_head.variables, self.target_Z_head.variables):
+            tp.assign(ep)
 
 
 class QRDeepQNetwork(Module):
@@ -242,7 +219,7 @@ class QRDeepQNetwork(Module):
         else:
             raise ValueError('action_space must be Discrete')
         self.representation = representation
-        self.target_representation = deepcopy(representation)
+        self.target_representation = representation.clone(trainable=False, name="target_representation")
         self.representation_info_shape = representation.output_shapes
 
         self.quantile_num = quantile_num
@@ -254,25 +231,19 @@ class QRDeepQNetwork(Module):
             normalizer=normalizer,
             initializer=initializer,
             activation=activation,
-            device=device
         )
-        self.target_Z_head = deepcopy(self.eval_Z_head)
+        self.target_Z_head = self.eval_Z_head.clone(trainable=False, name="target_Z_head")
 
         # Prepare DDP module.
         self.distributed_training = use_distributed_training
-        if self.distributed_training:
-            self.rank = int(os.environ["RANK"])
-            if self.representation._get_name() != "Basic_Identical":
-                self.representation = DistributedDataParallel(module=self.representation, device_ids=[self.rank])
-            self.eval_Z_head = DistributedDataParallel(module=self.eval_Z_head, device_ids=[self.rank])
 
     def call(self,
              observation: Union[Tensor, dict],
              **kwargs) -> ModelOutput:
         rep_output = self.representation(observation)
         eval_Z = self.eval_Z_head(rep_output.embeddings)
-        eval_Q = eval_Z.mean(dim=-1)
-        greedy_actions = eval_Q.argmax(dim=-1)
+        eval_Q = tf.reduce_mean(eval_Z, axis=-1)
+        greedy_actions = tf.argmax(eval_Q, axis=-1, output_type=tf.int32)
         return ModelOutput(
             actions=greedy_actions,
             values=eval_Z,
@@ -289,9 +260,11 @@ class QRDeepQNetwork(Module):
         if deterministic or epsilon_greedy <= 0.0:
             actions = greedy_actions
         else:
-            random_actions = torch.randint(low=0, high=self.n_actions, size=greedy_actions.shape, device=self.device)
-            random_mask = torch.rand(greedy_actions.shape, device=self.device) < epsilon_greedy
-            actions = torch.where(random_mask, random_actions, greedy_actions)
+            random_actions = tf.random.uniform(shape=tf.shape(greedy_actions), minval=0, maxval=self.n_actions,
+                                               dtype=greedy_actions.dtype)
+            random_mask = tf.random.uniform(shape=tf.shape(greedy_actions), minval=0.0, maxval=1.0,
+                                            dtype=tf.float32) < epsilon_greedy
+            actions = tf.where(random_mask, random_actions, greedy_actions)
         return actions
 
     def target(self,
@@ -299,15 +272,15 @@ class QRDeepQNetwork(Module):
                **kwargs) -> ModelOutput:
         target_rep_output = self.target_representation(observation)
         target_Z = self.target_Z_head(target_rep_output.embeddings)
-        target_Q = target_Z.mean(dim=-1)
-        argmax_action = target_Q.argmax(dim=-1)
+        target_Q = tf.reduce_mean(target_Z, axis=-1)
+        argmax_action = tf.argmax(target_Q, axis=-1, output_type=tf.int32)
         return ModelOutput(actions=argmax_action, values=target_Z)
 
     def copy_target(self):
-        for ep, tp in zip(self.representation.parameters(), self.target_representation.parameters()):
-            tp.data.copy_(ep)
-        for ep, tp in zip(self.eval_Z_head.parameters(), self.target_Z_head.parameters()):
-            tp.data.copy_(ep)
+        for ep, tp in zip(self.representation.variables, self.target_representation.variables):
+            tp.assign(ep)
+        for ep, tp in zip(self.eval_Z_head.variables, self.target_Z_head.variables):
+            tp.assign(ep)
 
 
 class DeepRecurrentQNetwork(Module):
@@ -327,7 +300,7 @@ class DeepRecurrentQNetwork(Module):
         else:
             raise ValueError('action_space must be Discrete')
         self.representation = representation
-        self.target_representation = deepcopy(representation)
+        self.target_representation = representation.clone(trainable=False, name="target_representation")
         self.representation_info_shape = representation.output_shapes
 
         self.recurrent_layer_N = recurrent_layer_N
@@ -341,19 +314,13 @@ class DeepRecurrentQNetwork(Module):
             n_actions=self.n_actions,
             rnn=rnn,
             initializer=initializer,
-            device=device
         )
-        self.target_Q_head = deepcopy(self.eval_Q_head)
+        self.target_Q_head = self.eval_Q_head.clone(trainable=False, name="target_Q_head")
 
         self.lstm = self.eval_Q_head.lstm
 
         # Prepare DDP module.
         self.distributed_training = use_distributed_training
-        if self.distributed_training:
-            self.rank = int(os.environ["RANK"])
-            if self.representation._get_name() != "Basic_Identical":
-                self.representation = DistributedDataParallel(module=self.representation, device_ids=[self.rank])
-            self.eval_Q_head = DistributedDataParallel(module=self.eval_Q_head, device_ids=[self.rank])
 
     def call(self,
              observation: Union[Tensor, dict],
@@ -361,7 +328,7 @@ class DeepRecurrentQNetwork(Module):
              **kwargs) -> Tuple[RNN_State, ModelOutput]:
         rep_output = self.representation(observation)
         rnn_states_new, q_values = self.eval_Q_head(rep_output.embeddings, rnn_states)
-        greedy_actions = q_values[:, -1].argmax(dim=-1)
+        greedy_actions = tf.argmax(q_values[:, -1], axis=-1)
         return rnn_states_new, ModelOutput(actions=greedy_actions, values=q_values, rep_out=rep_output)
 
     def act(self,
@@ -369,14 +336,16 @@ class DeepRecurrentQNetwork(Module):
             deterministic: bool = True,
             epsilon_greedy: float = 0.0,
             **kwargs) -> Tensor:
-        greedy_actions = self(observation).actions
+        greedy_actions = self.call(observation).actions
 
         if deterministic or epsilon_greedy <= 0.0:
             actions = greedy_actions
         else:
-            random_actions = torch.randint(low=0, high=self.n_actions, size=greedy_actions.shape, device=self.device)
-            random_mask = torch.rand(greedy_actions.shape, device=self.device) < epsilon_greedy
-            actions = torch.where(random_mask, random_actions, greedy_actions)
+            random_actions = tf.random.uniform(shape=tf.shape(greedy_actions), minval=0, maxval=self.n_actions,
+                                               dtype=greedy_actions.dtype)
+            random_mask = tf.random.uniform(shape=tf.shape(greedy_actions), minval=0.0, maxval=1.0,
+                                            dtype=tf.float32) < epsilon_greedy
+            actions = tf.where(random_mask, random_actions, greedy_actions)
         return actions
 
     def target(self,
@@ -385,25 +354,52 @@ class DeepRecurrentQNetwork(Module):
                **kwargs) -> Tuple[RNN_State, ModelOutput]:
         target_rep_output = self.target_representation(observation)
         target_rnn_out, target_q_values = self.target_Q_head(target_rep_output.embeddings, rnn_states)
-        argmax_action = target_q_values.argmax(dim=-1)
+        argmax_action = tf.argmax(target_q_values, axis=-1)
         return target_rnn_out, ModelOutput(actions=argmax_action, values=target_q_values)
 
     def init_rnn_states(self, batch: int) -> RNN_State:
-        hidden_states = torch.zeros(size=(self.recurrent_layer_N, batch, self.recurrent_hidden_size)).to(self.device)
-        cell_states = torch.zeros_like(hidden_states).to(self.device) if self.lstm else None
+        state_shape = (self.recurrent_layer_N, batch, self.recurrent_hidden_size)
+
+        hidden_states = tf.zeros(state_shape, dtype=tf.float32)
+        cell_states = tf.zeros(state_shape, dtype=tf.float32) if self.lstm else None
+
+        return RNN_State(
+            hidden_states=hidden_states,
+            cell_states=cell_states,
+        )
+
+    @staticmethod
+    def _zero_rnn_state_item(states: tf.Tensor, index: int | tf.Tensor) -> tf.Tensor:
+        """Reset one batch item's states.
+
+        Args:
+            states: Shape [num_layers, batch_size, hidden_size].
+            index: Batch index to reset.
+        """
+        index = tf.cast(index, tf.int32)
+        batch_size = tf.shape(states)[1]
+
+        # Shape: [batch_size]
+        keep_mask = 1.0 - tf.one_hot(index, depth=batch_size, dtype=states.dtype)
+
+        # Broadcast to [num_layers, batch_size, hidden_size].
+        return states * keep_mask[tf.newaxis, :, tf.newaxis]
+
+    def init_rnn_states_item(
+            self,
+            rnn_states: RNN_State,
+            i: int | tf.Tensor,
+    ) -> RNN_State:
+        hidden_states = self._zero_rnn_state_item(rnn_states.hidden_states, i)
+
+        cell_states = rnn_states.cell_states
+        if self.lstm:
+            cell_states = self._zero_rnn_state_item(cell_states, i)
+
         return RNN_State(hidden_states=hidden_states, cell_states=cell_states)
 
-    def init_rnn_states_item(self, rnn_states: RNN_State, i: int) -> RNN_State:
-        rnn_states.hidden_states[:, i] = torch.zeros(
-            size=(self.recurrent_layer_N, self.recurrent_hidden_size)).to(self.device)
-        if self.lstm:
-            rnn_states.cell_states[:, i] = torch.zeros(
-                size=(self.recurrent_layer_N, self.recurrent_hidden_size)).to(self.device)
-            return rnn_states
-        return rnn_states
-
     def copy_target(self):
-        for ep, tp in zip(self.representation.parameters(), self.target_representation.parameters()):
-            tp.data.copy_(ep)
-        for ep, tp in zip(self.eval_Q_head.parameters(), self.target_Q_head.parameters()):
-            tp.data.copy_(ep)
+        for ep, tp in zip(self.representation.variables, self.target_representation.variables):
+            tp.assign(ep)
+        for ep, tp in zip(self.eval_Q_head.variables, self.target_Q_head.variables):
+            tp.assign(ep)

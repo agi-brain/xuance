@@ -16,7 +16,6 @@ class DeterministicActor(Module):
                  initializer: Optional[keras.initializers.Initializer] = None,
                  activation: Optional[Type[Module]] = None,
                  activation_action: Optional[Type[Module]] = None,
-                 device: str = None,
                  **kwargs) -> None:
         super().__init__(**kwargs)
         if isinstance(action_space, Box):
@@ -36,7 +35,6 @@ class DeterministicActor(Module):
             initializer=initializer,
             activation=activation,
             activation_action=activation_action,
-            device=device,
             **kwargs
         )
 

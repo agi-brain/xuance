@@ -58,7 +58,6 @@ class DRQN_Agent(OffPolicyAgent):
             action_space=self.action_space,
             rnn=self.config.rnn,
             initializer=self.initializer,
-            device=self.device,
             use_distributed_training=self.distributed_training
         )
 
@@ -72,7 +71,7 @@ class DRQN_Agent(OffPolicyAgent):
         if np.random.rand() < egreedy:
             actions = random_action
         else:
-            actions = argmax_action.cpu().numpy()
+            actions = argmax_action.numpy()
 
         return ActionOutput(
             env_actions=actions,

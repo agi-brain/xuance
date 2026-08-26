@@ -40,8 +40,7 @@ class TD3_Agent(DDPG_Agent):
             normalizer=self.normalizer_fn,
             initializer=self.initializer,
             activation=self.activation,
-            activation_action=ActivationFunctions[self.config.activation_action],
-            device=self.device
+            activation_action=ActivationFunctions[self.config.activation_action]
         )
 
         # build critic network
@@ -51,8 +50,7 @@ class TD3_Agent(DDPG_Agent):
             critic_hidden_size=self.config.critic_hidden_size,
             normalizer=self.normalizer_fn,
             initializer=self.initializer,
-            activation=self.activation,
-            device=self.device
+            activation=self.activation
         )
 
         # build the RL model

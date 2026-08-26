@@ -57,8 +57,7 @@ class COMA_Agents(OnPolicyMARLAgents):
             actor_hidden_size=self.config.actor_hidden_size,
             normalizer=self.normalizer_fn,
             initializer=self.initializer,
-            activation=self.activation,
-            device=self.device
+            activation=self.activation
         )
         if isinstance(self.action_space[self.agent_keys[0]], gymnasium.spaces.Discrete):
             Actor = CategoricalActor
@@ -98,8 +97,7 @@ class COMA_Agents(OnPolicyMARLAgents):
             normalizer=self.normalizer_fn,
             initializer=self.initializer,
             activation=self.activation,
-            use_rnn=self.use_rnn,
-            device=self.device
+            use_rnn=self.use_rnn
         )
 
         # build the RL model
@@ -108,7 +106,6 @@ class COMA_Agents(OnPolicyMARLAgents):
             actors=actor_networks,
             critics=critic_network,
             use_rnn=self.use_rnn,
-            device=self.device,
             use_distributed_training=self.distributed_training
         )
 
@@ -255,13 +252,13 @@ class COMA_Agents(OnPolicyMARLAgents):
             rnn_states_critic_new = values_model_output.critic_rnn_states
             values = values_model_output.values
             values.grouped_tensor = {
-                k: values.group(k).gather(-1, actions.group(k)).reshape([batch_size, -1]).cpu().numpy()
+                k: values.group(k).gather(-1, actions.group(k)).reshape([batch_size, -1]).numpy()
                 for k in self.group_keys
             }
             values_dict = values.agent_wise
 
         actions.grouped_tensor = {
-            k: actions.grouped_tensor[k].reshape(batch_size, n).cpu().numpy() for k, n in self.n_group_agents.items()
+            k: actions.grouped_tensor[k].reshape(batch_size, n).numpy() for k, n in self.n_group_agents.items()
         }
         actions_list = [{k: actions.agent_wise[k][e].reshape([]) for k in self.agent_keys} for e in range(batch_size)]
 
@@ -334,7 +331,7 @@ class COMA_Agents(OnPolicyMARLAgents):
         rnn_states_critic_new_i = values_model_output.critic_rnn_states
         values = values_model_output.values
         values.grouped_tensor = {
-            k: v.gather(-1, actions_grouped.group(k)).cpu().numpy() for k, v in values.grouped_tensor.items()
+            k: v.gather(-1, actions_grouped.group(k)).numpy() for k, v in values.grouped_tensor.items()
         }
         values_dict = {k: v.reshape([]) for k, v in values.agent_wise.items()}
 

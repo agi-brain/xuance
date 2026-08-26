@@ -292,7 +292,6 @@ class Agent(ABC):
                         if isinstance(v, (tf.Tensor, tf.Variable)):
                             v = v.numpy()
                         tf.summary.scalar(k, v, step=x_index)
-                self.writer.flush()
 
     def log_videos(self, info: dict, fps: int, x_index: int = 0):
         if self.use_wandb:
@@ -315,7 +314,6 @@ class Agent(ABC):
                         if frame.shape.rank == 4 and frame.shape[1] in (1, 3, 4):
                             frame = tf.transpose(frame, [0, 2, 3, 1])
                         tf.summary.image(k, frame, step=x_index, max_outputs=4)
-                self.writer.flush()
 
     def _process_observation(self, observations):
         if not self.use_obsnorm:

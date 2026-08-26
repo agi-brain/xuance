@@ -27,8 +27,6 @@ class DQN_Learner(Learner):
             evalQ = self.model(obs_batch, training=True).values
             targetQ = self.model.target(next_batch).values
             targetQ = tf.math.reduce_max(targetQ, axis=-1)
-            rew_batch = tf.cast(rew_batch, targetQ.dtype)
-            ter_batch = tf.cast(ter_batch, targetQ.dtype)
             targetQ = rew_batch + self.gamma * (1.0 - ter_batch) * targetQ
             targetQ = tf.stop_gradient(targetQ)
 
@@ -62,16 +60,18 @@ class DQN_Learner(Learner):
 
     def update(self, **samples):
         self.iterations += 1
-        obs_batch = samples['obs']
-        act_batch = samples['actions'].astype(np.int32)
-        next_batch = samples['obs_next']
-        rew_batch = samples['rewards']
-        ter_batch = samples['terminals']
+        obs_batch = tf.convert_to_tensor(samples['obs'], dtype=tf.float32)
+        act_batch = tf.convert_to_tensor(samples['actions'], dtype=tf.int32)
+        next_batch = tf.convert_to_tensor(samples['obs_next'], dtype=tf.float32)
+        rew_batch = tf.convert_to_tensor(samples['rewards'], dtype=tf.float32)
+        ter_batch = tf.convert_to_tensor(samples['terminals'], dtype=tf.float32)
+
         info = self.callback.on_update_start(self.iterations,
                                              model=self.model, obs=obs_batch, act=act_batch,
                                              next_obs=next_batch, rew=rew_batch, termination=ter_batch)
 
         predictQ, loss = self.learn(obs_batch, act_batch, next_batch, rew_batch, ter_batch)
+
         if self.iterations % self.sync_frequency == 0:
             self.model.copy_target()
 

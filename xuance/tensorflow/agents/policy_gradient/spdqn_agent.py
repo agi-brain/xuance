@@ -77,8 +77,7 @@ class SPDQN_Agent(PDQN_Agent):
             normalizer=self.normalizer_fn,
             initializer=self.initializer,
             activation=self.activation,
-            activation_action=ActivationFunctions[self.config.activation_action],
-            device=self.device
+            activation_action=ActivationFunctions[self.config.activation_action]
         )
 
         q_network = ModuleList()
@@ -89,8 +88,7 @@ class SPDQN_Agent(PDQN_Agent):
                 critic_hidden_size=self.config.qnetwork_hidden_size,
                 normalizer=self.normalizer_fn,
                 initializer=self.initializer,
-                activation=self.activation,
-                device=self.device
+                activation=self.activation
             ))
 
         model = SplitParameterisedDQN(

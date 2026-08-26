@@ -44,8 +44,7 @@ class PG_Agent(OnPolicyAgent):
             action_space=self.action_space,
             normalizer=self.normalizer_fn,
             initializer=self.initializer,
-            activation=self.activation,
-            device=self.device
+            activation=self.activation
         )
         if isinstance(self.action_space, gymnasium.spaces.Box):
             Actor = GaussianActor

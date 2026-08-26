@@ -195,11 +195,11 @@ class MFQ_Agents(OffPolicyMARLAgents):
                                                           agent_mask_tensor=agent_mask_tensor,
                                                           batch_size=batch_size)
 
-        actions.grouped_tensor = {k: actions.grouped_tensor[k].reshape(batch_size, n).cpu().numpy()
+        actions.grouped_tensor = {k: actions.grouped_tensor[k].reshape(batch_size, n).numpy()
                                   for k, n in self.n_group_agents.items()}
         actions_list = [{k: actions.agent_wise[k][i] for k in self.agent_keys} for i in range(batch_size)]
 
-        actions_mean_masked = {k: v.cpu().numpy() for k, v in actions_mean_masked.items()}
+        actions_mean_masked = {k: v.numpy() for k, v in actions_mean_masked.items()}
         actions_mean_list = [{k: v[e] for k, v in actions_mean_masked.items()} for e in range(batch_size)]
 
         if not test_mode:  # get random actions

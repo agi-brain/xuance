@@ -55,7 +55,6 @@ class NoisyDQN_Agent(Agent):
             normalizer=self.normalizer_fn,
             initializer=self.initializer,
             activation=self.activation,
-            device=self.device,
             use_distributed_training=self.distributed_training
         )
 
@@ -65,7 +64,7 @@ class NoisyDQN_Agent(Agent):
     def get_actions(self, obs) -> ActionOutput:
         self.model.noise_scale = self.noise_scale
         actions = self.model.act(obs)
-        return ActionOutput(env_actions=actions.cpu().numpy())
+        return ActionOutput(env_actions=actions.numpy())
 
     def train_epochs(self, n_epochs=1):
         train_info = {}

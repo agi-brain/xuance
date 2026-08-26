@@ -7,7 +7,7 @@ from gymnasium.spaces import Space
 from typing import Optional, List, Union, Dict
 from xuance.common import MARL_OffPolicyBuffer, MARL_OffPolicyBuffer_RNN, MultiAgentBaseCallback
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
-from xuance.tensorflow import tf, Tensor, Module
+from xuance.tensorflow import tf, Module
 from xuance.tensorflow.agents.base import MARLAgents
 from xuance.tensorflow.rl_models.modules import RNN_State, MARLActionOutput
 
@@ -293,7 +293,7 @@ class OffPolicyMARLAgents(MARLAgents):
         rnn_states_new = model_output.rnn_states
         actions = model_output.actions
 
-        actions.grouped_tensor = {k: actions.grouped_tensor[k].reshape(batch_size, n).cpu().numpy()
+        actions.grouped_tensor = {k: actions.grouped_tensor[k].reshape(batch_size, n).numpy()
                                   for k, n in self.n_group_agents.items()}
         actions_list = [{k: actions.agent_wise[k][i] for k in self.agent_keys} for i in range(batch_size)]
 

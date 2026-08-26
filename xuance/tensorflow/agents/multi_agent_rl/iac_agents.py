@@ -186,7 +186,7 @@ class IAC_Agents(OnPolicyMARLAgents):
         rnn_states_actor_new = model_output.actor_rnn_states
         actions = model_output.actions
 
-        actions.grouped_tensor = {k: actions.grouped_tensor[k].reshape(batch_size, n).cpu().numpy()
+        actions.grouped_tensor = {k: actions.grouped_tensor[k].reshape(batch_size, n).numpy()
                                   for k, n in self.n_group_agents.items()}
         if self.continuous_control:
             actions_list = [{k: actions.agent_wise[k][e].reshape([-1]) for k in self.agent_keys}
@@ -201,7 +201,7 @@ class IAC_Agents(OnPolicyMARLAgents):
                                                         rnn_states=rnn_states_critic)
             rnn_states_critic_new = values_model_output.critic_rnn_states
             values = values_model_output.values
-            values.grouped_tensor = {k: v.cpu().numpy() for k, v in values.grouped_tensor.items()}
+            values.grouped_tensor = {k: v.numpy() for k, v in values.grouped_tensor.items()}
             values_dict = {k: v.reshape(batch_size) for k, v in values.agent_wise.items()}
 
         return MARLActionOutput(

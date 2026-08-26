@@ -235,7 +235,7 @@ class MFAC_Agents(OnPolicyMARLAgents):
                 # shape: batch_size * N_agents
                 log_pi_a = model_output.distributions[group].log_prob(actions.packed(group)).reshape(batch_size, -1)
                 for i, agent in enumerate(agent_keys):
-                    log_pi_a_dict[agent] = log_pi_a[:, i].cpu().numpy()
+                    log_pi_a_dict[agent] = log_pi_a[:, i].numpy()
 
             values_model_output = self.model.get_values(observations=obs_input,
                                                         mean_actions=mean_actions_input,
@@ -243,17 +243,17 @@ class MFAC_Agents(OnPolicyMARLAgents):
                                                         rnn_states=rnn_states_critic)
             rnn_states_critic_new = values_model_output.critic_rnn_states
             values = values_model_output.values
-            values.grouped_tensor = {k: v.cpu().numpy() for k, v in values.grouped_tensor.items()}
+            values.grouped_tensor = {k: v.numpy() for k, v in values.grouped_tensor.items()}
             values_dict = {k: v.reshape(batch_size) for k, v in values.agent_wise.items()}
 
         actions_mean_masked = self.model.get_mean_actions(actions=actions.agent_wise,
                                                           agent_mask_tensor=agent_mask_tensor,
                                                           batch_size=batch_size)
-        actions_mean_masked = {k: v.cpu().numpy() for k, v in actions_mean_masked.items()}
+        actions_mean_masked = {k: v.numpy() for k, v in actions_mean_masked.items()}
         actions_mean_dict = [{k: v[e] for k, v in actions_mean_masked.items()} for e in range(batch_size)]
 
         actions.grouped_tensor = {
-            k: v.reshape(batch_size, -1).cpu().numpy() for k, v in actions.grouped_tensor.items()
+            k: v.reshape(batch_size, -1).numpy() for k, v in actions.grouped_tensor.items()
         }
         actions_list = [
             {k: v[e].reshape([]) for k, v in actions.agent_wise.items()} for e in range(batch_size)
@@ -313,7 +313,7 @@ class MFAC_Agents(OnPolicyMARLAgents):
                                                     rnn_states=rnn_states_critic_i)
         rnn_states_critic_new_i = values_model_output.critic_rnn_states
         values = values_model_output.values
-        values.grouped_tensor = {k: v.cpu().numpy() for k, v in values.grouped_tensor.items()}
+        values.grouped_tensor = {k: v.numpy() for k, v in values.grouped_tensor.items()}
         values_dict = {k: v.reshape([]) for k, v in values.agent_wise.items()}
 
         return rnn_states_critic_new_i, values_dict

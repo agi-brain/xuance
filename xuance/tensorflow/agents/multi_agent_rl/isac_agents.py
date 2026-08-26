@@ -148,7 +148,7 @@ class ISAC_Agents(OffPolicyMARLAgents):
 
         if self.continuous_control:
             actions.grouped_tensor = {
-                k: actions.grouped_tensor[k].reshape(batch_size, n, -1).cpu().numpy() for k, n in
+                k: actions.grouped_tensor[k].reshape(batch_size, n, -1).numpy() for k, n in
                 self.n_group_agents.items()
             }
             actions_list = [{
@@ -156,7 +156,7 @@ class ISAC_Agents(OffPolicyMARLAgents):
             } for e in range(batch_size)]
         else:
             actions.grouped_tensor = {
-                k: actions.grouped_tensor[k].reshape(batch_size, n).cpu().numpy() for k, n in
+                k: actions.grouped_tensor[k].reshape(batch_size, n).numpy() for k, n in
                 self.n_group_agents.items()
             }
             actions_list = [{

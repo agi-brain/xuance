@@ -46,8 +46,7 @@ class PPO_Agent(OnPolicyAgent):
         # build actor network
         actor_input = dict(normalizer=self.normalizer_fn,
                            initializer=self.initializer,
-                           activation=self.activation,
-                           device=self.device)
+                           activation=self.activation)
         if shared_representation:
             actor_input.update(dict(feature_dim=representation.output_shapes['state'][0],
                                     hidden_size=self.config.actor_hidden_size))
@@ -78,16 +77,14 @@ class PPO_Agent(OnPolicyAgent):
                                hidden_size=self.config.critic_hidden_size,
                                normalizer=self.normalizer_fn,
                                initializer=self.initializer,
-                               activation=self.activation,
-                               device=self.device)
+                               activation=self.activation)
             model = SharedActorCritic(representation=representation, actor=actor, critic=critic)
         else:
             critic = Critic(representation=deepcopy(representation),
                             critic_hidden_size=self.config.critic_hidden_size,
                             normalizer=self.normalizer_fn,
                             initializer=self.initializer,
-                            activation=self.activation,
-                            device=self.device)
+                            activation=self.activation)
             model = ActorCritic(actor=actor, critic=critic)
 
         return model

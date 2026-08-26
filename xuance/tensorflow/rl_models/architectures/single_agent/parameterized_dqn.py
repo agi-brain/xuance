@@ -1,5 +1,4 @@
 import numpy as np
-from copy import deepcopy
 from xuance.tensorflow import tf, Module, ModuleList, Tensor
 
 
@@ -11,8 +10,8 @@ class ParameterizedDQN(Module):
         super().__init__(**kwargs)
         self.continuous_actor = continuous_actor
         self.q_network = q_network
-        self.target_continuous_actor = deepcopy(self.continuous_actor)
-        self.target_q_network = deepcopy(self.q_network)
+        self.target_continuous_actor = self.continuous_actor.clone(trainable=False, name="target_continuous_actor")
+        self.target_q_network = self.q_network.clone(trainable=False, name="target_q_network")
 
     def Atarget(self, observations: Tensor):
         return self.target_continuous_actor(observations).actions
@@ -32,12 +31,10 @@ class ParameterizedDQN(Module):
         return policy_q
 
     def soft_update(self, tau=0.005):
-        for ep, tp in zip(self.continuous_actor.parameters(), self.target_continuous_actor.parameters()):
-            tp.data.mul_(1 - tau)
-            tp.data.add_(tau * ep.data)
-        for ep, tp in zip(self.q_network.parameters(), self.target_q_network.parameters()):
-            tp.data.mul_(1 - tau)
-            tp.data.add_(tau * ep.data)
+        for ep, tp in zip(self.continuous_actor.variables, self.target_continuous_actor.variables):
+            tp.assign((1 - tau) * tp + tau * ep)
+        for ep, tp in zip(self.q_network.variables, self.target_q_network.variables):
+            tp.assign((1 - tau) * tp + tau * ep)
 
 
 class MultipassParameterizedDQN(ParameterizedDQN):

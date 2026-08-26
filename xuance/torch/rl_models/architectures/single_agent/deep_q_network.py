@@ -70,21 +70,6 @@ class DeepQNetwork(Module):
             rep_out=rep_output
         )
 
-    def act(self,
-            observation: Union[Tensor, dict],
-            deterministic: bool = True,
-            epsilon_greedy: float = 0.0,
-            **kwargs) -> Tensor:
-        greedy_actions = self(observation).actions
-
-        if deterministic or epsilon_greedy <= 0.0:
-            actions = greedy_actions
-        else:
-            random_actions = torch.randint(low=0, high=self.n_actions, size=greedy_actions.shape, device=self.device)
-            random_mask = torch.rand(greedy_actions.shape, device=self.device) < epsilon_greedy
-            actions = torch.where(random_mask, random_actions, greedy_actions)
-        return actions
-
     def target(self,
                observation: Union[Tensor, dict],
                **kwargs) -> ModelOutput:

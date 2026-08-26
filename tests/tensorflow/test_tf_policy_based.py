@@ -1,7 +1,6 @@
 # Test the policy-based algorithms with PyTorch.
 
 from argparse import Namespace
-from copy import deepcopy
 from xuance import get_runner
 import unittest
 

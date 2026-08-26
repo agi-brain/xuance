@@ -1,9 +1,12 @@
+import numpy as np
 from argparse import Namespace
 from gymnasium.spaces import Space
-from xuance.common import Optional, BaseCallback
+from typing import Optional, Tuple
+from xuance.common import BaseCallback
 from xuance.environment import DummyVecEnv, SubprocVecEnv
-from xuance.tensorflow import Module
+from xuance.tensorflow import tf, Tensor, Module
 from xuance.tensorflow.agents import OffPolicyAgent
+from xuance.tensorflow.rl_models.modules import ActionOutput
 from xuance.tensorflow.rl_models.architectures import DeepQNetwork
 
 
@@ -49,3 +52,44 @@ class DQN_Agent(OffPolicyAgent):
         )
 
         return model
+
+    @tf.function(reduce_retracing=True)
+    def _rollout_step(
+            self, observations: Tensor, epsilon: Tensor, **kwargs
+    ) -> Tuple[Tensor, ...]:
+        greedy_actions = self.model(observations).actions
+        explore_mask = tf.random.uniform(shape=tf.shape(greedy_actions),
+                                         minval=0.0,
+                                         maxval=1.0,
+                                         dtype=tf.float32) < epsilon
+        random_actions = tf.random.uniform(shape=tf.shape(greedy_actions),
+                                           minval=0,
+                                           maxval=self.action_space.n,
+                                           dtype=greedy_actions.dtype)
+        actions = tf.where(explore_mask, random_actions, greedy_actions)
+
+        return actions
+
+    def get_actions(
+            self,
+            observations: np.ndarray | Tensor,
+            test_mode: bool = False
+    ) -> ActionOutput:
+        """Returns actions for the given observations.
+
+        Args:
+            observations: Observations used by the policy to generate actions.
+            test_mode: Whether to disable exploration noise for evaluation.
+
+        Returns:
+            The ActionOutput containing actions to be executed in the environment.
+        """
+        observations = tf.convert_to_tensor(observations, dtype=tf.float32)
+        epsilon = tf.convert_to_tensor(0.0 if test_mode else self.e_greedy, dtype=tf.float32)
+
+        actions = self._rollout_step(observations, epsilon=epsilon)
+
+        if not self.is_tensor_memory:
+            actions = actions.numpy()
+
+        return ActionOutput(env_actions=actions)

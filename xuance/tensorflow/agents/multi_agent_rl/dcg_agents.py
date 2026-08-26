@@ -143,7 +143,7 @@ class DCG_Agents(OffPolicyMARLAgents):
         hidden_states = hidden_states.reshape([batch_size, self.n_agents, -1])
         actions = self.learner.act(hidden_states, avail_actions=avail_actions_input.grouped_tensor)
 
-        actions_out = actions.reshape([batch_size, self.n_agents]).cpu().numpy()
+        actions_out = actions.reshape([batch_size, self.n_agents]).numpy()
         actions_list = [{k: actions_out[e, i] for i, k in enumerate(self.agent_keys)} for e in range(batch_size)]
 
         if not test_mode:  # get random actions

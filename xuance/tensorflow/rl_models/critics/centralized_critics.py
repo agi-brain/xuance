@@ -1,4 +1,3 @@
-from copy import deepcopy
 from typing import Type, Sequence, Optional, Union, Dict, Any
 from gymnasium.spaces import Discrete, Box
 from xuance.common import AgentGrouping
@@ -159,7 +158,7 @@ class TwinCentralizedActionValueCritic(Module):
         self.action_dim = {k: v.shape[0] for k, v in action_space.items()}
         self.joint_action_dim = sum(self.action_dim.values())
         self.representation_1 = representation
-        self.representation_2 = deepcopy(representation)
+        self.representation_2 = representation.clone(copy_weights=False, trainable=True, name='representation_2')
         self.representation_info_shape = representation.output_shapes
 
         self.feature_dim = self.representation_info_shape['state'][0] + self.joint_action_dim
