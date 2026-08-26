@@ -1,12 +1,12 @@
 import numpy as np
-import torch.ao.quantization.utils
 from tqdm import tqdm
 from copy import deepcopy
 from argparse import Namespace
 from gymnasium.spaces import Space
-from xuance.common import Optional, DummyOffPolicyBuffer, DummyOffPolicyBuffer_Atari, BaseCallback
+from typing import Optional
+from xuance.common import DummyOffPolicyBuffer, DummyOffPolicyBuffer_Atari, BaseCallback
 from xuance.environment import DummyVecEnv, SubprocVecEnv
-from xuance.tensorflow import Module
+from xuance.tensorflow import tf, Tensor, Module
 from xuance.tensorflow.agents import Agent
 from xuance.tensorflow.rl_models.modules import ActionOutput
 from xuance.tensorflow.rl_models.architectures import NoisyDeepQNetwork
@@ -60,11 +60,35 @@ class NoisyDQN_Agent(Agent):
 
         return model
 
-    @torch.no_grad()
-    def get_actions(self, obs) -> ActionOutput:
-        self.model.noise_scale = self.noise_scale
-        actions = self.model.act(obs)
-        return ActionOutput(env_actions=actions.numpy())
+    @tf.function(reduce_retracing=True)
+    def _rollout_step(
+            self,
+            observations: Tensor,
+            **kwargs
+    ) -> Tensor:
+        greedy_actions = self.model(observations).actions
+        return greedy_actions
+
+    def get_actions(
+            self,
+            observations: np.ndarray | Tensor,
+            test_mode: bool = False
+    ) -> ActionOutput:
+        """Returns actions for the given observations.
+
+        Args:
+            observations: Observations used by the policy to generate actions.
+            test_mode: Whether to disable exploration noise for evaluation.
+
+        Returns:
+            The ActionOutput containing actions to be executed in the environment.
+        """
+        observations = tf.convert_to_tensor(observations, dtype=tf.float32)
+        actions = self._rollout_step(observations)
+        if not self.is_tensor_memory:
+            actions = actions.numpy()
+
+        return ActionOutput(env_actions=actions)
 
     def train_epochs(self, n_epochs=1):
         train_info = {}

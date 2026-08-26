@@ -3,7 +3,6 @@ Deep Q-Network (DQN)
 Paper link: https://www.nature.com/articles/nature14236
 Implementation: TensorFlow2
 """
-import numpy as np
 from argparse import Namespace
 from xuance.tensorflow import tf, keras, Module
 from xuance.tensorflow.learners import Learner
@@ -76,8 +75,8 @@ class DQN_Learner(Learner):
             self.model.copy_target()
 
         info.update({
-            "Qloss": loss.numpy(),
-            "predictQ": tf.math.reduce_mean(predictQ).numpy(),
+            "Qloss": loss,
+            "predictQ": tf.math.reduce_mean(predictQ),
         })
 
         info.update(self.callback.on_update_end(self.iterations, model=self.model, info=info,

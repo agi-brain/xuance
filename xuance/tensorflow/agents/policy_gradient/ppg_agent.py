@@ -83,7 +83,6 @@ class PPG_Agent(OnPolicyAgent):
 
         return model
 
-    @torch.no_grad()
     def get_actions(
             self,
             observations: np.ndarray,

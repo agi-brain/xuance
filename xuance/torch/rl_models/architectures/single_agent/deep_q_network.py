@@ -111,14 +111,6 @@ class NoisyDeepQNetwork(DeepQNetwork):
             parameter.data.copy_(parameter.data + noise_param)
         return super().forward(observation, **kwargs)
 
-    def act(self,
-            observation: Union[Tensor, dict],
-            **kwargs) -> Tensor:
-        self.update_noise(self.noise_scale)
-        for parameter, noise_param in zip(self.eval_Q_head.parameters(), self.eval_noise_parameter):
-            parameter.data.copy_(parameter.data + noise_param)
-        return super().act(observation=observation, deterministic=True)
-
     def target(self,
                observation: Union[Tensor, dict],
                **kwargs) -> ModelOutput:

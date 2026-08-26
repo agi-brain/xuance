@@ -102,7 +102,6 @@ class PDQN_Agent(Agent):
 
         return model
 
-    @torch.no_grad()
     def get_actions(self, obs):
         obs = torch.as_tensor(obs, device=self.device).float()
         con_actions = self.model.con_action(obs)

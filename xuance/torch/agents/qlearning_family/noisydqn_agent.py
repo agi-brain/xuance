@@ -64,7 +64,7 @@ class NoisyDQN_Agent(Agent):
     @torch.no_grad()
     def get_actions(self, obs) -> ActionOutput:
         self.model.noise_scale = self.noise_scale
-        actions = self.model.act(obs)
+        actions = self.model(obs).actions
         return ActionOutput(env_actions=actions.cpu().numpy())
 
     def train_epochs(self, n_epochs=1):

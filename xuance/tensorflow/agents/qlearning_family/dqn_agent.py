@@ -55,16 +55,15 @@ class DQN_Agent(OffPolicyAgent):
 
     @tf.function(reduce_retracing=True)
     def _rollout_step(
-            self, observations: Tensor, epsilon: Tensor, **kwargs
-    ) -> Tuple[Tensor, ...]:
+            self,
+            observations: Tensor,
+            epsilon: Tensor,
+            **kwargs
+    ) -> Tensor:
         greedy_actions = self.model(observations).actions
-        explore_mask = tf.random.uniform(shape=tf.shape(greedy_actions),
-                                         minval=0.0,
-                                         maxval=1.0,
+        explore_mask = tf.random.uniform(shape=tf.shape(greedy_actions), minval=0.0, maxval=1.0,
                                          dtype=tf.float32) < epsilon
-        random_actions = tf.random.uniform(shape=tf.shape(greedy_actions),
-                                           minval=0,
-                                           maxval=self.action_space.n,
+        random_actions = tf.random.uniform(shape=tf.shape(greedy_actions), minval=0, maxval=self.action_space.n,
                                            dtype=greedy_actions.dtype)
         actions = tf.where(explore_mask, random_actions, greedy_actions)
 

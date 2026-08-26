@@ -63,7 +63,6 @@ class DRQN_Agent(OffPolicyAgent):
 
         return model
 
-    @torch.no_grad()
     def get_actions(self, obs, egreedy=0.0, rnn_states=None) -> ActionOutput:
         rnn_states_new, model_output = self.model(obs[:, None], rnn_states)
         argmax_action = model_output.actions

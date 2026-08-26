@@ -179,16 +179,12 @@ class OffPolicyAgent(Agent):
         Returns:
             The ActionOutput containing actions to be executed in the environment.
         """
-        actions, explored_actions = self._rollout_step(observations)
-        if test_mode:
-            env_actions = actions
-        else:
-            env_actions = explored_actions
+        actions = self._rollout_step(observations)
 
         if not self.is_tensor_memory:
-            env_actions = env_actions.numpy()
+            actions = actions.numpy()
 
-        return ActionOutput(env_actions=env_actions)
+        return ActionOutput(env_actions=actions)
 
     def train_epochs(self, n_epochs=1) -> dict:
         train_info = {}
@@ -246,7 +242,6 @@ class OffPolicyAgent(Agent):
                               self._process_observation(next_obs))
             if self.current_step > self.start_training and self.current_step % self.training_frequency == 0:
                 update_info = self.train_epochs(n_epochs=self.n_epochs)
-                self.log_infos(update_info, self.current_step)
                 train_info.update(update_info)
                 self.callback.on_train_epochs_end(self.current_step, model=self.model, memory=self.memory,
                                                   current_episode=self.current_episode, train_steps=train_steps,
@@ -274,7 +269,6 @@ class OffPolicyAgent(Agent):
                                 f"Episode-Steps/rank_{self.rank}": {f"env-{i}": infos[i]["episode_step"]},
                                 f"Train-Episode-Rewards/rank_{self.rank}": {f"env-{i}": infos[i]["episode_score"]}
                             }
-                        self.log_infos(episode_info, self.current_step)
                         train_info.update(episode_info)
                         self.callback.on_train_episode_info(envs=self.train_envs, model=self.model, env_id=i,
                                                             infos=infos, rank=self.rank, use_wandb=self.use_wandb,
@@ -286,6 +280,9 @@ class OffPolicyAgent(Agent):
             self._update_explore_factor()
             self.callback.on_train_step_end(self.current_step, envs=self.train_envs, model=self.model,
                                             train_steps=train_steps, train_info=train_info)
+
+            if self.current_step % self.log_interval == 0:
+                self.log_infos(train_info, self.current_step)
         return train_info
 
     def test(self,
