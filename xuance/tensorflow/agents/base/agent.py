@@ -90,7 +90,7 @@ class Agent(ABC):
         self.gamma = config.gamma
         self.start_training = getattr(config, "start_training", 1)
         self.training_frequency = getattr(config, "training_frequency", 1)
-        self.log_interval = getattr(config, "log_interval", self.config.parallels * 10)
+        self.log_interval = getattr(config, "log_interval", self.config.parallels * 100)
         self.n_epochs = getattr(config, "n_epochs", 1)
         self.device = self.config.device = set_device(self.config.device)
 

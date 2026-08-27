@@ -8,8 +8,8 @@ policy: "Gaussian_AC"
 learner: "NPG_Learner"
 runner: "DRL"
 
-representation_hidden_size: [256,]
-actor_hidden_size: [256,]
+representation_hidden_size: [32,]
+actor_hidden_size: [32, 32]
 activation: 'leaky_relu'
 activation_action: 'tanh'
 

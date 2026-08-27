@@ -3,10 +3,10 @@ from tqdm import tqdm
 from copy import deepcopy
 from argparse import Namespace
 from gymnasium.spaces import Space
-from xuance.common import Optional, DummyOnPolicyBuffer, DummyOnPolicyBuffer_Atari, BaseCallback
+from typing import Optional, Tuple
+from xuance.common import DummyOnPolicyBuffer, DummyOnPolicyBuffer_Atari, BaseCallback
 from xuance.environment import DummyVecEnv, SubprocVecEnv
-from xuance.tensorflow import Module
-from xuance.tensorflow.rl_models.modules import split_distributions
+from xuance.tensorflow import tf, Tensor, Module
 from xuance.tensorflow.agents.base import Agent
 from xuance.tensorflow.rl_models.modules import ActionOutput
 from xuance.tensorflow.utils import TensorOnPolicyBuffer, TensorOnPolicyBufferAtari, TensorEnvWrapper
@@ -124,8 +124,15 @@ class OnPolicyAgent(Agent):
         values_next = policy_out.values
         return values_next
 
-    def get_actions(self, observations: np.ndarray, deterministic: bool = False,
-                    return_dists: bool = False, return_logpi: bool = False) -> ActionOutput:
+    @tf.function
+    def _stochastic_rollout_step(self, observations: np.ndarray, **kwargs) -> Tuple[Tensor, ...]:
+        raise NotImplementedError
+
+    @tf.function
+    def _deterministic_rollout_step(self, observations: np.ndarray, **kwargs) -> Tuple[Tensor, ...]:
+        raise NotImplementedError
+
+    def get_actions(self, observations: np.ndarray, deterministic: bool = False, **kwargs) -> ActionOutput:
         """Compute actions and value estimates for a batch of observations.
 
         This method performs a forward pass through the current policy to obtain action distributions
@@ -135,38 +142,13 @@ class OnPolicyAgent(Agent):
             observations (np.ndarray): Batch of observations. The array is expected to have shape compatible with
                 the underlying policy.
             deterministic (bool): True for deterministic policy and False for stochastic policy.
-            return_dists (bool): Whether to return the action distributions (split into a Python-friendly structure).
-            return_logpi (bool): Whether to return the log-probabilities of the sampled actions.
 
         Returns:
-            dict: A dictionary containing:
-                - actions (np.ndarray): Sampled actions to execute in the environment(s).
-                - values (np.ndarray): Value estimates for the input observations.
-                    If the policy does not produce values, this is set to 0.
-                - dists (Optional[Any]): Action distributions (when `return_dists=True`); otherwise None.
-                - log_pi (Optional[np.ndarray]): Log-probabilities of sampled actions (when `return_logpi=True`);
-                    otherwise None.
+            ActionOutput.
         """
-        model_output = self.model(observations)
-        policy_dists = model_output.distributions
-        values = model_output.values
-        actions = policy_dists.deterministic_sample() if deterministic else policy_dists.stochastic_sample()
-        dists = split_distributions(policy_dists) if return_dists else None
-        if self.is_tensor_memory:
-            log_pi = policy_dists.log_prob(actions) if return_logpi else None
-            values = 0 if values is None else values
-        else:
-            log_pi = policy_dists.log_prob(actions).numpy() if return_logpi else None
-            actions = actions.numpy()
-            values = 0 if values is None else values.numpy()
-        return ActionOutput(
-                env_actions=actions,
-                values=values,
-                distributions=dists,
-                log_probs=log_pi
-            )
+        raise NotImplementedError
 
-    def get_aux_info(self, policy_output: dict = None) -> dict:
+    def get_aux_info(self, policy_output: ActionOutput = None) -> dict:
         """Returns auxiliary information.
 
         Args:
@@ -231,11 +213,11 @@ class OnPolicyAgent(Agent):
         for _ in tqdm(range(train_steps)):
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
-            policy_out = self.get_actions(obs, return_dists=False, return_logpi=False)
+            policy_out = self.get_actions(obs, deterministic=False)
             acts = policy_out.env_actions
             vals = policy_out.values
             next_obs, rewards, terminals, truncations, infos = self.train_envs.step(acts)
-            aux_info = self.get_aux_info()
+            aux_info = self.get_aux_info(policy_out)
 
             self.callback.on_train_step(self.current_step, envs=self.train_envs, model=self.model,
                                         obs=obs, policy_out=policy_out, acts=acts, vals=vals, next_obs=next_obs,
@@ -251,7 +233,6 @@ class OnPolicyAgent(Agent):
                     else:
                         self.memory.finish_path(vals[i], i)
                 update_info = self.train_epochs(self.n_epochs)
-                self.log_infos(update_info, self.current_step)
                 train_info.update(update_info)
                 self.callback.on_train_epochs_end(self.current_step, model=self.model, memory=self.memory,
                                                   current_episode=self.current_episode, train_steps=train_steps,
@@ -285,7 +266,6 @@ class OnPolicyAgent(Agent):
                                 f"Episode-Steps/rank_{self.rank}": {f"env-{i}": infos[i]["episode_step"]},
                                 f"Train-Episode-Rewards/rank_{self.rank}": {f"env-{i}": infos[i]["episode_score"]}
                             }
-                        self.log_infos(episode_info, self.current_step)
                         train_info.update(episode_info)
                         self.callback.on_train_episode_info(envs=self.train_envs, model=self.model, env_id=i,
                                                             infos=infos, rank=self.rank, use_wandb=self.use_wandb,
@@ -296,6 +276,9 @@ class OnPolicyAgent(Agent):
             self.current_step += self.n_envs
             self.callback.on_train_step_end(self.current_step, envs=self.train_envs, model=self.model,
                                             train_steps=train_steps, train_info=train_info)
+
+            if self.current_step % self.log_interval == 0:
+                self.log_infos(train_info, self.current_step)
         return train_info
 
     def test(self,

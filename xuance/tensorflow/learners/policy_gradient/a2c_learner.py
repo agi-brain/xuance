@@ -66,10 +66,10 @@ class A2C_Learner(Learner):
         a_loss, c_loss, e_loss, v_pred = self.learn(obs_batch, act_batch, ret_batch, adv_batch)
 
         info.update({
-            "actor-loss": a_loss.numpy(),
-            "critic-loss": c_loss.numpy(),
-            "entropy": e_loss.numpy(),
-            "predict_value": tf.math.reduce_mean(v_pred).numpy()
+            "actor-loss": a_loss,
+            "critic-loss": c_loss,
+            "entropy": e_loss,
+            "predict_value": tf.math.reduce_mean(v_pred)
         })
 
         info.update(self.callback.on_update_end(self.iterations, model=self.model, info=info,

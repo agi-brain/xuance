@@ -141,25 +141,20 @@ def gru_block(
     layers = []
 
     for layer_index in range(num_layers):
-        gru = keras.layers.GRU(
-            units=output_dim,
-            dropout=dropout if num_layers > 1 else 0.0,
-            return_sequences=True,
-        )
+        dense_kwargs = {
+            "units": output_dim,
+            "dropout": dropout if num_layers > 1 else 0.0,
+            "return_sequences": True,
+            "return_state": True
+        }
 
         current_input_dim = input_dim if layer_index == 0 else output_dim
-        gru.build((None, None, current_input_dim))
 
         if initializer is not None:
-            initializerd_kernel = initializer(gru.cell.kernel)
-            initializerd_recurrent_kernel = initializer(gru.cell.recurrent_kernel)
+            dense_kwargs["kernel_initializer"] = keras.initializers.get(initializer)
 
-            if initializerd_kernel is not None:
-                gru.cell.kernel.assign(initializerd_kernel)
-            if initializerd_recurrent_kernel is not None:
-                gru.cell.recurrent_kernel.assign(initializerd_recurrent_kernel)
-
-            gru.cell.bias.assign(tf.zeros_like(gru.cell.bias))
+        gru = keras.layers.GRU(**dense_kwargs)
+        gru.build((None, None, current_input_dim))
 
         layers.append(gru)
 
@@ -179,26 +174,19 @@ def lstm_block(
     layers = []
 
     for layer_index in range(num_layers):
-        lstm = keras.layers.LSTM(
-            units=output_dim,
-            dropout=dropout,
-            return_sequences=True,
-            return_state=True
-        )
-
-        current_input_dim = input_dim if layer_index == 0 else output_dim
-        lstm.build((None, None, current_input_dim))
+        dense_kwargs = {
+            "units": output_dim,
+            "dropout": dropout,
+            "return_sequences": True,
+            "return_state": True
+        }
 
         if initializer is not None:
-            initializerd_kernel = initializer(lstm.cell.kernel)
-            initializerd_recurrent_kernel = initializer(lstm.cell.recurrent_kernel)
+            dense_kwargs["kernel_initializer"] = keras.initializers.get(initializer)
 
-            if initializerd_kernel is not None:
-                lstm.cell.kernel.assign(initializerd_kernel)
-            if initializerd_recurrent_kernel is not None:
-                lstm.cell.recurrent_kernel.assign(initializerd_recurrent_kernel)
-
-            lstm.cell.bias.assign(tf.zeros_like(lstm.cell.bias))
+        lstm = keras.layers.LSTM(**dense_kwargs)
+        current_input_dim = input_dim if layer_index == 0 else output_dim
+        lstm.build((None, None, current_input_dim))
 
         layers.append(lstm)
 

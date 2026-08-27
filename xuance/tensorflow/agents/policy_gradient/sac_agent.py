@@ -3,11 +3,11 @@ import numpy as np
 from copy import deepcopy
 from argparse import Namespace
 
-import torch
 from gymnasium.spaces import Space
-from xuance.common import Optional, BaseCallback
+from typing import Optional
+from xuance.common import BaseCallback
 from xuance.environment import DummyVecEnv, SubprocVecEnv
-from xuance.tensorflow import Module
+from xuance.tensorflow import tf, Tensor, Module
 from xuance.tensorflow.utils import ActivationFunctions
 from xuance.tensorflow.agents import OffPolicyAgent
 from xuance.tensorflow.rl_models import (
@@ -78,11 +78,21 @@ class SAC_Agent(OffPolicyAgent):
 
         return model
 
-    @torch.no_grad()
+    @tf.function
+    def _stochastic_rollout_step(self, observations: Tensor, **kwargs) -> Tensor:
+        actions = self.model.act(observations, deterministic=False)
+        return actions
+
+    @tf.function
+    def _deterministic_rollout_step(self, observations: Tensor, **kwargs) -> Tensor:
+        actions = self.model.act(observations, deterministic=True)
+        return actions
+
     def get_actions(
             self,
             observations: np.ndarray,
-            test_mode: Optional[bool] = False
+            test_mode: Optional[bool] = False,
+            deterministic: Optional[bool] = False
     ) -> ActionOutput:
         """Returns actions and values.
 
@@ -96,6 +106,14 @@ class SAC_Agent(OffPolicyAgent):
             dists: The policy distributions.
             log_pi: Log of stochastic actions.
         """
-        actions_output = self.model.act(observations)
-        actions = actions_output.numpy()
+        observations = tf.convert_to_tensor(observations, dtype=tf.float32)
+
+        if deterministic:
+            actions = self._deterministic_rollout_step(observations)
+        else:
+            actions = self._stochastic_rollout_step(observations)
+
+        if not self.is_tensor_memory:
+            actions = actions.numpy()
+
         return ActionOutput(env_actions=actions)

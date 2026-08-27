@@ -29,7 +29,7 @@ class Basic_CNN(Module):
 
     def _create_network(self):
         layers = []
-        input_shape = self.input_shape
+        input_shape = self.input_shapes
 
         for k, s, f in zip(self.kernels, self.strides, self.filters):
             cnn, input_shape = cnn_block(
@@ -37,7 +37,7 @@ class Basic_CNN(Module):
             layers.extend(cnn)
 
         layers.append(
-            keras.GlobalMaxPooling2D(data_format='channels_last')
+            keras.layers.GlobalMaxPooling2D(data_format='channels_last')
         )
         return keras.Sequential(layers)
 
@@ -84,7 +84,7 @@ class AC_CNN_Atari(Module):
                  fc_hidden_sizes: Sequence[int] = (),
                  **kwargs):
         super(AC_CNN_Atari, self).__init__()
-        self.input_shapes = (input_shape[0], input_shape[1], input_shape[2])  # Channels x Height x Width
+        self.input_shapes = (input_shape[0], input_shape[1], input_shape[2])  # Height x Width x Channels
         self.kernels = kernels
         self.strides = strides
         self.filters = filters
@@ -111,14 +111,14 @@ class AC_CNN_Atari(Module):
 
     def _create_network(self):
         layers = []
-        input_shape = self.input_shape
+        input_shape = self.input_shapes
 
         for k, s, f in zip(self.kernels, self.strides, self.filters):
             cnn, input_shape = cnn_block(input_shape, f, k, s, None, self.activation, None)
             cnn[0] = self._init_layer(cnn[0])
             layers.extend(cnn)
 
-        layers.append(keras.Flatten())
+        layers.append(keras.layers.Flatten())
 
         input_shape = (np.prod(input_shape, dtype=np.int32),)
 
@@ -156,6 +156,6 @@ class AC_CNN_Atari(Module):
             normalizer=self.normalizer,
             initializer=self.initializer,
             activation=self.activation,
+            fc_hidden_sizes=self.fc_hidden_sizes,
         ))
         return config
-

@@ -45,7 +45,7 @@ class TD3_Agent(DDPG_Agent):
 
         # build critic network
         critic = TwinActionValueCritic(
-            representation=deepcopy(representation),
+            representation=representation.clone(copy_weights=False, trainable=True, name="critic_representation"),
             action_space=self.action_space,
             critic_hidden_size=self.config.critic_hidden_size,
             normalizer=self.normalizer_fn,

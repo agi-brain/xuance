@@ -77,8 +77,8 @@ class QRDQN_Learner(Learner):
             self.model.copy_target()
 
         info.update({
-            "Qloss": loss.numpy(),
-            "predictQ": tf.math.reduce_mean(current_quantile).numpy()
+            "Qloss": loss,
+            "predictQ": tf.math.reduce_mean(current_quantile)
         })
 
         info.update(self.callback.on_update_end(self.iterations, model=self.model, info=info,

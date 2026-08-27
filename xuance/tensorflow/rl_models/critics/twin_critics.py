@@ -22,6 +22,10 @@ class TwinActionValueCritic(Module):
             raise ValueError('action_space must be Box.')
         self.representation_1 = representation
         self.representation_2 = representation.clone(copy_weights=False, trainable=True, name='representation_2')
+        self.critic_hidden_size = critic_hidden_size
+        self.normalizer = normalizer
+        self.initializer = initializer
+        self.activation = activation
 
         self.representation_info_shape = representation.output_shapes
         self.feature_dim = self.representation_info_shape['state'][0] + self.action_dim
@@ -56,6 +60,19 @@ class TwinActionValueCritic(Module):
             values_2=self.critic_head_2(tf.concat([rep_out_2.embeddings, actions], axis=-1), **kwargs)
         )
 
+    def get_config(self):
+        config = super().get_config()
+        config.update(dict(
+            representation=self.representation_1.clone(copy_weights=True, trainable=False,
+                                                       name="target_critic_representation"),
+            action_space=self.action_space,
+            critic_hidden_size=self.critic_hidden_size,
+            normalizer=self.normalizer,
+            initializer=self.initializer,
+            activation=self.activation,
+        ))
+        return config
+
 
 class TwinDiscreteActionValueCritic(Module):
 
@@ -75,6 +92,10 @@ class TwinDiscreteActionValueCritic(Module):
             raise ValueError('action_space must be Box.')
         self.representation_1 = representation
         self.representation_2 = representation.clone(copy_weights=False, trainable=True, name='representation_2')
+        self.critic_hidden_size = critic_hidden_size
+        self.normalizer = normalizer
+        self.initializer = initializer
+        self.activation = activation
 
         self.representation_info_shape = representation.output_shapes
         self.feature_dim = self.representation_info_shape['state'][0]
@@ -108,3 +129,16 @@ class TwinDiscreteActionValueCritic(Module):
             values_1=self.critic_head_1(rep_out_1.embeddings, **kwargs),
             values_2=self.critic_head_2(rep_out_2.embeddings, **kwargs)
         )
+
+    def get_config(self):
+        config = super().get_config()
+        config.update(dict(
+            representation=self.representation_1.clone(copy_weights=True, trainable=False,
+                                                       name="target_critic_representation"),
+            action_space=self.action_space,
+            critic_hidden_size=self.critic_hidden_size,
+            normalizer=self.normalizer,
+            initializer=self.initializer,
+            activation=self.activation,
+        ))
+        return config

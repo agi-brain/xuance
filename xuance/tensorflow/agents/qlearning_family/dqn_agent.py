@@ -1,7 +1,7 @@
 import numpy as np
 from argparse import Namespace
 from gymnasium.spaces import Space
-from typing import Optional, Tuple
+from typing import Optional
 from xuance.common import BaseCallback
 from xuance.environment import DummyVecEnv, SubprocVecEnv
 from xuance.tensorflow import tf, Tensor, Module

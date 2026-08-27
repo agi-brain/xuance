@@ -26,6 +26,12 @@ class DeterministicActor(Module):
         else:
             raise ValueError('action_space must be Box')
         self.representation = representation
+        self.actor_hidden_size = actor_hidden_size
+        self.normalizer = normalizer
+        self.initializer = initializer
+        self.activation = activation
+        self.activation_action = activation_action
+
         self.representation_info_shape = representation.output_shapes
         self.actor_head = self.actor_head_cls(
             feature_dim=self.representation_info_shape['state'][0],
@@ -46,3 +52,17 @@ class DeterministicActor(Module):
             representations=rep_out,
             actions=self.actor_head(rep_out.embeddings, **kwargs)
         )
+
+    def get_config(self):
+        config = super().get_config()
+        config.update(dict(
+            representation=self.representation.clone(copy_weights=True, trainable=False,
+                                                     name="target_actor_representation"),
+            actor_hidden_size=self.actor_hidden_size,
+            action_space=self.action_space,
+            normalizer=self.normalizer,
+            initializer=self.initializer,
+            activation=self.activation,
+            activation_action=self.activation_action
+        ))
+        return config

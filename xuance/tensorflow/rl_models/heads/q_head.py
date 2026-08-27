@@ -209,15 +209,16 @@ class RecurrentQValueHead(Module):
 
     def call(self,
              features: Tensor,
-             rnn_states: RNN_State,
+             hidden_states: Tensor,
+             cell_states: Optional[Tensor] = None,
              avail_actions: Optional[Tensor] = None,
              **kwargs) -> Tuple[RNN_State, Tensor]:
-        self.rnn_layer.flatten_parameters()
+        # self.rnn_layer.flatten_parameters()
         if self.lstm:
-            embeddings, (hn, cn) = self.rnn_layer(features, (rnn_states.hidden_states, rnn_states.cell_states))
+            embeddings, hn, cn = self.rnn_layer(features, initial_state=[hidden_states, cell_states])
             rnn_output = RNN_State(hidden_states=hn, cell_states=cn)
         else:
-            embeddings, hn = self.rnn_layer(features, rnn_states.hidden_states)
+            embeddings, hn = self.rnn_layer(features, hidden_states)
             rnn_output = RNN_State(hidden_states=hn)
 
         q_values = self.q_value(embeddings)

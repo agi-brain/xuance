@@ -8,9 +8,9 @@ policy: "Categorical_AC"
 learner: "NPG_Learner"
 runner: "DRL"
 
-representation_hidden_size: [128,]
-actor_hidden_size: [128,]
-critic_hidden_size: [128,]
+representation_hidden_size: [32,]
+actor_hidden_size: [32, 32]
+critic_hidden_size: [32, 32]
 activation: 'relu'
 activation_action: 'tanh'
 

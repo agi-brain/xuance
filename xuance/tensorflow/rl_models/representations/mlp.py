@@ -10,7 +10,7 @@ class Basic_Identical(Module):
     def __init__(self,
                  input_shape: Sequence[int],
                  **kwargs):
-        super(Basic_Identical, self).__init__(**kwargs)
+        super(Basic_Identical, self).__init__()
 
         self.input_shapes = input_shape
 

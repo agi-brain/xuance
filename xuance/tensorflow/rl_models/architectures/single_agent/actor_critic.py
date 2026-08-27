@@ -34,6 +34,13 @@ class ActorCritic(Module):
             actions = actor_output.distributions.stochastic_sample()
         return actions
 
+    def value(self,
+              observation: Union[Tensor, dict],
+              **kwargs) -> ModelOutput:
+        critic_output = self.critic(observation, **kwargs)
+        return ModelOutput(values=critic_output.values,
+                           critic_rep_out=critic_output.representations)
+
 
 class SharedActorCritic(Module):
     def __init__(self,
@@ -68,6 +75,13 @@ class SharedActorCritic(Module):
         else:
             actions = pi_distributions.stochastic_sample()
         return actions
+
+    def values(self,
+               observation: Union[Tensor, dict],
+               **kwargs) -> Tensor:
+        rep_out = self.representation(observation, **kwargs)
+        values = self.critic(rep_out.embeddings, **kwargs)
+        return values
 
 
 class PhasicActorCritic(ActorCritic):
@@ -108,7 +122,7 @@ class SoftActorCritic(ActorCritic):
                  critic: Module,
                  **kwargs):
         super().__init__(actor, critic, **kwargs)
-        self.target_critic = critic.clone(trainable=False, name="target_critic")
+        self.target_critic = critic.clone(copy_weights=True, trainable=False, name="target_critic")
 
     def call(self,
              observation: Union[Tensor, dict],
@@ -218,23 +232,15 @@ class DeterministicActorCritic(Module):
         super().__init__(**kwargs)
         self.actor = actor
         self.critic = critic
-        self.target_actor = actor.clone(trainable=False, name="target_actor")
-        self.target_critic = critic.clone(trainable=False, name="target_critic")
+        self.target_actor = actor.clone(copy_weights=True, trainable=False, name="target_actor")
+        self.target_critic = critic.clone(copy_weights=True, trainable=False, name="target_critic")
 
     def call(self,
              observations: Union[Tensor, dict],
              **kwargs) -> ModelOutput:
         actor_output = self.actor(observations, **kwargs)
-        critic_output = self.critic(observations, actor_output.actions, **kwargs)
         return ModelOutput(actions=actor_output.actions,
-                           values=critic_output.values,
-                           actor_rep_out=actor_output.representations,
-                           critic_rep_out=critic_output.representations)
-
-    def act(self,
-            observation: Union[Tensor, dict],
-            **kwargs) -> Tensor:
-        return self.actor(observation, **kwargs).actions
+                           actor_rep_out=actor_output.representations)
 
     def Qtarget(self, observation: Union[Tensor, dict]):
         outputs_actor = self.target_actor(observation)
@@ -265,26 +271,22 @@ class TwinDelayedActorCritic(Module):
         super().__init__(**kwargs)
         self.actor = actor
         self.critic = critic
-        self.target_actor = actor.clone(trainable=False, name="target_actor")
-        self.target_critic = critic.clone(trainable=False, name="target_critic")
-        self.target_policy_noise = target_policy_noise
-        self.target_noise_clip = target_noise_clip
+        self.target_actor = actor.clone(copy_weights=True, trainable=False, name="target_actor")
+        self.target_critic = critic.clone(copy_weights=True, trainable=False, name="target_critic")
+        self.target_policy_noise = tf.convert_to_tensor(target_policy_noise, dtype=tf.float32)
+        self.target_noise_clip = tf.convert_to_tensor(target_noise_clip, dtype=tf.float32)
 
     def call(self, observation: Union[Tensor, dict]) -> ModelOutput:
         outputs_actor = self.actor(observation)
         return ModelOutput(actions=outputs_actor.actions,
                            actor_rep_out=outputs_actor.representations)
 
-    def act(self,
-            observation: Union[Tensor, dict],
-            **kwargs) -> Tensor:
-        return self.actor(observation, **kwargs).actions
-
     def Qtarget(self, observation: Union[Tensor, dict]):
         outputs_actor = self.target_actor(observation)
         target_actions = outputs_actor.actions
-        target_noise = (tf.randn_like(target_actions) * self.target_policy_noise).clamp(-self.target_noise_clip,
-                                                                                        self.target_noise_clip)
+        target_noise = tf.clip_by_value(tf.random.normal(shape=tf.shape(target_actions),
+                                                         dtype=target_actions.dtype) * self.target_policy_noise,
+                                        -self.target_noise_clip, self.target_noise_clip)
         target_actions = target_actions + target_noise
         target_actions = tf.maximum(tf.minimum(target_actions, self.actor.action_high), self.actor.action_low)
 

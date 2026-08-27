@@ -10,18 +10,20 @@ class NPG_Learner(Learner):
                  model: nn.Module,
                  callback):
         super(NPG_Learner, self).__init__(config, model, callback)
-        self.actor_optimizer = torch.optim.Adam(self.model.actor.parameters(), config.learning_rate, eps=1e-5)
-        self.critic_optimizer = torch.optim.Adam(self.model.critic.parameters(), config.learning_rate, eps=1e-5)
-        self.actor_scheduler = torch.optim.lr_scheduler.LinearLR(self.actor_optimizer,
-                                                                 start_factor=1.0,
-                                                                 end_factor=self.end_factor_lr_decay,
-                                                                 total_iters=config.running_steps)
-        self.critic_scheduler = torch.optim.lr_scheduler.LinearLR(self.critic_optimizer,
-                                                                  start_factor=1.0,
-                                                                  end_factor=self.end_factor_lr_decay,
-                                                                  total_iters=config.running_steps)
-
-        self.gamma = config.gamma
+        self.optimizer = {
+            "actor": torch.optim.Adam(self.model.actor.parameters(), config.learning_rate, eps=1e-5),
+            "critic": torch.optim.Adam(self.model.critic.parameters(), config.learning_rate, eps=1e-5)
+        }
+        self.scheduler = {
+            "actor": torch.optim.lr_scheduler.LinearLR(self.optimizer['actor'],
+                                                       start_factor=1.0,
+                                                       end_factor=self.end_factor_lr_decay,
+                                                       total_iters=config.running_steps),
+            "critic": torch.optim.lr_scheduler.LinearLR(self.optimizer['critic'],
+                                                        start_factor=1.0,
+                                                        end_factor=self.end_factor_lr_decay,
+                                                        total_iters=config.running_steps)
+        }
         self.mse_loss = nn.MSELoss()
 
     def update(self, **samples):
@@ -35,7 +37,7 @@ class NPG_Learner(Learner):
                                              returns=ret_batch, advantages=adv_batch)
 
         model_output = self.model(obs_batch)
-        a_dist = model_output.distribution
+        a_dist = model_output.distributions
         v_pred = model_output.values
         log_prob = a_dist.log_prob(act_batch)
 
@@ -43,14 +45,14 @@ class NPG_Learner(Learner):
         c_loss = self.mse_loss(v_pred, ret_batch)  # critic_loss
 
         # train critic
-        self.critic_optimizer.zero_grad()
+        self.optimizer['critic'].zero_grad()
         c_loss.backward(retain_graph=True)
         if self.use_grad_clip:
             torch.nn.utils.clip_grad_norm_(self.model.critic.parameters(), self.grad_clip_norm)
-        self.critic_optimizer.step()
+        self.optimizer['critic'].step()
 
-        #train actor
-        self.actor_optimizer.zero_grad()
+        # train actor
+        self.optimizer['actor'].zero_grad()
         a_loss.backward()
         for param in self.model.actor.parameters():
             if param.requires_grad:
@@ -63,16 +65,16 @@ class NPG_Learner(Learner):
         if self.use_grad_clip:
             torch.nn.utils.clip_grad_norm_(self.model.actor.parameters(), self.grad_clip_norm)
 
-        self.actor_optimizer.step()
-        if self.critic_scheduler is not None:
-            self.critic_scheduler.step()
+        self.optimizer['actor'].step()
+        if self.scheduler['critic'] is not None:
+            self.scheduler['critic'].step()
 
-        if self.actor_scheduler is not None:
-            self.actor_scheduler.step()
+        if self.scheduler['actor'] is not None:
+            self.scheduler['actor'].step()
 
             # Logger
-        lr_actor = self.actor_optimizer.state_dict()['param_groups'][0]['lr']
-        lr_critic = self.actor_optimizer.state_dict()['param_groups'][0]['lr']
+        lr_actor = self.optimizer['actor'].state_dict()['param_groups'][0]['lr']
+        lr_critic = self.optimizer['critic'].state_dict()['param_groups'][0]['lr']
 
         if self.distributed_training:
             info.update({
@@ -101,7 +103,7 @@ class NPG_Learner(Learner):
         for param in params:
             param_num += param.numel()
         fisher_information = torch.zeros((param_num, param_num)).to(self.device)
-        dist = self.model(obs).distribution
+        dist = self.model(obs).distributions
         log_probs = dist.log_prob(act)
         score = torch.autograd.grad(log_probs.sum(), params, retain_graph=True)[0]
         score = score.view(-1).to(self.device)
@@ -110,4 +112,3 @@ class NPG_Learner(Learner):
         fisher_information = fisher_information + 1e-3 * torch.eye(fisher_information.shape[0]).to(self.device)
         fisher_inv = torch.linalg.inv(fisher_information)
         return fisher_inv
-

@@ -1,11 +1,13 @@
 import gymnasium
-from tqdm import tqdm
 from copy import deepcopy
 from argparse import Namespace
+
+import numpy as np
 from gymnasium.spaces import Space
-from xuance.common import Optional, BaseCallback
+from typing import Optional, Tuple
+from xuance.common import BaseCallback
 from xuance.environment import DummyVecEnv, SubprocVecEnv
-from xuance.tensorflow import Module
+from xuance.tensorflow import tf, Tensor, Module
 from xuance.tensorflow.utils import ActivationFunctions
 from xuance.tensorflow.agents import OnPolicyAgent
 from xuance.tensorflow.rl_models.heads import GaussianActorHead, CategoricalActorHead, ValueHead
@@ -105,74 +107,85 @@ class PPO_Agent(OnPolicyAgent):
         aux_info = {"old_logp": policy_output.log_probs}
         return aux_info
 
-    def train(self, train_steps):
-        train_info = {}
-        obs = self.train_envs.buf_obs
-        for _ in tqdm(range(train_steps)):
-            self.obs_rms.update(obs)
-            obs = self._process_observation(obs)
-            policy_out = self.get_actions(obs, return_dists=False, return_logpi=True)
-            acts = policy_out.env_actions
-            value = policy_out.values
-            next_obs, rewards, terminals, truncations, infos = self.train_envs.step(acts)
-            aux_info = self.get_aux_info(policy_out)
+    def get_terminated_values(self, observations_next: np.ndarray, rewards: np.ndarray = None) -> np.ndarray:
+        """Compute value estimates for terminal/terminated states.
 
-            self.callback.on_train_step(self.current_step, envs=self.train_envs, policy=self.model,
-                                        obs=obs, policy_out=policy_out, acts=acts, vals=value, next_obs=next_obs,
-                                        rewards=rewards, terminals=terminals, truncations=truncations,
-                                        infos=infos, aux_info=aux_info, train_steps=train_steps)
+        This method evaluates the value function on terminal observations and returns the value estimates used for
+        bootstrapping (e.g., when finishing a trajectory segment).
 
-            self.memory.store(obs, acts, self._process_reward(rewards), value, terminals, aux_info)
-            if self.memory.full:
-                vals = self.get_terminated_values(next_obs)
-                for i in range(self.n_envs):
-                    if terminals[i]:
-                        self.memory.finish_path(0.0, i)
-                    else:
-                        self.memory.finish_path(vals[i], i)
-                update_info = self.train_epochs(self.n_epochs)
-                self.log_infos(update_info, self.current_step)
-                train_info.update(update_info)
-                self.callback.on_train_epochs_end(self.current_step, policy=self.model, memory=self.memory,
-                                                  current_episode=self.current_episode, train_steps=train_steps,
-                                                  update_info=update_info)
-                self.memory.clear()
+        Args:
+            observations_next (np.ndarray): Observations at the terminal step
+                (or the next observations used for bootstrapping).
+            rewards (Optional[np.ndarray]): Rewards corresponding to the terminal transitions.
+                This argument is reserved for algorithm-specific implementations and may be unused.
 
-            self.returns = self.gamma * self.returns + rewards
-            obs = deepcopy(next_obs)
-            for i in range(self.n_envs):
-                if terminals[i] or truncations[i]:
-                    self.ret_rms.update(self.returns[i:i + 1])
-                    self.returns[i] = 0.0
-                    if self.atari and (not truncations[i]):
-                        pass
-                    else:
-                        if terminals[i]:
-                            self.memory.finish_path(0.0, i)
-                        else:
-                            vals = self.get_terminated_values(next_obs)
-                            self.memory.finish_path(vals[i], i)
-                        obs[i] = infos[i]["reset_obs"]
-                        self.train_envs.buf_obs[i] = obs[i]
-                        self.current_episode[i] += 1
-                        if self.use_wandb:
-                            episode_info = {
-                                f"Episode-Steps/rank_{self.rank}/env-{i}": infos[i]["episode_step"],
-                                f"Train-Episode-Rewards/rank_{self.rank}/env-{i}": infos[i]["episode_score"]
-                            }
-                        else:
-                            episode_info = {
-                                f"Episode-Steps/rank_{self.rank}": {f"env-{i}": infos[i]["episode_step"]},
-                                f"Train-Episode-Rewards/rank_{self.rank}": {f"env-{i}": infos[i]["episode_score"]}
-                            }
-                        self.log_infos(episode_info, self.current_step)
-                        train_info.update(episode_info)
-                        self.callback.on_train_episode_info(envs=self.train_envs, policy=self.model, env_id=i,
-                                                            infos=infos, rank=self.rank, use_wandb=self.use_wandb,
-                                                            current_step=self.current_step,
-                                                            current_episode=self.current_episode,
-                                                            train_steps=train_steps)
-            self.current_step += self.n_envs
-            self.callback.on_train_step_end(self.current_step, envs=self.train_envs, policy=self.model,
-                                            train_steps=train_steps, train_info=train_info)
-        return train_info
+        Returns:
+            np.ndarray: Value estimates for the provided terminal observations.
+        """
+        observations = self._process_observation(observations_next)
+        observations = tf.convert_to_tensor(observations, dtype=tf.float32)
+        values_next = self._values_step(observations)
+        values_next = values_next.numpy()
+        return values_next
+
+    @tf.function
+    def _values_step(self, observations: Tensor, **kwargs) -> Tensor:
+        value = self.model.values(observations)
+        return value
+
+    @tf.function
+    def _stochastic_rollout_step(self, observations: Tensor, **kwargs) -> Tuple[Tensor, ...]:
+        model_output = self.model(observations)
+        policy_dists = model_output.distributions
+        actions = policy_dists.stochastic_sample()
+        log_pi = policy_dists.log_prob(actions)
+        values = model_output.values
+        return actions, log_pi, values
+
+    @tf.function
+    def _deterministic_rollout_step(self, observations: Tensor, **kwargs) -> Tuple[Tensor, ...]:
+        model_output = self.model(observations)
+        policy_dists = model_output.distributions
+        actions = policy_dists.deterministic_sample()
+        log_pi = policy_dists.log_prob(actions)
+        values = model_output.values
+        return actions, log_pi, values
+
+    def get_actions(
+            self,
+            observations: np.ndarray,
+            deterministic: bool = False,
+            **kwargs
+    ) -> ActionOutput:
+        """Compute actions and value estimates for a batch of observations.
+
+        This method performs a forward pass through the current policy to obtain action distributions
+        and value predictions. Actions are sampled stochastically from the policy distribution.
+
+        Args:
+            observations (np.ndarray): Batch of observations. The array is expected to have shape compatible with
+                the underlying policy.
+            deterministic (bool): True for deterministic policy and False for stochastic policy.
+
+        Returns:
+            ActionOutput.
+        """
+        observations = tf.convert_to_tensor(observations, dtype=tf.float32)
+
+        if deterministic:
+            actions, log_pi, values = self._deterministic_rollout_step(observations)
+        else:
+            actions, log_pi, values = self._stochastic_rollout_step(observations)
+
+        if self.is_tensor_memory:
+            values = 0 if values is None else values
+        else:
+            actions = actions.numpy()
+            log_pi = log_pi.numpy()
+            values = 0 if values is None else values.numpy()
+
+        return ActionOutput(
+            env_actions=actions,
+            values=values,
+            log_probs=log_pi
+        )

@@ -19,7 +19,6 @@ class CentralizedStateValueCritic(Module):
                  initializer: Optional[keras.initializers.Initializer] = None,
                  activation: Optional[Type[Module]] = None,
                  use_rnn: bool = False,
-                 device: str = None,
                  **kwargs):
         super().__init__()
 
@@ -30,7 +29,6 @@ class CentralizedStateValueCritic(Module):
         self.n_agents = len(self.agent_keys)
         self.n_group_agents = {k: len(self.groups[k]) for k in self.group_keys}
         self.use_rnn = use_rnn
-        self.device = device
 
         self.state_space = state_space
         if isinstance(state_space, Box):
@@ -40,6 +38,12 @@ class CentralizedStateValueCritic(Module):
         else:
             raise NotImplementedError
         self.representations = representations
+        self.critic_hidden_size = critic_hidden_size
+        self.normalizer = normalizer
+        self.initializer = initializer
+        self.activation = activation
+        self.use_rnn = use_rnn
+
         self.representation_info_shape = {k: representations[k].output_shapes for k in self.group_keys}
         self.sum_obs_embedding_dim = sum([self.representation_info_shape[k]['state'][0] for k in self.group_keys])
 
@@ -49,7 +53,6 @@ class CentralizedStateValueCritic(Module):
             normalizer=normalizer,
             initializer=initializer,
             activation=activation,
-            device=device,
             **kwargs,
         )
 
@@ -95,6 +98,22 @@ class CentralizedStateValueCritic(Module):
             critic_rep_out=rep_out
         )
 
+    def get_config(self):
+        config = super().get_config()
+        config.update(dict(
+            grouping=self.grouping,
+            representations=ModuleDict({k: v.clone(copy_weights=True,
+                                                   trainable=False, name=f"target_critic_representation_{k}")
+                                        for k, v in self.representations}),
+            state_space=self.state_space,
+            critic_hidden_size=self.critic_hidden_size,
+            normalizer=self.normalizer,
+            initializer=self.initializer,
+            activation=self.activation,
+            use_rnn=self.use_rnn
+        ))
+        return config
+
 
 class CentralizedActionValueCritic(Module):
     """Q(o^1, ..., o^N, a^1, ..., a^N). Typically, for MADDPG-like algorithm"""
@@ -106,7 +125,6 @@ class CentralizedActionValueCritic(Module):
                  normalizer: Optional[Type[Module]] = None,
                  initializer: Optional[keras.initializers.Initializer] = None,
                  activation: Optional[Type[Module]] = None,
-                 device: str = None,
                  **kwargs):
         super().__init__()
 
@@ -114,6 +132,11 @@ class CentralizedActionValueCritic(Module):
         self.action_dim = {k: v.shape[0] for k, v in action_space.items()}
         self.joint_action_dim = sum(self.action_dim.values())
         self.representation = representation
+        self.critic_hidden_size = critic_hidden_size
+        self.normalizer = normalizer
+        self.initializer = initializer
+        self.activation = activation
+
         self.representation_info_shape = representation.output_shapes
 
         self.critic_head = ValueHead(
@@ -122,7 +145,6 @@ class CentralizedActionValueCritic(Module):
             normalizer=normalizer,
             initializer=initializer,
             activation=activation,
-            device=device,
             **kwargs,
         )
 
@@ -135,6 +157,19 @@ class CentralizedActionValueCritic(Module):
             representations=joint_obs_rep_out,
             values=self.critic_head(tf.concat([joint_obs_rep_out.embeddings, joint_actions], axis=-1), **kwargs)
         )
+
+    def get_config(self):
+        config = super().get_config()
+        config.update(dict(
+            representations=self.representation.clone(copy_weights=True,
+                                                      trainable=False, name="target_critic_representation"),
+            action_space=self.action_space,
+            critic_hidden_size=self.critic_hidden_size,
+            normalizer=self.normalizer,
+            initializer=self.initializer,
+            activation=self.activation
+        ))
+        return config
 
 
 class TwinCentralizedActionValueCritic(Module):
@@ -150,7 +185,6 @@ class TwinCentralizedActionValueCritic(Module):
                  normalizer: Optional[Type[Module]] = None,
                  initializer: Optional[keras.initializers.Initializer] = None,
                  activation: Optional[Type[Module]] = None,
-                 device: str = None,
                  **kwargs):
         super().__init__()
 
@@ -159,6 +193,11 @@ class TwinCentralizedActionValueCritic(Module):
         self.joint_action_dim = sum(self.action_dim.values())
         self.representation_1 = representation
         self.representation_2 = representation.clone(copy_weights=False, trainable=True, name='representation_2')
+        self.critic_hidden_size = critic_hidden_size
+        self.normalizer = normalizer
+        self.initializer = initializer
+        self.activation = activation
+
         self.representation_info_shape = representation.output_shapes
 
         self.feature_dim = self.representation_info_shape['state'][0] + self.joint_action_dim
@@ -169,7 +208,6 @@ class TwinCentralizedActionValueCritic(Module):
             normalizer=normalizer,
             initializer=initializer,
             activation=activation,
-            device=device,
             **kwargs,
         )
 
@@ -195,6 +233,19 @@ class TwinCentralizedActionValueCritic(Module):
             values_2=self.critic_head_2(tf.concat([rep_out_2.embeddings, joint_actions], axis=-1), **kwargs)
         )
 
+    def get_config(self):
+        config = super().get_config()
+        config.update(dict(
+            representations=self.representation_1.clone(copy_weights=True,
+                                                        trainable=False, name="target_critic_representation"),
+            action_space=self.action_space,
+            critic_hidden_size=self.critic_hidden_size,
+            normalizer=self.normalizer,
+            initializer=self.initializer,
+            activation=self.activation
+        ))
+        return config
+
 
 class CounterfactualCentralizedCritic(Module):
     """Q(s, o^i, {a^1, ..., a^N}\a^i). Typically, for COMA's centralized critic,"""
@@ -209,7 +260,6 @@ class CounterfactualCentralizedCritic(Module):
                  initializer: Optional[keras.initializers.Initializer] = None,
                  activation: Optional[Type[Module]] = None,
                  use_rnn: bool = False,
-                 device: str = None,
                  **kwargs):
         super().__init__()
 
@@ -220,7 +270,6 @@ class CounterfactualCentralizedCritic(Module):
         self.n_agents = len(self.agent_keys)
         self.n_group_agents = {k: len(self.groups[k]) for k in self.group_keys}
         self.use_rnn = use_rnn
-        self.device = device
 
         self.state_space = state_space
         self.action_space = action_space
@@ -228,6 +277,11 @@ class CounterfactualCentralizedCritic(Module):
         self.n_actions = {k: v.n for k, v in action_space.items()}
         self.joint_action_dim = sum(self.n_actions.values())
         self.representations = representations
+        self.critic_hidden_size = critic_hidden_size
+        self.normalizer = normalizer
+        self.initializer = initializer
+        self.activation = activation
+
         self.representation_info_shape = representations[self.group_keys[0]].output_shapes
 
         self.critic_head = QValueHead(
@@ -237,7 +291,6 @@ class CounterfactualCentralizedCritic(Module):
             normalizer=normalizer,
             initializer=initializer,
             activation=activation,
-            device=device,
             **kwargs,
         )
 
@@ -288,3 +341,20 @@ class CounterfactualCentralizedCritic(Module):
             critic_rnn_states=rnn_states_new,
             critic_rep_out=rep_out
         )
+
+    def get_config(self):
+        config = super().get_config()
+        config.update(dict(
+            grouping=self.grouping,
+            representations=ModuleDict({k: v.clone(copy_weights=True,
+                                                   trainable=False, name=f"target_critic_representation_{k}")
+                                        for k, v in self.representations}),
+            state_space=self.state_space,
+            action_space=self.action_space,
+            critic_hidden_size=self.critic_hidden_size,
+            normalizer=self.normalizer,
+            initializer=self.initializer,
+            activation=self.activation,
+            use_rnn=self.use_rnn
+        ))
+        return config

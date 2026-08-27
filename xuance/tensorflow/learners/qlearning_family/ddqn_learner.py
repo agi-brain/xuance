@@ -73,8 +73,8 @@ class DDQN_Learner(Learner):
         if self.iterations % self.sync_frequency == 0:
             self.model.copy_target()
         info.update({
-            "Qloss": loss.numpy(),
-            "predictQ": tf.math.reduce_mean(predictQ).numpy(),
+            "Qloss": loss,
+            "predictQ": tf.math.reduce_mean(predictQ),
         })
 
         info.update(self.callback.on_update_end(self.iterations,

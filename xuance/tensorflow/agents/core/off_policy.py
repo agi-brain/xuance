@@ -288,7 +288,8 @@ class OffPolicyAgent(Agent):
     def test(self,
              test_episodes: int,
              test_envs: Optional[DummyVecEnv | SubprocVecEnv] = None,
-             close_envs: bool = True) -> list:
+             close_envs: bool = True,
+             **kwargs) -> list:
         """Evaluate the current policy in a vectorized environment.
 
         This method runs evaluation episodes using `test_envs` and returns the per-episode scores. During evaluation,

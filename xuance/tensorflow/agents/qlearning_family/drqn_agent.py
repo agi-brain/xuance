@@ -1,12 +1,11 @@
 import numpy as np
-import torch
 from tqdm import tqdm
 from copy import deepcopy
 from argparse import Namespace
 from gymnasium.spaces import Space
 from xuance.common import Optional, RecurrentOffPolicyBuffer, EpisodeBuffer, BaseCallback
 from xuance.environment import DummyVecEnv, SubprocVecEnv
-from xuance.tensorflow import Module
+from xuance.tensorflow import tf, Tensor, Module
 from xuance.tensorflow.agents import OffPolicyAgent
 from xuance.tensorflow.rl_models.modules import ActionOutput
 from xuance.tensorflow.rl_models.architectures import DeepRecurrentQNetwork
@@ -64,7 +63,9 @@ class DRQN_Agent(OffPolicyAgent):
         return model
 
     def get_actions(self, obs, egreedy=0.0, rnn_states=None) -> ActionOutput:
-        rnn_states_new, model_output = self.model(obs[:, None], rnn_states)
+        observations = tf.expand_dims(tf.convert_to_tensor(obs), axis=1)
+        # rnn_states_new, model_output = self.model(observations, rnn_states)
+        rnn_states_new, model_output = self.model(observations, rnn_states.hidden_states, rnn_states.cell_states)
         argmax_action = model_output.actions
         random_action = np.random.choice(self.action_space.n, self.n_envs)
         if np.random.rand() < egreedy:

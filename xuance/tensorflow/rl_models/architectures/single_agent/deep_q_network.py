@@ -24,7 +24,8 @@ class DeepQNetwork(Module):
         else:
             raise ValueError('action_space must be Discrete')
         self.representation = representation
-        self.target_representation = representation.clone(trainable=False, name="target_representation")
+        self.target_representation = representation.clone(copy_weights=True, trainable=False,
+                                                          name="target_representation")
         self.representation_info_shape = representation.output_shapes
 
         self.eval_Q_head = self.q_head_cls(
@@ -35,7 +36,7 @@ class DeepQNetwork(Module):
             initializer=initializer,
             activation=activation,
         )
-        self.target_Q_head = self.eval_Q_head.clone(trainable=False, name="target_q_head")
+        self.target_Q_head = self.eval_Q_head.clone(copy_weights=True, trainable=False, name="target_q_head")
 
     def call(self,
              observation: Union[Tensor, dict],
@@ -130,7 +131,8 @@ class C51DeepQNetwork(Module):
         else:
             raise ValueError('action_space must be Discrete')
         self.representation = representation
-        self.target_representation = representation.clone(trainable=False, name='target_representation')
+        self.target_representation = representation.clone(copy_weights=True, trainable=False,
+                                                          name='target_representation')
         self.representation_info_shape = representation.output_shapes
 
         self.atom_num = atom_num
@@ -146,7 +148,7 @@ class C51DeepQNetwork(Module):
             initializer=initializer,
             activation=activation,
         )
-        self.target_Z_head = self.eval_Z_head.clone(trainable=False, name='target_Z_head')
+        self.target_Z_head = self.eval_Z_head.clone(copy_weights=True, trainable=False, name='target_Z_head')
         self.supports = self.add_weight(name="supports", shape=(self.atom_num,),
                                         initializer=tf.keras.initializers.Constant(
                                             tf.linspace(self.v_min, self.v_max, self.atom_num).numpy()),
@@ -219,7 +221,8 @@ class QRDeepQNetwork(Module):
         else:
             raise ValueError('action_space must be Discrete')
         self.representation = representation
-        self.target_representation = representation.clone(trainable=False, name="target_representation")
+        self.target_representation = representation.clone(copy_weights=True, trainable=False,
+                                                          name="target_representation")
         self.representation_info_shape = representation.output_shapes
 
         self.quantile_num = quantile_num
@@ -232,7 +235,8 @@ class QRDeepQNetwork(Module):
             initializer=initializer,
             activation=activation,
         )
-        self.target_Z_head = self.eval_Z_head.clone(trainable=False, name="target_Z_head")
+        self.target_Z_head = self.eval_Z_head.clone(copy_weights=True, trainable=False,
+                                                    name="target_Z_head")
 
         # Prepare DDP module.
         self.distributed_training = use_distributed_training
@@ -300,7 +304,8 @@ class DeepRecurrentQNetwork(Module):
         else:
             raise ValueError('action_space must be Discrete')
         self.representation = representation
-        self.target_representation = representation.clone(trainable=False, name="target_representation")
+        self.target_representation = representation.clone(copy_weights=True, trainable=False,
+                                                          name="target_representation")
         self.representation_info_shape = representation.output_shapes
 
         self.recurrent_layer_N = recurrent_layer_N
@@ -315,7 +320,7 @@ class DeepRecurrentQNetwork(Module):
             rnn=rnn,
             initializer=initializer,
         )
-        self.target_Q_head = self.eval_Q_head.clone(trainable=False, name="target_Q_head")
+        self.target_Q_head = self.eval_Q_head.clone(copy_weights=True, trainable=False, name="target_Q_head")
 
         self.lstm = self.eval_Q_head.lstm
 
@@ -324,10 +329,11 @@ class DeepRecurrentQNetwork(Module):
 
     def call(self,
              observation: Union[Tensor, dict],
-             rnn_states: RNN_State,
+             hidden_states: Tensor,
+             cell_states: Optional[Tensor] = None,
              **kwargs) -> Tuple[RNN_State, ModelOutput]:
         rep_output = self.representation(observation)
-        rnn_states_new, q_values = self.eval_Q_head(rep_output.embeddings, rnn_states)
+        rnn_states_new, q_values = self.eval_Q_head(rep_output.embeddings, hidden_states, cell_states)
         greedy_actions = tf.argmax(q_values[:, -1], axis=-1)
         return rnn_states_new, ModelOutput(actions=greedy_actions, values=q_values, rep_out=rep_output)
 

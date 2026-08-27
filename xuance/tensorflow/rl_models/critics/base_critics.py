@@ -20,6 +20,11 @@ class StateValueCritic(Module):
                  **kwargs) -> None:
         super().__init__(**kwargs)
         self.representation = representation
+        self.critic_hidden_size = critic_hidden_size
+        self.normalizer = normalizer
+        self.initializer = initializer
+        self.activation = activation
+
         self.representation_info_shape = representation.output_shapes
         self.critic_head = ValueHead(
             feature_dim=self.representation_info_shape['state'][0],
@@ -38,6 +43,18 @@ class StateValueCritic(Module):
             representations=rep_out,
             values=self.critic_head(rep_out.embeddings, **kwargs)
         )
+
+    def get_config(self):
+        config = super().get_config()
+        config.update(dict(
+            representation=self.representation.clone(copy_weights=True, trainable=False,
+                                                     name="target_critic_representation"),
+            critic_hidden_size=self.critic_hidden_size,
+            normalizer=self.normalizer,
+            initializer=self.initializer,
+            activation=self.activation,
+        ))
+        return config
 
 
 class ActionValueCritic(Module):
@@ -60,6 +77,11 @@ class ActionValueCritic(Module):
         else:
             raise ValueError('action_space must be Box.')
         self.representation = representation
+        self.critic_hidden_size = critic_hidden_size
+        self.normalizer = normalizer
+        self.initializer = initializer
+        self.activation = activation
+
         self.representation_info_shape = representation.output_shapes
 
         self.critic_head = ValueHead(
@@ -78,8 +100,21 @@ class ActionValueCritic(Module):
         rep_out = self.representation(observations, **kwargs)
         return CriticOutput(
             representations=rep_out,
-            values=self.critic_head(tf.concat([rep_out.embeddings, actions], dim=-1), **kwargs)
+            values=self.critic_head(tf.concat([rep_out.embeddings, actions], axis=-1), **kwargs)
         )
+
+    def get_config(self):
+        config = super().get_config()
+        config.update(dict(
+            representation=self.representation.clone(copy_weights=True, trainable=False,
+                                                     name="target_critic_representation"),
+            action_space=self.action_space,
+            critic_hidden_size=self.critic_hidden_size,
+            normalizer=self.normalizer,
+            initializer=self.initializer,
+            activation=self.activation,
+        ))
+        return config
 
 
 class DiscreteActionValueCritic(Module):
@@ -102,6 +137,11 @@ class DiscreteActionValueCritic(Module):
         else:
             raise ValueError('action_space must be Discrete.')
         self.representation = representation
+        self.critic_hidden_size = critic_hidden_size
+        self.normalizer = normalizer
+        self.initializer = initializer
+        self.activation = activation
+
         self.representation_info_shape = representation.output_shapes
 
         self.critic_head = QValueHead(
@@ -122,6 +162,19 @@ class DiscreteActionValueCritic(Module):
             representations=rep_out,
             values=self.critic_head(rep_out.embeddings, **kwargs)
         )
+
+    def get_config(self):
+        config = super().get_config()
+        config.update(dict(
+            representation=self.representation.clone(copy_weights=True, trainable=False,
+                                                     name="target_critic_representation"),
+            action_space=self.action_space,
+            critic_hidden_size=self.critic_hidden_size,
+            normalizer=self.normalizer,
+            initializer=self.initializer,
+            activation=self.activation,
+        ))
+        return config
 
 
 class HybridActionValueCritic(Module):
@@ -146,6 +199,11 @@ class HybridActionValueCritic(Module):
         else:
             raise ValueError('Invalid action space.')
         self.representation = representation
+        self.critic_hidden_size = critic_hidden_size
+        self.normalizer = normalizer
+        self.initializer = initializer
+        self.activation = activation
+
         self.representation_info_shape = representation.output_shapes
 
         self.critic_head = QValueHead(
@@ -169,6 +227,19 @@ class HybridActionValueCritic(Module):
             values=self.critic_head(critic_input, **kwargs)
         )
 
+    def get_config(self):
+        config = super().get_config()
+        config.update(dict(
+            representation=self.representation.clone(copy_weights=True, trainable=False,
+                                                     name="target_critic_representation"),
+            action_space=self.action_space,
+            critic_hidden_size=self.critic_hidden_size,
+            normalizer=self.normalizer,
+            initializer=self.initializer,
+            activation=self.activation,
+        ))
+        return config
+
 
 class MeanFieldStateValueCritic(Module):
     """
@@ -186,6 +257,11 @@ class MeanFieldStateValueCritic(Module):
         super().__init__(**kwargs)
         self.representation = representation
         self.mean_actions_encoder = mean_actions_encoder
+        self.critic_hidden_size = critic_hidden_size
+        self.normalizer = normalizer
+        self.initializer = initializer
+        self.activation = activation
+
         self.representation_feature_dim = representation.output_shapes['state'][0]
         self.mean_action_feature_dim = mean_actions_encoder.output_shapes['state'][0]
         self.critic_head = ValueHead(
@@ -208,6 +284,20 @@ class MeanFieldStateValueCritic(Module):
             representations=rep_out,
             values=self.critic_head(critic_input, **kwargs)
         )
+
+    def get_config(self):
+        config = super().get_config()
+        config.update(dict(
+            representation=self.representation.clone(copy_weights=True, trainable=False,
+                                                     name="target_critic_representation"),
+            mean_actions_encoder=self.mean_actions_encoder.clone(copy_weights=True, trainable=False,
+                                                                 name="target_critic_mean_actions_encoder"),
+            critic_hidden_size=self.critic_hidden_size,
+            normalizer=self.normalizer,
+            initializer=self.initializer,
+            activation=self.activation,
+        ))
+        return config
 
 
 class MeanFieldActionValueCritic(Module):
@@ -232,6 +322,11 @@ class MeanFieldActionValueCritic(Module):
             raise ValueError('action_space must be Discrete.')
         self.representation = representation
         self.mean_actions_encoder = mean_actions_encoder
+        self.critic_hidden_size = critic_hidden_size
+        self.normalizer = normalizer
+        self.initializer = initializer
+        self.activation = activation
+
         self.representation_feature_dim = representation.output_shapes['state'][0]
         self.mean_action_feature_dim = mean_actions_encoder.output_shapes['state'][0]
 
@@ -256,3 +351,18 @@ class MeanFieldActionValueCritic(Module):
             representations=rep_out,
             values=self.critic_head(critic_input, **kwargs)
         )
+
+    def get_config(self):
+        config = super().get_config()
+        config.update(dict(
+            representation=self.representation.clone(copy_weights=True, trainable=False,
+                                                     name="target_critic_representation"),
+            mean_actions_encoder=self.mean_actions_encoder.clone(copy_weights=True, trainable=False,
+                                                                 name="target_critic_mean_actions_encoder"),
+            action_space=self.action_space,
+            critic_hidden_size=self.critic_hidden_size,
+            normalizer=self.normalizer,
+            initializer=self.initializer,
+            activation=self.activation,
+        ))
+        return config

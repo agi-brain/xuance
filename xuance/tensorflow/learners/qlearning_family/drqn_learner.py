@@ -18,7 +18,7 @@ class DRQN_Learner(Learner):
         self.optimizer = keras.optimizers.Adam(config.learning_rate)
         self.gamma = config.gamma
         self.sync_frequency = config.sync_frequency
-        self.n_actions = self.model.action_dim
+        self.n_actions = self.model.n_actions
         self.mse_loss = keras.losses.MeanSquaredError()
 
     @tf.function
@@ -82,8 +82,8 @@ class DRQN_Learner(Learner):
             self.model.copy_target()
 
         info.update({
-            "Qloss": loss.numpy(),
-            "predictQ": tf.math.reduce_mean(predictQ).numpy()
+            "Qloss": loss,
+            "predictQ": tf.math.reduce_mean(predictQ)
         })
 
         info.update(self.callback.on_update_end(self.iterations, model=self.model, info=info,

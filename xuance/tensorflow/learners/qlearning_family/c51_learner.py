@@ -81,7 +81,7 @@ class C51_Learner(Learner):
             self.model.copy_target()
 
         info.update({
-            "Qloss": loss.numpy(),
+            "Qloss": loss,
         })
 
         info.update(self.callback.on_update_end(self.iterations, model=self.model, info=info,

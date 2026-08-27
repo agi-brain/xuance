@@ -1,13 +1,12 @@
 import gymnasium
 import numpy as np
-import torch
 from tqdm import tqdm
 from copy import deepcopy
 from argparse import Namespace
 from gymnasium.spaces import Space
 from xuance.common import Optional, BaseCallback
 from xuance.environment import DummyVecEnv, SubprocVecEnv
-from xuance.tensorflow import Module
+from xuance.tensorflow import tf, Module
 from xuance.tensorflow.utils import ActivationFunctions
 from xuance.tensorflow.rl_models.modules import split_distributions
 from xuance.tensorflow.agents import OnPolicyAgent
@@ -59,20 +58,24 @@ class PPG_Agent(OnPolicyAgent):
         if isinstance(self.action_space, gymnasium.spaces.Box):
             Actor = GaussianActor
             actor_input['activation_action'] = ActivationFunctions[self.config.activation_action]
+            self.continuous_control = True
         elif isinstance(self.action_space, gymnasium.spaces.Discrete):
             Actor = CategoricalActor
+            self.continuous_control = False
         else:
             raise NotImplementedError
         actor = Actor(**actor_input)
 
         # build critic network
-        critic = Critic(representation=deepcopy(representation),
+        critic = Critic(representation=representation.clone(copy_weights=False, trainable=True,
+                                                            name="critic_representation"),
                         critic_hidden_size=self.config.critic_hidden_size,
                         normalizer=self.normalizer_fn,
                         initializer=self.initializer,
                         activation=self.activation)
 
-        aux_critic = Critic(representation=deepcopy(representation),
+        aux_critic = Critic(representation=representation.clone(copy_weights=False, trainable=True,
+                                                                name="aux_critic_representation"),
                             critic_hidden_size=self.config.critic_hidden_size,
                             normalizer=self.normalizer_fn,
                             initializer=self.initializer,
@@ -87,16 +90,13 @@ class PPG_Agent(OnPolicyAgent):
             self,
             observations: np.ndarray,
             deterministic: bool = False,
-            return_dists: bool = False,
-            return_logpi: bool = False
+            **kwargs
     ) -> ActionOutput:
         """Returns actions and values.
 
         Parameters:
             observations (np.ndarray): The observation.
             deterministic (bool): True for deterministic policy and False for stochastic policy.
-            return_dists (bool): Whether to return dists.
-            return_logpi (bool): Whether to return log_pi.
 
         Returns:
             actions: The actions to be executed.
@@ -104,18 +104,41 @@ class PPG_Agent(OnPolicyAgent):
             dists: The policy distributions.
             log_pi: Log of stochastic actions.
         """
+        observations = tf.convert_to_tensor(observations, dtype=tf.float32)
         model_output = self.model(observations)
         policy_dists, values = model_output.distributions, model_output.values
         actions = policy_dists.deterministic_sample() if deterministic else policy_dists.stochastic_sample()
-        log_pi = policy_dists.log_prob(actions) if return_logpi else None
-        dists = split_distributions(policy_dists) if return_dists else None
+        dists = split_distributions(policy_dists)
         actions = actions.numpy()
         values = values.numpy()
         return ActionOutput(
             env_actions=actions,
             values=values,
             distributions=dists,
-            log_probs=log_pi
+        )
+
+    def get_policy_distributions(self, observations: np.ndarray) -> ActionOutput:
+        obs_shape = observations.shape
+        observations = observations.reshape((-1,) + obs_shape[2:])
+        observations = tf.convert_to_tensor(observations, dtype=tf.float32)
+        model_output = self.model(observations)
+        policy_dists = model_output.distributions
+
+        if self.continuous_control:
+            mu_shape = tf.shape(policy_dists.mu)
+            mu = tf.reshape(policy_dists.mu, (obs_shape[0], obs_shape[1],) + mu_shape[1:])
+            std = tf.reshape(policy_dists.std, (obs_shape[0], obs_shape[1],) + mu_shape[1:])
+            policy_dists.set_param(mu, std)
+        else:
+            logits_shape = tuple(tf.shape(policy_dists.logits).numpy())
+            logits = tf.reshape(policy_dists.logits, (obs_shape[0], obs_shape[1],) + logits_shape[1:])
+            policy_dists.set_param(logits=logits)
+
+        policy_dists.log_probs = policy_dists
+        dists = split_distributions(policy_dists)
+        return ActionOutput(
+            env_actions=None,
+            distributions=dists,
         )
 
     @property
@@ -140,7 +163,7 @@ class PPG_Agent(OnPolicyAgent):
         for _ in tqdm(range(train_steps)):
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
-            policy_out = self.get_actions(obs, return_dists=True, return_logpi=False)
+            policy_out = self.get_actions(obs)
             acts = policy_out.env_actions
             rets = policy_out.values
             next_obs, rewards, terminals, truncations, infos = self.train_envs.step(acts)
@@ -182,7 +205,7 @@ class PPG_Agent(OnPolicyAgent):
                 # update old_prob
                 buffer_obs = self.memory.observations
                 buffer_act = self.memory.actions
-                new_policy_out = self.get_actions(buffer_obs, return_dists=True)
+                new_policy_out = self.get_policy_distributions(buffer_obs)
                 aux_info = self.get_aux_info(new_policy_out)
                 self.memory.auxiliary_infos.update(aux_info)
                 for _ in range(self.aux_nepoch):

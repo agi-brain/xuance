@@ -13,7 +13,7 @@ from .policy_gradient import PDQN_Agent
 from .policy_gradient import MPDQN_Agent
 from .policy_gradient import SPDQN_Agent
 from .policy_gradient import SAC_Agent
-# from .policy_gradient import NPG_Agent
+from .policy_gradient import NPG_Agent
 from .qlearning_family import DQN_Agent
 from .qlearning_family import DuelDQN_Agent
 from .qlearning_family import DDQN_Agent
@@ -75,8 +75,8 @@ REGISTRY_Agents = {
     "MPDQN": MPDQN_Agent,
     "SPDQN": SPDQN_Agent,
     "DRQN": DRQN_Agent,
-    # "NPG": NPG_Agent,
-    #
+    "NPG": NPG_Agent,
+
     # "DreamerV2": DreamerV2Agent,
     # "DreamerV3": DreamerV3Agent,
 
@@ -122,7 +122,7 @@ __all__ = [
 
     "PG_Agent", "A2C_Agent", "PPO_Agent", "PPOKL_Agent", "PPG_Agent", "DDPG_Agent", "TD3_Agent", "PDQN_Agent",
     "MPDQN_Agent", "SPDQN_Agent", "SAC_Agent", "DQN_Agent", "DuelDQN_Agent", "DDQN_Agent",
-    "NoisyDQN_Agent", "C51_Agent", "QRDQN_Agent", "PerDQN_Agent", "DRQN_Agent",  # "NPG_Agent",
+    "NoisyDQN_Agent", "C51_Agent", "QRDQN_Agent", "PerDQN_Agent", "DRQN_Agent", "NPG_Agent",
 
     # "DreamerV2Agent", "DreamerV3Agent",
 
