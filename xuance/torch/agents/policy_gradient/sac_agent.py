@@ -98,6 +98,6 @@ class SAC_Agent(OffPolicyAgent):
             dists: The policy distributions.
             log_pi: Log of stochastic actions.
         """
-        actions_output = self.model.act(observations)
+        actions_output = self.model(observations).actions
         actions = actions_output.cpu().numpy()
         return ActionOutput(env_actions=actions)

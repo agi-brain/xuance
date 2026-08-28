@@ -24,12 +24,11 @@ class SAC_Learner(Learner):
         self.optimizer = {'actor': keras.optimizers.Adam(config.learning_rate_actor),
                           'critic': keras.optimizers.Adam(config.learning_rate_critic)}
         self.tau = config.tau
-        self.gamma = config.gamma
         self.alpha = config.alpha
         self.use_automatic_entropy_tuning = config.use_automatic_entropy_tuning
         self.mse_loss = keras.losses.MeanSquaredError()
         if self.use_automatic_entropy_tuning:
-            self.target_entropy = -np.prod(policy.action_space.shape).item()
+            self.target_entropy = -np.prod(self.model.actor.action_space.shape).item()
             if self.distributed_training:
                 with self.model.mirrored_strategy.scope():
                     self.alpha_layer = AlphaLayer()
@@ -40,36 +39,40 @@ class SAC_Learner(Learner):
                 self.alpha = tf.exp(self.alpha_layer.log_alpha)
                 self.alpha_optimizer = keras.optimizers.Adam(config.learning_rate_actor)
 
+    def current_alpha(self, dtype):
+        if self.use_automatic_entropy_tuning:
+            alpha = tf.exp(self.alpha_layer.log_alpha)
+        else:
+            alpha = tf.convert_to_tensor(self.alpha)
+
+        return tf.stop_gradient(tf.cast(alpha, dtype))
+
     @tf.function
     def actor_forward_fn(self, obs_batch):
         with tf.GradientTape() as tape:
-            _, actions_forward, log_pi = self.model(obs_batch)
-            policy_q_1, policy_q_2 = self.model.Qpolicy(obs_batch, actions_forward)
-            log_pi = tf.reshape(log_pi, [-1])
-            policy_q = tf.reshape(tf.math.minimum(policy_q_1, policy_q_2), [-1])
-            p_loss = tf.reduce_mean(self.alpha * log_pi - policy_q)
+            log_pi, model_q_1, model_q_2 = self.model.Qpolicy(obs_batch)
+            model_q = tf.reshape(tf.math.minimum(model_q_1, model_q_2), [-1])
+            alpha = self.current_alpha(log_pi.dtype)
+            p_loss = tf.reduce_mean(alpha * tf.reshape(log_pi, [-1]) - model_q)
+
             gradients = tape.gradient(p_loss, self.model.actor.trainable_variables)
             if self.use_grad_clip:
                 gradients, _ = tf.clip_by_global_norm(gradients, clip_norm=self.grad_clip_norm)
                 self.optimizer['actor'].apply_gradients(zip(gradients, self.model.actor.trainable_variables))
             else:
                 self.optimizer['actor'].apply_gradients(zip(gradients, self.model.actor.trainable_variables))
-        return p_loss, log_pi, policy_q
+        return p_loss, log_pi, model_q
 
     @tf.function
     def critic_forward_fn(self, obs_batch, act_batch, rew_batch, next_batch, ter_batch):
         with tf.GradientTape() as tape:
-            action_q_1, action_q_2 = self.model.Qpolicy(obs_batch, act_batch)
-            _, next_actions, log_pi_next = self.model(next_batch)
-            target_q = self.model.Qtarget(next_batch, next_actions)
-            target_q = tf.reshape(target_q, [-1])
-            log_pi_next = tf.reshape(log_pi_next, [-1])
-            target_value = target_q - self.alpha * log_pi_next
+            action_q_1, action_q_2 = self.model.Qaction(obs_batch, act_batch)
+            log_pi_next, target_q = self.model.Qtarget(next_batch)
+            alpha = self.current_alpha(log_pi_next.dtype)
+            target_value = target_q - alpha * tf.reshape(log_pi_next, [-1])
             backup = rew_batch + (1 - ter_batch) * self.gamma * target_value
-            y_true = tf.stop_gradient(tf.reshape(backup, [-1]))
-            y_pred_1 = tf.reshape(action_q_1, [-1])
-            y_pred_2 = tf.reshape(action_q_2, [-1])
-            q_loss = self.mse_loss(y_true, y_pred_1) + self.mse_loss(y_true, y_pred_2)
+            backup = tf.stop_gradient(backup)
+            q_loss = self.mse_loss(backup, action_q_1) + self.mse_loss(backup, action_q_2)
             gradients = tape.gradient(q_loss, self.model.critic.trainable_variables)
             if self.use_grad_clip:
                 gradients, _ = tf.clip_by_global_norm(gradients, clip_norm=self.grad_clip_norm)
@@ -129,8 +132,8 @@ class SAC_Learner(Learner):
         p_loss, log_pi, policy_q = self.learn_actor(obs_batch)
         if self.use_automatic_entropy_tuning:
             alpha_loss = self.learn_alpha(log_pi)
-            alpha_loss = alpha_loss.numpy()
-            self.alpha = tf.math.exp(self.alpha_layer.log_alpha).numpy()
+            alpha_loss = alpha_loss
+            self.alpha = tf.math.exp(self.alpha_layer.log_alpha)
         else:
             alpha_loss = 0
 

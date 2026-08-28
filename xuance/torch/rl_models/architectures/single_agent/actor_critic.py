@@ -114,24 +114,18 @@ class SoftActorCritic(ActorCritic):
 
     def forward(self,
                 observation: Union[Tensor, dict],
+                deterministic: bool = False,
                 **kwargs) -> ModelOutput:
-        actor_output = self.actor(observation, **kwargs)
-        critic_output = self.critic(observation, actor_output.actions, **kwargs)
-        return ModelOutput(distributions=actor_output.distributions,
-                           values=critic_output,
-                           actor_rep_out=actor_output.representations)
-
-    def act(self,
-            observation: Union[Tensor, dict],
-            deterministic: bool = False,
-            **kwargs) -> Tensor:
         actor_output = self.actor(observation, **kwargs)
 
         if deterministic:
             actions = actor_output.distributions.activated_deterministic_sample()
         else:
             actions = actor_output.distributions.activated_rsample()
-        return actions
+
+        return ModelOutput(distributions=actor_output.distributions,
+                           actions=actions,
+                           actor_rep_out=actor_output.representations)
 
     def Qpolicy(self, observation: Union[Tensor, dict]):
         outputs_actor = self.actor(observation)
@@ -162,24 +156,18 @@ class SoftActorCritic(ActorCritic):
 class SoftActorCriticDiscrete(SoftActorCritic):
     def forward(self,
                 observation: Union[Tensor, dict],
+                deterministic: bool = False,
                 **kwargs) -> ModelOutput:
-        actor_output = self.actor(observation, **kwargs)
-        critic_output = self.critic(observation, **kwargs)
-        return ModelOutput(distributions=actor_output.distributions,
-                           values=critic_output,
-                           actor_rep_out=actor_output.representations)
-
-    def act(self,
-            observation: Union[Tensor, dict],
-            deterministic: bool = False,
-            **kwargs) -> Tensor:
         actor_output = self.actor(observation, **kwargs)
 
         if deterministic:
-            actions = actor_output.distributions.deterministic_sample()
+            actions = actor_output.distributions.activated_deterministic_sample()
         else:
-            actions = actor_output.distributions.stochastic_sample()
-        return actions
+            actions = actor_output.distributions.activated_rsample()
+
+        return ModelOutput(distributions=actor_output.distributions,
+                           actions=actions,
+                           actor_rep_out=actor_output.representations)
 
     def Qpolicy(self, observation: Union[Tensor, dict]):
         outputs_actor = self.actor(observation)

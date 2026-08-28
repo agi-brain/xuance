@@ -138,7 +138,7 @@ class SAC_GaussianActorHead(Module):
         for h in hidden_size:
             mlp, input_shape = mlp_block(input_shape[0], h, normalizer, activation, initializer)
             layers.extend(mlp)
-        self.output = keras.Sequential(layers)
+        self.model = keras.Sequential(layers)
 
         mu_layer, _ = mlp_block(input_shape[0], action_dim, None, None, initializer)
         log_std_layer, _ = mlp_block(input_shape[0], action_dim, None, None, initializer)
@@ -152,7 +152,7 @@ class SAC_GaussianActorHead(Module):
              features: Tensor,
              avail_actions: Optional[Tensor] = None,
              **kwargs):
-        output = self.output(features)
+        output = self.model(features)
         mu = self.out_mu(output)
         log_std = tf.clip_by_value(self.out_log_std(output), clip_value_min=-20.0, clip_value_max=2.0)
         self.policy_distribution.set_param(mu, tf.exp(log_std))

@@ -1,6 +1,5 @@
 import gymnasium
 import numpy as np
-from copy import deepcopy
 from argparse import Namespace
 
 from gymnasium.spaces import Space
@@ -10,8 +9,8 @@ from xuance.environment import DummyVecEnv, SubprocVecEnv
 from xuance.tensorflow import tf, Tensor, Module
 from xuance.tensorflow.utils import ActivationFunctions
 from xuance.tensorflow.agents import OffPolicyAgent
-from xuance.tensorflow.rl_models import (
-    CategoricalActor, SAC_GaussianActor, TwinActionValueCritic, TwinDiscreteActionValueCritic)
+from xuance.tensorflow.rl_models import (CategoricalActor, SAC_GaussianActor,
+                                         TwinActionValueCritic, TwinDiscreteActionValueCritic)
 from xuance.tensorflow.rl_models.modules import ActionOutput
 from xuance.tensorflow.rl_models.architectures import SoftActorCritic, SoftActorCriticDiscrete
 
@@ -66,7 +65,8 @@ class SAC_Agent(OffPolicyAgent):
         actor = Actor(**actor_input)
 
         # build critic network
-        critic = Critic(representation=deepcopy(representation),
+        critic = Critic(representation=representation.clone(copy_weights=False, trainable=True,
+                                                            name="critic_representation"),
                         action_space=self.action_space,
                         critic_hidden_size=self.config.critic_hidden_size,
                         normalizer=self.normalizer_fn,
@@ -80,12 +80,12 @@ class SAC_Agent(OffPolicyAgent):
 
     @tf.function
     def _stochastic_rollout_step(self, observations: Tensor, **kwargs) -> Tensor:
-        actions = self.model.act(observations, deterministic=False)
+        actions = self.model(observations, deterministic=False).actions
         return actions
 
     @tf.function
     def _deterministic_rollout_step(self, observations: Tensor, **kwargs) -> Tensor:
-        actions = self.model.act(observations, deterministic=True)
+        actions = self.model(observations, deterministic=True).actions
         return actions
 
     def get_actions(

@@ -216,7 +216,7 @@ class DiagGaussianDistribution(Distribution):
         return -0.5 * (tf.square(normalized) + 2.0 * self.log_std + log_two_pi)
 
     def log_prob(self, x: Tensor) -> Tensor:
-        return tf.reduce_sum(self.log_prob_per_dimension(x), axis=-1)
+        return tf.reduce_sum(self.log_prob_per_dimension(x), axis=-1, keepdims=True)
 
     def entropy(self) -> Tensor:
         log_two_pi = tf.math.log(tf.cast(2.0 * np.pi, self.mu.dtype))

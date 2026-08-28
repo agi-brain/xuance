@@ -126,24 +126,18 @@ class SoftActorCritic(ActorCritic):
 
     def call(self,
              observation: Union[Tensor, dict],
+             deterministic: bool = False,
              **kwargs) -> ModelOutput:
-        actor_output = self.actor(observation, **kwargs)
-        critic_output = self.critic(observation, actor_output.actions, **kwargs)
-        return ModelOutput(distributions=actor_output.distributions,
-                           values=critic_output,
-                           actor_rep_out=actor_output.representations)
-
-    def act(self,
-            observation: Union[Tensor, dict],
-            deterministic: bool = False,
-            **kwargs) -> Tensor:
         actor_output = self.actor(observation, **kwargs)
 
         if deterministic:
             actions = actor_output.distributions.activated_deterministic_sample()
         else:
             actions = actor_output.distributions.activated_rsample()
-        return actions
+
+        return ModelOutput(distributions=actor_output.distributions,
+                           actions=actions,
+                           actor_rep_out=actor_output.representations)
 
     def Qpolicy(self, observation: Union[Tensor, dict]):
         outputs_actor = self.actor(observation)
@@ -158,7 +152,7 @@ class SoftActorCritic(ActorCritic):
         policy_dist = outputs_actor.distributions
         act_sample, log_action_prob = policy_dist.activated_rsample_and_logprob()
         outputs_critic = self.target_critic(observation, act_sample)
-        target_q = tf.min(outputs_critic.values_1, outputs_critic.values_2)
+        target_q = tf.math.minimum(outputs_critic.values_1, outputs_critic.values_2)
         return log_action_prob, target_q
 
     def Qaction(self, observation: Union[Tensor, dict], action: Tensor):

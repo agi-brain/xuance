@@ -32,9 +32,9 @@ class DCG_Utility(nn.Module):
         self.dim_output = dim_output
         self.device = device
         '''All utilities share the same parameters'''
-        self.output = nn.Sequential(nn.Linear(self.dim_input, self.dim_hidden),
-                                    nn.ReLU(),
-                                    nn.Linear(self.dim_hidden, self.dim_output)).to(device)
+        self.model = nn.Sequential(nn.Linear(self.dim_input, self.dim_hidden),
+                                   nn.ReLU(),
+                                   nn.Linear(self.dim_hidden, self.dim_output)).to(device)
 
     def forward(self, hidden_states_n: Tensor):
         """
@@ -45,7 +45,7 @@ class DCG_Utility(nn.Module):
 
         Returns: The utility values for multiple agents.
         """
-        return self.output(hidden_states_n)
+        return self.model(hidden_states_n)
 
 
 class DCG_Payoff(DCG_Utility):
