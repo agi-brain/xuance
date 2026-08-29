@@ -1,5 +1,4 @@
 import numpy as np
-from copy import deepcopy
 from argparse import Namespace
 from gymnasium import spaces
 from xuance.environment.single_agent_env import Gym_Env
@@ -41,7 +40,7 @@ class MPDQN_Agent(PDQN_Agent):
         )
 
         q_network = HybridActionValueCritic(
-            representation=deepcopy(representation),
+            representation=representation.clone(copy_weights=False, trainable=True, name='critic_representation'),
             action_space=self.action_space,
             critic_hidden_size=self.config.qnetwork_hidden_size,
             normalizer=self.normalizer_fn,

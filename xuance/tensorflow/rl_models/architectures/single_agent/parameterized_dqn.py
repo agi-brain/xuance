@@ -10,13 +10,15 @@ class ParameterizedDQN(Module):
         super().__init__(**kwargs)
         self.continuous_actor = continuous_actor
         self.q_network = q_network
-        self.target_continuous_actor = self.continuous_actor.clone(trainable=False, name="target_continuous_actor")
-        self.target_q_network = self.q_network.clone(trainable=False, name="target_q_network")
+        self.target_continuous_actor = self.continuous_actor.clone(copy_weights=True, trainable=False,
+                                                                   name="target_continuous_actor")
+        self.target_q_network = self.q_network.clone(copy_weights=True,
+                                                     trainable=False, name="target_q_network")
 
     def Atarget(self, observations: Tensor):
         return self.target_continuous_actor(observations).actions
 
-    def con_action(self, observations: Tensor):
+    def call(self, observations: Tensor):
         return self.continuous_actor(observations).actions
 
     def Qtarget(self, observations: Tensor, actions: Tensor):
@@ -27,7 +29,7 @@ class ParameterizedDQN(Module):
 
     def Qpolicy(self, observations: Tensor):
         continuous_actions = self.continuous_actor(observations).actions
-        policy_q = tf.sum(self.q_network(observations, continuous_actions).values)
+        policy_q = tf.reduce_sum(self.q_network(observations, continuous_actions).values)
         return policy_q
 
     def soft_update(self, tau=0.005):
@@ -49,63 +51,50 @@ class MultipassParameterizedDQN(ParameterizedDQN):
         self.num_disact = self.q_network.num_disact
 
     def Qtarget(self, observations: Tensor, actions: Tensor):
-        batch_size = observations.shape[0]
-        Q = []
-        actions_input = tf.zeros_like(actions)
-        actions_input = actions_input.repeat(self.num_disact, 1)
+        actions_all = []
         for i in range(self.num_disact):
-            slice_0 = [i * batch_size, (i + 1) * batch_size]
-            slice_1 = [self.offsets[i], self.offsets[i + 1]]
-            actions_input[slice_0[0]:slice_0[1], slice_1[0]: slice_1[1]] = actions[:, slice_1[0]: slice_1[1]]
+            start = self.offsets[i]
+            end = self.offsets[i + 1]
 
-        eval_qall = self.target_q_network(observations.repeat(self.num_disact, 1), actions_input).values
+            action_i = tf.concat([tf.zeros_like(actions[:, :start]),
+                                  actions[:, start:end],
+                                  tf.zeros_like(actions[:, end:])], axis=-1)
+            actions_all.append(action_i)
 
-        for i in range(self.num_disact):
-            eval_q = eval_qall[i * batch_size:(i + 1) * batch_size, i]
-            if len(eval_q.shape) == 1:
-                eval_q = eval_q.unsqueeze(1)
-            Q.append(eval_q)
-        Q = tf.cat(Q, dim=1)
+        actions_input = tf.concat(actions_all, axis=0)
+        observations_all = tf.tile(observations, [self.num_disact, 1])
+
+        target_qall = self.target_q_network(observations_all, actions_input).values
+        target_qall = tf.reshape(target_qall, [self.num_disact, -1, self.num_disact])
+
+        Q = tf.stack([target_qall[i, :, i] for i in range(self.num_disact)], axis=-1)
+
         return Q
 
     def Qeval(self, observations: Tensor, actions: Tensor):
-        batch_size = observations.shape[0]
-        Q = []
-        actions_input = tf.zeros_like(actions)
-        actions_input = actions_input.repeat(self.num_disact, 1)
+        actions_all = []
         for i in range(self.num_disact):
-            slice_0 = [i * batch_size, (i + 1) * batch_size]
-            slice_1 = [self.offsets[i], self.offsets[i + 1]]
-            actions_input[slice_0[0]:slice_0[1], slice_1[0]: slice_1[1]] = actions[:, slice_1[0]: slice_1[1]]
+            start = self.offsets[i]
+            end = self.offsets[i + 1]
 
-        eval_qall = self.q_network(observations.repeat(self.num_disact, 1), actions_input).values
-        for i in range(self.num_disact):
-            eval_q = eval_qall[i * batch_size:(i + 1) * batch_size, i]
-            if len(eval_q.shape) == 1:
-                eval_q = eval_q.unsqueeze(1)
-            Q.append(eval_q)
-        Q = tf.cat(Q, dim=1)
+            action_i = tf.concat([tf.zeros_like(actions[:, :start]),
+                                  actions[:, start:end],
+                                  tf.zeros_like(actions[:, end:])], axis=-1)
+            actions_all.append(action_i)
+
+        actions_input = tf.concat(actions_all, axis=0)
+        observations_all = tf.tile(observations, [self.num_disact, 1])
+
+        eval_qall = self.q_network(observations_all, actions_input).values
+        eval_qall = tf.reshape(eval_qall, [self.num_disact, -1, self.num_disact])
+
+        Q = tf.stack([eval_qall[i, :, i] for i in range(self.num_disact)], axis=-1)
+
         return Q
 
     def Qpolicy(self, observations: Tensor):
         conact = self.continuous_actor(observations).actions
-        batch_size = observations.shape[0]
-        Q = []
-
-        actions_input = tf.zeros_like(conact)
-        actions_input = actions_input.repeat(self.num_disact, 1)
-        for i in range(self.num_disact):
-            slice_0 = [i * batch_size, (i + 1) * batch_size]
-            slice_1 = [self.offsets[i], self.offsets[i + 1]]
-            actions_input[slice_0[0]:slice_0[1], slice_1[0]: slice_1[1]] = conact[:, slice_1[0]: slice_1[1]]
-
-        eval_qall = self.q_network(observations.repeat(self.num_disact, 1), actions_input).values
-        for i in range(self.num_disact):
-            eval_q = eval_qall[i * batch_size:(i + 1) * batch_size, i]
-            if len(eval_q.shape) == 1:
-                eval_q = eval_q.unsqueeze(1)
-            Q.append(eval_q)
-        Q = tf.cat(Q, dim=1)
+        Q = self.Qeval(observations, conact)
         return Q
 
 
@@ -122,29 +111,24 @@ class SplitParameterisedDQN(MultipassParameterizedDQN):
         self.num_disact = num_disact
 
     def Qtarget(self, observations: Tensor, actions: Tensor):
-        target_Q = []
+        target_Q_list = []
         for i in range(self.num_disact):
             conact = actions[:, self.offsets[i]:self.offsets[i + 1]]
-            eval_q = self.target_q_network[i](observations, conact).values
-            target_Q.append(eval_q.unsqueeze(-1))
-        target_Q = tf.cat(target_Q, dim=1)
-        return target_Q
+            target_q = self.target_q_network[i](observations, conact).values
+            target_Q_list.append(tf.expand_dims(target_q, axis=-1))
+        target_Q_value = tf.concat(target_Q_list, axis=1)
+        return target_Q_value
 
     def Qeval(self, observations: Tensor, actions: Tensor):
         Q = []
         for i in range(self.num_disact):
             conact = actions[:, self.offsets[i]:self.offsets[i + 1]]
             eval_q = self.q_network[i](observations, conact).values
-            Q.append(eval_q.unsqueeze(-1))
-        Q = tf.cat(Q, dim=1)
+            Q.append(tf.expand_dims(eval_q, axis=-1))
+        Q = tf.concat(Q, axis=1)
         return Q
 
     def Qpolicy(self, observations: Tensor):
         conacts = self.continuous_actor(observations).actions
-        Q = []
-        for i in range(self.num_disact):
-            conact = conacts[:, self.offsets[i]:self.offsets[i + 1]]
-            eval_q = self.q_network[i](observations, conact).values
-            Q.append(eval_q.unsqueeze(-1))
-        Q = tf.cat(Q, dim=1)
+        Q = self.Qeval(observations, conacts)
         return Q

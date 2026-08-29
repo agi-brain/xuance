@@ -125,10 +125,9 @@ class PPG_Agent(OnPolicyAgent):
         policy_dists = model_output.distributions
 
         if self.continuous_control:
-            mu_shape = tf.shape(policy_dists.mu)
+            mu_shape = tuple(tf.shape(policy_dists.mu).numpy())
             mu = tf.reshape(policy_dists.mu, (obs_shape[0], obs_shape[1],) + mu_shape[1:])
-            std = tf.reshape(policy_dists.std, (obs_shape[0], obs_shape[1],) + mu_shape[1:])
-            policy_dists.set_param(mu, std)
+            policy_dists.set_param(mu, policy_dists.std)
         else:
             logits_shape = tuple(tf.shape(policy_dists.logits).numpy())
             logits = tf.reshape(policy_dists.logits, (obs_shape[0], obs_shape[1],) + logits_shape[1:])

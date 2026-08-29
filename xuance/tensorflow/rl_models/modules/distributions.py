@@ -216,7 +216,7 @@ class DiagGaussianDistribution(Distribution):
         return -0.5 * (tf.square(normalized) + 2.0 * self.log_std + log_two_pi)
 
     def log_prob(self, x: Tensor) -> Tensor:
-        return tf.reduce_sum(self.log_prob_per_dimension(x), axis=-1, keepdims=True)
+        return tf.reduce_sum(self.log_prob_per_dimension(x), axis=-1)
 
     def entropy(self) -> Tensor:
         log_two_pi = tf.math.log(tf.cast(2.0 * np.pi, self.mu.dtype))
@@ -259,6 +259,7 @@ class ActivatedDiagGaussianDistribution(DiagGaussianDistribution):
         act_pre_activated = self.rsample()  # sample without being activated.
         act_activated = self.activation_fn(act_pre_activated)
         log_prob = self.log_prob(act_pre_activated)
+        log_prob = tf.expand_dims(log_prob, axis=-1)
         correction = - 2. * (tf.math.log(2.0) - act_pre_activated - softplus(-2. * act_pre_activated))
         log_prob += correction
         return act_activated, tf.math.reduce_sum(log_prob, axis=-1)

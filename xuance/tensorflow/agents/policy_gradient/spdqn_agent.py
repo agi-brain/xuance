@@ -1,9 +1,7 @@
 import numpy as np
-from tqdm import tqdm
-from copy import deepcopy
 from argparse import Namespace
 from gymnasium import spaces
-from xuance.common import Optional, DummyOffPolicyBuffer, BaseCallback
+from xuance.common import Optional, BaseCallback
 from xuance.environment.single_agent_env import Gym_Env
 from xuance.tensorflow import Module, ModuleList
 from xuance.tensorflow.utils import ActivationFunctions
@@ -25,45 +23,7 @@ class SPDQN_Agent(PDQN_Agent):
                  config: Namespace,
                  envs: Gym_Env,
                  callback: Optional[BaseCallback] = None):
-        super(PDQN_Agent, self).__init__(config, envs, callback=callback)
-        self.start_noise, self.end_noise = config.start_noise, config.end_noise
-        self.noise_scale = config.start_noise
-        self.delta_noise = (self.start_noise - self.end_noise) / (config.running_steps / self.n_envs)
-
-        self.observation_space = envs.observation_space.spaces[0]
-        old_as = envs.action_space
-        num_disact = old_as.spaces[0].n
-        self.action_space = spaces.Tuple((old_as.spaces[0],
-                                          *(spaces.Box(old_as.spaces[1].spaces[i].low,
-                                                       old_as.spaces[1].spaces[i].high, dtype=np.float32)
-                                            for i in range(0, num_disact))))
-        self.action_high = [self.action_space.spaces[i].high for i in range(1, num_disact + 1)]
-        self.action_low = [self.action_space.spaces[i].low for i in range(1, num_disact + 1)]
-        self.action_range = [self.action_space.spaces[i].high - self.action_space.spaces[i].low for i in
-                             range(1, num_disact + 1)]
-        self.representation_info_shape = {'state': (envs.observation_space.spaces[0].shape)}
-        self.auxiliary_info_shape = {}
-        self.nenvs = 1
-        self.epsilon = 1.0
-        self.epsilon_steps = 1000
-        self.epsilon_initial = 1.0
-        self.epsilon_final = 0.1
-        self.buffer_action_space = spaces.Box(np.zeros(4), np.ones(4), dtype=np.float64)
-
-        self.num_disact = self.action_space.spaces[0].n
-        self.conact_sizes = np.array([self.action_space.spaces[i].shape[0] for i in range(1, self.num_disact + 1)])
-        self.conact_size = int(self.conact_sizes.sum())
-
-        # Build RL model, optimizer, scheduler.
-        self.model = self._build_model()
-
-        self.memory = DummyOffPolicyBuffer(observation_space=self.observation_space,
-                                           action_space=self.buffer_action_space,
-                                           auxiliary_shape=self.auxiliary_info_shape,
-                                           n_envs=self.n_envs,
-                                           buffer_size=config.buffer_size,
-                                           batch_size=config.batch_size)
-        self.learner = self._build_learner(self.config, self.model, self.callback)
+        super(SPDQN_Agent, self).__init__(config, envs, callback=callback)
 
     def _build_model(self) -> Module:
         # build representation.
@@ -83,7 +43,8 @@ class SPDQN_Agent(PDQN_Agent):
         q_network = ModuleList()
         for k in range(self.num_disact):
             q_network.append(ActionValueCritic(
-                representation=deepcopy(representation),
+                representation=representation.clone(copy_weights=False, trainable=True,
+                                                    name=f"critic_representation_{k}"),
                 action_space=spaces.Box(low=-np.inf, high=np.inf, shape=(self.conact_sizes[k],)),
                 critic_hidden_size=self.config.qnetwork_hidden_size,
                 normalizer=self.normalizer_fn,
@@ -99,60 +60,3 @@ class SPDQN_Agent(PDQN_Agent):
         )
 
         return model
-
-    def train(self, train_steps=10000):
-        train_info = {}
-        episodes = np.zeros((self.nenvs,), np.int32)
-        scores = np.zeros((self.nenvs,), np.float32)
-        obs, _ = self.train_envs.reset()
-        for _ in tqdm(range(train_steps)):
-            disaction, conaction, con_actions = self.get_actions(obs)
-            action = self.pad_action(disaction, conaction)
-            action[1][disaction] = self.action_range[disaction] * (action[1][disaction] + 1) / 2. + self.action_low[
-                disaction]
-            (next_obs, steps), rewards, terminal, _ = self.train_envs.step(action)
-            if self.render: self.train_envs.render("human")
-            acts = np.concatenate(([disaction], con_actions), axis=0).ravel()
-
-            self.callback.on_train_step(self.current_step, envs=self.train_envs, model=self.model,
-                                        obs=obs, next_obs=next_obs, rewards=rewards, terminals=terminal,
-                                        action=action, acts=acts, steps=steps,
-                                        disaction=disaction, conaction=conaction, con_actions=con_actions,
-                                        train_steps=train_steps)
-
-            self.memory.store(obs, acts, rewards, terminal, next_obs)
-            if self.current_step > self.start_training and self.current_step % self.training_frequency == 0:
-                update_info = self.train_epochs(n_epochs=self.n_epochs)
-                self.log_infos(update_info, self.current_step)
-                train_info.update(update_info)
-                self.callback.on_train_epochs_end(self.current_step, model=self.model, memory=self.memory,
-                                                  current_episode=self.current_episode, train_steps=train_steps,
-                                                  update_info=update_info)
-
-            scores += rewards
-            obs = deepcopy(next_obs)
-
-            if terminal:
-                episode_info = {"returns-step": scores}
-                scores = 0
-                returns = 0
-                episodes += 1
-                self.end_episode(episodes)
-                obs, _ = self.train_envs.reset()
-                self.log_infos(episode_info, self.current_step)
-                train_info.update(episode_info)
-                self.callback.on_train_episode_info(envs=self.train_envs, model=self.model,
-                                                    rank=self.rank, use_wandb=self.use_wandb,
-                                                    current_step=self.current_step,
-                                                    current_episode=self.current_episode,
-                                                    train_steps=train_steps)
-
-            self.current_step += self.n_envs
-
-            if self.noise_scale >= self.end_noise:
-                self.noise_scale -= self.delta_noise
-
-            self.callback.on_train_step_end(self.current_step, envs=self.train_envs, model=self.model,
-                                            train_steps=train_steps, train_info=train_info)
-
-        return train_info

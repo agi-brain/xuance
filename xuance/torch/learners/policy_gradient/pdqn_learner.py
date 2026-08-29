@@ -29,7 +29,6 @@ class PDQN_Learner(Learner):
                                                                    total_iters=self.total_iters)
         self.scheduler = [continuous_actor_lr_scheduler, q_network_lr_scheduler]
         self.tau = config.tau
-        self.gamma = config.gamma
         self.mse_loss = nn.MSELoss()
 
     def update(self, **samples):

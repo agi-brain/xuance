@@ -3,6 +3,40 @@ from typing import Dict, Iterator
 
 import keras
 
+def _clone_layer(
+        layer: keras.layers.Layer,
+        *,
+        copy_weights: bool = True
+) -> keras.layers.Layer:
+    """Clones a Keras layer.
+
+    Args:
+        layer: The layer to clone.
+        copy_weights: Whether to copy the weights from the original layer.
+
+    Returns:
+        The cloned layer.
+    """
+    config = dict(layer.get_config())
+    cloned = type(layer).from_config(config)
+
+    if copy_weights:
+        if len(cloned.weights) == 0 and len(layer.weights) > 0:
+            build_config = layer.get_build_config()
+            if build_config:
+                cloned.build_from_config(build_config)
+
+        if len(cloned.weights) != len(layer.weights):
+            raise RuntimeError(
+                f"Cannot copy weights from {type(layer).__name__}: "
+                f"source has {len(layer.weights)} weights, "
+                f"clone has {len(cloned.weights)} weights."
+            )
+
+        cloned.set_weights(layer.get_weights())
+
+    return cloned
+
 
 class Module(keras.Model, ABC):
 
@@ -80,6 +114,33 @@ class ModuleList(keras.layers.Layer):
             "ModuleList is only a container and has no forward computation."
         )
 
+    def clone(
+            self,
+            *,
+            copy_weights: bool = True,
+            trainable: bool | None = None,
+            name: str | None = None
+    ):
+        config = dict(self.get_config())
+
+        if name is not None:
+            config["name"] = name
+
+        cloned = type(self).from_config(config)
+
+        for module in self._modules:
+            cloned.append(
+                _clone_layer(
+                    module,
+                    copy_weights=copy_weights
+                )
+            )
+
+        if trainable is not None:
+            cloned.trainable = trainable
+
+        return cloned
+
 
 class ModuleDict(keras.layers.Layer):
     def __init__(self, modules: Dict[str, keras.layers.Layer] = None, **kwargs):
@@ -133,3 +194,28 @@ class ModuleDict(keras.layers.Layer):
     def update(self, modules: Dict[str, keras.layers.Layer]):
         for key, module in modules.items():
             self[key] = module
+
+    def clone(
+            self,
+            *,
+            copy_weights: bool = True,
+            trainable: bool | None = None,
+            name: str | None = None
+    ):
+        config = dict(self.get_config())
+
+        if name is not None:
+            config["name"] = name
+
+        cloned = type(self).from_config(config)
+
+        for key, module in self._modules.items():
+            cloned[key] = _clone_layer(
+                module,
+                copy_weights=copy_weights
+            )
+
+        if trainable is not None:
+            cloned.trainable = trainable
+
+        return cloned

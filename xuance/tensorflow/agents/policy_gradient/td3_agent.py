@@ -1,4 +1,3 @@
-from copy import deepcopy
 from argparse import Namespace
 from gymnasium.spaces import Space
 from xuance.common import Optional, BaseCallback

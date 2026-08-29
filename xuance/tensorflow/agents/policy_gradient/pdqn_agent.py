@@ -1,13 +1,13 @@
 import gymnasium as gym
-import torch
 import numpy as np
 from tqdm import tqdm
 from copy import deepcopy
 from argparse import Namespace
 from gymnasium import spaces
-from xuance.common import Optional, DummyOffPolicyBuffer, BaseCallback
+from typing import Optional, Tuple
+from xuance.common import DummyOffPolicyBuffer, BaseCallback
 from xuance.environment.single_agent_env import Gym_Env
-from xuance.tensorflow import Module
+from xuance.tensorflow import tf, Tensor, Module
 from xuance.tensorflow.utils import ActivationFunctions
 from xuance.tensorflow.agents import Agent
 from xuance.tensorflow.rl_models import DeterministicActor, HybridActionValueCritic
@@ -87,7 +87,7 @@ class PDQN_Agent(Agent):
         )
 
         q_network = HybridActionValueCritic(
-            representation=deepcopy(representation),
+            representation=representation.clone(copy_weights=False, trainable=True, name="critic_representation"),
             action_space=self.action_space,
             critic_hidden_size=self.config.qnetwork_hidden_size,
             normalizer=self.normalizer_fn,
@@ -102,18 +102,29 @@ class PDQN_Agent(Agent):
 
         return model
 
-    def get_actions(self, obs):
-        obs = torch.as_tensor(obs, device=self.device).float()
-        con_actions = self.model.con_action(obs)
-        rnd = np.random.rand()
-        if rnd < self.epsilon:
-            disaction = np.random.choice(self.num_disact)
-        else:
-            q = self.model.Qeval(obs.unsqueeze(0), con_actions.unsqueeze(0))
-            q = q.cpu().data.numpy()
-            disaction = np.argmax(q)
+    @tf.function
+    def _rollout_step(self, observations: Tensor, epsilon: Tensor) -> Tuple[Tensor, ...]:
+        con_actions = self.model(observations)
+        q = self.model.Qeval(observations, con_actions)
+        disaction = tf.argmax(q, axis=-1)
 
-        con_actions = con_actions.cpu().data.numpy()
+        explore_mask = tf.random.uniform(shape=tf.shape(disaction), minval=0.0, maxval=1.0,
+                                         dtype=tf.float32) < epsilon
+        random_actions = tf.random.uniform(shape=tf.shape(disaction), minval=0, maxval=self.num_disact,
+                                           dtype=disaction.dtype)
+        disaction = tf.where(explore_mask, random_actions, disaction)
+
+        return disaction, con_actions
+
+    def get_actions(self, obs):
+        obs = tf.reshape(tf.convert_to_tensor(obs, dtype=tf.float32), [self.n_envs, -1])
+        epsilon = tf.convert_to_tensor(self.epsilon, dtype=tf.float32)
+
+        disaction, con_actions = self._rollout_step(obs, epsilon)
+
+        disaction = disaction.numpy()[0]
+        con_actions = con_actions.numpy()
+        con_actions = con_actions[0]
         offset = np.array([self.conact_sizes[i] for i in range(disaction)], dtype=int).sum()
         conaction = con_actions[offset:offset + self.conact_sizes[disaction]]
 
@@ -165,7 +176,7 @@ class PDQN_Agent(Agent):
             obs = deepcopy(next_obs)
 
             if terminal:
-                episode_info = {"returns-step": scores}
+                episode_info = {"returns-step": np.mean(scores)}
                 scores = 0
                 returns = 0
                 episodes += 1

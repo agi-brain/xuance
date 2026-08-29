@@ -22,6 +22,9 @@ learning_rate: 0.001
 gamma: 0.99
 tau: 0.005
 
+start_greedy: 0.5
+end_greedy: 0.05
+decay_step_greedy: 1000000  # 1M
 start_noise: 0.1
 end_noise: 0.1
 training_frequency: 1
