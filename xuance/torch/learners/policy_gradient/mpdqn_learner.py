@@ -62,8 +62,8 @@ class MPDQN_Learner(Learner):
         self.optimizer[1].step()
 
         # optimize actor network
-        model_q = self.model.Qpolicy(obs_batch)
-        p_loss = - model_q.mean()
+        policy_q = self.model.Qpolicy(obs_batch)
+        p_loss = - policy_q.mean()
         self.optimizer[0].zero_grad()
         p_loss.backward()
         self.optimizer[0].step()
@@ -89,6 +89,6 @@ class MPDQN_Learner(Learner):
         info.update(self.callback.on_update_end(self.iterations,
                                                 model=self.model, scheduler=self.scheduler, info=info,
                                                 target_conact=target_conact, target_q=target_q,
-                                                eval_qs=eval_qs, eval_q=eval_q, model_q=model_q,
+                                                eval_qs=eval_qs, eval_q=eval_q, policy_q=policy_q,
                                                 q_loss=q_loss, p_loss=p_loss))
         return info

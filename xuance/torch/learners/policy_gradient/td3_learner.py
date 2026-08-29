@@ -59,10 +59,10 @@ class TD3_Learner(Learner):
             self.scheduler['critic'].step()
 
         # actor update
-        model_q, p_loss = None, None
+        policy_q, p_loss = None, None
         if self.iterations % self.actor_update_delay == 0:
-            model_q = self.model.Qpolicy(obs_batch)
-            p_loss = -model_q.mean()
+            policy_q = self.model.Qpolicy(obs_batch)
+            p_loss = -policy_q.mean()
             self.optimizer['actor'].zero_grad()
             p_loss.backward()
             if self.use_grad_clip:
@@ -96,5 +96,5 @@ class TD3_Learner(Learner):
                                                 model=self.model, info=info,
                                                 action_q_A=action_q_A, action_q_B=action_q_B,
                                                 next_q=next_q, target_q=target_q, q_loss=q_loss,
-                                                model_q=model_q, p_loss=p_loss))
+                                                policy_q=policy_q, p_loss=p_loss))
         return info

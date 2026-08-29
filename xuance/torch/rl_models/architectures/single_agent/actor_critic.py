@@ -161,9 +161,9 @@ class SoftActorCriticDiscrete(SoftActorCritic):
         actor_output = self.actor(observation, **kwargs)
 
         if deterministic:
-            actions = actor_output.distributions.activated_deterministic_sample()
+            actions = actor_output.distributions.deterministic_sample()
         else:
-            actions = actor_output.distributions.activated_rsample()
+            actions = actor_output.distributions.stochastic_sample()
 
         return ModelOutput(distributions=actor_output.distributions,
                            actions=actions,

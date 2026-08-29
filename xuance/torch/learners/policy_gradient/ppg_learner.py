@@ -25,7 +25,7 @@ class PPG_Learner(Learner):
         self.ent_coef = config.ent_coef
         self.clip_range = config.clip_range
         self.kl_beta = config.kl_beta
-        self.model_iterations = 0
+        self.policy_iterations = 0
         self.value_iterations = 0
 
     def estimate_total_iterations(self):
@@ -36,7 +36,7 @@ class PPG_Learner(Learner):
         return total_iters
 
     def update_actor(self, **samples):
-        self.model_iterations += 1
+        self.policy_iterations += 1
         obs_batch = torch.as_tensor(samples['obs'], device=self.device)
         act_batch = torch.as_tensor(samples['actions'], device=self.device)
         adv_batch = torch.as_tensor(samples['advantages'], device=self.device)

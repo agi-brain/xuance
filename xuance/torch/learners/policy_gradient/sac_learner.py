@@ -51,9 +51,9 @@ class SAC_Learner(Learner):
                                              next_obs=next_batch, rew=rew_batch, termination=ter_batch)
 
         # actor update
-        log_pi, model_q_1, model_q_2 = self.model.Qpolicy(obs_batch)
-        model_q = torch.min(model_q_1, model_q_2).reshape([-1])
-        p_loss = (self.alpha * log_pi.reshape([-1]) - model_q).mean()
+        log_pi, policy_q_1, policy_q_2 = self.model.Qpolicy(obs_batch)
+        policy_q = torch.min(policy_q_1, policy_q_2).reshape([-1])
+        p_loss = (self.alpha * log_pi.reshape([-1]) - policy_q).mean()
         self.optimizer['actor'].zero_grad()
         p_loss.backward()
         if self.use_grad_clip:
@@ -95,7 +95,7 @@ class SAC_Learner(Learner):
             info.update({
                 f"Qloss/rank_{self.rank}": q_loss.item(),
                 f"Ploss/rank_{self.rank}": p_loss.item(),
-                f"Qvalue/rank_{self.rank}": model_q.mean().item(),
+                f"Qvalue/rank_{self.rank}": policy_q.mean().item(),
                 f"actor_lr/rank_{self.rank}": actor_lr,
                 f"critic_lr/rank_{self.rank}": critic_lr,
             })
@@ -103,7 +103,7 @@ class SAC_Learner(Learner):
             info.update({
                 "Qloss": q_loss.item(),
                 "Ploss": p_loss.item(),
-                "Qvalue": model_q.mean().item(),
+                "Qvalue": policy_q.mean().item(),
                 "actor_lr": actor_lr,
                 "critic_lr": critic_lr,
             })
@@ -117,8 +117,8 @@ class SAC_Learner(Learner):
 
         info.update(self.callback.on_update_end(self.iterations,
                                                 model=self.model, info=info,
-                                                log_pi=log_pi, model_q_1=model_q_1, model_q_2=model_q_2,
-                                                model_q=model_q, p_loss=p_loss,
+                                                log_pi=log_pi, policy_q_1=policy_q_1, policy_q_2=policy_q_2,
+                                                policy_q=policy_q, p_loss=p_loss,
                                                 action_q_1=action_q_1, action_q_2=action_q_2,
                                                 log_pi_next=log_pi_next, target_q=target_q,
                                                 target_value=target_value, backup=backup, q_loss=q_loss,

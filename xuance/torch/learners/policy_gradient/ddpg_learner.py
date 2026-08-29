@@ -54,8 +54,8 @@ class DDPG_Learner(Learner):
         self.optimizer['critic'].step()
 
         # actor update
-        model_q = self.model.Qpolicy(obs_batch)
-        p_loss = -model_q.mean()
+        policy_q = self.model.Qpolicy(obs_batch)
+        p_loss = -policy_q.mean()
         self.optimizer['actor'].zero_grad()
         p_loss.backward()
         if self.use_grad_clip:
@@ -89,6 +89,6 @@ class DDPG_Learner(Learner):
             })
         info.update(self.callback.on_update_end(self.iterations,
                                                 model=self.model, info=info,
-                                                action_q=action_q, next_q=next_q, target_q=target_q, model_q=model_q,
+                                                action_q=action_q, next_q=next_q, target_q=target_q, policy_q=policy_q,
                                                 q_loss=q_loss, p_loss=p_loss))
         return info

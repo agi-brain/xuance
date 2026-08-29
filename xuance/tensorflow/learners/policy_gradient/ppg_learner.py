@@ -21,7 +21,7 @@ class PPG_Learner(Learner):
         self.ent_coef = config.ent_coef
         self.clip_range = config.clip_range
         self.kl_beta = config.kl_beta
-        self.model_iterations = 0
+        self.policy_iterations = 0
         self.value_iterations = 0
         self.mse_loss = keras.losses.MeanSquaredError()
 
@@ -123,7 +123,7 @@ class PPG_Learner(Learner):
 
         a_loss, e_loss = self.learn_model(obs_batch, act_batch, adv_batch, old_log_prob_batch)
         info.update({"actor-loss": a_loss.numpy(), "entropy": e_loss.numpy()})
-        self.model_iterations += 1
+        self.policy_iterations += 1
         info.update(self.callback.on_update_end(self.iterations, method="update_model",
                                                 model=self.model, info=info,
                                                 a_loss=a_loss, e_loss=e_loss))

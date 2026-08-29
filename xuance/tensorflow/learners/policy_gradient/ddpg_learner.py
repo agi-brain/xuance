@@ -22,8 +22,8 @@ class DDPG_Learner(Learner):
     @tf.function
     def actor_forward_fn(self, obs_batch):
         with tf.GradientTape() as tape:
-            model_q = self.model.Qpolicy(obs_batch)
-            p_loss = -tf.reduce_mean(model_q)
+            policy_q = self.model.Qpolicy(obs_batch)
+            p_loss = -tf.reduce_mean(policy_q)
             gradients = tape.gradient(p_loss, self.model.actor.trainable_variables)
             if self.use_grad_clip:
                 gradients, _ = tf.clip_by_global_norm(gradients, clip_norm=self.grad_clip_norm)

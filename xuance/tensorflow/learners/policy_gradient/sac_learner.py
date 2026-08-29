@@ -50,10 +50,10 @@ class SAC_Learner(Learner):
     @tf.function
     def actor_forward_fn(self, obs_batch):
         with tf.GradientTape() as tape:
-            log_pi, model_q_1, model_q_2 = self.model.Qpolicy(obs_batch)
-            model_q = tf.reshape(tf.math.minimum(model_q_1, model_q_2), [-1])
+            log_pi, policy_q_1, policy_q_2 = self.model.Qpolicy(obs_batch)
+            policy_q = tf.reshape(tf.math.minimum(policy_q_1, policy_q_2), [-1])
             alpha = self.current_alpha(log_pi.dtype)
-            p_loss = tf.reduce_mean(alpha * tf.reshape(log_pi, [-1]) - model_q)
+            p_loss = tf.reduce_mean(alpha * tf.reshape(log_pi, [-1]) - policy_q)
 
             gradients = tape.gradient(p_loss, self.model.actor.trainable_variables)
             if self.use_grad_clip:
@@ -61,7 +61,7 @@ class SAC_Learner(Learner):
                 self.optimizer['actor'].apply_gradients(zip(gradients, self.model.actor.trainable_variables))
             else:
                 self.optimizer['actor'].apply_gradients(zip(gradients, self.model.actor.trainable_variables))
-        return p_loss, log_pi, model_q
+        return p_loss, log_pi, policy_q
 
     @tf.function
     def critic_forward_fn(self, obs_batch, act_batch, rew_batch, next_batch, ter_batch):

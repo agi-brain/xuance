@@ -167,11 +167,17 @@ class SoftActorCritic(ActorCritic):
 class SoftActorCriticDiscrete(SoftActorCritic):
     def call(self,
              observation: Union[Tensor, dict],
+             deterministic: bool = False,
              **kwargs) -> ModelOutput:
         actor_output = self.actor(observation, **kwargs)
-        critic_output = self.critic(observation, **kwargs)
+
+        if deterministic:
+            actions = actor_output.distributions.deterministic_sample()
+        else:
+            actions = actor_output.distributions.stochastic_sample()
+
         return ModelOutput(distributions=actor_output.distributions,
-                           values=critic_output,
+                           actions=actions,
                            actor_rep_out=actor_output.representations)
 
     def act(self,
@@ -191,8 +197,8 @@ class SoftActorCriticDiscrete(SoftActorCritic):
         policy_dist = outputs_actor.distributions
         act_prob = policy_dist.probs
         z = act_prob == 0.0
-        z = z.float() * 1e-8
-        log_action_prob = tf.log(act_prob + z)
+        z = tf.cast(z, act_prob.dtype) * 1e-8  # avoid log(0)
+        log_action_prob = tf.math.log(act_prob + z)
 
         q_1, q_2 = self.Qaction(observation)
         return act_prob, log_action_prob, q_1, q_2
@@ -202,11 +208,11 @@ class SoftActorCriticDiscrete(SoftActorCritic):
         policy_dist = outputs_actor.distributions
         act_prob = policy_dist.probs
         z = act_prob == 0.0
-        z = z.float() * 1e-8  # avoid log(0)
-        log_action_prob = tf.log(act_prob + z)
+        z = tf.cast(z, act_prob.dtype) * 1e-8  # avoid log(0)
+        log_action_prob = tf.math.log(act_prob + z)
 
         outputs_critic = self.target_critic(observation)
-        target_q = tf.min(outputs_critic.values_1, outputs_critic.values_2)
+        target_q = tf.minimum(outputs_critic.values_1, outputs_critic.values_2)
         return act_prob, log_action_prob, target_q
 
     def Qaction(self, observation: Union[Tensor, dict], **kwargs):
