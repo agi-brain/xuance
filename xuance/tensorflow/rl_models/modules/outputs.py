@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from typing import Any, Optional, Dict
-from xuance.tensorflow import tf, Tensor
+from xuance.tensorflow import Tensor
 from xuance.tensorflow.utils import AgentGroupedTensor
 from xuance.tensorflow.rl_models.modules import Distribution
 

@@ -3,11 +3,11 @@ from tqdm import tqdm
 from copy import deepcopy
 from argparse import Namespace
 from gymnasium.spaces import Space
-from xuance.common import Optional, RecurrentOffPolicyBuffer, EpisodeBuffer, BaseCallback
+from xuance.common import Optional, Tuple, RecurrentOffPolicyBuffer, EpisodeBuffer, BaseCallback
 from xuance.environment import DummyVecEnv, SubprocVecEnv
 from xuance.tensorflow import tf, Tensor, Module
 from xuance.tensorflow.agents import OffPolicyAgent
-from xuance.tensorflow.rl_models.modules import ActionOutput
+from xuance.tensorflow.rl_models.modules import ActionOutput, RNN_State
 from xuance.tensorflow.rl_models.architectures import DeepRecurrentQNetwork
 
 
@@ -62,16 +62,39 @@ class DRQN_Agent(OffPolicyAgent):
 
         return model
 
-    def get_actions(self, obs, egreedy=0.0, rnn_states=None) -> ActionOutput:
+    @tf.function
+    def _rollout_step(
+            self, observations: Tensor,
+            epsilon: Tensor,
+            rnn_hidden_states: Tensor = None,
+            rnn_cell_states: Optional[Tensor] = None,
+            **kwargs
+    ) -> Tuple[Tensor, ...]:
+        rnn_states = RNN_State(hidden_states=rnn_hidden_states, cell_states=rnn_cell_states)
+
+        rnn_states_new, model_output = self.model(observations, rnn_states=rnn_states)
+
+        greedy_actions = model_output.actions
+        explore_mask = tf.random.uniform(shape=tf.shape(greedy_actions), minval=0.0, maxval=1.0,
+                                         dtype=tf.float32) < epsilon
+        random_actions = tf.random.uniform(shape=tf.shape(greedy_actions), minval=0, maxval=self.action_space.n,
+                                           dtype=greedy_actions.dtype)
+        actions = tf.where(explore_mask, random_actions, greedy_actions)
+
+        return actions, rnn_states_new.hidden_states, rnn_states_new.cell_states
+
+    def get_actions(self, obs, e_greedy=0.0, rnn_states=None, test_mode: bool = False) -> ActionOutput:
         observations = tf.expand_dims(tf.convert_to_tensor(obs), axis=1)
-        # rnn_states_new, model_output = self.model(observations, rnn_states)
-        rnn_states_new, model_output = self.model(observations, rnn_states.hidden_states, rnn_states.cell_states)
-        argmax_action = model_output.actions
-        random_action = np.random.choice(self.action_space.n, self.n_envs)
-        if np.random.rand() < egreedy:
-            actions = random_action
-        else:
-            actions = argmax_action.numpy()
+        epsilon = tf.convert_to_tensor(0.0 if test_mode else e_greedy, dtype=tf.float32)
+
+        actions, hidden_states, cell_states = self._rollout_step(observations, epsilon=epsilon,
+                                                                 rnn_hidden_states=rnn_states.hidden_states,
+                                                                 rnn_cell_states=rnn_states.cell_states)
+
+        rnn_states_new = RNN_State(hidden_states=hidden_states, cell_states=cell_states)
+
+        if not self.is_tensor_memory:
+            actions = actions.numpy()
 
         return ActionOutput(
             env_actions=actions,
@@ -92,10 +115,7 @@ class DRQN_Agent(OffPolicyAgent):
             policy_out = self.get_actions(obs, self.egreedy, self.rnn_states)
             acts = policy_out.env_actions
             self.rnn_states = policy_out.auxiliary['rnn_states_next']
-            try:
-                next_obs, rewards, terminals, truncations, infos = self.train_envs.step(acts)
-            except:
-                pass
+            next_obs, rewards, terminals, truncations, infos = self.train_envs.step(acts)
 
             self.callback.on_train_step(self.current_step, envs=self.train_envs, model=self.model,
                                         obs=obs, policy_out=policy_out, acts=acts, next_obs=next_obs, rewards=rewards,

@@ -3,7 +3,6 @@ Deep Recurrent Q-Netwrk (DRQN)
 Paper link: https://cdn.aaai.org/ocs/11673/11673-51288-1-PB.pdf
 Implementation: TensorFlow2
 """
-import numpy as np
 from argparse import Namespace
 from xuance.tensorflow import tf, keras, Module
 from xuance.tensorflow.learners import Learner
@@ -16,7 +15,6 @@ class DRQN_Learner(Learner):
                  callback):
         super(DRQN_Learner, self).__init__(config, model, callback)
         self.optimizer = keras.optimizers.Adam(config.learning_rate)
-        self.gamma = config.gamma
         self.sync_frequency = config.sync_frequency
         self.n_actions = self.model.n_actions
         self.mse_loss = keras.losses.MeanSquaredError()
@@ -24,20 +22,20 @@ class DRQN_Learner(Learner):
     @tf.function
     def forward_fn(self, batch_size, obs_batch, act_batch, rew_batch, ter_batch):
         with tf.GradientTape() as tape:
-            rnn_hidden = self.model.init_hidden(batch_size)
-            _, _, evalQ, _ = self.model(obs_batch[:, 0:-1], *rnn_hidden)
-            target_rnn_hidden = self.model.init_hidden(batch_size)
-            _, targetA, targetQ, _ = self.model.target(obs_batch[:, 1:], *target_rnn_hidden)
+            rnn_states = self.model.init_rnn_states(batch_size)
+            _, model_output = self.model(obs_batch[:, 0:-1], rnn_states=rnn_states)
+            evalQ = model_output.values
+            _, target_model_output = self.model.target(obs_batch, rnn_states=rnn_states)
+            targetA, targetQ = target_model_output.actions, target_model_output.values
+            targetA = targetA[:, 1:]
+            targetQ = targetQ[:, 1:]
             # targetQ = targetQ.max(dim=-1).values
 
-            targetA = tf.one_hot(targetA, targetQ.shape[-1])
-            targetQ = tf.reduce_mean(targetQ * targetA, axis=-1)
-
+            predictQ = tf.gather(evalQ, act_batch, axis=-1, batch_dims=2)
+            targetQ = tf.gather(targetQ, targetA, axis=-1, batch_dims=2)
             targetQ = rew_batch + self.gamma * (1 - ter_batch) * targetQ
-            predictQ = tf.reduce_mean(evalQ * tf.one_hot(act_batch, evalQ.shape[-1]), axis=-1)
+            targetQ = tf.stop_gradient(targetQ)
 
-            targetQ = tf.reshape(targetQ, [-1])
-            predictQ = tf.reshape(predictQ, [-1])
             loss = self.mse_loss(targetQ, predictQ)
             gradients = tape.gradient(loss, self.model.trainable_variables)
             if self.use_grad_clip:
@@ -66,11 +64,11 @@ class DRQN_Learner(Learner):
 
     def update(self, **samples):
         self.iterations += 1
-        obs_batch = samples['obs']
-        act_batch = samples['actions'].astype(np.int32)
-        rew_batch = samples['rewards']
-        ter_batch = samples['terminals'].astype(np.float32)
-        batch_size = obs_batch.shape[0]
+        obs_batch = tf.convert_to_tensor(samples['obs'], dtype=tf.float32)
+        act_batch = tf.convert_to_tensor(samples['actions'], dtype=tf.int32)
+        rew_batch = tf.convert_to_tensor(samples['rewards'], dtype=tf.float32)
+        ter_batch = tf.convert_to_tensor(samples['terminals'], dtype=tf.float32)
+        batch_size = samples['batch_size']
         info = self.callback.on_update_start(self.iterations,
                                              model=self.model, obs=obs_batch, act=act_batch,
                                              rew=rew_batch, termination=ter_batch, batch_size=batch_size)

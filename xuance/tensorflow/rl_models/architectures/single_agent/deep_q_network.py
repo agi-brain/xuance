@@ -329,11 +329,10 @@ class DeepRecurrentQNetwork(Module):
 
     def call(self,
              observation: Union[Tensor, dict],
-             hidden_states: Tensor,
-             cell_states: Optional[Tensor] = None,
+             rnn_states: RNN_State,
              **kwargs) -> Tuple[RNN_State, ModelOutput]:
         rep_output = self.representation(observation)
-        rnn_states_new, q_values = self.eval_Q_head(rep_output.embeddings, hidden_states, cell_states)
+        rnn_states_new, q_values = self.eval_Q_head(rep_output.embeddings, rnn_states=rnn_states)
         greedy_actions = tf.argmax(q_values[:, -1], axis=-1)
         return rnn_states_new, ModelOutput(actions=greedy_actions, values=q_values, rep_out=rep_output)
 
@@ -359,7 +358,7 @@ class DeepRecurrentQNetwork(Module):
                rnn_states: RNN_State,
                **kwargs) -> Tuple[RNN_State, ModelOutput]:
         target_rep_output = self.target_representation(observation)
-        target_rnn_out, target_q_values = self.target_Q_head(target_rep_output.embeddings, rnn_states)
+        target_rnn_out, target_q_values = self.target_Q_head(target_rep_output.embeddings, rnn_states=rnn_states)
         argmax_action = tf.argmax(target_q_values, axis=-1)
         return target_rnn_out, ModelOutput(actions=argmax_action, values=target_q_values)
 
@@ -367,7 +366,10 @@ class DeepRecurrentQNetwork(Module):
         state_shape = (self.recurrent_layer_N, batch, self.recurrent_hidden_size)
 
         hidden_states = tf.zeros(state_shape, dtype=tf.float32)
-        cell_states = tf.zeros(state_shape, dtype=tf.float32) if self.lstm else None
+        if self.lstm:
+            cell_states = tf.zeros(state_shape, dtype=tf.float32)
+        else:
+            cell_states = None
 
         return RNN_State(
             hidden_states=hidden_states,

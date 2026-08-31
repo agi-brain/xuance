@@ -20,7 +20,6 @@ class DRQN_Learner(Learner):
                                                            start_factor=1.0,
                                                            end_factor=self.end_factor_lr_decay,
                                                            total_iters=self.total_iters)
-        self.gamma = config.gamma
         self.sync_frequency = config.sync_frequency
         self.mse_loss = nn.MSELoss()
         self.n_actions = self.model.n_actions
@@ -39,8 +38,10 @@ class DRQN_Learner(Learner):
         rnn_states = self.model.init_rnn_states(batch_size)
         _, model_output = self.model(obs_batch[:, 0:-1], rnn_states)
         evalQ = model_output.values
-        _, target_model_output = self.model.target(obs_batch[:, 1:], rnn_states)
+        _, target_model_output = self.model.target(obs_batch, rnn_states)
         targetA, targetQ = target_model_output.actions, target_model_output.values
+        targetA = targetA[:, 1:]
+        targetQ = targetQ[:, 1:]
         # targetQ = targetQ.max(dim=-1).values
 
         predictQ = evalQ.gather(-1, act_batch.unsqueeze(-1)).squeeze(-1)

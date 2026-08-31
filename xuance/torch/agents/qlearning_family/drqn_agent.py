@@ -93,10 +93,7 @@ class DRQN_Agent(OffPolicyAgent):
             policy_out = self.get_actions(obs, self.egreedy, self.rnn_states)
             acts = policy_out.env_actions
             self.rnn_states = policy_out.auxiliary['rnn_states_next']
-            try:
-                next_obs, rewards, terminals, truncations, infos = self.train_envs.step(acts)
-            except:
-                pass
+            next_obs, rewards, terminals, truncations, infos = self.train_envs.step(acts)
 
             self.callback.on_train_step(self.current_step, envs=self.train_envs, model=self.model,
                                         obs=obs, policy_out=policy_out, acts=acts, next_obs=next_obs, rewards=rewards,

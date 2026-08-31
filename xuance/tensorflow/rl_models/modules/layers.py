@@ -1,5 +1,5 @@
 import numpy as np
-from typing import Optional, Sequence, Type, Callable, Tuple
+from typing import Optional, Sequence, Type, Callable, Tuple, List
 from xuance.tensorflow import tf, keras, Tensor, Module
 
 ModuleType = Type[Module]
@@ -137,7 +137,7 @@ def gru_block(
         num_layers: int = 1,
         dropout: float = 0,
         initializer: Optional[Callable[[Tensor], Tensor]] = None
-) -> Tuple[keras.layers.Layer, int]:
+) -> Tuple[List[keras.layers.Layer], int]:
     layers = []
 
     for layer_index in range(num_layers):
@@ -158,10 +158,7 @@ def gru_block(
 
         layers.append(gru)
 
-    if num_layers == 1:
-        return layers[0], output_dim
-
-    return keras.Sequential(layers), output_dim
+    return layers, output_dim
 
 
 def lstm_block(
@@ -170,7 +167,7 @@ def lstm_block(
         num_layers: int = 1,
         dropout: float = 0,
         initializer: Optional[Callable[[Tensor], Tensor]] = None
-) -> Tuple[keras.layers.Layer, int]:
+) -> Tuple[List[keras.layers.Layer], int]:
     layers = []
 
     for layer_index in range(num_layers):
@@ -190,7 +187,4 @@ def lstm_block(
 
         layers.append(lstm)
 
-    if num_layers == 1:
-        return layers[0], output_dim
-
-    return keras.Sequential(layers), output_dim
+    return layers, output_dim

@@ -209,17 +209,35 @@ class RecurrentQValueHead(Module):
 
     def call(self,
              features: Tensor,
-             hidden_states: Tensor,
-             cell_states: Optional[Tensor] = None,
+             rnn_states: RNN_State,
              avail_actions: Optional[Tensor] = None,
              **kwargs) -> Tuple[RNN_State, Tensor]:
-        # self.rnn_layer.flatten_parameters()
+        hidden_states_new = []
+        cell_states_new = []
+
+        x = features
         if self.lstm:
-            embeddings, hn, cn = self.rnn_layer(features, initial_state=[hidden_states, cell_states])
-            rnn_output = RNN_State(hidden_states=hn, cell_states=cn)
+            hidden_states = rnn_states.hidden_states
+            cell_states = rnn_states.cell_states
+            for i, rnn_layer in enumerate(self.rnn_layer):
+                x, h, c = rnn_layer(x, initial_state=[hidden_states[i], cell_states[i]])
+                hidden_states_new.append(h)
+                cell_states_new.append(c)
+
+            hidden_states = tf.stack(hidden_states_new, axis=0)
+            cell_states = tf.stack(cell_states_new, axis=0)
+            embeddings = x
+            rnn_output = RNN_State(hidden_states=hidden_states, cell_states=cell_states)
+
         else:
-            embeddings, hn = self.rnn_layer(features, hidden_states)
-            rnn_output = RNN_State(hidden_states=hn)
+            hidden_states = rnn_states.hidden_states
+            for i, rnn_layer in enumerate(self.rnn_layer):
+                x, h = rnn_layer(x, initial_state=hidden_states[i])
+                hidden_states_new.append(h)
+
+            hidden_states = tf.stack(hidden_states_new, axis=0)
+            embeddings = x
+            rnn_output = RNN_State(hidden_states=hidden_states)
 
         q_values = self.q_value(embeddings)
         if avail_actions is not None:
