@@ -6,34 +6,20 @@ Implementation: TensorFlow 2.X
 """
 import numpy as np
 from argparse import Namespace
-from xuance.common import List
+from xuance.common import AgentGrouping
 from xuance.tensorflow import tf, keras, Module
-from xuance.tensorflow.utils import ValueNorm
 from xuance.tensorflow.learners.multi_agent_rl.iac_learner import IAC_Learner
 
 
 class IPPO_Learner(IAC_Learner):
     def __init__(self,
                  config: Namespace,
-                 model_keys: List[str],
-                 agent_keys: List[str],
-                 policy: Module,
+                 agent_grouping: AgentGrouping,
+                 model: Module,
                  callback):
-        super(IPPO_Learner, self).__init__(config, model_keys, agent_keys, policy, callback)
-        self.lr = config.learning_rate
-        self.end_factor_lr_decay = config.end_factor_lr_decay
-        self.gamma = config.gamma
+        super(IPPO_Learner, self).__init__(config, agent_grouping, model, callback)
         self.clip_range = config.clip_range
-        self.use_linear_lr_decay = config.use_linear_lr_decay
-        self.use_value_clip, self.value_clip_range = config.use_value_clip, config.value_clip_range
-        self.use_huber_loss, self.huber_delta = config.use_huber_loss, config.huber_delta
-        self.use_value_norm = config.use_value_norm
         self.use_global_state = config.use_global_state
-        self.vf_coef, self.ent_coef = config.vf_coef, config.ent_coef
-        if self.use_value_norm:
-            self.value_normalizer = {key: ValueNorm(1) for key in self.model_keys}
-        else:
-            self.value_normalizer = None
 
     # @tf.function
     def forward_fn(self, *args):

@@ -1,11 +1,12 @@
-import torch
-import torch.nn as nn
-from xuance.torch.learners import Learner
 from argparse import Namespace
 try:
     from torchvision import transforms
 except:
     pass
+
+import torch
+from xuance.torch import Module, nn
+from xuance.torch.learners import Learner
 
 
 class FrameStackTransform:
@@ -33,7 +34,7 @@ class FrameStackTransform:
 class CURL_Learner(Learner):
     def __init__(self,
                  config: Namespace,
-                 model: nn.Module,
+                 model: Module,
                  callback):
         super(CURL_Learner, self).__init__(config, policy, callback)
 

@@ -1,21 +1,21 @@
-from operator import itemgetter
-
 import numpy as np
-import torch
+from operator import itemgetter
 from argparse import Namespace
-from typing import List, Optional
-from torch import nn, Tensor
+from typing import Optional
+from xuance.common import AgentGrouping
+
+import torch
+from xuance.torch import Tensor, Module
 from xuance.torch.learners.multi_agent_rl.commnet_learner import CommNet_Learner
 
 
 class IC3Net_Learner(CommNet_Learner):
     def __init__(self,
                  config: Namespace,
-                 model_keys: List[str],
-                 agent_keys: List[str],
-                 policy: nn.Module,
+                 agent_grouping: AgentGrouping,
+                 model: Module,
                  callback):
-        super(IC3Net_Learner, self).__init__(config, model_keys, agent_keys, policy, callback)
+        super(IC3Net_Learner, self).__init__(config, agent_grouping, model, callback)
 
     def build_training_data(self, sample: Optional[dict],
                             use_parameter_sharing: Optional[bool] = False,
@@ -148,15 +148,24 @@ class IC3Net_Learner(CommNet_Learner):
             alive_ally = {k: agent_mask[k].unsqueeze(-1) for k in self.model_keys}
 
         if self.use_parameter_sharing:
+            key = self.model_keys[0]
             filled = filled.unsqueeze(1).expand(batch_size, self.n_agents, seq_len).reshape(bs_rnn, seq_len)
+            joint_obs = obs[key].reshape(batch_size, self.n_agents, seq_len, -1).transpose(
+                1, 2).reshape(batch_size, seq_len, -1)
+            joint_obs = joint_obs.unsqueeze(1).expand(-1, self.n_agents, -1, -1).reshape(bs_rnn, seq_len, -1)
+            critic_input = {key: joint_obs}
+        else:
+            joint_obs = self.get_joint_input(obs, (batch_size, seq_len, -1))
+            critic_input = {k: joint_obs for k in self.agent_keys}
 
         # feedfowrd
-        rnn_hidden_actor = {k: self.policy.actor_representation[k].init_hidden(bs_rnn) for k in self.model_keys}
-        rnn_hidden_critic = {k: self.policy.critic_representation[k].init_hidden(bs_rnn) for k in self.model_keys}
+        rnn_states_actor = {k: self.policy.actor_representation[k].init_rnn_states(bs_rnn) for k in self.model_keys}
+        rnn_states_critic = {k: self.policy.critic_representation[k].init_rnn_states(bs_rnn) for k in self.model_keys}
 
         # feedforward
-        _, pi_dist_dict, gate_log_probs = self.policy(obs, agent_ids=IDs, avail_actions=avail_actions, rnn_hidden=rnn_hidden_actor, alive_ally=alive_ally)
-        _, value_pred_dict = self.policy.get_values(observation=obs, agent_ids=IDs, rnn_hidden=rnn_hidden_critic, alive_ally=alive_ally)
+        _, pi_dist_dict, gate_log_probs = self.policy(obs, agent_ids=IDs, avail_actions=avail_actions,
+                                                      rnn_states=rnn_states_actor, alive_ally=alive_ally)
+        _, value_pred_dict = self.policy.get_values(observation=critic_input, agent_ids=IDs, rnn_states=rnn_states_critic)
 
         # calculate losses for each agent
         loss_gate, loss_a, loss_e, loss_c = [], [], [], []
@@ -191,7 +200,7 @@ class IC3Net_Learner(CommNet_Learner):
                                                                            self.value_clip_range)
                 if self.use_value_norm:
                     self.value_normalizer[key].update(value_target.reshape(-1, 1))
-                    value_target = self.value_normalizer[key].normalizer(value_target.reshape(-1, 1))
+                    value_target = self.value_normalizer[key].normalize(value_target.reshape(-1, 1))
                     value_target = value_target.reshape(bs_rnn, seq_len)
                 if self.use_huber_loss:
                     loss_v = self.huber_loss(value_pred_i, value_target)
@@ -204,7 +213,7 @@ class IC3Net_Learner(CommNet_Learner):
             else:
                 if self.use_value_norm:
                     self.value_normalizer[key].update(value_target)
-                    value_target = self.value_normalizer[key].normalizer(value_target)
+                    value_target = self.value_normalizer[key].normalize(value_target)
                 if self.use_huber_loss:
                     loss_v = self.huber_loss(value_pred_i, value_target)
                 else:

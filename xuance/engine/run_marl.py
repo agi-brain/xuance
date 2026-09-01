@@ -25,17 +25,18 @@ class RunnerMARL(RunnerBase):
         super(RunnerMARL, self).__init__(self.config, envs, agent, manage_resources)
 
         # Build agent if not injected externally
-        if getattr(self.config, 'dl_toolbox', 'torch'):
+        dl_toolbox = getattr(self.config, "dl_toolbox", "torch").lower()
+        if dl_toolbox == "torch":
             from xuance.torch.agents import REGISTRY_Agents
             from xuance.torch.utils import collect_device_info
-        elif getattr(self.config, 'dl_toolbox', 'tensorflow'):
+        elif dl_toolbox == "tensorflow":
             from xuance.tensorflow.agents import REGISTRY_Agents
             from xuance.tensorflow.utils import collect_device_info
-        elif getattr(self.config, 'dl_toolbox', 'mindspore'):
+        elif dl_toolbox == "mindspore":
             from xuance.mindspore.agents import REGISTRY_Agents
             from xuance.mindspore.utils import collect_device_info
         else:
-            raise NotImplementedError
+            raise ValueError(f"Unsupported dl_toolbox: {dl_toolbox}")
         self.collect_device_info = collect_device_info
         self.agent = REGISTRY_Agents[self.config.agent](self.config, self.envs) if agent is None else agent
 

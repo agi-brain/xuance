@@ -25,9 +25,11 @@ class AgentFeatureEncoder(Module):
     def get_config(self):
         config = super().get_config()
         config.update({
-            "representation": self.obs_representation.clone(),
-            "identity_representation": self.identity_representation.clone(),
-            "fusion": self.fusion.clone()
+            "representation": self.obs_representation.clone(copy_weights=True, trainable=False,
+                                                            name="target_representation"),
+            "identity_encoder": self.identity_representation.clone(copy_weights=True, trainable=False,
+                                                                   name="target_identity_encoder"),
+            "fusion": self.fusion.clone(copy_weights=True, trainable=False, name="target_fusion")
         })
         return config
 

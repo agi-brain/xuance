@@ -4,11 +4,12 @@ Paper link:
 http://proceedings.mlr.press/v97/son19a/son19a.pdf
 Implementation: Pytorch
 """
-import torch
-from torch import nn
 from argparse import Namespace
 from operator import itemgetter
 from xuance.common import AgentGrouping
+
+import torch
+from xuance.torch import Module
 from xuance.torch.learners import OffPolicyMultiAgentLearner
 from xuance.torch.utils import AgentGroupedTensor
 
@@ -17,7 +18,7 @@ class QTRAN_Learner(OffPolicyMultiAgentLearner):
     def __init__(self,
                  config: Namespace,
                  agent_grouping: AgentGrouping,
-                 model: nn.Module,
+                 model: Module,
                  callback):
         super(QTRAN_Learner, self).__init__(config, agent_grouping, model, callback)
         self.sync_frequency = config.sync_frequency

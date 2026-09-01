@@ -3,31 +3,30 @@ Independent Q-learning (IQL)
 Implementation: TensorFlow 2.X
 """
 from argparse import Namespace
-from xuance.common import List
+from typing import List
+from xuance.common import AgentGrouping
 from xuance.tensorflow import tf, keras, Module
-from xuance.tensorflow.learners import LearnerMAS
+from xuance.tensorflow.learners import OffPolicyMultiAgentLearner
+from xuance.tensorflow.rl_models.modules import OffPolicyMARLBatch
 
 
-class IQL_Learner(LearnerMAS):
+class IQL_Learner(OffPolicyMultiAgentLearner):
     def __init__(self,
                  config: Namespace,
-                 model_keys: List[str],
-                 agent_keys: List[str],
-                 policy: Module,
+                 agent_grouping: AgentGrouping,
+                 model: Module,
                  callback):
-        super(IQL_Learner, self).__init__(config, model_keys, agent_keys, policy, callback)
-        self.build_optimizer()
-        self.gamma = config.gamma
+        super(IQL_Learner, self).__init__(config, agent_grouping, model, callback)
         self.sync_frequency = config.sync_frequency
-        self.n_actions = {k: self.policy.action_space[k].n for k in self.model_keys}
+        self.n_actions = {k: self.model.individual_q_networks[k].action_space.n for k in self.group_keys}
 
     def build_optimizer(self):
-        if ("macOS" in self.os_name) and ("arm" in self.os_name):  # For macOS with Apple's M-series chips.
-            self.optimizer = {k: keras.optimizers.legacy.Adam(self.config.learning_rate) for k in self.model_keys}
-        else:
-            self.optimizer = {k: keras.optimizers.Adam(self.config.learning_rate) for k in self.model_keys}
+        self.optimizer = {
+            key: keras.optimizers.Adam(self.config.learning_rate)
+            for key in self.group_keys
+        }
 
-    @tf.function
+    # @tf.function
     def forward_fn(self, *args):
         bs, obs, actions, rewards, obs_next, terminals, agent_mask, avail_actions, avail_actions_next, IDs = args
         info_train, gradients = {}, {}
@@ -78,10 +77,10 @@ class IQL_Learner(LearnerMAS):
 
         return info_train
 
-    @tf.function
+    # @tf.function
     def learn(self, *inputs):
         if self.distributed_training:
-            info_train = self.policy.mirrored_strategy.run(self.forward_fn, args=inputs)
+            info_train = self.model.mirrored_strategy.run(self.forward_fn, args=inputs)
             return info_train[0]
         else:
             return self.forward_fn(*inputs)

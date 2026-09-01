@@ -65,7 +65,6 @@ class IQL_Agents(OffPolicyMARLAgents):
                 normalizer=self.normalizer_fn,
                 initializer=self.initializer,
                 activation=self.activation,
-                device=self.device
             )
 
         # build mixer

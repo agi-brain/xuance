@@ -3,10 +3,11 @@ Qmix: Monotonic value function factorisation for deep multi-agent reinforcement 
 Paper link: http://proceedings.mlr.press/v80/rashid18a/rashid18a.pdf
 Implementation: Pytorch
 """
-import torch
-from torch import nn
 from argparse import Namespace
 from xuance.common import AgentGrouping
+
+import torch
+from xuance.torch import Module
 from xuance.torch.learners.multi_agent_rl.iql_learner import IQL_Learner
 
 
@@ -14,7 +15,7 @@ class QMIX_Learner(IQL_Learner):
     def __init__(self,
                  config: Namespace,
                  agent_grouping: AgentGrouping,
-                 model: nn.Module,
+                 model: Module,
                  callback):
         super(QMIX_Learner, self).__init__(config, agent_grouping, model, callback)
 

@@ -13,4 +13,4 @@ class TarMAC_Learner(IC3Net_Learner):
                  agent_keys: List[str],
                  policy: nn.Module,
                  callback):
-        super(TarMAC_Learner, self).__init__(config, model_keys, agent_keys, policy, callback)
+        super(TarMAC_Learner, self).__init__(config, agent_grouping, model, callback)

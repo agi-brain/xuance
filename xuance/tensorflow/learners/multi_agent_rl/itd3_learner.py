@@ -2,18 +2,17 @@
 Independent TD3 for multi-agent cooperative task
 """
 import torch
-from torch import nn
 from argparse import Namespace
 from xuance.common import AgentGrouping
-from xuance.torch.utils import AgentGroupedTensor
-from xuance.torch.learners import OffPolicyMultiAgentLearner
+from xuance.tensorflow.utils import AgentGroupedTensor
+from xuance.tensorflow.learners import OffPolicyMultiAgentLearner
 
 
 class ITD3_Learner(OffPolicyMultiAgentLearner):
     def __init__(self,
                  config: Namespace,
                  agent_grouping: AgentGrouping,
-                 model: nn.Module,
+                 model: Module,
                  callback):
         super(ITD3_Learner, self).__init__(config, agent_grouping, model, callback)
         self.tau = config.tau

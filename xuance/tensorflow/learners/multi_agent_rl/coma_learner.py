@@ -4,7 +4,8 @@ Paper link: https://ojs.aaai.org/index.php/AAAI/article/view/11794
 Implementation: TensorFlow 2.X
 """
 from argparse import Namespace
-from typing import List
+from xuance.common import AgentGrouping
+
 from tensorflow import one_hot
 from xuance.tensorflow import tf, keras, Module
 from xuance.tensorflow.learners.multi_agent_rl.iac_learner import IAC_Learner
@@ -13,29 +14,22 @@ from xuance.tensorflow.learners.multi_agent_rl.iac_learner import IAC_Learner
 class COMA_Learner(IAC_Learner):
     def __init__(self,
                  config: Namespace,
-                 model_keys: List[str],
-                 agent_keys: List[str],
-                 policy: Module,
+                 agent_grouping: AgentGrouping,
+                 model: Module,
                  callback):
         config.use_value_clip, config.value_clip_range = False, None
         config.use_huber_loss, config.huber_delta = False, None
         config.use_value_norm = False
         config.vf_coef, config.ent_coef = None, None
-        super(COMA_Learner, self).__init__(config, model_keys, agent_keys, policy, callback)
+        super(COMA_Learner, self).__init__(config, agent_grouping, model, callback)
         self.sync_frequency = config.sync_frequency
-        self.n_actions = {k: self.policy.action_space[k].n for k in self.model_keys}
+        self.n_actions = {k: self.model.critics.action_space[k].n for k in self.agent_keys}
 
     def build_optimizer(self):
-        if ("macOS" in self.os_name) and ("arm" in self.os_name):  # For macOS with Apple's M-series chips.
-            self.optimizer = {
-                'actor': keras.optimizers.legacy.Adam(self.config.learning_rate_actor),
-                'critic': keras.optimizers.legacy.Adam(self.config.learning_rate_critic),
-            }
-        else:
-            self.optimizer = {
-                'actor': keras.optimizers.Adam(self.config.learning_rate_actor),
-                'critic': keras.optimizers.Adam(self.config.learning_rate_critic)
-            }
+        self.optimizer = {
+            'actor': keras.optimizers.Adam(self.config.learning_rate_actor),
+            'critic': keras.optimizers.Adam(self.config.learning_rate_critic)
+        }
 
     # @tf.function
     def forward_fn(self, *args):

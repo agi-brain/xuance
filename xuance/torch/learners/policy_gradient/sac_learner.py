@@ -3,17 +3,18 @@ Soft Actor-Critic with continuous action spaces (SAC)
 Paper link: http://proceedings.mlr.press/v80/haarnoja18b/haarnoja18b.pdf
 Implementation: Pytorch
 """
-import torch
-from torch import nn
 import numpy as np
-from xuance.torch.learners import Learner
 from argparse import Namespace
+
+import torch
+from xuance.torch import Module, nn
+from xuance.torch.learners import Learner
 
 
 class SAC_Learner(Learner):
     def __init__(self,
                  config: Namespace,
-                 model: nn.Module,
+                 model: Module,
                  callback):
         super(SAC_Learner, self).__init__(config, model, callback)
         self.optimizer = {

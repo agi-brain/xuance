@@ -3,10 +3,11 @@ Independent Proximal Policy Optimization (IPPO)
 Paper link: https://arxiv.org/pdf/2103.01955.pdf
 Implementation: Pytorch
 """
-import torch
-from torch import nn
 from argparse import Namespace
 from xuance.common import AgentGrouping
+
+import torch
+from xuance.torch import Module
 from xuance.torch.learners.multi_agent_rl.iac_learner import IAC_Learner
 
 
@@ -14,7 +15,7 @@ class IPPO_Learner(IAC_Learner):
     def __init__(self,
                  config: Namespace,
                  agent_grouping: AgentGrouping,
-                 model: nn.Module,
+                 model: Module,
                  callback):
         super(IPPO_Learner, self).__init__(config, agent_grouping, model, callback)
         self.clip_range = config.clip_range

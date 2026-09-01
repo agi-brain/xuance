@@ -3,16 +3,17 @@ Deep Recurrent Q-Netwrk (DRQN)
 Paper link: https://cdn.aaai.org/ocs/11673/11673-51288-1-PB.pdf
 Implementation: Pytorch
 """
-import torch
-from torch import nn
-from xuance.torch.learners import Learner
 from argparse import Namespace
+
+import torch
+from xuance.torch import Module, nn
+from xuance.torch.learners import Learner
 
 
 class DRQN_Learner(Learner):
     def __init__(self,
                  config: Namespace,
-                 model: nn.Module,
+                 model: Module,
                  callback):
         super(DRQN_Learner, self).__init__(config, model, callback)
         self.optimizer = torch.optim.Adam(self.model.parameters(), self.config.learning_rate, eps=1e-5)

@@ -13,11 +13,10 @@ from xuance.tensorflow.learners import LearnerMAS
 class MATD3_Learner(LearnerMAS):
     def __init__(self,
                  config: Namespace,
-                 model_keys: List[str],
-                 agent_keys: List[str],
-                 policy: Module,
+                 agent_grouping: AgentGrouping,
+                 model: Module,
                  callback):
-        super(MATD3_Learner, self).__init__(config, model_keys, agent_keys, policy, callback)
+        super(MATD3_Learner, self).__init__(config, agent_grouping, model, callback)
         self.build_optimizer()
         self.gamma = config.gamma
         self.tau = config.tau

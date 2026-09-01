@@ -1,11 +1,10 @@
-import os
 from operator import itemgetter
 from copy import deepcopy
 from typing import Dict, Optional, Union, Tuple
 from gymnasium.spaces import Discrete
 
 from xuance.common import AgentGrouping
-from xuance.tensorflow import Tensor, Module, ModuleDict
+from xuance.tensorflow import tf, Tensor, Module, ModuleDict
 from xuance.tensorflow.utils import AgentGroupedTensor
 from xuance.tensorflow.rl_models.heads import QTRAN_Base, QTRAN_Alt, Coordination_Graph
 from xuance.tensorflow.rl_models.modules import MultiAgentModelOutput, RNN_State
@@ -30,18 +29,19 @@ class MixingQNetwork(Module):
         self.use_rnn = use_rnn
 
         self.individual_q_networks = q_networks
-        self.target_individual_q_networks = deepcopy(self.individual_q_networks)
+        self.target_individual_q_networks = self.individual_q_networks.clone(copy_weights=True, trainable=False, 
+                                                                             name="target_individual_q_networks")
         self.eval_Qtot = mixer
-        self.target_Qtot = deepcopy(self.eval_Qtot)
+        self.target_Qtot = self.eval_Qtot.clone(copy_weights=True, trainable=False, name="target_Qtot")
 
         # Prepare DDP module.
         self.distributed_training = use_distributed_training
 
     @property
     def parameters_model(self):
-        return list(self.individual_q_networks.parameters()) + list(self.eval_Qtot.parameters())
+        return self.individual_q_networks.trainable_variables + self.eval_Qtot.trainable_variables
 
-    def forward(
+    def call(
             self,
             observations: AgentGroupedTensor,
             agent_indices: AgentGroupedTensor,
@@ -126,14 +126,14 @@ class MixingQNetwork(Module):
 
     def Q_tot(self, individual_values: Dict[str, Tensor], states: Optional[Tensor] = None):
         # Expected shape: [tot_batch_size * 1, ...] -> tot_batch_size * n_agents_all
-        individual_inputs = torch.concat([individual_values[k].reshape([-1, 1]) for k in self.agent_keys], dim=-1)
+        individual_inputs = tf.concat([individual_values[k].reshape([-1, 1]) for k in self.agent_keys], axis=-1)
         # Output shape: tot_batch_size * 1
         evalQ_tot = self.eval_Qtot(individual_inputs, states)
         return evalQ_tot
 
     def Qtarget_tot(self, individual_values: Dict[str, Tensor], states: Optional[Tensor] = None):
         # Expected shape: [tot_batch_size * 1, ...] -> tot_batch_size * n_agents_all
-        individual_inputs = torch.concat([individual_values[k].reshape([-1, 1]) for k in self.agent_keys], dim=-1)
+        individual_inputs = tf.concat([individual_values[k].reshape([-1, 1]) for k in self.agent_keys], axis=-1)
         # Output shape: tot_batch_size * 1
         q_target_tot = self.target_Qtot(individual_inputs, states)
         return q_target_tot

@@ -4,10 +4,11 @@ Paper link:
 http://proceedings.mlr.press/v80/yang18d/yang18d.pdf
 Implementation: Pytorch
 """
-import torch
-from torch import nn
 from argparse import Namespace
 from xuance.common import Optional, AgentGrouping
+
+import torch
+from xuance.torch import Module
 from xuance.torch.utils import AgentGroupedTensor
 from xuance.torch.learners.multi_agent_rl.mappo_learner import MAPPO_Learner
 
@@ -16,7 +17,7 @@ class MFAC_Learner(MAPPO_Learner):
     def __init__(self,
                  config: Namespace,
                  agent_grouping: AgentGrouping,
-                 model: nn.Module,
+                 model: Module,
                  callback):
         super(MFAC_Learner, self).__init__(config, agent_grouping, model, callback)
 

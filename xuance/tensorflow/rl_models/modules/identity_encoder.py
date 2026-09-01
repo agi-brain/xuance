@@ -78,7 +78,7 @@ class IdentityFeatureFusion(Module):
             mode: Literal["concat", "add", "film"] = "concat",
             **kwargs
     ):
-        super().__init__(**kwargs)
+        super().__init__()
 
         self.observation_feature_dim = observation_feature_dim
         self.identity_feature_dim = identity_feature_dim

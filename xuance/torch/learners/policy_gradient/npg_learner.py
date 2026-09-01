@@ -1,13 +1,14 @@
-import torch
-from torch import nn
-from xuance.torch.learners import Learner
 from argparse import Namespace
+
+import torch
+from xuance.torch import Module, nn
+from xuance.torch.learners import Learner
 
 
 class NPG_Learner(Learner):
     def __init__(self,
                  config: Namespace,
-                 model: nn.Module,
+                 model: Module,
                  callback):
         super(NPG_Learner, self).__init__(config, model, callback)
         self.optimizer = {

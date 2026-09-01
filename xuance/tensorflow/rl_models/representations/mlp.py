@@ -35,7 +35,7 @@ class Basic_MLP(Module):
                  initializer: Optional[keras.initializers.Initializer] = None,
                  activation: Optional[ModuleType] = None,
                  **kwargs):
-        super(Basic_MLP, self).__init__(**kwargs)
+        super(Basic_MLP, self).__init__()
         self.input_shapes = input_shape
         self.hidden_sizes = hidden_sizes
         self.normalizer = normalizer

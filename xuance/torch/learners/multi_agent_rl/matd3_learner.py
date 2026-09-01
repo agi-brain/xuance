@@ -1,10 +1,11 @@
 """
 Multi-Agent TD3
 """
-import torch
-from torch import nn
 from argparse import Namespace
 from xuance.common import AgentGrouping
+
+import torch
+from xuance.torch import Module
 from xuance.torch.utils import AgentGroupedTensor
 from xuance.torch.learners.multi_agent_rl.itd3_learner import ITD3_Learner
 
@@ -13,7 +14,7 @@ class MATD3_Learner(ITD3_Learner):
     def __init__(self,
                  config: Namespace,
                  agent_grouping: AgentGrouping,
-                 model: nn.Module,
+                 model: Module,
                  callback):
         ITD3_Learner.__init__(self, config, agent_grouping, model, callback)
 

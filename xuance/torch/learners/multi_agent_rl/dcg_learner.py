@@ -3,10 +3,11 @@ DCG: Deep coordination graphs
 Paper link: http://proceedings.mlr.press/v119/boehmer20a/boehmer20a.pdf
 Implementation: Pytorch
 """
-import torch
-from torch import nn, Tensor
 from argparse import Namespace
-from xuance.common import Optional, AgentGrouping
+from xuance.common import AgentGrouping
+
+import torch
+from xuance.torch import Tensor, Module
 from xuance.torch.learners import OffPolicyMultiAgentLearner
 from xuance.torch.rl_models.modules import OffPolicyMARLBatch
 
@@ -20,7 +21,7 @@ class DCG_Learner(OffPolicyMultiAgentLearner):
     def __init__(self,
                  config: Namespace,
                  agent_grouping: AgentGrouping,
-                 model: nn.Module,
+                 model: Module,
                  callback):
         super(DCG_Learner, self).__init__(config, agent_grouping, model, callback)
         self.dim_hidden_state = model.representation[self.group_keys[0]].output_shapes['state'][0]

@@ -7,7 +7,7 @@ except:
     pass
 
 from typing import Sequence
-from xuance.torch import nn, Module, ModuleList, Tensor
+from xuance.torch import Module, ModuleList, Tensor, nn
 
 
 # helpers

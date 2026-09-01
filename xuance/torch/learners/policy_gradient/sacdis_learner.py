@@ -3,16 +3,17 @@ Soft Actor-Critic with discrete action spaces (SAC-Discrete)
 Paper link: https://arxiv.org/pdf/1910.07207.pdf
 Implementation: Pytorch
 """
-import torch
-from torch import nn
-from xuance.torch.learners import Learner
 from argparse import Namespace
+
+import torch
+from xuance.torch import Module, nn
+from xuance.torch.learners import Learner
 
 
 class SACDIS_Learner(Learner):
     def __init__(self,
                  config: Namespace,
-                 model: nn.Module,
+                 model: Module,
                  callback):
         super(SACDIS_Learner, self).__init__(config, model, callback)
         self.optimizer = {

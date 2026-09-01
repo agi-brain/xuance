@@ -3,19 +3,18 @@ DQN with Prioritized Experience Replay (PER-DQN)
 Paper link: https://arxiv.org/pdf/1511.05952.pdf
 Implementation: Pytorch
 """
-import os
-import torch
 import numpy as np
-from torch import nn
-from xuance.common import Optional
-from xuance.torch.learners import Learner
 from argparse import Namespace
+
+import torch
+from xuance.torch import Module, nn
+from xuance.torch.learners import Learner
 
 
 class PerDQN_Learner(Learner):
     def __init__(self,
                  config: Namespace,
-                 model: nn.Module,
+                 model: Module,
                  callback):
         super(PerDQN_Learner, self).__init__(config, model, callback)
         self.optimizer = torch.optim.Adam(self.model.parameters(), self.config.learning_rate, eps=1e-5)

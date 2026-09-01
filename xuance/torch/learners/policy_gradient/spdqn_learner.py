@@ -4,7 +4,8 @@ Paper link: https://arxiv.org/pdf/1810.06394.pdf
 Implementation: Pytorch
 """
 from argparse import Namespace
-from torch.nn import Module
+
+from xuance.torch import Module
 from xuance.torch.learners.policy_gradient.pdqn_learner import PDQN_Learner
 
 

@@ -1,9 +1,10 @@
 import os
-import torch
 from pathlib import Path
 from abc import ABC, abstractmethod
-from xuance.common import Optional, Union
 from argparse import Namespace
+from xuance.common import Optional, Union
+
+import torch
 from xuance.torch import Module
 
 MAX_GPUs = torch.cuda.device_count()

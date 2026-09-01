@@ -15,11 +15,10 @@ from xuance.tensorflow.learners.multi_agent_rl.iac_learner import IAC_Learner
 class VDAC_Learner(IAC_Learner):
     def __init__(self,
                  config: Namespace,
-                 model_keys: List[str],
-                 agent_keys: List[str],
-                 policy: Module,
+                 agent_grouping: AgentGrouping,
+                 model: Module,
                  callback):
-        super(VDAC_Learner, self).__init__(config, model_keys, agent_keys, policy, callback)
+        super(VDAC_Learner, self).__init__(config, agent_grouping, model, callback)
         self.use_global_state = True if config.mixer == "QMIX" else getattr(config, "use_global_state", False)
 
     # @tf.function

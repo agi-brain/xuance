@@ -2,10 +2,11 @@
 Independent Q-learning (IQL)
 Implementation: Pytorch
 """
-import torch
-from torch import nn
 from argparse import Namespace
 from xuance.common import AgentGrouping
+
+import torch
+from xuance.torch import Module
 from xuance.torch.learners import OffPolicyMultiAgentLearner
 from xuance.torch.rl_models.modules import OffPolicyMARLBatch
 
@@ -14,7 +15,7 @@ class IQL_Learner(OffPolicyMultiAgentLearner):
     def __init__(self,
                  config: Namespace,
                  agent_grouping: AgentGrouping,
-                 model: nn.Module,
+                 model: Module,
                  callback):
         super(IQL_Learner, self).__init__(config, agent_grouping, model, callback)
         self.sync_frequency = config.sync_frequency

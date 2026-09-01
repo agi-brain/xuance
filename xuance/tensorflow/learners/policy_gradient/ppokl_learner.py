@@ -3,8 +3,8 @@ Proximal Policy Optimization with KL divergence (PPO-KL)
 Paper link: https://arxiv.org/pdf/1707.06347.pdf
 Implementation: TensorFlow2
 """
-import numpy as np
 from argparse import Namespace
+
 from xuance.tensorflow import tf, keras, Module
 from xuance.tensorflow.learners import Learner
 from xuance.tensorflow.rl_models.modules import merge_distributions

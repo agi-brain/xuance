@@ -3,18 +3,19 @@ Proximal Policy Optimization with KL divergence (PPO-KL)
 Paper link: https://arxiv.org/pdf/1707.06347.pdf
 Implementation: Pytorch
 """
-import torch
-import numpy as np
-from torch import nn
-from xuance.torch.learners import Learner
 from argparse import Namespace
+import numpy as np
+
+import torch
+from xuance.torch import Module, nn
+from xuance.torch.learners import Learner
 from xuance.torch.rl_models.modules import merge_distributions
 
 
 class PPOKL_Learner(Learner):
     def __init__(self,
                  config: Namespace,
-                 model: nn.Module,
+                 model: Module,
                  callback):
         super(PPOKL_Learner, self).__init__(config, model, callback)
         self.optimizer = torch.optim.Adam(self.model.parameters(), self.config.learning_rate, eps=1e-5)

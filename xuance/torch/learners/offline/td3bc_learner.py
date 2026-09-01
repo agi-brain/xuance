@@ -1,18 +1,19 @@
-import torch
-from torch import nn
 from argparse import Namespace
+
+import torch
+from xuance.torch import Module, nn
 from xuance.torch.learners import Learner
 
 
 class TD3_BC_Learner(Learner):
     def __init__(self,
                  config: Namespace,
-                 model: nn.Module,
+                 model: Module,
                  callback):
-        super(TD3_BC_Learner, self).__init__(config, policy, callback)
+        super(TD3_BC_Learner, self).__init__(config, model, callback)
         self.optimizer = {
-            'actor': torch.optim.Adam(self.policy.actor_parameters, self.config.learning_rate_actor),
-            'critic': torch.optim.Adam(self.policy.critic_parameters, self.config.learning_rate_critic)}
+            'actor': torch.optim.Adam(self.model.actor_parameters, self.config.learning_rate_actor),
+            'critic': torch.optim.Adam(self.model.critic_parameters, self.config.learning_rate_critic)}
         self.scheduler = {
             'actor': torch.optim.lr_scheduler.LinearLR(self.optimizer['actor'],
                                                        start_factor=1.0,

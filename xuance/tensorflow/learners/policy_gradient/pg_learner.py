@@ -3,7 +3,6 @@ Policy Gradient (PG)
 Paper link: https://proceedings.neurips.cc/paper/2001/file/4b86abe48d358ecf194c56c69108433e-Paper.pdf
 Implementation: TensorFlow2
 """
-import numpy as np
 from argparse import Namespace
 
 from xuance.tensorflow import tf, keras, Module

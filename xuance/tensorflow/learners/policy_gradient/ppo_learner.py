@@ -4,6 +4,7 @@ Paper link: https://arxiv.org/pdf/1707.06347.pdf
 Implementation: TensorFlow2
 """
 from argparse import Namespace
+
 from xuance.tensorflow import tf, keras, Module
 from xuance.tensorflow.learners import Learner
 

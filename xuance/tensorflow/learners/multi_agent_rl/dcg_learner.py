@@ -4,95 +4,81 @@ Paper link: http://proceedings.mlr.press/v119/boehmer20a/boehmer20a.pdf
 Implementation: TensorFlow 2.X
 """
 from argparse import Namespace
-from xuance.tensorflow import tf, keras, Module
+from xuance.common import AgentGrouping
+
+from xuance.tensorflow import tf, Module
 from xuance.tensorflow.learners import LearnerMAS
+
+try:
+    import torch_scatter
+except ImportError:
+    print("The module torch_scatter is not installed.")
 
 
 class DCG_Learner(LearnerMAS):
     def __init__(self,
                  config: Namespace,
-                 policy: Module,
-                 optimizer: keras.optimizers.Optimizer,
-                 device: str = "cpu:0",
-                 model_dir: str = "./",
-                 gamma: float = 0.99,
-                 sync_frequency: int = 100
-                 ):
-        self.gamma = gamma
-        self.use_rnn = config.use_rnn
-        self.sync_frequency = sync_frequency
-        self.dim_hidden_state = policy.representation.output_shapes['state'][0]
-        self.sync_frequency = sync_frequency
-        super(DCG_Learner, self).__init__(config, policy, optimizer, device, model_dir)
-        self.mse_loss = keras.losses.MeanSquaredError()
-
-    def get_hidden_states(self, obs_n, *rnn_hidden, use_target_net=False):
-        if self.use_rnn:
-            if use_target_net:
-                outputs = self.policy.target_representation(obs_n, *rnn_hidden)
-            else:
-                outputs = self.policy.representation(obs_n, *rnn_hidden)
-            hidden_states = outputs['state']
-            rnn_hidden = (outputs['rnn_hidden'], outputs['rnn_cell'])
-        else:
-            shape_obs_n = obs_n.shape
-            rep_in = tf.reshape(obs_n, [-1, shape_obs_n[-1]])
-            if use_target_net:
-                hidden_states = self.policy.target_representation(rep_in)['state']
-            else:
-                hidden_states = self.policy.representation(rep_in)['state']
-            hidden_states_out = tf.reshape(hidden_states, shape_obs_n[:-1] + (self.dim_hidden_state, ))
-            rnn_hidden = None
-        return rnn_hidden, hidden_states_out
+                 agent_grouping: AgentGrouping,
+                 model: Module,
+                 callback):
+        super(DCG_Learner, self).__init__(config, agent_grouping, model, callback)
+        self.dim_hidden_state = model.representation[self.group_keys[0]].output_shapes['state'][0]
+        self.dim_act = max([self.model.action_space[key].n for key in self.agent_keys])
+        self.sync_frequency = config.sync_frequency
 
     def get_graph_values(self, hidden_states, use_target_net=False):
         if use_target_net:
-            utilities = self.policy.target_utility(hidden_states)
-            payoff = self.policy.target_payoffs(hidden_states, self.policy.graph.edges_from, self.policy.graph.edges_to)
+            utilities = self.model.target_utility(hidden_states)
+            payoff = self.model.target_payoffs(hidden_states, self.model.graph.edges_from, self.model.graph.edges_to)
         else:
-            utilities = self.policy.utility(hidden_states)
-            payoff = self.policy.payoffs(hidden_states, self.policy.graph.edges_from.numpy(), self.policy.graph.edges_to.numpy())
+            utilities = self.model.utility(hidden_states)
+            payoff = self.model.payoffs(hidden_states, self.model.graph.edges_from, self.model.graph.edges_to)
         return utilities, payoff
 
-    def act(self, hidden_states, avail_actions=None):
+    def act(self, hidden_states, avail_actions: Tensor | None = None):
+        """
+        Calculate the actions via belief propagation.
+
+        Args:
+            hidden_states (torch.Tensor): The hidden states for the representation of all agents.
+            avail_actions (torch.Tensor): The avail actions for the agents, default is None.
+
+        Returns: The actions.
+        """
         with torch.no_grad():
             f_i, f_ij = self.get_graph_values(hidden_states)
-        n_edges = self.policy.graph.n_edges
-        n_vertexes = self.policy.graph.n_vertexes
-        f_i_mean = tf.cast(f_i, dtype=tf.double) / n_vertexes
-        f_ij_mean = tf.cast(f_ij, dtype=tf.double) / n_edges
-        f_ji_mean = copy.deepcopy(tf.transpose(f_ij_mean, perm=(0, 1, 3, 2)))
+        n_edges = self.model.graph.n_edges
+        n_vertexes = self.model.graph.n_vertexes
+        f_i_mean = f_i.double() / n_vertexes
+        f_ij_mean = f_ij.double() / n_edges
+        f_ji_mean = f_ij_mean.transpose(dim0=-1, dim1=-2).clone()
         batch_size = f_i.shape[0]
 
-        msg_ij = torch.zeros(batch_size, n_edges, self.dim_act)  # i -> j (send)
-        msg_ji = torch.zeros(batch_size, n_edges, self.dim_act)  # j -> i (receive)
+        msg_ij = torch.zeros(batch_size, n_edges, self.dim_act).to(self.device)  # i -> j (send)
+        msg_ji = torch.zeros(batch_size, n_edges, self.dim_act).to(self.device)  # j -> i (receive)
         #
-        msg_forward = torch_scatter.scatter_add(src=msg_ij, index=self.policy.graph.edges_to, dim=1,
+        msg_forward = torch_scatter.scatter_add(src=msg_ij, index=self.model.graph.edges_to, dim=1,
                                                 dim_size=n_vertexes)
-        msg_backward = torch_scatter.scatter_add(src=msg_ji, index=self.policy.graph.edges_from, dim=1,
+        msg_backward = torch_scatter.scatter_add(src=msg_ji, index=self.model.graph.edges_from, dim=1,
                                                  dim_size=n_vertexes)
-
-        f_i_mean = torch.tensor(f_i_mean.numpy())
-        f_ij_mean = torch.tensor(f_ij_mean.numpy())
-        f_ji_mean = torch.tensor(f_ji_mean.numpy())
         utility = f_i_mean + msg_forward + msg_backward
-        if len(self.policy.graph.edges) != 0:
-            for i in range(self.args.n_msg_iterations):
-                joint_forward = (utility[:, self.policy.graph.edges_from, :] - msg_ji).unsqueeze(dim=-1) + f_ij_mean
-                joint_backward = (utility[:, self.policy.graph.edges_to, :] - msg_ij).unsqueeze(dim=-1) + f_ji_mean
+        if len(self.model.graph.edges) != 0:
+            for i in range(self.config.n_msg_iterations):
+                joint_forward = (utility[:, self.model.graph.edges_from, :] - msg_ji).unsqueeze(dim=-1) + f_ij_mean
+                joint_backward = (utility[:, self.model.graph.edges_to, :] - msg_ij).unsqueeze(dim=-1) + f_ji_mean
                 msg_ij = joint_forward.max(dim=-2).values
                 msg_ji = joint_backward.max(dim=-2).values
-                if self.args.msg_normalizerd:
+                if self.config.msg_normalized:
                     msg_ij -= msg_ij.mean(dim=-1, keepdim=True)
                     msg_ji -= msg_ji.mean(dim=-1, keepdim=True)
 
-                msg_forward = torch_scatter.scatter_add(src=msg_ij, index=self.policy.graph.edges_to, dim=1,
+                msg_forward = torch_scatter.scatter_add(src=msg_ij, index=self.model.graph.edges_to, dim=1,
                                                         dim_size=n_vertexes)
-                msg_backward = torch_scatter.scatter_add(src=msg_ji, index=self.policy.graph.edges_from, dim=1,
+                msg_backward = torch_scatter.scatter_add(src=msg_ji, index=self.model.graph.edges_from, dim=1,
                                                          dim_size=n_vertexes)
                 utility = f_i_mean + msg_forward + msg_backward
         if avail_actions is not None:
-            avail_actions = torch.Tensor(avail_actions)
+            avail_actions = torch.as_tensor(avail_actions, device=self.device)
             utility_detach = utility.clone().detach()
             utility_detach[avail_actions == 0] = -1e10
             actions_greedy = utility_detach.argmax(dim=-1)
@@ -102,17 +88,17 @@ class DCG_Learner(LearnerMAS):
 
     def q_dcg(self, hidden_states, actions, states=None, use_target_net=False):
         f_i, f_ij = self.get_graph_values(hidden_states, use_target_net=use_target_net)
-        f_i_mean = tf.cast(f_i, tf.double) / self.policy.graph.n_vertexes
-        f_ij_mean = tf.cast(f_ij, tf.double) / self.policy.graph.n_edges
+        f_i_mean = tf.cast(f_i, tf.double) / self.model.graph.n_vertexes
+        f_ij_mean = tf.cast(f_ij, tf.double) / self.model.graph.n_edges
         utilities = tf.reduce_sum(tf.gather(f_i_mean, tf.expand_dims(actions, -1), axis=-1, batch_dims=-1), axis=1)
-        if len(self.policy.graph.edges) == 0 or self.args.n_msg_iterations == 0:
+        if len(self.model.graph.edges) == 0 or self.args.n_msg_iterations == 0:
             return utilities
-        edges_from = self.policy.graph.edges_from.numpy()
-        edges_to = self.policy.graph.edges_to.numpy()
+        edges_from = self.model.graph.edges_from.numpy()
+        edges_to = self.model.graph.edges_to.numpy()
         actions_ij = tf.expand_dims(tf.gather(actions, edges_from, axis=1) * self.dim_act + tf.gather(actions, edges_to, axis=1), -1)
         payoffs = tf.reduce_sum(tf.gather(tf.reshape(f_ij_mean, list(f_ij_mean.shape[0:-2]) + [-1]), actions_ij, axis=-1, batch_dims=-1), axis=1)
-        if self.args.agent == "DCG_S":
-            state_value = self.policy.bias(states)
+        if self.config.agent == "DCG_S":
+            state_value = self.model.bias(states)
             return utilities + payoffs + state_value
         else:
             return utilities + payoffs
@@ -147,15 +133,15 @@ class DCG_Learner(LearnerMAS):
                 y_true = tf.stop_gradient(tf.reshape(q_target, [-1]))
                 y_pred = tf.reshape(q_eval_a, [-1])
                 loss = self.mse_loss(y_true, y_pred)
-                gradients = tape.gradient(loss, self.policy.trainable_variables)
+                gradients = tape.gradient(loss, self.model.trainable_variables)
                 self.optimizer.apply_gradients([
                     (grad, var)
-                    for (grad, var) in zip(gradients, self.policy.trainable_variables)
+                    for (grad, var) in zip(gradients, self.model.trainable_variables)
                     if grad is not None
                 ])
 
             if self.iterations % self.sync_frequency == 0:
-                self.policy.copy_target()
+                self.model.copy_target()
 
             lr = self.optimizer._decayed_lr(tf.float32)
 

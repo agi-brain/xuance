@@ -2,6 +2,7 @@ import os
 from abc import ABC, abstractmethod
 from argparse import Namespace
 from xuance.common import Union, Optional
+
 from xuance.tensorflow import tf, keras, Module
 
 

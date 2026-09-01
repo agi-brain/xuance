@@ -2,10 +2,11 @@
 Independent Soft Actor-critic (ISAC)
 Implementation: Pytorch
 """
-import torch
-from torch import nn
 from argparse import Namespace
 from xuance.common import AgentGrouping
+
+import torch
+from xuance.torch import Module, nn
 from xuance.torch.utils import AgentGroupedTensor
 from xuance.torch.learners import OffPolicyMultiAgentLearner
 
@@ -14,7 +15,7 @@ class ISAC_Learner(OffPolicyMultiAgentLearner):
     def __init__(self,
                  config: Namespace,
                  agent_grouping: AgentGrouping,
-                 model: nn.Module,
+                 model: Module,
                  callback):
         super(ISAC_Learner, self).__init__(config, agent_grouping, model, callback)
         self.tau = config.tau

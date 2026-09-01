@@ -4,10 +4,11 @@ Paper link:
 https://proceedings.neurips.cc/paper_files/paper/2022/file/9c1535a02f0ce079433344e14d910597-Paper-Datasets_and_Benchmarks.pdf
 Implementation: Pytorch
 """
-import torch
-from torch import nn
-from xuance.common import AgentGrouping
 from argparse import Namespace
+from xuance.common import AgentGrouping
+
+import torch
+from xuance.torch import Module
 from xuance.torch.learners import OnPolicyMultiAgentLearner
 
 
@@ -15,7 +16,7 @@ class MAPPO_Learner(OnPolicyMultiAgentLearner):
     def __init__(self,
                  config: Namespace,
                  agent_grouping: AgentGrouping,
-                 model: nn.Module,
+                 model: Module,
                  callback):
         super(MAPPO_Learner, self).__init__(config, agent_grouping, model, callback)
         self.clip_range = config.clip_range

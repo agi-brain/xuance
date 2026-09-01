@@ -3,16 +3,17 @@ Deep Q-Network (DQN)
 Paper link: https://www.nature.com/articles/nature14236
 Implementation: Pytorch
 """
-import torch
-from torch import nn
 from argparse import Namespace
+
+import torch
+from xuance.torch import Module, nn
 from xuance.torch.learners import Learner
 
 
 class DQN_Learner(Learner):
     def __init__(self,
                  config: Namespace,
-                 model: nn.Module,
+                 model: Module,
                  callback):
         super(DQN_Learner, self).__init__(config, model, callback)
         self.optimizer = torch.optim.Adam(self.model.parameters(), self.config.learning_rate, eps=1e-5)

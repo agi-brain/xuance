@@ -12,11 +12,10 @@ from xuance.tensorflow.learners.multi_agent_rl.isac_learner import ISAC_Learner
 class MASAC_Learner(ISAC_Learner):
     def __init__(self,
                  config: Namespace,
-                 model_keys: List[str],
-                 agent_keys: List[str],
-                 policy: Module,
+                 agent_grouping: AgentGrouping,
+                 model: Module,
                  callback):
-        super(MASAC_Learner, self).__init__(config, model_keys, agent_keys, policy, callback)
+        super(MASAC_Learner, self).__init__(config, agent_grouping, model, callback)
 
     # @tf.function
     def forward_fn(self, *args):

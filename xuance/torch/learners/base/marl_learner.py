@@ -1,15 +1,14 @@
 import os
-import torch
-import torch.nn as nn
 from pathlib import Path
 from abc import abstractmethod
-from xuance.common import Optional, AgentGrouping
 from argparse import Namespace
-from xuance.torch import Module
-from xuance.torch.utils import ValueNorm
+from xuance.common import Optional, AgentGrouping
+
+import torch
+from xuance.torch import Module, nn
+from xuance.torch.utils import ValueNorm, AgentGroupedTensor
 from xuance.torch.rl_models.modules import OnPolicyMARLBatch, OffPolicyMARLBatch
 from xuance.torch.learners.base.drl_learner import Learner
-from xuance.torch.utils import AgentGroupedTensor
 
 MAX_GPUs = torch.cuda.device_count()
 

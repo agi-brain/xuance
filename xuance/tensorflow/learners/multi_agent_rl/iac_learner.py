@@ -4,155 +4,19 @@ Paper link: https://ojs.aaai.org/index.php/AAAI/article/view/11794
 Implementation: TensorFlow2
 """
 import numpy as np
-from argparse import Namespace
-from operator import itemgetter
-from xuance.common import Optional, List
-from xuance.tensorflow import tf, keras, Module
-from xuance.tensorflow.utils import ValueNorm
-from xuance.tensorflow.learners import LearnerMAS
+
+from xuance.tensorflow import tf, keras
+from xuance.tensorflow.learners import OnPolicyMultiAgentLearner
 
 
-class IAC_Learner(LearnerMAS):
-    def __init__(self,
-                 config: Namespace,
-                 model_keys: List[str],
-                 agent_keys: List[str],
-                 policy: Module,
-                 callback):
-        super(IAC_Learner, self).__init__(config, model_keys, agent_keys, policy, callback)
-        self.build_optimizer()
-        self.use_value_clip, self.value_clip_range = config.use_value_clip, config.value_clip_range
-        self.use_huber_loss, self.huber_delta = config.use_huber_loss, config.huber_delta
-        self.use_value_norm = config.use_value_norm
-        self.vf_coef, self.ent_coef = config.vf_coef, config.ent_coef
-        if self.use_value_norm:
-            self.value_normalizer = {key: ValueNorm(1) for key in self.model_keys}
-        else:
-            self.value_normalizer = None
-        self.is_continuous = self.policy.is_continuous
+class IAC_Learner(OnPolicyMultiAgentLearner):
 
     def build_optimizer(self):
-        if ("macOS" in self.os_name) and ("arm" in self.os_name):  # For macOS with Apple's M-series chips.
-            if self.distributed_training:
-                with self.policy.mirrored_strategy.scope():
-                    self.optimizer = keras.optimizers.legacy.Adam(self.config.learning_rate)
-            else:
-                self.optimizer = keras.optimizers.legacy.Adam(self.config.learning_rate)
-        else:
-            if self.distributed_training:
-                with self.policy.mirrored_strategy.scope():
-                    self.optimizer = keras.optimizers.Adam(self.config.learning_rate)
-            else:
+        if self.distributed_training:
+            with self.model.mirrored_strategy.scope():
                 self.optimizer = keras.optimizers.Adam(self.config.learning_rate)
-
-    def build_training_data(self, sample: Optional[dict],
-                            use_parameter_sharing: Optional[bool] = False,
-                            use_actions_mask: Optional[bool] = False,
-                            use_global_state: Optional[bool] = False):
-        """
-        Prepare the training data.
-
-        Parameters:
-            sample (dict): The raw sampled data.
-            use_parameter_sharing (bool): Whether to use parameter sharing for individual agent models.
-            use_actions_mask (bool): Whether to use actions mask for unavailable actions.
-            use_global_state (bool): Whether to use global state.
-
-        Returns:
-            sample_Tensor (dict): The formatted sampled data.
-        """
-        batch_size = sample['batch_size']
-        seq_length = sample['sequence_length'] if self.use_rnn else 1
-        state, avail_actions, filled, IDs = None, None, None, None
-        if use_parameter_sharing:
-            k = self.model_keys[0]
-            bs = batch_size * self.n_agents
-            obs_tensor = tf.stack(itemgetter(*self.agent_keys)(sample['obs']), axis=1)
-            actions_tensor = tf.stack(itemgetter(*self.agent_keys)(sample['actions']), axis=1)
-            values_tensor = tf.stack(itemgetter(*self.agent_keys)(sample['values']), axis=1)
-            returns_tensor = tf.stack(itemgetter(*self.agent_keys)(sample['returns']), axis=1)
-            advantages_tensor = tf.stack(itemgetter(*self.agent_keys)(sample['advantages']), axis=1)
-            log_pi_old_tensor = tf.stack(itemgetter(*self.agent_keys)(sample['log_pi_old']), axis=1)
-            ter_tensor = tf.cast(tf.stack(itemgetter(*self.agent_keys)(sample['terminals']), axis=1), dtype=tf.float32)
-            msk_tensor = tf.cast(tf.stack(itemgetter(*self.agent_keys)(sample['agent_mask']), axis=1), dtype=tf.float32)
-            if self.use_rnn:
-                obs = {k: tf.reshape(obs_tensor, [bs, seq_length, -1])}
-                if len(actions_tensor.shape) == 3:
-                    actions = {k: tf.reshape(actions_tensor, [bs, seq_length])}
-                elif len(actions_tensor.shape) == 4:
-                    actions = {k: tf.reshape(actions_tensor, [bs, seq_length, -1])}
-                else:
-                    raise AttributeError("Wrong actions shape.")
-                values = {k: tf.reshape(values_tensor, [bs, seq_length])}
-                returns = {k: tf.reshape(returns_tensor, [bs, seq_length])}
-                advantages = {k: tf.reshape(advantages_tensor, [bs, seq_length])}
-                log_pi_old = {k: tf.reshape(log_pi_old_tensor, [bs, seq_length])}
-                terminals = {k: tf.reshape(ter_tensor, [bs, seq_length])}
-                agent_mask = {k: tf.reshape(msk_tensor, [bs, seq_length])}
-                IDs = tf.reshape(tf.tile(tf.eye(self.n_agents, dtype=np.float32)[None, :, None, :],
-                                         [batch_size, 1, seq_length + 1, 1]), [bs, seq_length + 1, self.n_agents])
-            else:
-                obs = {k: tf.reshape(obs_tensor, [bs, -1])}
-                if self.is_continuous:
-                    actions = {k: tf.reshape(tf.cast(actions_tensor, dtype=tf.float32), [bs, -1])}
-                else:
-                    actions = {k: tf.reshape(tf.cast(actions_tensor, dtype=tf.int32), [bs, 1])}
-                values = {k: tf.reshape(values_tensor, [bs])}
-                returns = {k: tf.reshape(returns_tensor, [bs])}
-                advantages = {k: tf.reshape(advantages_tensor, [bs])}
-                log_pi_old = {k: tf.reshape(log_pi_old_tensor, [bs])}
-                terminals = {k: tf.reshape(ter_tensor, [bs])}
-                agent_mask = {k: tf.reshape(msk_tensor, [bs])}
-                IDs = tf.reshape(tf.tile(tf.eye(self.n_agents, dtype=np.float32)[None],
-                                         [batch_size, 1, 1]), [bs, self.n_agents])
-
-            if use_actions_mask:
-                avail_a = tf.stack(itemgetter(*self.agent_keys)(sample['avail_actions']), axis=1)
-                if self.use_rnn:
-                    avail_actions = {k: tf.reshape(avail_a, [bs, seq_length, -1])}
-                else:
-                    avail_actions = {k: tf.reshape(avail_a, [bs, -1])}
-
         else:
-            obs = {k: tf.convert_to_tensor(sample['obs'][k], dtype=tf.float32) for k in self.agent_keys}
-            if self.is_continuous:
-                actions = {k: tf.convert_to_tensor(sample['actions'][k], dtype=tf.float32) for k in self.agent_keys}
-            else:
-                actions = {k: tf.expand_dims(tf.convert_to_tensor(sample['actions'][k], dtype=tf.int32), axis=-1)
-                           for k in self.agent_keys}
-            values = {k: tf.convert_to_tensor(sample['values'][k], dtype=tf.float32) for k in self.agent_keys}
-            returns = {k: tf.convert_to_tensor(sample['returns'][k], dtype=tf.float32) for k in self.agent_keys}
-            advantages = {k: tf.convert_to_tensor(sample['advantages'][k], dtype=tf.float32) for k in self.agent_keys}
-            log_pi_old = {k: tf.convert_to_tensor(sample['log_pi_old'][k], dtype=tf.float32) for k in self.agent_keys}
-            terminals = {k: tf.convert_to_tensor(sample['terminals'][k], dtype=tf.float32) for k in self.agent_keys}
-            agent_mask = {k: tf.convert_to_tensor(sample['agent_mask'][k], dtype=tf.float32) for k in self.agent_keys}
-            if use_actions_mask:
-                avail_actions = {k: tf.convert_to_tensor(sample['avail_actions'][k], dtype=tf.float32)
-                                 for k in self.agent_keys}
-
-        if use_global_state:
-            state = tf.convert_to_tensor(sample['state'], dtype=tf.float32)
-
-        if self.use_rnn:
-            filled = tf.convert_to_tensor(sample['filled'], dtype=tf.float32)
-
-        sample_Tensor = {
-            'batch_size': batch_size,
-            'state': state,
-            'obs': obs,
-            'actions': actions,
-            'values': values,
-            'returns': returns,
-            'advantages': advantages,
-            'log_pi_old': log_pi_old,
-            'terminals': terminals,
-            'agent_mask': agent_mask,
-            'avail_actions': avail_actions,
-            'agent_ids': IDs,
-            'filled': filled,
-            'seq_length': seq_length,
-        }
-        return sample_Tensor
+            self.optimizer = keras.optimizers.Adam(self.config.learning_rate)
 
     # @tf.function
     def forward_fn(self, *args):

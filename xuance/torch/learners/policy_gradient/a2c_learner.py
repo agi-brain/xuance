@@ -2,16 +2,17 @@
 Advantage Actor-Critic (A2C)
 Implementation: Pytorch
 """
-import torch
-from torch import nn
 from argparse import Namespace
+
+import torch
+from xuance.torch import Module, nn
 from xuance.torch.learners import Learner
 
 
 class A2C_Learner(Learner):
     def __init__(self,
                  config: Namespace,
-                 model: nn.Module,
+                 model: Module,
                  callback):
         super(A2C_Learner, self).__init__(config, model, callback)
         self.optimizer = torch.optim.Adam(self.model.parameters(), config.learning_rate, eps=1e-5)

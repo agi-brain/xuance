@@ -3,7 +3,7 @@ Independent Soft Actor-critic (ISAC)
 Implementation: TensorFlow 2.X
 """
 from argparse import Namespace
-from xuance.common import List
+from xuance.common import AgentGrouping
 from xuance.tensorflow import tf, keras, Module
 from xuance.tensorflow.learners import LearnerMAS
 from xuance.tensorflow.learners.policy_gradient.sac_learner import AlphaLayer
@@ -12,37 +12,24 @@ from xuance.tensorflow.learners.policy_gradient.sac_learner import AlphaLayer
 class ISAC_Learner(LearnerMAS):
     def __init__(self,
                  config: Namespace,
-                 model_keys: List[str],
-                 agent_keys: List[str],
-                 policy: Module,
+                 agent_grouping: AgentGrouping,
+                 model: Module,
                  callback):
-        super(ISAC_Learner, self).__init__(config, model_keys, agent_keys, policy, callback)
-        self.build_optimizer()
-        self.gamma = config.gamma
+        super(ISAC_Learner, self).__init__(config, agent_grouping, model, callback)
         self.tau = config.tau
         self.alpha = {key: config.alpha for key in self.model_keys}
         self.use_automatic_entropy_tuning = config.use_automatic_entropy_tuning
         if self.use_automatic_entropy_tuning:
-            self.target_entropy = {key: -policy.action_space[key].shape[-1] for key in self.model_keys}
+            self.target_entropy = {key: -model.action_space[key].shape[-1] for key in self.model_keys}
             self.alpha_layer = {key: AlphaLayer() for key in self.model_keys}
             self.alpha = {key: tf.exp(self.alpha_layer[key].log_alpha) for key in self.model_keys}
-            if ("macOS" in self.os_name) and ("arm" in self.os_name):  # For macOS with Apple's M-series chips.
-                self.alpha_optimizer = {key: keras.optimizers.legacy.Adam(config.learning_rate_actor)
-                                        for key in self.model_keys}
-            else:
-                self.alpha_optimizer = {key: keras.optimizers.Adam(config.learning_rate_actor) for key in self.model_keys}
+            self.alpha_optimizer = {key: keras.optimizers.Adam(config.learning_rate_actor) for key in self.model_keys}
 
     def build_optimizer(self):
-        if ("macOS" in self.os_name) and ("arm" in self.os_name):  # For macOS with Apple's M-series chips.
-            self.optimizer = {
-                key: {'actor': keras.optimizers.legacy.Adam(self.config.learning_rate_actor),
-                      'critic': keras.optimizers.legacy.Adam(self.config.learning_rate_critic)}
-                for key in self.model_keys}
-        else:
-            self.optimizer = {
-                key: {'actor': keras.optimizers.Adam(self.config.learning_rate_actor),
-                      'critic': keras.optimizers.Adam(self.config.learning_rate_critic)}
-                for key in self.model_keys}
+        self.optimizer = {
+            key: {'actor': keras.optimizers.Adam(self.config.learning_rate_actor),
+                  'critic': keras.optimizers.Adam(self.config.learning_rate_critic)}
+            for key in self.model_keys}
 
     # @tf.function
     def forward_fn(self, *args):

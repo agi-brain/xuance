@@ -1,11 +1,11 @@
-from operator import itemgetter
-
 import numpy as np
-import torch
+from operator import itemgetter
 from argparse import Namespace
 from typing import Optional
 from xuance.common import AgentGrouping
-from torch import nn, Tensor
+
+import torch
+from xuance.torch import Tensor, Module
 from xuance.torch.learners.multi_agent_rl.commnet_learner import CommNet_Learner
 
 
@@ -13,7 +13,7 @@ class IC3Net_Learner(CommNet_Learner):
     def __init__(self,
                  config: Namespace,
                  agent_grouping: AgentGrouping,
-                 model: nn.Module,
+                 model: Module,
                  callback):
         super(IC3Net_Learner, self).__init__(config, agent_grouping, model, callback)
 

@@ -4,10 +4,11 @@ Paper link:
 http://proceedings.mlr.press/v80/yang18d/yang18d.pdf
 Implementation: Pytorch
 """
-import torch
 from argparse import Namespace
-from xuance.torch import Module
 from xuance.common import AgentGrouping, Optional
+
+import torch
+from xuance.torch import Module
 from xuance.torch.utils import AgentGroupedTensor
 from xuance.torch.learners import OffPolicyMultiAgentLearner
 

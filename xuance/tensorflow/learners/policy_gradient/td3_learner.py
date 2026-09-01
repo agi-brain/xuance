@@ -4,6 +4,7 @@ Paper link: http://proceedings.mlr.press/v80/fujimoto18a/fujimoto18a.pdf
 Implementation: TensorFlow2
 """
 from argparse import Namespace
+
 from xuance.tensorflow import tf, keras, Module
 from xuance.tensorflow.learners import Learner
 

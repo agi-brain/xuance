@@ -2,8 +2,7 @@ from argparse import Namespace
 from xuance.common import AgentGrouping
 
 import torch
-from torch import nn
-
+from xuance.torch import Module
 from xuance.torch.learners.multi_agent_rl.ippo_learner import IPPO_Learner
 
 
@@ -11,7 +10,7 @@ class CommNet_Learner(IPPO_Learner):
     def __init__(self,
                  config: Namespace,
                  agent_grouping: AgentGrouping,
-                 model: nn.Module,
+                 model: Module,
                  callback):
         super(CommNet_Learner, self).__init__(config, agent_grouping, model, callback)
 

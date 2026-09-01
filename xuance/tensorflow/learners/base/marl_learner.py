@@ -4,6 +4,7 @@ from pathlib import Path
 from abc import abstractmethod
 from argparse import Namespace
 from xuance.common import Optional, AgentGrouping
+
 from xuance.tensorflow import tf, Module
 from xuance.tensorflow.utils import ValueNorm, AgentGroupedTensor
 from xuance.tensorflow.rl_models.modules import OnPolicyMARLBatch, OffPolicyMARLBatch

@@ -3,34 +3,28 @@ Independent Deep Deterministic Policy Gradient (IDDPG)
 Implementation: TensorFlow 2.X
 """
 from argparse import Namespace
-from xuance.common import List
+from typing import List
+from xuance.common import AgentGrouping
 from xuance.tensorflow import tf, keras, Module
-from xuance.tensorflow.learners import LearnerMAS
+from xuance.torch.utils import AgentGroupedTensor
+from xuance.torch.learners import OffPolicyMultiAgentLearner
+from xuance.torch.rl_models.modules import OffPolicyMARLBatch
 
 
-class IDDPG_Learner(LearnerMAS):
+class IDDPG_Learner(OffPolicyMultiAgentLearner):
     def __init__(self,
                  config: Namespace,
-                 model_keys: List[str],
-                 agent_keys: List[str],
-                 policy: Module,
+                 agent_grouping: AgentGrouping,
+                 model: Module,
                  callback):
-        super(IDDPG_Learner, self).__init__(config, model_keys, agent_keys, policy, callback)
-        self.build_optimizer()
-        self.gamma = self.config.gamma
+        super(IDDPG_Learner, self).__init__(config, agent_grouping, model, callback)
         self.tau = self.config.tau
 
     def build_optimizer(self):
-        if ("macOS" in self.os_name) and ("arm" in self.os_name):  # For macOS with Apple's M-series chips.
-            self.optimizer = {
-                key: {'actor': keras.optimizers.legacy.Adam(self.config.learning_rate_actor),
-                      'critic': keras.optimizers.legacy.Adam(self.config.learning_rate_critic)}
-                for key in self.model_keys}
-        else:
-            self.optimizer = {
-                key: {'actor': keras.optimizers.Adam(self.config.learning_rate_actor),
-                      'critic': keras.optimizers.Adam(self.config.learning_rate_critic)}
-                for key in self.model_keys}
+        self.optimizer = {
+            key: {'actor': keras.optimizers.Adam(self.config.learning_rate_actor),
+                  'critic': keras.optimizers.Adam(self.config.learning_rate_critic)}
+            for key in self.model_keys}
 
     @tf.function
     def forward_fn(self, bs, obs, actions, rewards, obs_next, terminals, IDs, agent_mask):

@@ -1,18 +1,19 @@
-import torch
-
+from argparse import Namespace
 from xuance.common import Tuple, Union
+
+import torch
+from torch.distributions import Independent, OneHotCategoricalStraightThrough
+from xuance.torch import Module
 from xuance.torch.learners import Learner
 # from xuance.torch.policies import DreamerV2Policy
 from xuance.torch.utils import dotdict
 from xuance.torch.rl_models.modules.distributions import kl_div
-from argparse import Namespace
-from torch.distributions import Independent, OneHotCategoricalStraightThrough
 
 
 class DreamerV2_Learner(Learner):
     def __init__(self,
                  config: Namespace,
-                 policy: torch.nn.Module,
+                 policy: Module,
                  action_shape: Union[int, Tuple[int, ...]],
                  callback):
         super(DreamerV2_Learner, self).__init__(config, policy, callback)

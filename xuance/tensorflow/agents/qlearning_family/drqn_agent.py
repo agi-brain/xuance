@@ -190,7 +190,7 @@ class DRQN_Agent(OffPolicyAgent):
         while current_episode < test_episodes:
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
-            policy_out = self.get_actions(obs, egreedy=0.0, rnn_states=rnn_states)
+            policy_out = self.get_actions(obs, e_greedy=0.0, rnn_states=rnn_states)
             acts = policy_out.env_actions
             rnn_states = policy_out.auxiliary['rnn_states_next']
             next_obs, rewards, terminals, truncations, infos = test_envs.step(acts)

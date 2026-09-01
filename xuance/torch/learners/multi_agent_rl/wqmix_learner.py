@@ -3,10 +3,11 @@ Weighted QMIX
 Paper link: https://proceedings.neurips.cc/paper/2020/file/73a427badebe0e32caa2e1fc7530b7f3-Paper.pdf
 Implementation: Pytorch
 """
-import torch
-from torch import nn
 from argparse import Namespace
 from xuance.common import AgentGrouping
+
+import torch
+from xuance.torch import Module
 from xuance.torch.utils import AgentGroupedTensor
 from xuance.torch.learners.multi_agent_rl.iql_learner import IQL_Learner
 from xuance.torch.rl_models.modules import OffPolicyMARLBatch
@@ -16,7 +17,7 @@ class WQMIX_Learner(IQL_Learner):
     def __init__(self,
                  config: Namespace,
                  agent_grouping: AgentGrouping,
-                 model: nn.Module,
+                 model: Module,
                  callback):
         super(WQMIX_Learner, self).__init__(config, agent_grouping, model, callback)
         self.alpha = config.alpha

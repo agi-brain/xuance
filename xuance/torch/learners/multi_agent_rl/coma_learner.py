@@ -3,11 +3,12 @@ COMA: Counterfactual Multi-Agent Policy Gradients
 Paper link: https://ojs.aaai.org/index.php/AAAI/article/view/11794
 Implementation: Pytorch
 """
-import torch
 from argparse import Namespace
-from torch import nn
-from torch.nn.functional import one_hot
 from xuance.common import AgentGrouping
+
+import torch
+from torch.nn.functional import one_hot
+from xuance.torch import Module
 from xuance.torch.learners.multi_agent_rl.iac_learner import IAC_Learner
 
 
@@ -15,7 +16,7 @@ class COMA_Learner(IAC_Learner):
     def __init__(self,
                  config: Namespace,
                  agent_grouping: AgentGrouping,
-                 model: nn.Module,
+                 model: Module,
                  callback):
         config.use_value_clip, config.value_clip_range = False, None
         config.use_huber_loss, config.huber_delta = False, None
@@ -24,7 +25,6 @@ class COMA_Learner(IAC_Learner):
         super(COMA_Learner, self).__init__(config, agent_grouping, model, callback)
         self.sync_frequency = config.sync_frequency
         self.n_actions = {k: self.model.critics.action_space[k].n for k in self.agent_keys}
-        self.mse_loss = nn.MSELoss()
 
     def build_optimizer(self):
         self.optimizer = {

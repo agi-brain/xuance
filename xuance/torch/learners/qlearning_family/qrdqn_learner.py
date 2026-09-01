@@ -3,16 +3,17 @@ DQN with Quantile Regression (QRDQN)
 Paper link: https://ojs.aaai.org/index.php/AAAI/article/view/11791
 Implementation: Pytorch
 """
-import torch
-from torch import nn
-from xuance.torch.learners import Learner
 from argparse import Namespace
+
+import torch
+from xuance.torch import Module, nn
+from xuance.torch.learners import Learner
 
 
 class QRDQN_Learner(Learner):
     def __init__(self,
                  config: Namespace,
-                 model: nn.Module,
+                 model: Module,
                  callback):
         super(QRDQN_Learner, self).__init__(config, model, callback)
         self.optimizer = torch.optim.Adam(self.model.parameters(), self.config.learning_rate, eps=1e-5)

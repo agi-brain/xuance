@@ -2,10 +2,11 @@
 Multi-agent Soft Actor-critic (MASAC)
 Implementation: Pytorch
 """
-import torch
-from torch import nn
 from argparse import Namespace
 from xuance.common import AgentGrouping
+
+import torch
+from xuance.torch import Module
 from xuance.torch.utils import AgentGroupedTensor
 from xuance.torch.learners.multi_agent_rl.isac_learner import ISAC_Learner
 
@@ -14,7 +15,7 @@ class MASAC_Learner(ISAC_Learner):
     def __init__(self,
                  config: Namespace,
                  agent_grouping: AgentGrouping,
-                 model: nn.Module,
+                 model: Module,
                  callback):
         super(MASAC_Learner, self).__init__(config, agent_grouping, model, callback)
 

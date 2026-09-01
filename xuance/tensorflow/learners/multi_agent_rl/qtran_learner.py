@@ -14,11 +14,10 @@ from xuance.tensorflow.learners import LearnerMAS
 class QTRAN_Learner(LearnerMAS):
     def __init__(self,
                  config: Namespace,
-                 model_keys: List[str],
-                 agent_keys: List[str],
-                 policy: Module,
+                 agent_grouping: AgentGrouping,
+                 model: Module,
                  callback):
-        super(QTRAN_Learner, self).__init__(config, model_keys, agent_keys, policy, callback)
+        super(QTRAN_Learner, self).__init__(config, agent_grouping, model, callback)
         self.build_optimizer()
         self.n_actions = {k: self.policy.action_space[k].n for k in self.model_keys}
         self.sync_frequency = config.sync_frequency

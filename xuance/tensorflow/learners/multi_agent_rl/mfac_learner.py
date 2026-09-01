@@ -14,11 +14,10 @@ from xuance.tensorflow.learners.multi_agent_rl.ippo_learner import IPPO_Learner
 class MFAC_Learner(IPPO_Learner):
     def __init__(self,
                  config: Namespace,
-                 model_keys: List[str],
-                 agent_keys: List[str],
-                 policy: Module,
+                 agent_grouping: AgentGrouping,
+                 model: Module,
                  callback):
-        super(MFAC_Learner, self).__init__(config, model_keys, agent_keys, policy, callback)
+        super(MFAC_Learner, self).__init__(config, agent_grouping, model, callback)
 
     def build_actions_mean_input(self, sample: Optional[dict], use_parameter_sharing: Optional[bool] = False):
         batch_size = sample['batch_size']

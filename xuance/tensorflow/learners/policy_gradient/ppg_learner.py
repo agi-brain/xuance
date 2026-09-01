@@ -3,7 +3,6 @@ Phasic Policy Gradient (PPG)
 Paper link: http://proceedings.mlr.press/v139/cobbe21a/cobbe21a.pdf
 Implementation: TensorFlow2
 """
-import numpy as np
 from argparse import Namespace
 
 from xuance.tensorflow import tf, keras, Module

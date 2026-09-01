@@ -1,20 +1,18 @@
 from argparse import Namespace
-from typing import List
+from xuance.common import AgentGrouping
 
 import torch
-from torch import nn
-
+from xuance.torch import Module
 from xuance.torch.learners.multi_agent_rl.ippo_learner import IPPO_Learner
 
 
 class CommNet_Learner(IPPO_Learner):
     def __init__(self,
                  config: Namespace,
-                 model_keys: List[str],
-                 agent_keys: List[str],
-                 policy: nn.Module,
+                 agent_grouping: AgentGrouping,
+                 model: Module,
                  callback):
-        super(CommNet_Learner, self).__init__(config, model_keys, agent_keys, policy, callback)
+        super(CommNet_Learner, self).__init__(config, agent_grouping, model, callback)
 
     def build_optimizer(self):
         self.optimizer = torch.optim.Adam(self.policy.parameters_model, lr=self.learning_rate, eps=1e-5,
@@ -64,12 +62,13 @@ class CommNet_Learner(IPPO_Learner):
             joint_obs = self.get_joint_input(obs, (batch_size, seq_len, -1))
             critic_input = {k: joint_obs for k in self.agent_keys}
         # feedfowrd
-        rnn_hidden_actor = {k: self.policy.actor_representation[k].init_hidden(bs_rnn) for k in self.model_keys}
-        rnn_hidden_critic = {k: self.policy.critic_representation[k].init_hidden(bs_rnn) for k in self.model_keys}
+        rnn_states_actor = {k: self.policy.actor_representation[k].init_rnn_states(bs_rnn) for k in self.model_keys}
+        rnn_states_critic = {k: self.policy.critic_representation[k].init_rnn_states(bs_rnn) for k in self.model_keys}
 
         # feedforward
-        _, pi_dist_dict = self.policy(obs, agent_ids=IDs, avail_actions=avail_actions, rnn_hidden=rnn_hidden_actor, alive_ally=alive_ally)
-        _, value_pred_dict = self.policy.get_values(observation=obs, agent_ids=IDs, rnn_hidden=rnn_hidden_critic, alive_ally=alive_ally)
+        _, pi_dist_dict = self.policy(obs, agent_ids=IDs, avail_actions=avail_actions, rnn_states=rnn_states_actor,
+                                      alive_ally=alive_ally)
+        _, value_pred_dict = self.policy.get_values(critic_input, agent_ids=IDs, rnn_states=rnn_states_critic)
 
         # calculate losses for each agent
         loss_a, loss_e, loss_c = [], [], []
@@ -95,7 +94,7 @@ class CommNet_Learner(IPPO_Learner):
                                                                            self.value_clip_range)
                 if self.use_value_norm:
                     self.value_normalizer[key].update(value_target.reshape(-1, 1))
-                    value_target = self.value_normalizer[key].normalizer(value_target.reshape(-1, 1))
+                    value_target = self.value_normalizer[key].normalize(value_target.reshape(-1, 1))
                     value_target = value_target.reshape(bs_rnn, seq_len)
                 if self.use_huber_loss:
                     loss_v = self.huber_loss(value_pred_i, value_target)
@@ -108,7 +107,7 @@ class CommNet_Learner(IPPO_Learner):
             else:
                 if self.use_value_norm:
                     self.value_normalizer[key].update(value_target)
-                    value_target = self.value_normalizer[key].normalizer(value_target)
+                    value_target = self.value_normalizer[key].normalize(value_target)
                 if self.use_huber_loss:
                     loss_v = self.huber_loss(value_pred_i, value_target)
                 else:

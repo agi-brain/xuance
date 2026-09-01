@@ -2,18 +2,19 @@
 Independent Soft Actor-critic (ISAC) with discrete action spaces.
 Implementation: Pytorch
 """
-import torch
-from torch import nn
-from xuance.torch.learners import LearnerMAS
-from xuance.common import AgentGrouping
 from argparse import Namespace
+from xuance.common import AgentGrouping
+
+import torch
+from xuance.torch import Module, nn
+from xuance.torch.learners import LearnerMAS
 
 
 class ISACDIS_Learner(LearnerMAS):
     def __init__(self,
                  config: Namespace,
                  agent_grouping: AgentGrouping,
-                 model: nn.Module,
+                 model: Module,
                  callback):
         super(ISACDIS_Learner, self).__init__(config, agent_grouping, model, callback)
         self.optimizer = {
