@@ -6,7 +6,8 @@ Implementation: TensorFlow 2.X
 """
 from argparse import Namespace
 from operator import itemgetter
-from xuance.common import List
+from xuance.common import AgentGrouping
+
 from xuance.tensorflow import tf, keras, Module
 from xuance.tensorflow.learners import LearnerMAS
 

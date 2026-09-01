@@ -166,7 +166,7 @@ class MeanFieldQNetwork(MixingQNetwork):
 
     def copy_target(self):
         for ep, tp in zip(self.individual_q_networks.parameters(), self.target_individual_q_networks.parameters()):
-            tp.data.copy_(ep)
+            tp.assign(ep)
 
 
 class MeanFiledActorCritic(IndependentActorCritic):

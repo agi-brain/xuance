@@ -333,7 +333,7 @@ class CounterfactualMultiAgentActorCritic(IndependentActorCritic):
 
     def copy_target(self):
         for ep, tp in zip(self.critics.parameters(), self.target_critics.parameters()):
-            tp.data.copy_(ep)
+            tp.assign(ep)
 
 
 class ValueDecompositionActorCritic(IndependentActorCritic):

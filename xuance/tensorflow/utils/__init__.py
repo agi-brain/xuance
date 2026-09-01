@@ -7,7 +7,8 @@ from .operations import (update_linear_decay,
                          set_seed,
                          get_flat_params,
                          assign_from_flat_params,
-                         assign_from_flat_grads)
+                         assign_from_flat_grads,
+                         zero_rnn_state_item)
 from .value_norm import ValueNorm
 from .tensor_memory import (TensorOnPolicyBuffer, TensorOnPolicyBufferAtari,
                             TensorOffPolicyBuffer, TensorOffPolicyBufferAtari)

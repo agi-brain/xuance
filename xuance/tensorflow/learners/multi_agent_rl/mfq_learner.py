@@ -4,9 +4,10 @@ Paper link:
 http://proceedings.mlr.press/v80/yang18d/yang18d.pdf
 Implementation: TensorFlow 2.X
 """
-from operator import itemgetter
 from argparse import Namespace
-from xuance.common import List, Optional
+from typing import Optional
+from xuance.common import AgentGrouping
+
 from xuance.tensorflow import tf, keras, Module
 from xuance.tensorflow.learners import LearnerMAS
 

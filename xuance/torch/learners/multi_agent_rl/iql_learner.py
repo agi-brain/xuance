@@ -8,7 +8,6 @@ from xuance.common import AgentGrouping
 import torch
 from xuance.torch import Module
 from xuance.torch.learners import OffPolicyMultiAgentLearner
-from xuance.torch.rl_models.modules import OffPolicyMARLBatch
 
 
 class IQL_Learner(OffPolicyMultiAgentLearner):
@@ -35,18 +34,28 @@ class IQL_Learner(OffPolicyMultiAgentLearner):
             for key in self.group_keys
         }
 
-    def _forward_transitions(self, batch: OffPolicyMARLBatch):
-        # calculate the individual Q values
+    def update(self, sample):
+        self.iterations += 1
+
+        # prepare training data
+        batch = self.build_training_data(sample=sample,
+                                         use_actions_mask=self.use_actions_mask)
+
+        info = self.callback.on_update_start(self.iterations, model=self.model, batch=batch)
+
+        # initialize rnn hidden states if use rnn
         rnn_states = self.model.init_rnn_states(batch.batch_size)
 
+        # calculate the individual Q values
         model_output = self.model(
             observations=batch.observations,
             agent_indices=batch.agent_indices,
             avail_actions=batch.avail_actions,
             rnn_states=rnn_states
         )
-        q_eval = model_output.values
+        q_eval = model_output.values  # the individual Q values
 
+        # calculate output with target networks
         with torch.no_grad():
             if self.use_rnn:
                 actions_next = model_output.actions
@@ -73,28 +82,6 @@ class IQL_Learner(OffPolicyMultiAgentLearner):
                 else:
                     actions_next = None
 
-        for group in self.group_keys:
-            if self.use_actions_mask:
-                if self.use_rnn:
-                    next_avail_actions = batch.avail_actions.group(group)[:, 1:]
-                else:
-                    next_avail_actions = batch.next_avail_actions.group(group)
-                q_next.group(group)[next_avail_actions == 0] = -1e10
-
-        return q_eval, q_next, actions_next
-
-    def update(self, sample):
-        self.iterations += 1
-
-        # prepare training data
-        batch = self.build_training_data(sample=sample,
-                                         use_actions_mask=self.use_actions_mask)
-
-        info = self.callback.on_update_start(self.iterations, model=self.model, batch=batch)
-
-        # feedforward
-        q_eval, q_next, actions_next = self._forward_transitions(batch)
-
         # calculate losses and update networks for each group of agents
         for group, n_agents in self.n_group_agents.items():
             mask_values = batch.valid_mask(group, n_agents).reshape(-1)
@@ -104,6 +91,13 @@ class IQL_Learner(OffPolicyMultiAgentLearner):
 
             actions_taken = batch.actions.packed(group)
             q_eval_taken = q_eval.packed(group).gather(-1, actions_taken.long().unsqueeze(-1)).reshape(-1)
+
+            if self.use_actions_mask:
+                if self.use_rnn:
+                    next_avail_actions = batch.avail_actions.group(group)[:, 1:]
+                else:
+                    next_avail_actions = batch.next_avail_actions.group(group)
+                q_next.group(group)[next_avail_actions == 0] = -1e10
 
             if self.config.double_q:
                 actions_next_taken = actions_next.packed(group)

@@ -6,7 +6,9 @@ Implementation: TensorFlow 2.X
 """
 from argparse import Namespace
 from operator import itemgetter
-from xuance.common import Optional, List
+from typing import Optional
+from xuance.common import AgentGrouping
+
 from xuance.tensorflow import tf, keras, Module
 from xuance.tensorflow.learners.multi_agent_rl.ippo_learner import IPPO_Learner
 

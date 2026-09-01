@@ -293,7 +293,7 @@ class OffPolicyMARLAgents(MARLAgents):
         rnn_states_new = model_output.rnn_states
         actions = model_output.actions
 
-        actions.grouped_tensor = {k: actions.grouped_tensor[k].reshape(batch_size, n).numpy()
+        actions.grouped_tensor = {k: tf.reshape(actions.grouped_tensor[k], [batch_size, n]).numpy()
                                   for k, n in self.n_group_agents.items()}
         actions_list = [{k: actions.agent_wise[k][i] for k in self.agent_keys} for i in range(batch_size)]
 

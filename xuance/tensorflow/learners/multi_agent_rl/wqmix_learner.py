@@ -4,10 +4,9 @@ Paper link:
 https://proceedings.neurips.cc/paper/2020/file/73a427badebe0e32caa2e1fc7530b7f3-Paper.pdf
 Implementation: TensorFlow 2.X
 """
-import numpy as np
 from argparse import Namespace
-from operator import itemgetter
-from xuance.common import List
+from xuance.common import AgentGrouping
+
 from xuance.tensorflow import tf, keras, Module
 from xuance.tensorflow.learners import LearnerMAS
 

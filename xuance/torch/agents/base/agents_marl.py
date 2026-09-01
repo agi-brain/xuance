@@ -376,9 +376,14 @@ class MARLAgents(ABC):
                 if self.use_rnn:
                     avail_actions[group] = avail_actions[group].unsqueeze(2)
 
+        if self.use_actions_mask:
+            grouped_avail_actions = AgentGroupedTensor(avail_actions, self.agent_grouping)
+        else:
+            grouped_avail_actions = None
+
         return (AgentGroupedTensor(obs_input, self.agent_grouping),
                 AgentGroupedTensor(agent_indices, self.agent_grouping),
-                AgentGroupedTensor(avail_actions, self.agent_grouping))
+                grouped_avail_actions)
 
     @abstractmethod
     def get_actions(self, *args, **kwargs):

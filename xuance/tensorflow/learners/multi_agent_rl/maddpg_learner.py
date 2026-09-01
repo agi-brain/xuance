@@ -5,35 +5,11 @@ https://proceedings.neurips.cc/paper/2017/file/68a9750337a418a86fe06c1991a1d64c-
 Implementation: TensorFlow 2.X
 Trick: Parameter sharing for all agents, with agents' one-hot IDs as actor-critic's inputs.
 """
-from argparse import Namespace
-from operator import itemgetter
-from xuance.common import List
-from xuance.tensorflow import tf, keras, Module
-from xuance.tensorflow.learners import LearnerMAS
+from xuance.tensorflow import tf
+from xuance.tensorflow.learners.multi_agent_rl.iddpg_learner import IDDPG_Learner
 
 
-class MADDPG_Learner(LearnerMAS):
-    def __init__(self,
-                 config: Namespace,
-                 agent_grouping: AgentGrouping,
-                 model: Module,
-                 callback):
-        super(MADDPG_Learner, self).__init__(config, agent_grouping, model, callback)
-        self.build_optimizer()
-        self.gamma = config.gamma
-        self.tau = config.tau
-
-    def build_optimizer(self):
-        if ("macOS" in self.os_name) and ("arm" in self.os_name):  # For macOS with Apple's M-series chips.
-            self.optimizer = {
-                key: {'actor': keras.optimizers.legacy.Adam(self.config.learning_rate_actor),
-                      'critic': keras.optimizers.legacy.Adam(self.config.learning_rate_critic)}
-                for key in self.model_keys}
-        else:
-            self.optimizer = {
-                key: {'actor': keras.optimizers.Adam(self.config.learning_rate_actor),
-                      'critic': keras.optimizers.Adam(self.config.learning_rate_critic)}
-                for key in self.model_keys}
+class MADDPG_Learner(IDDPG_Learner):
 
     @tf.function
     def forward_fn(self, batch_size, bs, obs, obs_joint, actions, actions_joint, rewards,

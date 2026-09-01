@@ -4,7 +4,8 @@ Implementation: TensorFlow 2.X
 """
 from argparse import Namespace
 from operator import itemgetter
-from xuance.common import List
+from xuance.common import AgentGrouping
+
 from xuance.tensorflow import tf, Module
 from xuance.tensorflow.learners.multi_agent_rl.isac_learner import ISAC_Learner
 

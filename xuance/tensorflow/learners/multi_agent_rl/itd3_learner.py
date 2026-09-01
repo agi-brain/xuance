@@ -1,9 +1,9 @@
 """
 Independent TD3 for multi-agent cooperative task
 """
-import torch
 from argparse import Namespace
 from xuance.common import AgentGrouping
+from xuance.tensorflow import Module
 from xuance.tensorflow.utils import AgentGroupedTensor
 from xuance.tensorflow.learners import OffPolicyMultiAgentLearner
 

@@ -48,6 +48,22 @@ def assign_from_flat_params(flat_params: Tensor, model: Module) -> Module:
         prev_ind += flat_size
     return model
 
+def zero_rnn_state_item(states: tf.Tensor, index: int | tf.Tensor) -> tf.Tensor:
+    """Reset one batch item's states.
+
+    Args:
+        states: Shape [num_layers, batch_size, hidden_size].
+        index: Batch index to reset.
+    """
+    index = tf.cast(index, tf.int32)
+    batch_size = tf.shape(states)[1]
+
+    # Shape: [batch_size]
+    keep_mask = 1.0 - tf.one_hot(index, depth=batch_size, dtype=states.dtype)
+
+    # Broadcast to [num_layers, batch_size, hidden_size].
+    return states * keep_mask[tf.newaxis, :, tf.newaxis]
+
 
 class MyLinearLR(keras.optimizers.schedules.LearningRateSchedule):
     def __init__(self, initial_learning_rate, start_factor, end_factor, total_iters):

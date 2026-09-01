@@ -1,6 +1,7 @@
 from gymnasium.spaces import Space, Discrete
 from typing import Type, Sequence, Optional, Union, Tuple
 from xuance.tensorflow import tf, keras, Tensor, Module
+from xuance.tensorflow.utils import zero_rnn_state_item
 from xuance.tensorflow.rl_models.modules import ModelOutput, RNN_State
 from xuance.tensorflow.rl_models.heads import (QValueHead, DuelingQValueHead, C51QValueHead,
                                                QuantileRegressionQValueHead, RecurrentQValueHead)
@@ -376,33 +377,16 @@ class DeepRecurrentQNetwork(Module):
             cell_states=cell_states,
         )
 
-    @staticmethod
-    def _zero_rnn_state_item(states: tf.Tensor, index: int | tf.Tensor) -> tf.Tensor:
-        """Reset one batch item's states.
-
-        Args:
-            states: Shape [num_layers, batch_size, hidden_size].
-            index: Batch index to reset.
-        """
-        index = tf.cast(index, tf.int32)
-        batch_size = tf.shape(states)[1]
-
-        # Shape: [batch_size]
-        keep_mask = 1.0 - tf.one_hot(index, depth=batch_size, dtype=states.dtype)
-
-        # Broadcast to [num_layers, batch_size, hidden_size].
-        return states * keep_mask[tf.newaxis, :, tf.newaxis]
-
     def init_rnn_states_item(
             self,
             rnn_states: RNN_State,
             i: int | tf.Tensor,
     ) -> RNN_State:
-        hidden_states = self._zero_rnn_state_item(rnn_states.hidden_states, i)
+        hidden_states = zero_rnn_state_item(rnn_states.hidden_states, i)
 
         cell_states = rnn_states.cell_states
         if self.lstm:
-            cell_states = self._zero_rnn_state_item(cell_states, i)
+            cell_states = zero_rnn_state_item(cell_states, i)
 
         return RNN_State(hidden_states=hidden_states, cell_states=cell_states)
 

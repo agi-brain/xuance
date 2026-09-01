@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from typing import Any, Optional, Dict
-from xuance.tensorflow import Tensor
+from xuance.tensorflow import tf, Tensor
 from xuance.tensorflow.utils import AgentGroupedTensor
 from xuance.tensorflow.rl_models.modules import Distribution
 
@@ -138,7 +138,8 @@ class MARLBatch:
         mask = self.agent_masks.grouped_tensor[group]
 
         if self.filled_masks is not None:
-            mask = mask * self.filled_masks.unsqueeze(1).repeat(1, n_agents, 1)
+            filled = tf.repeat(tf.expand_dims(self.filled_masks, axis=1), repeats=n_agents, axis=1)
+            mask = mask * filled
 
         return mask
 

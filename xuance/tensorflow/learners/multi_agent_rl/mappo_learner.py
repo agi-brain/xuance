@@ -7,7 +7,8 @@ Implementation: TensorFlow 2.X
 import numpy as np
 from argparse import Namespace
 from operator import itemgetter
-from xuance.common import List
+from xuance.common import AgentGrouping
+
 from xuance.tensorflow import tf, keras, Module
 from xuance.tensorflow.learners.multi_agent_rl.ippo_learner import IPPO_Learner
 

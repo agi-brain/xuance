@@ -50,7 +50,7 @@ class MixingQNetwork(Module):
             rnn_states: Dict[str, RNN_State | dict] = None,
     ) -> MultiAgentModelOutput:
         rep_out, rnn_states_new, argmax_action, evalQ = {}, {}, {}, {}
-        input_shape = observations.grouped_tensor[self.group_keys[0]].shape
+        input_shape = tf.shape(observations.grouped_tensor[self.group_keys[0]])
         batch_size = input_shape[0]
         seq_len = input_shape[2] if self.use_rnn else 1
 
@@ -72,14 +72,14 @@ class MixingQNetwork(Module):
             rnn_states_new[group] = individual_output.representations.rnn_states
             rep_out[group] = individual_output.representations
             # Q value shape: batch_size * n_agent * -1 or batch_size * n_agent * seq_len * -1
-            evalQ[group] = individual_output.values.reshape(*batch_shape, -1)
+            evalQ[group] = tf.reshape(individual_output.values, (*batch_shape, -1))
 
             if avail_actions is not None:
-                evalQ_detach = evalQ[group].clone().detach()
-                evalQ_detach[avail_actions.group(group) == 0] = -1e10
-                argmax_action[group] = evalQ_detach.argmax(dim=-1, keepdim=False)
+                evalQ_masked = tf.where(avail_actions.group(group) > 0, evalQ[group],
+                                        tf.cast(-1e10, evalQ[group].dtype))
+                argmax_action[group] = tf.argmax(evalQ_masked, axis=-1, output_type=tf.int32)
             else:
-                argmax_action[group] = evalQ[group].argmax(dim=-1, keepdim=False)
+                argmax_action[group] = tf.argmax(evalQ[group], axis=-1, output_type=tf.int32)
 
         return MultiAgentModelOutput(
             actions=AgentGroupedTensor(argmax_action, self.grouping),
@@ -94,7 +94,7 @@ class MixingQNetwork(Module):
                 group_key: Optional[str] = None,
                 rnn_states: Dict[str, RNN_State | dict] = None) -> MultiAgentModelOutput:
         rep_out, rnn_states_new, q_target = {}, {}, {}
-        input_shape = observations.grouped_tensor[self.group_keys[0]].shape
+        input_shape = tf.shape(observations.grouped_tensor[self.group_keys[0]])
         batch_size = input_shape[0]
         seq_len = input_shape[2] if self.use_rnn else 1
 
@@ -116,7 +116,7 @@ class MixingQNetwork(Module):
             rnn_states_new[group] = individual_output.representations.rnn_states
             rep_out[group] = individual_output.representations
             # Q value shape: batch_size * n_agent * -1 or batch_size * n_agent * seq_len * -1
-            q_target[group] = individual_output.values.reshape(*batch_shape, -1)
+            q_target[group] = tf.reshape(individual_output.values, (*batch_shape, -1))
 
         return MultiAgentModelOutput(
             values=AgentGroupedTensor(q_target, self.grouping),
@@ -126,14 +126,14 @@ class MixingQNetwork(Module):
 
     def Q_tot(self, individual_values: Dict[str, Tensor], states: Optional[Tensor] = None):
         # Expected shape: [tot_batch_size * 1, ...] -> tot_batch_size * n_agents_all
-        individual_inputs = tf.concat([individual_values[k].reshape([-1, 1]) for k in self.agent_keys], axis=-1)
+        individual_inputs = tf.concat([tf.reshape(individual_values[k], [-1, 1]) for k in self.agent_keys], axis=-1)
         # Output shape: tot_batch_size * 1
         evalQ_tot = self.eval_Qtot(individual_inputs, states)
         return evalQ_tot
 
     def Qtarget_tot(self, individual_values: Dict[str, Tensor], states: Optional[Tensor] = None):
         # Expected shape: [tot_batch_size * 1, ...] -> tot_batch_size * n_agents_all
-        individual_inputs = tf.concat([individual_values[k].reshape([-1, 1]) for k in self.agent_keys], axis=-1)
+        individual_inputs = tf.concat([tf.reshape(individual_values[k], [-1, 1]) for k in self.agent_keys], axis=-1)
         # Output shape: tot_batch_size * 1
         q_target_tot = self.target_Qtot(individual_inputs, states)
         return q_target_tot
@@ -158,10 +158,10 @@ class MixingQNetwork(Module):
         return rnn_states
 
     def copy_target(self):
-        for ep, tp in zip(self.individual_q_networks.parameters(), self.target_individual_q_networks.parameters()):
-            tp.data.copy_(ep)
-        for ep, tp in zip(self.eval_Qtot.parameters(), self.target_Qtot.parameters()):
-            tp.data.copy_(ep)
+        for ep, tp in zip(self.individual_q_networks.variables, self.target_individual_q_networks.variables):
+            tp.assign(ep)
+        for ep, tp in zip(self.eval_Qtot.variables, self.target_Qtot.variables):
+            tp.assign(ep)
 
 
 class WeightedMixingQNetwork(MixingQNetwork):
@@ -297,9 +297,9 @@ class WeightedMixingQNetwork(MixingQNetwork):
         super().copy_target()
         for ep, tp in zip(self.individual_q_centralized.parameters(),
                           self.target_individual_q_centralized.parameters()):
-            tp.data.copy_(ep)
+            tp.assign(ep)
         for ep, tp in zip(self.ff_mixer.parameters(), self.target_ff_mixer.parameters()):
-            tp.data.copy_(ep)
+            tp.assign(ep)
 
 
 class QTranMixingNetwork(MixingQNetwork):
@@ -424,7 +424,7 @@ class QTranMixingNetwork(MixingQNetwork):
     def copy_target(self):
         super().copy_target()
         for ep, tp in zip(self.qtran_net.parameters(), self.target_qtran_net.parameters()):
-            tp.data.copy_(ep)
+            tp.assign(ep)
 
 
 class DeepCoordinationGraph(Module):
@@ -551,11 +551,11 @@ class DeepCoordinationGraph(Module):
 
     def copy_target(self):
         for ep, tp in zip(self.representation.parameters(), self.target_representation.parameters()):
-            tp.data.copy_(ep)
+            tp.assign(ep)
         for ep, tp in zip(self.utility.parameters(), self.target_utility.parameters()):
-            tp.data.copy_(ep)
+            tp.assign(ep)
         for ep, tp in zip(self.payoffs.parameters(), self.target_payoffs.parameters()):
-            tp.data.copy_(ep)
+            tp.assign(ep)
         if self.dcg_s:
             for ep, tp in zip(self.bias.parameters(), self.target_bias.parameters()):
-                tp.data.copy_(ep)
+                tp.assign(ep)
