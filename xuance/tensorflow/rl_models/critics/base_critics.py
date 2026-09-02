@@ -3,7 +3,7 @@ from typing import Type, Sequence, Optional, Union
 from gymnasium.spaces import Discrete, Box
 from xuance.tensorflow import tf, keras, Tensor, Module
 from xuance.tensorflow.rl_models.heads import ValueHead, QValueHead
-from xuance.tensorflow.rl_models.modules import CriticOutput
+from xuance.tensorflow.rl_models.modules import CriticOutput, RNN_State
 
 
 class StateValueCritic(Module):
@@ -156,8 +156,10 @@ class DiscreteActionValueCritic(Module):
 
     def call(self,
              observation: Tensor,
+             agent_indices: Optional[Tensor] = None,
+             rnn_states: Optional[RNN_State] = None,
              **kwargs) -> CriticOutput:
-        rep_out = self.representation(observation, **kwargs)
+        rep_out = self.representation(observation, agent_indices=agent_indices, rnn_states=rnn_states, **kwargs)
         return CriticOutput(
             representations=rep_out,
             values=self.critic_head(rep_out.embeddings, **kwargs)

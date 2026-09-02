@@ -3,7 +3,7 @@ from abc import abstractmethod
 from typing import Dict, Optional
 from xuance.common import AgentGrouping
 from xuance.tensorflow import Tensor, Module, ModuleDict
-from xuance.torch.rl_models.modules import RNN_State, MultiAgentModelOutput
+from xuance.tensorflow.rl_models.modules import RNN_State, MultiAgentModelOutput
 
 
 class OffPolicyMultiAgentActorCritic(Module):

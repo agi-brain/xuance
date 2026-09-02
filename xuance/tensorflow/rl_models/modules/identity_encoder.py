@@ -40,7 +40,6 @@ class IdentityEncoder(Module):
     def call(
             self,
             agent_indices: Tensor,
-            training: Optional[bool] = None
     ) -> Optional[Tensor]:
 
         if self.mode == "none":

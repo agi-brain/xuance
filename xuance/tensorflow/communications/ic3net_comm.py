@@ -1,9 +1,8 @@
 from argparse import Namespace
-from typing import Sequence, Optional, Union
+from typing import Sequence, Optional
 
-import torch
-
-from xuance.torch.communications.comm_net import CommNet
+from xuance.tensorflow import Tensor
+from xuance.tensorflow.communications.comm_net import CommNet
 
 
 class IC3NetComm(CommNet):
@@ -14,13 +13,12 @@ class IC3NetComm(CommNet):
                  model_keys: dict = None,
                  agent_keys: dict = None,
                  n_agents: int = 1,
-                 device: Optional[Union[str, int, torch.device]] = None,
                  config: Optional[Namespace] = None,
                  **kwargs):
         super(IC3NetComm, self).__init__(input_shape, hidden_sizes, comm_passes, model_keys,
-                                          agent_keys, n_agents, device, config, **kwargs)
+                                          agent_keys, n_agents, config, **kwargs)
 
-    def forward(self, obs: torch.Tensor, msg_send: dict, alive_ally: dict, gate_control: dict = None,):
+    def forward(self, obs: Tensor, msg_send: dict, alive_ally: dict, gate_control: dict = None,):
         alive_ally = {k: torch.as_tensor(alive_ally[k], dtype=torch.float32, device=self.device) for k in
                       self.agent_keys}
         batch_size, seq_length = obs.shape[0], obs.shape[1]

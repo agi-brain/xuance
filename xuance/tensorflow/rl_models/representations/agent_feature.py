@@ -1,6 +1,7 @@
+from typing import Optional
 from tensorflow import Tensor
 from xuance.tensorflow.utils import Module
-from xuance.tensorflow.rl_models.modules.outputs import RepresentationOutput
+from xuance.tensorflow.rl_models.modules.outputs import RepresentationOutput, RNN_State
 from xuance.tensorflow.rl_models.modules.identity_encoder import IdentityEncoder, IdentityFeatureFusion
 
 
@@ -36,8 +37,11 @@ class AgentFeatureEncoder(Module):
     def call(self,
              observations: Tensor,
              agent_indices=None,
+             rnn_states: Optional[RNN_State] = None,
              **representation_kwargs) -> RepresentationOutput:
-        representation_output = self.obs_representation(observations, **representation_kwargs)
+        representation_output = self.obs_representation(observations,
+                                                        rnn_states=rnn_states,
+                                                        **representation_kwargs)
 
         identity_embeddings = self.identity_representation(agent_indices=agent_indices)
 

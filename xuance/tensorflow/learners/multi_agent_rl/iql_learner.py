@@ -34,7 +34,6 @@ class IQL_Learner(OffPolicyMultiAgentLearner):
             seq_length=kwargs["seq_length"],
             observations=AgentGroupedTensor(kwargs["observations"], self.agent_grouping),
             actions=AgentGroupedTensor(kwargs["actions"], self.agent_grouping),
-            next_observations=AgentGroupedTensor(kwargs["next_observations"], self.agent_grouping),
             rewards=AgentGroupedTensor(kwargs["rewards"], self.agent_grouping),
             terminals=AgentGroupedTensor(kwargs["terminals"], self.agent_grouping),
             agent_masks=AgentGroupedTensor(kwargs["agent_masks"], self.agent_grouping),
@@ -46,6 +45,8 @@ class IQL_Learner(OffPolicyMultiAgentLearner):
                 batch.next_avail_actions = AgentGroupedTensor(kwargs["next_avail_actions"], self.agent_grouping)
         if self.use_rnn:
             batch.filled_masks = kwargs["filled_masks"]
+        else:
+            batch.next_observations = AgentGroupedTensor(kwargs["next_observations"], self.agent_grouping)
 
         with tf.GradientTape() as tape:
             # calculate the individual Q values
@@ -162,7 +163,6 @@ class IQL_Learner(OffPolicyMultiAgentLearner):
             "seq_length": batch.seq_length,
             "observations": batch.observations.grouped_tensor,
             "actions": batch.actions.grouped_tensor,
-            "next_observations": batch.next_observations.grouped_tensor,
             "rewards": batch.rewards.grouped_tensor,
             "terminals": batch.terminals.grouped_tensor,
             "agent_masks": batch.agent_masks.grouped_tensor,
@@ -180,6 +180,8 @@ class IQL_Learner(OffPolicyMultiAgentLearner):
 
         if self.use_rnn:
             inputs_learn["filled_masks"] = batch.filled_masks
+        else:
+            inputs_learn["next_observations"] = batch.next_observations.grouped_tensor
 
         info_train = self.learn(**inputs_learn)
 

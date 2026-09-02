@@ -6,9 +6,9 @@ from argparse import Namespace
 from typing import List
 from xuance.common import AgentGrouping
 from xuance.tensorflow import tf, keras, Module
-from xuance.torch.utils import AgentGroupedTensor
-from xuance.torch.learners import OffPolicyMultiAgentLearner
-from xuance.torch.rl_models.modules import OffPolicyMARLBatch
+from xuance.tensorflow.utils import AgentGroupedTensor
+from xuance.tensorflow.learners import OffPolicyMultiAgentLearner
+from xuance.tensorflow.rl_models.modules import OffPolicyMARLBatch
 
 
 class IDDPG_Learner(OffPolicyMultiAgentLearner):

@@ -1,9 +1,9 @@
 from argparse import Namespace
 from typing import Sequence, Optional, Union
+
 import torch
 from torch import nn
-
-from xuance.torch.communications.ic3net_comm import IC3NetComm
+from xuance.tensorflow.communications.ic3net_comm import IC3NetComm
 
 
 class TarMAC(IC3NetComm):

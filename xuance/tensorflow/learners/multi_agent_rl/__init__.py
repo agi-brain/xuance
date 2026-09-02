@@ -19,6 +19,6 @@ from .mappo_learner import MAPPO_Learner
 from .itd3_learner import ITD3_Learner
 from .matd3_learner import MATD3_Learner
 from .mfac_learner import MFAC_Learner
-from .commnet_learner import CommNet_Learner
-from .ic3net_learner import IC3Net_Learner
-from .tarmac_learner import TarMAC_Learner
+# from .commnet_learner import CommNet_Learner
+# from .ic3net_learner import IC3Net_Learner
+# from .tarmac_learner import TarMAC_Learner

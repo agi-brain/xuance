@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 
 from xuance.common import Optional, Union, Sequence
-from xuance.torch import Module
+from xuance.tensorflow import Module
 
 
 class CommNet(Module):

@@ -29,7 +29,7 @@ class MixingQNetwork(Module):
         self.use_rnn = use_rnn
 
         self.individual_q_networks = q_networks
-        self.target_individual_q_networks = self.individual_q_networks.clone(copy_weights=True, trainable=False, 
+        self.target_individual_q_networks = self.individual_q_networks.clone(copy_weights=True, trainable=False,
                                                                              name="target_individual_q_networks")
         self.eval_Qtot = mixer
         self.target_Qtot = self.eval_Qtot.clone(copy_weights=True, trainable=False, name="target_Qtot")
@@ -60,14 +60,13 @@ class MixingQNetwork(Module):
             n_agent = self.n_group_agents[group]
             batch_shape = (batch_size, n_agent, seq_len) if self.use_rnn else (batch_size, n_agent)
 
-            input_kwargs = {
-                "agent_indices": agent_indices.packed(group)
-            }
             if self.use_rnn:
-                input_kwargs["rnn_states"] = rnn_states[group]
-
-            individual_output = self.individual_q_networks[group](observations.packed(group),
-                                                                  **input_kwargs)
+                individual_output = self.individual_q_networks[group](observations.packed(group),
+                                                                      agent_indices=agent_indices.packed(group),
+                                                                      rnn_states=rnn_states[group])
+            else:
+                individual_output = self.individual_q_networks[group](observations.packed(group),
+                                                                      agent_indices=agent_indices.packed(group))
 
             rnn_states_new[group] = individual_output.representations.rnn_states
             rep_out[group] = individual_output.representations
@@ -104,14 +103,13 @@ class MixingQNetwork(Module):
             n_agent = self.n_group_agents[group]
             batch_shape = (batch_size, n_agent, seq_len) if self.use_rnn else (batch_size, n_agent)
 
-            target_input_kwargs = {
-                "agent_indices": agent_indices.packed(group)
-            }
             if self.use_rnn:
-                target_input_kwargs["rnn_states"] = rnn_states[group]
-
-            individual_output = self.target_individual_q_networks[group](observations.packed(group),
-                                                                         **target_input_kwargs)
+                individual_output = self.target_individual_q_networks[group](observations.packed(group),
+                                                                             agent_indices=agent_indices.packed(group),
+                                                                             rnn_states=rnn_states[group])
+            else:
+                individual_output = self.target_individual_q_networks[group](observations.packed(group),
+                                                                             agent_indices=agent_indices.packed(group))
 
             rnn_states_new[group] = individual_output.representations.rnn_states
             rep_out[group] = individual_output.representations

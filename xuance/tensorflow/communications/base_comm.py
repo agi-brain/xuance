@@ -1,8 +1,8 @@
 import torch
 import torch.nn as nn
 from xuance.common import Optional, Callable, Union, Sequence
-from xuance.torch import Module, Tensor
-from xuance.torch.utils import mlp_block, ModuleType
+from xuance.tensorflow import Module, Tensor, ModuleType
+from xuance.tensorflow.rl_models.modules import mlp_block
 
 
 class BaseComm(Module):

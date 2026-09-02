@@ -69,7 +69,10 @@ class Basic_RNN(Module):
         return keras.Sequential(layers), rnn_layer, input_shape
 
     def call(
-            self, x: Tensor, rnn_states: RNN_State, **kwargs
+            self,
+            x: Tensor,
+            rnn_states: RNN_State,
+            **kwargs
     ) -> RepresentationOutput:
 
         tensor_x = tf.cast(x, dtype=tf.float32)
@@ -80,7 +83,7 @@ class Basic_RNN(Module):
         mlp_output = self.mlp(tensor_x)
 
         if self.lstm:
-            output, hidden_states, cell_states = self._forward_lstm(mlp_output, rnn_states)
+            output, hidden_states, cell_states = self._forward_lstm(mlp_output, rnn_states=rnn_states)
 
             if self.use_normalizer:
                 output = self.norm_rnn(output)
@@ -90,7 +93,7 @@ class Basic_RNN(Module):
                 cell_states=tf.stop_gradient(cell_states),
             )
         else:
-            output, hidden_states = self._forward_gru(mlp_output, rnn_states)
+            output, hidden_states = self._forward_gru(mlp_output, rnn_states=rnn_states)
 
             if self.use_normalizer:
                 output = self.norm_rnn(output)
@@ -113,19 +116,38 @@ class Basic_RNN(Module):
         The GRU block translates XuanCe's stacked state format
         ``[N_layers, B, H]`` to the per-layer Keras state format internally.
         """
+        hidden_states_new = []
+        hidden_states = rnn_states.hidden_states
+        for i, rnn_layer in enumerate(self.rnn):
+            x, h, c = rnn_layer(x, hidden_states[i])
+            hidden_states_new.append(h)
 
-        return self.rnn(x, rnn_states.hidden_states)
+        hidden_states = tf.stack(hidden_states_new, axis=0)
+        output = x
+        return output, hidden_states
 
-    def _forward_lstm(self, x: Tensor, rnn_states: RNN_State) -> Tuple[Tensor, Tensor, Tensor]:
+    def _forward_lstm(
+            self,
+            x: Tensor,
+            rnn_states: RNN_State
+    ) -> Tuple[Tensor, Tensor, Tensor]:
         """
         The LSTM block accepts and returns XuanCe's stacked state format:
             hidden_states: [N_layers, B, H]
             cell_states:   [N_layers, B, H]
         """
-        output, (hidden_states, cell_states) = self.rnn(
-            x,
-            (rnn_states.hidden_states, rnn_states.cell_states),
-        )
+        hidden_states_new = []
+        cell_states_new = []
+        hidden_states = rnn_states.hidden_states
+        cell_states = rnn_states.cell_states
+        for i, rnn_layer in enumerate(self.rnn):
+            x, h, c = rnn_layer(x, [hidden_states[i], cell_states[i]])
+            hidden_states_new.append(h)
+            cell_states_new.append(c)
+
+        hidden_states = tf.stack(hidden_states_new, axis=0)
+        cell_states = tf.stack(cell_states_new, axis=0)
+        output = x
         return output, hidden_states, cell_states
 
     def init_rnn_states(self, batch: int) -> RNN_State:
