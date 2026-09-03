@@ -177,17 +177,19 @@ class WeightedMixingQNetwork(MixingQNetwork):
                                                      use_rnn=use_rnn,
                                                      use_distributed_training=use_distributed_training,
                                                      **kwargs)
-        self.individual_q_centralized = deepcopy(q_networks)
-        self.target_individual_q_centralized = deepcopy(self.individual_q_centralized)
+        self.individual_q_centralized = q_networks.clone(copy_weights=False, trainable=True,
+                                                         name="individual_q_centralized")
+        self.target_individual_q_centralized = self.individual_q_centralized.clone(copy_weights=True, trainable=False,
+                                                                                   name="target_individual_q_centralized")
         self.ff_mixer = ff_mixer
-        self.target_ff_mixer = deepcopy(self.ff_mixer)
+        self.target_ff_mixer = self.ff_mixer.clone(copy_weights=True, trainable=False, name="target_ff_mixer")
 
         # Prepare DDP module.
 
     @property
     def parameters_model(self):
-        return list(self.individual_q_networks.parameters()) + list(self.eval_Qtot.parameters()) + list(
-            self.individual_q_centralized.parameters()) + list(self.ff_mixer.parameters())
+        return (self.individual_q_networks.trainable_variables + self.eval_Qtot.trainable_variables +
+                self.individual_q_centralized.trainable_variables + self.ff_mixer.trainable_variables)
 
     def q_centralized(
             self,
@@ -197,7 +199,7 @@ class WeightedMixingQNetwork(MixingQNetwork):
             rnn_states: Dict[str, RNN_State | dict] = None
     ) -> MultiAgentModelOutput:
         rnn_states_new, evalQ = {}, {}
-        input_shape = observations.grouped_tensor[self.group_keys[0]].shape
+        input_shape = tf.shape(observations.grouped_tensor[self.group_keys[0]])
         batch_size = input_shape[0]
         seq_len = input_shape[2] if self.use_rnn else 1
 
@@ -207,15 +209,15 @@ class WeightedMixingQNetwork(MixingQNetwork):
             n_agent = self.n_group_agents[group]
             batch_shape = (batch_size, n_agent, seq_len) if self.use_rnn else (batch_size, n_agent)
 
-            input_kwargs = {
-                "agent_indices": agent_indices.packed(group)
-            }
             if self.use_rnn:
-                input_kwargs["rnn_states"] = rnn_states[group]
+                individual_output = self.individual_q_centralized[group](observations.packed(group),
+                                                                         agent_indices=agent_indices.packed(group),
+                                                                         rnn_states=rnn_states[group])
+            else:
+                individual_output = self.individual_q_centralized[group](observations.packed(group),
+                                                                         agent_indices=agent_indices.packed(group))
 
-            individual_output = self.individual_q_centralized[group](observations.packed(group), **input_kwargs)
-
-            evalQ[group] = individual_output.values.reshape(*batch_shape, -1)
+            evalQ[group] = tf.reshape(individual_output.values, (*batch_shape, -1))
             rnn_states_new[group] = individual_output.representations.rnn_states
 
         return MultiAgentModelOutput(
@@ -231,7 +233,7 @@ class WeightedMixingQNetwork(MixingQNetwork):
             rnn_states: Dict[str, RNN_State | dict] = None
     ) -> MultiAgentModelOutput:
         rnn_states_new, q_target = {}, {}
-        input_shape = observations.grouped_tensor[self.group_keys[0]].shape
+        input_shape = tf.shape(observations.grouped_tensor[self.group_keys[0]])
         batch_size = input_shape[0]
         seq_len = input_shape[2] if self.use_rnn else 1
 
@@ -241,16 +243,19 @@ class WeightedMixingQNetwork(MixingQNetwork):
             n_agent = self.n_group_agents[group]
             batch_shape = (batch_size, n_agent, seq_len) if self.use_rnn else (batch_size, n_agent)
 
-            target_input_kwargs = {
-                "agent_indices": agent_indices.packed(group)
-            }
             if self.use_rnn:
-                target_input_kwargs["rnn_states"] = rnn_states[group]
+                individual_output = self.target_individual_q_centralized[group](
+                    observations.packed(group),
+                    agent_indices=agent_indices.packed(group),
+                    rnn_states=rnn_states[group]
+                )
+            else:
+                individual_output = self.target_individual_q_centralized[group](
+                    observations.packed(group),
+                    agent_indices=agent_indices.packed(group)
+                )
 
-            individual_output = self.target_individual_q_centralized[group](observations.packed(group),
-                                                                            **target_input_kwargs)
-
-            q_target[group] = individual_output.values.reshape(*batch_shape, -1)
+            q_target[group] = tf.reshape(individual_output.values, (*batch_shape, -1))
             rnn_states_new[group] = individual_output.representations.rnn_states
 
         return MultiAgentModelOutput(
@@ -260,14 +265,14 @@ class WeightedMixingQNetwork(MixingQNetwork):
 
     def q_feedforward(self, individual_values: Dict[str, Tensor], states: Optional[Tensor] = None):
         # Expected shape: [tot_batch_size * 1, ...] -> tot_batch_size * n_agents_all
-        individual_inputs = torch.concat([individual_values[k].reshape([-1, 1]) for k in self.agent_keys], dim=-1)
+        individual_inputs = tf.concat([tf.reshape(individual_values[k], [-1, 1]) for k in self.agent_keys], axis=-1)
         # Output shape: tot_batch_size * 1
         evalQ_tot = self.ff_mixer(individual_inputs, states)
         return evalQ_tot
 
     def target_q_feedforward(self, individual_values: Dict[str, Tensor], states: Optional[Tensor] = None):
         # Expected shape: [tot_batch_size * 1, ...] -> tot_batch_size * n_agents_all
-        individual_inputs = torch.concat([individual_values[k].reshape([-1, 1]) for k in self.agent_keys], dim=-1)
+        individual_inputs = tf.concat([tf.reshape(individual_values[k], [-1, 1]) for k in self.agent_keys], axis=-1)
         # Output shape: tot_batch_size * 1
         evalQ_tot = self.target_ff_mixer(individual_inputs, states)
         return evalQ_tot
@@ -293,10 +298,9 @@ class WeightedMixingQNetwork(MixingQNetwork):
 
     def copy_target(self):
         super().copy_target()
-        for ep, tp in zip(self.individual_q_centralized.parameters(),
-                          self.target_individual_q_centralized.parameters()):
+        for ep, tp in zip(self.individual_q_centralized.variables, self.target_individual_q_centralized.variables):
             tp.assign(ep)
-        for ep, tp in zip(self.ff_mixer.parameters(), self.target_ff_mixer.parameters()):
+        for ep, tp in zip(self.ff_mixer.variables, self.target_ff_mixer.variables):
             tp.assign(ep)
 
 

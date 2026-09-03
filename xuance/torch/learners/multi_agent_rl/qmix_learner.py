@@ -8,19 +8,18 @@ from xuance.common import AgentGrouping
 
 import torch
 from xuance.torch import Module
-from xuance.torch.learners.multi_agent_rl.iql_learner import IQL_Learner
+from xuance.torch.learners import OffPolicyMultiAgentLearner
 
 
-class QMIX_Learner(IQL_Learner):
+class QMIX_Learner(OffPolicyMultiAgentLearner):
     def __init__(self,
                  config: Namespace,
                  agent_grouping: AgentGrouping,
                  model: Module,
                  callback):
         super(QMIX_Learner, self).__init__(config, agent_grouping, model, callback)
-
-    def build_optimizer(self):
-        super(IQL_Learner, self).build_optimizer()
+        self.sync_frequency = config.sync_frequency
+        self.n_actions = {k: self.model.individual_q_networks[k].action_space.n for k in self.group_keys}
 
     def update(self, sample):
         self.iterations += 1

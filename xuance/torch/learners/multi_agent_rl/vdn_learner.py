@@ -8,19 +8,18 @@ from xuance.common import AgentGrouping
 
 import torch
 from xuance.torch import Module
-from xuance.torch.learners.multi_agent_rl.iql_learner import IQL_Learner
+from xuance.torch.learners import OffPolicyMultiAgentLearner
 
 
-class VDN_Learner(IQL_Learner):
+class VDN_Learner(OffPolicyMultiAgentLearner):
     def __init__(self,
                  config: Namespace,
                  agent_grouping: AgentGrouping,
                  model: Module,
                  callback):
         super(VDN_Learner, self).__init__(config, agent_grouping, model, callback)
-
-    def build_optimizer(self):
-        super(IQL_Learner, self).build_optimizer()
+        self.sync_frequency = config.sync_frequency
+        self.n_actions = {k: self.model.individual_q_networks[k].action_space.n for k in self.group_keys}
 
     def update(self, sample):
         self.iterations += 1
@@ -37,8 +36,44 @@ class VDN_Learner(IQL_Learner):
         info = self.callback.on_update_start(self.iterations, model=self.model, batch=batch,
                                              rewards_tot=rewards_tot, terminals_tot=terminals_tot)
 
-        # feedforward
-        q_eval, q_next, actions_next = self._forward_transitions(batch)
+        # initialize rnn hidden states when use rnn
+        rnn_states = self.model.init_rnn_states(batch.batch_size)
+
+        # calculate the individual Q values
+        model_output = self.model(
+            observations=batch.observations,
+            agent_indices=batch.agent_indices,
+            avail_actions=batch.avail_actions,
+            rnn_states=rnn_states
+        )
+        q_eval = model_output.values  # the individual Q values
+
+        # calculate output with target networks
+        with torch.no_grad():
+            if self.use_rnn:
+                actions_next = model_output.actions
+
+                q_next = self.model.Qtarget(
+                    observations=batch.observations,
+                    agent_indices=batch.agent_indices,
+                    rnn_states=rnn_states
+                ).values
+                q_eval.grouped_tensor = {k: v[:, :, :-1] for k, v in q_eval.grouped_tensor.items()}
+                q_next.grouped_tensor = {k: v[:, :, 1:] for k, v in q_next.grouped_tensor.items()}
+                actions_next.grouped_tensor = {k: v[:, :, 1:] for k, v in actions_next.grouped_tensor.items()}
+
+            else:
+                q_next = self.model.Qtarget(
+                    observations=batch.next_observations,
+                    agent_indices=batch.agent_indices,
+                ).values
+
+                if self.config.double_q:
+                    actions_next = self.model(observations=batch.next_observations,
+                                              agent_indices=batch.agent_indices,
+                                              avail_actions=batch.next_avail_actions).actions
+                else:
+                    actions_next = None
 
         # calculate target values
         q_eval_a, q_next_a = {}, {}
@@ -48,6 +83,13 @@ class VDN_Learner(IQL_Learner):
             actions_taken = batch.actions.group(group)
             q_eval_taken = q_eval.group(group).gather(-1, actions_taken.long().unsqueeze(-1)).reshape(
                 [batch.batch_size, n_agents, batch.seq_length])
+
+            if self.use_actions_mask:
+                if self.use_rnn:
+                    next_avail_actions = batch.avail_actions.group(group)[:, 1:]
+                else:
+                    next_avail_actions = batch.next_avail_actions.group(group)
+                q_next.group(group)[next_avail_actions == 0] = -1e10
 
             if self.config.double_q:
                 actions_next_taken = actions_next.group(group)

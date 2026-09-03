@@ -1,7 +1,9 @@
 from argparse import Namespace
 from gymnasium.spaces import Space
-from xuance.common import List, Optional, MultiAgentBaseCallback
+from typing import List, Optional
+from xuance.common import MultiAgentBaseCallback
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
+
 from xuance.tensorflow import Module, ModuleDict
 from xuance.tensorflow.agents.multi_agent_rl import QMIX_Agents
 from xuance.tensorflow.rl_models import DiscreteActionValueCritic
@@ -56,8 +58,7 @@ class WQMIX_Agents(QMIX_Agents):
                 critic_hidden_size=self.config.q_hidden_size,
                 normalizer=self.normalizer_fn,
                 initializer=self.initializer,
-                activation=self.activation,
-                device=self.device
+                activation=self.activation
             )
 
         # build mixer
@@ -65,15 +66,14 @@ class WQMIX_Agents(QMIX_Agents):
             dim_state=self.state_space.shape[0],
             dim_hidden=self.config.hidden_dim_mixing_net,
             dim_hypernet_hidden=self.config.hidden_dim_hyper_net,
-            n_agents=self.n_agents,
-            device=self.device
+            n_agents=self.n_agents
         )
 
         ff_mixer = QMIX_FF_Mixer(
             dim_state=self.state_space.shape[0],
             dim_hidden=self.config.hidden_dim_ff_mix_net,
-            n_agents=self.n_agents,
-            device=self.device)
+            n_agents=self.n_agents
+        )
 
         model = WeightedMixingQNetwork(
             grouping=self.agent_grouping,
@@ -81,7 +81,6 @@ class WQMIX_Agents(QMIX_Agents):
             mixer=mixer,
             ff_mixer=ff_mixer,
             use_rnn=self.use_rnn,
-            device=self.device,
             use_distributed_training=self.distributed_training
         )
 

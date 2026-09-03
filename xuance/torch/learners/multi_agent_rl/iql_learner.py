@@ -43,7 +43,7 @@ class IQL_Learner(OffPolicyMultiAgentLearner):
 
         info = self.callback.on_update_start(self.iterations, model=self.model, batch=batch)
 
-        # initialize rnn hidden states if use rnn
+        # initialize rnn hidden states when use rnn
         rnn_states = self.model.init_rnn_states(batch.batch_size)
 
         # calculate the individual Q values

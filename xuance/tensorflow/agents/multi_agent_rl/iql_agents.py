@@ -1,4 +1,3 @@
-import numpy as np
 from argparse import Namespace
 from gymnasium.spaces import Space
 from typing import List, Optional, Dict, Tuple

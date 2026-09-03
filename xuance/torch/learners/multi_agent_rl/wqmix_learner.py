@@ -9,23 +9,40 @@ from xuance.common import AgentGrouping
 import torch
 from xuance.torch import Module
 from xuance.torch.utils import AgentGroupedTensor
-from xuance.torch.learners.multi_agent_rl.iql_learner import IQL_Learner
-from xuance.torch.rl_models.modules import OffPolicyMARLBatch
+from xuance.torch.learners import OffPolicyMultiAgentLearner
 
 
-class WQMIX_Learner(IQL_Learner):
+class WQMIX_Learner(OffPolicyMultiAgentLearner):
     def __init__(self,
                  config: Namespace,
                  agent_grouping: AgentGrouping,
                  model: Module,
                  callback):
         super(WQMIX_Learner, self).__init__(config, agent_grouping, model, callback)
+        self.sync_frequency = config.sync_frequency
+        self.n_actions = {k: self.model.individual_q_networks[k].action_space.n for k in self.group_keys}
         self.alpha = config.alpha
 
-    def build_optimizer(self):
-        super(IQL_Learner, self).build_optimizer()
+    def update(self, sample):
+        self.iterations += 1
 
-    def _forward_transitions(self, batch: OffPolicyMARLBatch):
+        # prepare training data
+        batch = self.build_training_data(
+            sample=sample,
+            use_actions_mask=self.use_actions_mask,
+            use_global_state=True
+        )
+
+        rewards_tot = torch.stack([r for r in batch.rewards.agent_wise.values()], dim=1).mean(dim=1)
+        terminals_tot = torch.stack([d for d in batch.terminals.agent_wise.values()], dim=1).all(dim=1).float()
+
+        info = self.callback.on_update_start(self.iterations, model=self.model, batch=batch,
+                                             rewards_tot=rewards_tot, terminals_tot=terminals_tot)
+
+        ############################################
+        #  Feedforward
+        ############################################
+
         # calculate the individual Q value
         rnn_states = self.model.init_rnn_states(batch.batch_size)
         model_output = self.model(
@@ -94,8 +111,7 @@ class WQMIX_Learner(IQL_Learner):
 
                     if self.use_actions_mask:
                         for group in self.group_keys:
-                            q_next[batch.next_avail_actions[group] == 0] = -1e10
-
+                            q_next.grouped_tensor[batch.next_avail_actions[group] == 0] = -1e10
                     next_actions_greedy = None
 
         q_eval_a, q_eval_centralized_a, q_next_centralized_a = {}, {}, {}
@@ -127,26 +143,9 @@ class WQMIX_Learner(IQL_Learner):
                 q_eval_centralized_a[agent_key] = q_eval_centralized_taken[:, i]
                 q_next_centralized_a[agent_key] = q_next_centralized_taken[:, i]
 
-        return q_eval_a, q_eval_centralized_a, q_next_centralized_a, actions_greedy
-
-    def update(self, sample):
-        self.iterations += 1
-
-        # prepare training data
-        batch = self.build_training_data(
-            sample=sample,
-            use_actions_mask=self.use_actions_mask,
-            use_global_state=True
-        )
-
-        rewards_tot = torch.stack([r for r in batch.rewards.agent_wise.values()], dim=1).mean(dim=1)
-        terminals_tot = torch.stack([d for d in batch.terminals.agent_wise.values()], dim=1).all(dim=1).float()
-
-        info = self.callback.on_update_start(self.iterations, model=self.model, batch=batch,
-                                             rewards_tot=rewards_tot, terminals_tot=terminals_tot)
-        # feedforward
-        q_eval_a, q_eval_centralized_a, q_next_centralized_a, actions_greedy = self._forward_transitions(batch)
-
+        ############################################
+        #  Calculate total values and loss
+        ############################################
         if self.use_rnn:
             state_input = batch.global_states[:, :-1].reshape([batch.batch_size * batch.seq_length, -1])
             state_input_next = batch.global_states[:, 1:].reshape([batch.batch_size * batch.seq_length, -1])

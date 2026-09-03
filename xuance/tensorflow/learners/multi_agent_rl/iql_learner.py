@@ -139,7 +139,6 @@ class IQL_Learner(OffPolicyMultiAgentLearner):
 
         return info_train
 
-
     @tf.function
     def learn(self, **kwargs):
         if self.distributed_training:
@@ -147,7 +146,6 @@ class IQL_Learner(OffPolicyMultiAgentLearner):
             return info_train[0]
         else:
             return self.forward_fn(**kwargs)
-
 
     def update(self, sample):
         self.iterations += 1
@@ -185,8 +183,6 @@ class IQL_Learner(OffPolicyMultiAgentLearner):
 
         info_train = self.learn(**inputs_learn)
 
-        for k, v in info_train.items():
-            info_train[k] = v
         info.update(info_train)
 
         if self.iterations % self.sync_frequency == 0:

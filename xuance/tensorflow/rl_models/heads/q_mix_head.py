@@ -38,6 +38,7 @@ class QMIX_Mixer(Module):
             dim_hidden: int = 32,
             dim_hypernet_hidden: int = 32,
             n_agents: int = 1,
+            **kwargs
     ):
         super(QMIX_Mixer, self).__init__()
         self.dim_state = dim_state
@@ -123,6 +124,7 @@ class QMIX_FF_Mixer(Module):
             dim_state: int = 0,
             dim_hidden: int = 32,
             n_agents: int = 1,
+            **kwargs
     ):
         super(QMIX_FF_Mixer, self).__init__()
         self.dim_state = dim_state
@@ -174,6 +176,7 @@ class QMIX_FF_Mixer(Module):
             dim_hidden=self.dim_hidden,
             n_agents=self.n_agents,
         ))
+        return config
 
 
 class QTRAN_Base(Module):
@@ -197,6 +200,7 @@ class QTRAN_Base(Module):
             n_agents: int = 1,
             dim_utility_hidden: int = 1,
             use_parameter_sharing: bool = False,
+            **kwargs
     ):
         super(QTRAN_Base, self).__init__()
         self.dim_state = dim_state
@@ -297,6 +301,7 @@ class QTRAN_Alt(Module):
             n_agents: int = 1,
             dim_utility_hidden: int = 1,
             use_parameter_sharing: bool = False,
+            **kwargs
     ):
         super(QTRAN_Alt, self).__init__()
         self.dim_state = dim_state
