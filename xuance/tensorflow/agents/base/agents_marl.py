@@ -315,8 +315,8 @@ class MARLAgents(ABC):
             N_recurrent_layers=getattr(config, "N_recurrent_layers", None),
             recurrent_hidden_size=getattr(config, "recurrent_hidden_size", None),
             rnn=getattr(config, "rnn", None),
-            dropout=getattr(config, "dropout", None),
-            device=self.device)
+            dropout=getattr(config, "dropout", None)
+        )
         representation = REGISTRY_Representation[representation_choice](**input_representations)
         if representation_choice not in REGISTRY_Representation:
             raise AttributeError(f"{representation_choice} is not registered in REGISTRY_Representation.")

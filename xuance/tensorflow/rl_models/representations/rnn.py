@@ -119,7 +119,7 @@ class Basic_RNN(Module):
         hidden_states_new = []
         hidden_states = rnn_states.hidden_states
         for i, rnn_layer in enumerate(self.rnn):
-            x, h, c = rnn_layer(x, hidden_states[i])
+            x, h = rnn_layer(x, hidden_states[i])
             hidden_states_new.append(h)
 
         hidden_states = tf.stack(hidden_states_new, axis=0)

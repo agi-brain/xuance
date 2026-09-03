@@ -1,4 +1,3 @@
-from copy import deepcopy
 from abc import abstractmethod
 from typing import Dict, Optional
 from xuance.common import AgentGrouping
@@ -25,9 +24,9 @@ class OffPolicyMultiAgentActorCritic(Module):
         self.use_rnn = use_rnn
 
         self.actors = actors
-        self.target_actors = deepcopy(self.actors)
+        self.target_actors = self.actors.clone(copy_weights=True, trainable=False, name="target_actors")
         self.critics = critics
-        self.target_critics = deepcopy(self.critics)
+        self.target_critics = self.critics.clone(copy_weights=True, trainable=False, name="target_critics")
 
         # Prepare DDP module.
         self.distributed_training = use_distributed_training
@@ -119,9 +118,7 @@ class OffPolicyMultiAgentActorCritic(Module):
         return rnn_states
 
     def soft_update(self, tau=0.005):
-        for ep, tp in zip(self.actors.parameters(), self.target_actors.parameters()):
-            tp.data.mul_(1 - tau)
-            tp.data.add_(tau * ep.data)
-        for ep, tp in zip(self.critics.parameters(), self.target_critics.parameters()):
-            tp.data.mul_(1 - tau)
-            tp.data.add_(tau * ep.data)
+        for ep, tp in zip(self.actors.variables, self.target_actors.variables):
+            tp.assign((1 - tau) * tp + tau * ep)
+        for ep, tp in zip(self.critics.variables, self.target_critics.variables):
+            tp.assign((1 - tau) * tp + tau * ep)

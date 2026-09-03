@@ -373,7 +373,7 @@ class IndependentDeterministicActorCritic(OffPolicyMultiAgentActorCritic):
             **kwargs
     ) -> MultiAgentModelOutput:
         rnn_states_new, actions = {}, {}
-        input_shape = observations.grouped_tensor[self.group_keys[0]].shape
+        input_shape = tf.shape(observations.grouped_tensor[self.group_keys[0]])
         batch_size = input_shape[0]
         seq_len = input_shape[2] if self.use_rnn else 1
 
@@ -383,16 +383,16 @@ class IndependentDeterministicActorCritic(OffPolicyMultiAgentActorCritic):
             n_agent = self.n_group_agents[group]
             batch_shape = (batch_size, n_agent, seq_len) if self.use_rnn else (batch_size, n_agent)
 
-            actor_kwargs = {
-                "agent_indices": agent_indices.packed(group)
-            }
             if self.use_rnn:
-                actor_kwargs["rnn_states"] = rnn_states[group]
-
-            actor_out = self.actors[group](observations.packed(group), **actor_kwargs)
+                actor_out = self.actors[group](observations.packed(group),
+                                               agent_indices=agent_indices.packed(group),
+                                               rnn_states=rnn_states[group])
+            else:
+                actor_out = self.actors[group](observations.packed(group),
+                                               agent_indices=agent_indices.packed(group))
 
             rnn_states_new[group] = actor_out.representations.rnn_states
-            actions[group] = actor_out.actions.reshape(*batch_shape, -1)
+            actions[group] = tf.reshape(actor_out.actions, (*batch_shape, -1))
 
         return MultiAgentModelOutput(
             actions=AgentGroupedTensor(actions, self.grouping),
@@ -409,7 +409,7 @@ class IndependentDeterministicActorCritic(OffPolicyMultiAgentActorCritic):
             **kwargs
     ) -> AgentGroupedTensor:
         q_eval = {}
-        input_shape = observations.grouped_tensor[self.group_keys[0]].shape
+        input_shape = tf.shape(observations.grouped_tensor[self.group_keys[0]])
         batch_size = input_shape[0]
         seq_len = input_shape[2] if self.use_rnn else 1
 
@@ -419,17 +419,17 @@ class IndependentDeterministicActorCritic(OffPolicyMultiAgentActorCritic):
             n_agent = self.n_group_agents[group]
             batch_shape = (batch_size, n_agent, seq_len) if self.use_rnn else (batch_size, n_agent)
 
-            critic_kwargs = {
-                "agent_indices": agent_indices.packed(group)
-            }
             if self.use_rnn:
-                critic_kwargs["rnn_states"] = rnn_states[group]
+                critic_out = self.critics[group](observations.packed(group),
+                                                 actions.packed(group),
+                                                 agent_indices=agent_indices.packed(group),
+                                                 rnn_states=rnn_states[group])
+            else:
+                critic_out = self.critics[group](observations.packed(group),
+                                                 actions.packed(group),
+                                                 agent_indices=agent_indices.packed(group))
 
-            critic_out = self.critics[group](observations.packed(group),
-                                             actions.packed(group),
-                                             **critic_kwargs)
-
-            q_eval[group] = critic_out.values.reshape(*batch_shape, -1)
+            q_eval[group] = tf.reshape(critic_out.values, (*batch_shape, -1))
 
         return AgentGroupedTensor(q_eval, self.grouping)
 
@@ -443,7 +443,7 @@ class IndependentDeterministicActorCritic(OffPolicyMultiAgentActorCritic):
             **kwargs
     ) -> AgentGroupedTensor:
         q_target = {}
-        input_shape = observations.grouped_tensor[self.group_keys[0]].shape
+        input_shape = tf.shape(observations.grouped_tensor[self.group_keys[0]])
         batch_size = input_shape[0]
         seq_len = input_shape[2] if self.use_rnn else 1
 
@@ -453,17 +453,17 @@ class IndependentDeterministicActorCritic(OffPolicyMultiAgentActorCritic):
             n_agent = self.n_group_agents[group]
             batch_shape = (batch_size, n_agent, seq_len) if self.use_rnn else (batch_size, n_agent)
 
-            critic_kwargs = {
-                "agent_indices": agent_indices.packed(group)
-            }
             if self.use_rnn:
-                critic_kwargs["rnn_states"] = rnn_states[group]
+                target_critic_out = self.target_critics[group](observations.packed(group),
+                                                               actions.packed(group),
+                                                               agent_indices=agent_indices.packed(group),
+                                                               rnn_states=rnn_states[group])
+            else:
+                target_critic_out = self.target_critics[group](observations.packed(group),
+                                                               actions.packed(group),
+                                                               agent_indices=agent_indices.packed(group))
 
-            target_critic_out = self.target_critics[group](observations.packed(group),
-                                                           actions.packed(group),
-                                                           **critic_kwargs)
-
-            q_target[group] = target_critic_out.values.reshape(*batch_shape, -1)
+            q_target[group] = tf.reshape(target_critic_out.values, (*batch_shape, -1))
 
         return AgentGroupedTensor(q_target, self.grouping)
 
@@ -476,7 +476,7 @@ class IndependentDeterministicActorCritic(OffPolicyMultiAgentActorCritic):
             **kwargs
     ) -> AgentGroupedTensor:
         actions = {}
-        input_shape = observations.grouped_tensor[self.group_keys[0]].shape
+        input_shape = tf.shape(observations.grouped_tensor[self.group_keys[0]])
         batch_size = input_shape[0]
         seq_len = input_shape[2] if self.use_rnn else 1
 
@@ -486,15 +486,15 @@ class IndependentDeterministicActorCritic(OffPolicyMultiAgentActorCritic):
             n_agent = self.n_group_agents[group]
             batch_shape = (batch_size, n_agent, seq_len) if self.use_rnn else (batch_size, n_agent)
 
-            actor_kwargs = {
-                "agent_indices": agent_indices.packed(group)
-            }
             if self.use_rnn:
-                actor_kwargs["rnn_states"] = rnn_states[group]
+                target_actor_out = self.target_actors[group](observations.packed(group),
+                                                             agent_indices=agent_indices.packed(group),
+                                                             rnn_states=rnn_states[group])
+            else:
+                target_actor_out = self.target_actors[group](observations.packed(group),
+                                                             agent_indices=agent_indices.packed(group))
 
-            target_actor_out = self.target_actors[group](observations.packed(group), **actor_kwargs)
-
-            actions[group] = target_actor_out.actions.reshape(*batch_shape, -1)
+            actions[group] = tf.reshape(target_actor_out.actions, (*batch_shape, -1))
 
         return AgentGroupedTensor(actions, self.grouping)
 
@@ -726,8 +726,7 @@ class IndependentSoftActorCritic(OffPolicyMultiAgentActorCritic):
 
     def soft_update(self, tau=0.005):
         for ep, tp in zip(self.critics.parameters(), self.target_critics.parameters()):
-            tp.data.mul_(1 - tau)
-            tp.data.add_(tau * ep.data)
+            tp.assign((1 - tau) * tp + tau * ep)
 
 
 class MultiAgentSoftActorCritic(IndependentSoftActorCritic):

@@ -96,8 +96,10 @@ class ActionValueCritic(Module):
     def call(self,
              observations: Union[Tensor, dict],
              actions: Union[Tensor, dict],
+             agent_indices: Optional[Tensor] = None,
+             rnn_states: Optional[RNN_State] = None,
              **kwargs) -> CriticOutput:
-        rep_out = self.representation(observations, **kwargs)
+        rep_out = self.representation(observations, agent_indices=agent_indices, rnn_states=rnn_states, **kwargs)
         return CriticOutput(
             representations=rep_out,
             values=self.critic_head(tf.concat([rep_out.embeddings, actions], axis=-1), **kwargs)

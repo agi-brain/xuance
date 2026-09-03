@@ -2,7 +2,7 @@ from typing import Type, Sequence, Optional, Union
 from gymnasium.spaces import Box
 from xuance.tensorflow import tf, keras, Tensor, Module
 from xuance.tensorflow.rl_models.heads import DeterministicActorHead
-from xuance.tensorflow.rl_models.modules import DeterministicActorOutput
+from xuance.tensorflow.rl_models.modules import DeterministicActorOutput, RNN_State
 
 
 class DeterministicActor(Module):
@@ -46,8 +46,10 @@ class DeterministicActor(Module):
 
     def call(self,
              observation: Union[Tensor, dict],
+             agent_indices: Optional[Tensor] = None,
+             rnn_states: Optional[RNN_State] = None,
              **kwargs) -> DeterministicActorOutput:
-        rep_out = self.representation(observation, **kwargs)
+        rep_out = self.representation(observation, agent_indices=agent_indices, rnn_states=rnn_states, **kwargs)
         return DeterministicActorOutput(
             representations=rep_out,
             actions=self.actor_head(rep_out.embeddings, **kwargs)

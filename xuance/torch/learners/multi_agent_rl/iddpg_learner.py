@@ -97,14 +97,65 @@ class IDDPG_Learner(OffPolicyMultiAgentLearner):
 
         info = self.callback.on_update_start(self.iterations, model=self.model, batch=batch)
 
-        # feedforward
-        q_policy, q_eval, q_next = self._forward_transition(batch)
+        ######################
+        # Feedforward
+        ######################
+        rnn_states_actor = self.model.init_actor_rnn_states(batch.batch_size)
+        rnn_states_critic = self.model.init_critic_rnn_states(batch.batch_size)
+        if self.use_rnn:
+            observations_t = AgentGroupedTensor(
+                {k: v[:, :, :-1] for k, v in batch.observations.grouped_tensor.items()}, self.agent_grouping
+            )
+            agent_indices_t = AgentGroupedTensor(
+                {k: v[:, :, :-1] for k, v in batch.agent_indices.grouped_tensor.items()}, self.agent_grouping
+            )
+        else:
+            observations_t = batch.observations
+            agent_indices_t = batch.agent_indices
 
+        actions_eval = self.model(observations=observations_t,
+                                  agent_indices=agent_indices_t,
+                                  rnn_states=rnn_states_actor).actions
+
+        q_policy = self.model.Qpolicy(observations=observations_t,
+                                      actions=actions_eval,
+                                      agent_indices=agent_indices_t,
+                                      rnn_states=rnn_states_critic)
+
+        q_eval = self.model.Qpolicy(observations=observations_t,
+                                    actions=batch.actions,
+                                    agent_indices=agent_indices_t,
+                                    rnn_states=rnn_states_critic)
+
+        #########################################
+        # Calculate values with target networks
+        #########################################
+        with torch.no_grad():
+            if self.use_rnn:
+                next_actions = self.model.Atarget(observations=batch.observations,
+                                                  agent_indices=batch.agent_indices,
+                                                  rnn_states=rnn_states_actor)
+                q_next = self.model.Qtarget(observations=batch.observations,
+                                            actions=next_actions,
+                                            agent_indices=batch.agent_indices,
+                                            rnn_states=rnn_states_critic)
+                q_next.grouped_tensor = {k: v[:, :, 1:] for k, v in q_next.grouped_tensor.items()}
+            else:
+                next_actions = self.model.Atarget(observations=batch.next_observations,
+                                                  agent_indices=batch.agent_indices)
+                q_next = self.model.Qtarget(observations=batch.next_observations,
+                                            actions=next_actions,
+                                            agent_indices=batch.agent_indices,
+                                            rnn_states=rnn_states_critic)
+
+        #########################################
+        # Calculate loss and backpropogation
+        #########################################
         for group, n_agents in self.n_group_agents.items():
             mask_values = batch.valid_mask(group, n_agents).reshape(-1)
 
             # update actor
-            loss_actor = (q_policy.packed(group).reshape(-1) * mask_values).sum() / mask_values.sum()
+            loss_actor = -(q_policy.packed(group).reshape(-1) * mask_values).sum() / mask_values.sum()
             self.optimizer[group]['actor'].zero_grad()
             loss_actor.backward()
             if self.use_grad_clip:
