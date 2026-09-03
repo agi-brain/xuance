@@ -175,13 +175,9 @@ class VDN_Learner(OffPolicyMultiAgentLearner):
         }
 
         if self.use_actions_mask:
-            inputs_learn["avail_actions"] = (
-                batch.avail_actions.grouped_tensor
-            )
+            inputs_learn["avail_actions"] = batch.avail_actions.grouped_tensor
             if not self.use_rnn:
-                inputs_learn["next_avail_actions"] = (
-                    batch.next_avail_actions.grouped_tensor
-                )
+                inputs_learn["next_avail_actions"] = batch.next_avail_actions.grouped_tensor
 
         if self.use_rnn:
             inputs_learn["filled_masks"] = batch.filled_masks

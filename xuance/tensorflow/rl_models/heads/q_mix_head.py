@@ -210,7 +210,7 @@ class QTRAN_Base(Module):
         self.dim_utility_hidden = dim_utility_hidden
         self.use_parameter_sharing = use_parameter_sharing
 
-        self.n_actions_list = [a_space.n for a_space in action_space.values()]
+        self.n_actions_list = [int(a_space.n) for a_space in action_space.values()]
         self.n_actions_max = max(self.n_actions_list)
 
         self.dim_q_input = self.dim_state + dim_utility_hidden + self.n_actions_max

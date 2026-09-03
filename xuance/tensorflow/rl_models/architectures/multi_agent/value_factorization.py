@@ -323,14 +323,14 @@ class QTranMixingNetwork(MixingQNetwork):
         self.n_actions_max = max(self.n_actions.values())
 
         self.qtran_net = qtran_mixer
-        self.target_qtran_net = deepcopy(qtran_mixer)
+        self.target_qtran_net = qtran_mixer.clone(copy_weights=True, trainable=False, name="target_qtran_net")
 
         # Prepare DDP module.
 
     @property
     def parameters_model(self):
-        parameters_model = list(self.qtran_net.parameters()) + list(self.eval_Qtot.parameters()) + list(
-            self.individual_q_networks.parameters())
+        parameters_model = (self.qtran_net.trainable_variables + self.eval_Qtot.trainable_variables +
+                            self.individual_q_networks.trainable_variables)
         return parameters_model
 
     def Q_tran(self,
@@ -340,41 +340,43 @@ class QTranMixingNetwork(MixingQNetwork):
                agent_mask: AgentGroupedTensor | None = None,
                avail_actions: AgentGroupedTensor | None = None,
                group_key: Optional[str] = None) -> Tuple[Tensor, ...]:
-        seq_len = states.shape[1] if self.use_rnn else 1
-        batch_size = states.shape[0]
+        seq_len = tf.shape(states)[1] if self.use_rnn else 1
+        batch_size = tf.shape(states)[0]
         hidden_states_dict, actions_onehot_dict = {}, {}
         group_list = self.group_keys if group_key is None else [group_key]
 
         for group in group_list:
             n_agents = self.n_group_agents[group]
             n_actions = self.n_actions[group]
-            dim_hidden_state = hidden_states[group].shape[-1]
-            group_actions_onehot = F.one_hot(actions.packed(group).long(), n_actions)
+            dim_hidden_state = tf.shape(hidden_states[group])[-1]
+            group_actions_onehot = tf.one_hot(tf.cast(actions.packed(group), tf.int32), depth=n_actions)
             if self.use_rnn:
-                actions_onehot_dict[group] = group_actions_onehot.reshape(batch_size, n_agents, seq_len, -1)
-                hidden_states_dict[group] = hidden_states[group].reshape([-1, n_agents, seq_len, dim_hidden_state])
+                actions_onehot_dict[group] = tf.reshape(group_actions_onehot, [batch_size, n_agents, seq_len, -1])
+                hidden_states_dict[group] = tf.reshape(hidden_states[group], [-1, n_agents, seq_len, dim_hidden_state])
             else:
-                actions_onehot_dict[group] = group_actions_onehot.reshape(batch_size, n_agents, -1)
-                hidden_states_dict[group] = hidden_states[group].reshape([-1, n_agents, dim_hidden_state])
+                actions_onehot_dict[group] = tf.reshape(group_actions_onehot, [batch_size, n_agents, -1])
+                hidden_states_dict[group] = tf.reshape(hidden_states[group], [-1, n_agents, dim_hidden_state])
 
             if avail_actions is not None:
                 actions_onehot_dict[group] *= avail_actions.packed(group)
             if agent_mask is not None:
                 if self.use_rnn:
-                    agt_mask = agent_mask.packed(group).reshape(
-                        batch_size, n_agents, seq_len, 1).repeat(1, 1, 1, dim_hidden_state)
+                    agt_mask = tf.repeat(tf.reshape(agent_mask.packed(group), [batch_size, n_agents, seq_len, 1]),
+                                         repeats=dim_hidden_state, axis=-1)
                 else:
-                    agt_mask = agent_mask.packed(group).reshape(batch_size, n_agents, 1).repeat(1, 1, dim_hidden_state)
+                    agt_mask = tf.repeat(tf.reshape(agent_mask.packed(group), [batch_size, n_agents, 1]),
+                                         repeats=dim_hidden_state, axis=-1)
                 hidden_states_dict[group] = hidden_states_dict[group] * agt_mask
 
-        hidden_states_tensor_in = torch.concat([hidden_states_dict[k] for k in self.group_keys], dim=1)
-        actions_onehot = torch.concat([actions_onehot_dict[k] for k in self.group_keys], dim=1)
+        hidden_states_tensor_in = tf.concat([hidden_states_dict[k] for k in self.group_keys], axis=1)
+        actions_onehot = tf.concat([actions_onehot_dict[k] for k in self.group_keys], axis=1)
 
         if self.use_rnn:
-            states = states.reshape(batch_size * seq_len, -1)
-            hidden_states_tensor_in = hidden_states_tensor_in.transpose(1, 2).reshape(-1, self.n_agents,
-                                                                                      dim_hidden_state)
-            actions_onehot = actions_onehot.transpose(1, 2).reshape(-1, self.n_agents, self.n_actions_max)
+            states = tf.reshape(states, [batch_size * seq_len, -1])
+            hidden_states_tensor_in = tf.reshape(tf.transpose(hidden_states_tensor_in, perm=[0, 2, 1, 3]),
+                                                 [-1, self.n_agents, dim_hidden_state])
+            actions_onehot = tf.reshape(tf.transpose(actions_onehot, perm=[0, 2, 1, 3]),
+                                        [-1, self.n_agents, self.n_actions_max])
         q_jt, v_jt = self.qtran_net(states, hidden_states_tensor_in, actions_onehot)
         return q_jt, v_jt
 
@@ -385,47 +387,49 @@ class QTranMixingNetwork(MixingQNetwork):
                       agent_mask: AgentGroupedTensor | None = None,
                       avail_actions: AgentGroupedTensor | None = None,
                       group_key: Optional[str] = None) -> Tuple[Tensor, ...]:
-        seq_len = states.shape[1] if self.use_rnn else 1
-        batch_size = states.shape[0]
+        seq_len = tf.shape(states)[1] if self.use_rnn else 1
+        batch_size = tf.shape(states)[0]
         hidden_states_dict, actions_onehot_dict = {}, {}
         group_list = self.group_keys if group_key is None else [group_key]
 
         for group in group_list:
             n_agents = self.n_group_agents[group]
             n_actions = self.n_actions[group]
-            dim_hidden_state = hidden_states[group].shape[-1]
-            group_actions_onehot = F.one_hot(actions.packed(group).long(), n_actions)
+            dim_hidden_state = tf.shape(hidden_states[group])[-1]
+            group_actions_onehot = tf.one_hot(tf.cast(actions.packed(group), tf.int32), depth=n_actions)
             if self.use_rnn:
-                actions_onehot_dict[group] = group_actions_onehot.reshape(batch_size, n_agents, seq_len, -1)
-                hidden_states_dict[group] = hidden_states[group].reshape([-1, n_agents, seq_len, dim_hidden_state])
+                actions_onehot_dict[group] = tf.reshape(group_actions_onehot, [batch_size, n_agents, seq_len, -1])
+                hidden_states_dict[group] = tf.reshape(hidden_states[group], [-1, n_agents, seq_len, dim_hidden_state])
             else:
-                actions_onehot_dict[group] = group_actions_onehot.reshape(batch_size, n_agents, -1)
-                hidden_states_dict[group] = hidden_states[group].reshape([-1, n_agents, dim_hidden_state])
+                actions_onehot_dict[group] = tf.reshape(group_actions_onehot, [batch_size, n_agents, -1])
+                hidden_states_dict[group] = tf.reshape(hidden_states[group], [-1, n_agents, dim_hidden_state])
 
             if avail_actions is not None:
                 actions_onehot_dict[group] *= avail_actions.packed(group)
             if agent_mask is not None:
                 if self.use_rnn:
-                    agt_mask = agent_mask.packed(group).reshape(
-                        batch_size, n_agents, seq_len, 1).repeat(1, 1, 1, dim_hidden_state)
+                    agt_mask = tf.repeat(tf.reshape(agent_mask.packed(group), [batch_size, n_agents, seq_len, 1]),
+                                         repeats=dim_hidden_state, axis=-1)
                 else:
-                    agt_mask = agent_mask.packed(group).reshape(batch_size, n_agents, 1).repeat(1, 1, dim_hidden_state)
+                    agt_mask = tf.repeat(tf.reshape(agent_mask.packed(group), [batch_size, n_agents, 1]),
+                                         repeats=dim_hidden_state, axis=-1)
                 hidden_states_dict[group] = hidden_states_dict[group] * agt_mask
 
-        hidden_states_tensor_in = torch.concat([hidden_states_dict[k] for k in self.group_keys], dim=1)
-        actions_onehot = torch.concat([actions_onehot_dict[k] for k in self.group_keys], dim=1)
+        hidden_states_tensor_in = tf.concat([hidden_states_dict[k] for k in self.group_keys], axis=1)
+        actions_onehot = tf.concat([actions_onehot_dict[k] for k in self.group_keys], axis=1)
 
         if self.use_rnn:
-            states = states.reshape(batch_size * seq_len, -1)
-            hidden_states_tensor_in = hidden_states_tensor_in.transpose(1, 2).reshape(-1, self.n_agents,
-                                                                                      dim_hidden_state)
-            actions_onehot = actions_onehot.transpose(1, 2).reshape(-1, self.n_agents, self.n_actions_max)
+            states = tf.reshape(states, [batch_size * seq_len, -1])
+            hidden_states_tensor_in = tf.reshape(tf.transpose(hidden_states_tensor_in, perm=[0, 2, 1, 3]),
+                                                 [-1, self.n_agents, dim_hidden_state])
+            actions_onehot = tf.reshape(tf.transpose(actions_onehot, perm=[0, 2, 1, 3]),
+                                        [-1, self.n_agents, self.n_actions_max])
         q_jt, v_jt = self.target_qtran_net(states, hidden_states_tensor_in, actions_onehot)
         return q_jt, v_jt
 
     def copy_target(self):
         super().copy_target()
-        for ep, tp in zip(self.qtran_net.parameters(), self.target_qtran_net.parameters()):
+        for ep, tp in zip(self.qtran_net.variables, self.target_qtran_net.variables):
             tp.assign(ep)
 
 
