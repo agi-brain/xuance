@@ -151,8 +151,13 @@ class CentralizedActionValueCritic(Module):
     def call(self,
              joint_observations: Union[Tensor, dict],
              joint_actions: Union[Tensor, dict],
+             agent_indices: Optional[Tensor] = None,
+             rnn_states: Optional[RNN_State] = None,
              **kwargs) -> CriticOutput:
-        joint_obs_rep_out = self.representation(joint_observations, **kwargs)
+        joint_obs_rep_out = self.representation(joint_observations,
+                                                agent_indices=agent_indices,
+                                                rnn_states=rnn_states,
+                                                **kwargs)
         return CriticOutput(
             representations=joint_obs_rep_out,
             values=self.critic_head(tf.concat([joint_obs_rep_out.embeddings, joint_actions], axis=-1), **kwargs)
@@ -161,8 +166,8 @@ class CentralizedActionValueCritic(Module):
     def get_config(self):
         config = super().get_config()
         config.update(dict(
-            representations=self.representation.clone(copy_weights=True,
-                                                      trainable=False, name="target_critic_representation"),
+            representation=self.representation.clone(copy_weights=True, trainable=False,
+                                                     name="target_critic_representation"),
             action_space=self.action_space,
             critic_hidden_size=self.critic_hidden_size,
             normalizer=self.normalizer,

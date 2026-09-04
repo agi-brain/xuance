@@ -533,7 +533,6 @@ class MultiAgentDeterministicActorCritic(IndependentDeterministicActorCritic):
         group_list = self.group_keys if group_key is None else [group_key]
 
         for group in group_list:
-            group_agents = self.groups[group]
             n_agent = self.n_group_agents[group]
             batch_size = bs // n_agent
             batch_shape = (batch_size, n_agent, seq_len) if self.use_rnn else (batch_size, n_agent)
@@ -574,7 +573,6 @@ class MultiAgentDeterministicActorCritic(IndependentDeterministicActorCritic):
         group_list = self.group_keys if group_key is None else [group_key]
 
         for group in group_list:
-            group_agents = self.groups[group]
             n_agent = self.n_group_agents[group]
             batch_size = bs // n_agent
             batch_shape = (batch_size, n_agent, seq_len) if self.use_rnn else (batch_size, n_agent)

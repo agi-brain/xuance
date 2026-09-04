@@ -510,34 +510,37 @@ class MultiAgentDeterministicActorCritic(IndependentDeterministicActorCritic):
             **kwargs
     ) -> AgentGroupedTensor:
         q_eval = {}
-        input_shape = joint_observations.shape
+        input_shape = tf.shape(joint_observations)
         bs = input_shape[0]
         seq_len = input_shape[1] if self.use_rnn else 1
 
         group_list = self.group_keys if group_key is None else [group_key]
 
         for group in group_list:
-            group_agents = self.groups[group]
             n_agent = self.n_group_agents[group]
             batch_size = bs // n_agent
             batch_shape = (batch_size, n_agent, seq_len) if self.use_rnn else (batch_size, n_agent)
 
             if self.use_rnn:
-                expand_joint_obs = joint_observations.unsqueeze(1).expand(-1, n_agent, -1, -1).reshape(bs, seq_len, -1)
-                expand_joint_act = joint_actions.unsqueeze(1).expand(-1, n_agent, -1, -1).reshape(bs, seq_len, -1)
+                expand_joint_obs = tf.reshape(tf.repeat(tf.expand_dims(joint_observations, axis=1),
+                                                        repeats=n_agent, axis=1), [bs, seq_len, -1])
+                expand_joint_act = tf.reshape(tf.repeat(tf.expand_dims(joint_actions, axis=1),
+                                                        repeats=n_agent, axis=1), [bs, seq_len, -1])
             else:
-                expand_joint_obs = joint_observations.unsqueeze(1).expand(-1, n_agent, -1).reshape(bs, -1)
-                expand_joint_act = joint_actions.unsqueeze(1).expand(-1, n_agent, -1).reshape(bs, -1)
+                expand_joint_obs = tf.reshape(tf.repeat(tf.expand_dims(joint_observations, axis=1),
+                                                        repeats=n_agent, axis=1), [bs, -1])
+                expand_joint_act = tf.reshape(tf.repeat(tf.expand_dims(joint_actions, axis=1),
+                                                        repeats=n_agent, axis=1), [bs, -1])
 
-            critic_kwargs = {
-                "agent_indices": agent_indices.packed(group)
-            }
             if self.use_rnn:
-                critic_kwargs["rnn_states"] = rnn_states[group]
+                critic_out = self.critics[group](expand_joint_obs, expand_joint_act,
+                                                 agent_indices=agent_indices.packed(group),
+                                                 rnn_states=rnn_states[group])
+            else:
+                critic_out = self.critics[group](expand_joint_obs, expand_joint_act,
+                                                 agent_indices=agent_indices.packed(group))
 
-            critic_out = self.critics[group](expand_joint_obs, expand_joint_act, **critic_kwargs)
-
-            q_eval[group] = critic_out.values.reshape(*batch_shape, -1)
+            q_eval[group] = tf.reshape(critic_out.values, (*batch_shape, -1))
 
         return AgentGroupedTensor(q_eval, self.grouping)
 
@@ -551,34 +554,37 @@ class MultiAgentDeterministicActorCritic(IndependentDeterministicActorCritic):
             **kwargs
     ) -> AgentGroupedTensor:
         q_target = {}
-        input_shape = joint_observations.shape
+        input_shape = tf.shape(joint_observations)
         bs = input_shape[0]
         seq_len = input_shape[1] if self.use_rnn else 1
 
         group_list = self.group_keys if group_key is None else [group_key]
 
         for group in group_list:
-            group_agents = self.groups[group]
             n_agent = self.n_group_agents[group]
             batch_size = bs // n_agent
             batch_shape = (batch_size, n_agent, seq_len) if self.use_rnn else (batch_size, n_agent)
 
             if self.use_rnn:
-                expand_joint_obs = joint_observations.unsqueeze(1).expand(-1, n_agent, -1, -1).reshape(bs, seq_len, -1)
-                expand_joint_act = joint_actions.unsqueeze(1).expand(-1, n_agent, -1, -1).reshape(bs, seq_len, -1)
+                expand_joint_obs = tf.reshape(tf.repeat(tf.expand_dims(joint_observations, axis=1),
+                                                        repeats=n_agent, axis=1), [bs, seq_len, -1])
+                expand_joint_act = tf.reshape(tf.repeat(tf.expand_dims(joint_actions, axis=1),
+                                                        repeats=n_agent, axis=1), [bs, seq_len, -1])
             else:
-                expand_joint_obs = joint_observations.unsqueeze(1).expand(-1, n_agent, -1).reshape(bs, -1)
-                expand_joint_act = joint_actions.unsqueeze(1).expand(-1, n_agent, -1).reshape(bs, -1)
+                expand_joint_obs = tf.reshape(tf.repeat(tf.expand_dims(joint_observations, axis=1),
+                                                        repeats=n_agent, axis=1), [bs, -1])
+                expand_joint_act = tf.reshape(tf.repeat(tf.expand_dims(joint_actions, axis=1),
+                                                        repeats=n_agent, axis=1), [bs, -1])
 
-            target_critic_kwargs = {
-                "agent_indices": agent_indices.packed(group)
-            }
             if self.use_rnn:
-                target_critic_kwargs["rnn_states"] = rnn_states[group]
+                target_critic_out = self.target_critics[group](expand_joint_obs, expand_joint_act,
+                                                               agent_indices=agent_indices.packed(group),
+                                                               rnn_states=rnn_states[group])
+            else:
+                target_critic_out = self.target_critics[group](expand_joint_obs, expand_joint_act,
+                                                               agent_indices=agent_indices.packed(group))
 
-            target_critic_out = self.target_critics[group](expand_joint_obs, expand_joint_act, **target_critic_kwargs)
-
-            q_target[group] = target_critic_out.values.reshape(*batch_shape, -1)
+            q_target[group] = tf.reshape(target_critic_out.values, (*batch_shape, -1))
 
         return AgentGroupedTensor(q_target, self.grouping)
 

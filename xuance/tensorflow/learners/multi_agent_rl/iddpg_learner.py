@@ -3,7 +3,6 @@ Independent Deep Deterministic Policy Gradient (IDDPG)
 Implementation: TensorFlow 2.X
 """
 from argparse import Namespace
-from typing import List
 from xuance.common import AgentGrouping
 
 from xuance.tensorflow import tf, keras, Module
@@ -146,6 +145,8 @@ class IDDPG_Learner(OffPolicyMultiAgentLearner):
             else:
                 self.optimizer['actor'].apply_gradients(zip(gradients, self.model.actors.trainable_variables))
 
+        self.model.soft_update(self.tau)
+
         return info_train
 
     @tf.function
@@ -187,10 +188,8 @@ class IDDPG_Learner(OffPolicyMultiAgentLearner):
             inputs_learn["next_observations"] = batch.next_observations.grouped_tensor
 
         info_train = self.learn(**inputs_learn)
+
         info.update(info_train)
-
-        self.model.soft_update(self.tau)
-
         info.update(self.callback.on_update_end(self.iterations, model=self.model, info=info))
 
         return info
