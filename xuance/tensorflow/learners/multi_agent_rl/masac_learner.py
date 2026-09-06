@@ -19,7 +19,7 @@ class MASAC_Learner(ISAC_Learner):
                  callback):
         super(MASAC_Learner, self).__init__(config, agent_grouping, model, callback)
 
-    # @tf.function
+    @tf.function
     def forward_fn(self, **kwargs):
         info_train = {}
 
@@ -124,7 +124,7 @@ class MASAC_Learner(ISAC_Learner):
                 rewards = tf.reshape(batch.rewards.packed(group), [-1])
                 terminals = tf.reshape(batch.terminals.packed(group), [-1])
 
-                target_value = tf.reshape(q_next.packed(group), [-1]) - self.alpha[group] * log_pi_next_eval
+                target_value = tf.reshape(q_next.packed(group), [-1]) - alpha * log_pi_next_eval
                 backup = rewards + (1 - terminals) * self.gamma * target_value
                 backup = tf.stop_gradient(backup)
                 td_error_1 = action_q_1_i - backup
@@ -163,7 +163,7 @@ class MASAC_Learner(ISAC_Learner):
                 log_pi_eval_i = tf.reshape(log_pi_eval.packed(group), [-1])
                 policy_q = tf.reshape(tf.minimum(policy_q_1.packed(group), policy_q_2.packed(group)), [-1])
 
-                masked_loss_a = tf.reduce_sum((self.alpha[group] * log_pi_eval_i - policy_q) * mask_values)
+                masked_loss_a = tf.reduce_sum((alpha * log_pi_eval_i - policy_q) * mask_values)
                 loss_a = masked_loss_a / tf.reduce_sum(mask_values)
 
                 gradients = tape.gradient(loss_a, self.model.actors[group].trainable_variables)

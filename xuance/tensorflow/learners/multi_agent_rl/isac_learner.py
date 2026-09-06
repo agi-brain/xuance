@@ -204,7 +204,7 @@ class ISAC_Learner(OffPolicyMultiAgentLearner):
         self.model.soft_update(self.tau)
         return info_train
 
-    # @tf.function
+    @tf.function
     def learn(self, **kwargs):
         if self.distributed_training:
             info_train = self.model.mirrored_strategy.run(self.forward_fn, kwargs=kwargs)
