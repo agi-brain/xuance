@@ -47,12 +47,8 @@ class TwinActionValueCritic(Module):
              rnn_states_1: Dict[str, RNN_State | dict] = None,
              rnn_states_2: Dict[str, RNN_State | dict] = None,
              **kwargs) -> TwinCriticOutput:
-        if rnn_states_1 is not None:
-            kwargs["rnn_states"] = rnn_states_1
-        rep_out_1 = self.representation_1(observation, **kwargs)
-        if rnn_states_1 is not None:
-            kwargs["rnn_states"] = rnn_states_2
-        rep_out_2 = self.representation_2(observation, **kwargs)
+        rep_out_1 = self.representation_1(observation, rnn_states=None if rnn_states_1 is None else rnn_states_1)
+        rep_out_2 = self.representation_2(observation, rnn_states=None if rnn_states_2 is None else rnn_states_2)
         return TwinCriticOutput(
             representations_1=rep_out_1,
             representations_2=rep_out_2,
@@ -117,12 +113,8 @@ class TwinDiscreteActionValueCritic(Module):
              rnn_states_1: Dict[str, RNN_State | dict] = None,
              rnn_states_2: Dict[str, RNN_State | dict] = None,
              **kwargs) -> TwinCriticOutput:
-        if rnn_states_1 is not None:
-            kwargs["rnn_states"] = rnn_states_1
-        rep_out_1 = self.representation_1(observation, **kwargs)
-        if rnn_states_1 is not None:
-            kwargs["rnn_states"] = rnn_states_2
-        rep_out_2 = self.representation_2(observation, **kwargs)
+        rep_out_1 = self.representation_1(observation, rnn_states=None if rnn_states_1 is None else rnn_states_1)
+        rep_out_2 = self.representation_2(observation, rnn_states=None if rnn_states_2 is None else rnn_states_2)
         return TwinCriticOutput(
             representations_1=rep_out_1,
             representations_2=rep_out_2,

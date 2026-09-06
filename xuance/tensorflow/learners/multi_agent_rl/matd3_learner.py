@@ -3,158 +3,174 @@ Multi-Agent TD3
 
 """
 from argparse import Namespace
-from operator import itemgetter
-
 from xuance.common import AgentGrouping
-from xuance.tensorflow import tf, keras, Module
-from xuance.tensorflow.learners import LearnerMAS
+
+from xuance.tensorflow import tf, Module
+from xuance.tensorflow.utils import AgentGroupedTensor
+from xuance.tensorflow.learners.multi_agent_rl.itd3_learner import ITD3_Learner
+from xuance.tensorflow.rl_models.modules import OffPolicyMARLBatch
 
 
-class MATD3_Learner(LearnerMAS):
+class MATD3_Learner(ITD3_Learner):
     def __init__(self,
                  config: Namespace,
                  agent_grouping: AgentGrouping,
                  model: Module,
                  callback):
-        super(MATD3_Learner, self).__init__(config, agent_grouping, model, callback)
-        self.build_optimizer()
-        self.gamma = config.gamma
-        self.tau = config.tau
-        self.actor_update_delay = config.actor_update_delay
-
-    def build_optimizer(self):
-        if ("macOS" in self.os_name) and ("arm" in self.os_name):  # For macOS with Apple's M-series chips.
-            self.optimizer = {
-                key: {'actor': keras.optimizers.legacy.Adam(self.config.learning_rate_actor),
-                      'critic': keras.optimizers.legacy.Adam(self.config.learning_rate_critic)}
-                for key in self.model_keys}
-        else:
-            self.optimizer = {
-                key: {'actor': keras.optimizers.Adam(self.config.learning_rate_actor),
-                      'critic': keras.optimizers.Adam(self.config.learning_rate_critic)}
-                for key in self.model_keys}
+        ITD3_Learner.__init__(self, config, agent_grouping, model, callback)
 
     @tf.function
-    def forward_fn(self, batch_size, bs, obs, obs_joint, actions, actions_joint, rewards,
-                   obs_next, next_obs_joint, terminals, IDs, agent_mask):
+    def forward_fn(self, **kwargs):
         info_train = {}
-        gradients_a, gradients_c = {}, {}
-        with tf.GradientTape(persistent=True) as tape:
-            # Update critic
-            _, actions_next = self.policy.Atarget(next_observation=obs_next, agent_ids=IDs)
-            if self.use_parameter_sharing:
-                key = self.model_keys[0]
-                actions_next_joint = tf.reshape(tf.reshape(actions_next[key], [batch_size, self.n_agents, -1]),
-                                                [batch_size, -1])
-            else:
-                actions_next_joint = tf.reshape(tf.concat(itemgetter(*self.model_keys)(actions_next), -1),
-                                                [batch_size, -1])
-            q_eval_A, q_eval_B, _ = self.policy.Qpolicy(joint_observation=obs_joint, joint_actions=actions_joint,
-                                                        agent_ids=IDs)
-            q_next = self.policy.Qtarget(joint_observation=next_obs_joint, joint_actions=actions_next_joint,
-                                         agent_ids=IDs)
 
-            for key in self.model_keys:
-                mask_values = agent_mask[key]
-                q_eval_A_i, q_eval_B_i = tf.reshape(q_eval_A[key], [bs]), tf.reshape(q_eval_B[key], [bs])
-                q_next_i = tf.reshape(q_next[key], [bs])
-                q_target = rewards[key] + (1 - terminals[key]) * self.gamma * q_next_i
-                td_error_A = (q_eval_A_i - tf.stop_gradient(q_target)) * mask_values
-                td_error_B = (q_eval_B_i - tf.stop_gradient(q_target)) * mask_values
-                loss_c = (tf.reduce_sum(td_error_A ** 2) + tf.reduce_sum(td_error_B ** 2)) / tf.reduce_sum(mask_values)
-                gradients_c[key] = tape.gradient(loss_c, self.policy.critic_trainable_variables(key))
+        #########################################
+        # Prepare training data
+        #########################################
+
+        batch = OffPolicyMARLBatch(
+            batch_size=kwargs["batch_size"],
+            seq_length=kwargs["seq_length"],
+            observations=AgentGroupedTensor(kwargs["observations"], self.agent_grouping),
+            actions=AgentGroupedTensor(kwargs["actions"], self.agent_grouping),
+            rewards=AgentGroupedTensor(kwargs["rewards"], self.agent_grouping),
+            terminals=AgentGroupedTensor(kwargs["terminals"], self.agent_grouping),
+            agent_masks=AgentGroupedTensor(kwargs["agent_masks"], self.agent_grouping),
+            agent_indices=AgentGroupedTensor(kwargs["agent_indices"], self.agent_grouping),
+        )
+        if self.use_actions_mask:
+            batch.avail_actions = AgentGroupedTensor(kwargs["avail_actions"], self.agent_grouping)
+            if not self.use_rnn:
+                batch.next_avail_actions = AgentGroupedTensor(kwargs["next_avail_actions"], self.agent_grouping)
+        if self.use_rnn:
+            batch.filled_masks = kwargs["filled_masks"]
+        else:
+            batch.next_observations = AgentGroupedTensor(kwargs["next_observations"], self.agent_grouping)
+
+        if self.use_rnn:
+            obs_joint = self.get_joint_input(batch.observations.agent_wise,
+                                             output_shape=(batch.batch_size, batch.seq_length + 1, -1))
+            obs_joint_t = obs_joint[:, :-1]
+            actions_joint_t = self.get_joint_input(batch.actions.agent_wise,
+                                                   output_shape=(batch.batch_size, batch.seq_length, -1))
+            observations_t = AgentGroupedTensor(
+                {k: v[:, :, :-1] for k, v in batch.observations.grouped_tensor.items()}, self.agent_grouping
+            )
+            agent_indices_t = AgentGroupedTensor(
+                {k: v[:, :, :-1] for k, v in batch.agent_indices.grouped_tensor.items()}, self.agent_grouping
+            )
+        else:
+            obs_joint_t = obs_joint = self.get_joint_input(batch.observations.agent_wise,
+                                                           output_shape=(batch.batch_size, -1))
+            actions_joint_t = self.get_joint_input(batch.actions.agent_wise, output_shape=(batch.batch_size, -1))
+            observations_t = batch.observations
+            agent_indices_t = batch.agent_indices
+
+        # initial hidden states for rnn
+        rnn_states_actor = self.model.init_actor_rnn_states(batch.batch_size)
+        rnn_states_critic_1, rnn_states_critic_2 = self.model.init_critic_rnn_states(batch.batch_size)
+
+        if self.use_rnn:
+            actions_next = self.model.Atarget(observations=batch.observations,
+                                              agent_indices=batch.agent_indices,
+                                              rnn_states=rnn_states_actor)
+            actions_joint_next = self.get_joint_input(actions_next.agent_wise,
+                                                      (batch.batch_size, batch.seq_length + 1, -1))
+            q_next = self.model.Qtarget(joint_observations=obs_joint,
+                                        joint_actions=actions_joint_next,
+                                        agent_indices=batch.agent_indices,
+                                        rnn_states_1=rnn_states_critic_1,
+                                        rnn_states_2=rnn_states_critic_2)
+            q_next.grouped_tensor = {k: v[:, :, 1:] for k, v in q_next.grouped_tensor.items()}
+        else:
+            actions_next = self.model.Atarget(observations=batch.next_observations,
+                                              agent_indices=batch.agent_indices)
+            actions_joint_next = self.get_joint_input(actions_next.agent_wise, (batch.batch_size, -1))
+            obs_joint_next = self.get_joint_input(batch.next_observations.agent_wise,
+                                                  output_shape=(batch.batch_size, -1))
+            q_next = self.model.Qtarget(joint_observations=obs_joint_next,
+                                        joint_actions=actions_joint_next,
+                                        agent_indices=batch.agent_indices)
+
+        #########################################
+        # Feedforward & backpropogation
+        #########################################
+
+        # update critic
+        with tf.GradientTape(persistent=True) as tape_critic:
+
+            q_eval_A, q_eval_B, _ = self.model.Qpolicy(joint_observations=obs_joint_t,
+                                                       joint_actions=actions_joint_t,
+                                                       agent_indices=agent_indices_t,
+                                                       rnn_states_1=rnn_states_critic_1,
+                                                       rnn_states_2=rnn_states_critic_2)
+
+            for group, n_agents in self.n_group_agents.items():
+                mask_values = tf.reshape(batch.valid_mask(group, n_agents), [-1])
+
+                q_eval_A_i = tf.reshape(q_eval_A.packed(group), [-1])
+                q_eval_B_i = tf.reshape(q_eval_B.packed(group), [-1])
+                q_next_i = tf.reshape(q_next.packed(group), [-1])
+                rewards_i = tf.reshape(batch.rewards.packed(group), [-1])
+                terminals_i = tf.reshape(batch.terminals.packed(group), [-1])
+                q_target = rewards_i + (1 - terminals_i) * self.gamma * q_next_i
+                q_target = tf.stop_gradient(q_target)
+
+                td_error_A = (q_eval_A_i - q_target) * mask_values
+                td_error_B = (q_eval_B_i - q_target) * mask_values
+
+                loss_c = (tf.reduce_sum(td_error_A ** 2) + tf.reduce_sum(td_error_B ** 2)) / tf.reduce_sum(
+                    mask_values)
+
+                gradients = tape_critic.gradient(loss_c, self.model.critics[group].trainable_variables)
                 if self.use_grad_clip:
-                    gradients_c[key], _ = tf.clip_by_global_norm(gradients_c[key], clip_norm=self.grad_clip_norm)
-                    self.optimizer[key]['critic'].apply_gradients(zip(gradients_c[key],
-                                                                      self.policy.critic_trainable_variables(key)))
+                    gradients, _ = tf.clip_by_global_norm(gradients, clip_norm=self.grad_clip_norm)
+                    self.optimizer[group]['critic'].apply_gradients(
+                        zip(gradients, self.model.critics[group].trainable_variables))
                 else:
-                    self.optimizer[key]['critic'].apply_gradients(zip(gradients_c[key],
-                                                                      self.policy.critic_trainable_variables(key)))
+                    self.optimizer[group]['critic'].apply_gradients(
+                        zip(gradients, self.model.critics[group].trainable_variables))
 
-                info_train.update({f"{key}/loss_critic": loss_c,
-                                   f"{key}/predictQ_A": tf.math.reduce_mean(q_eval_A[key]),
-                                   f"{key}/predictQ_B": tf.math.reduce_mean(q_eval_B[key])})
+        # update actor(s)
+        if self.iterations % self.actor_update_delay == 0:
 
-            # Update actor
-            if self.iterations % self.actor_update_delay == 0:
-                _, actions_eval = self.policy(observation=obs, agent_ids=IDs)
-                for key in self.model_keys:
-                    mask_values = agent_mask[key]
-                    if self.use_parameter_sharing:
-                        act_eval = tf.reshape(tf.reshape(actions_eval[key], [batch_size, self.n_agents, -1]),
-                                              [batch_size, -1])
+            with tf.GradientTape(persistent=True) as tape_actor:
+
+                actions_eval = self.model(observations=observations_t,
+                                          agent_indices=agent_indices_t,
+                                          rnn_states=rnn_states_actor).actions
+                actions_eval_agent_wise = actions_eval.agent_wise
+                for group, n_agents in self.n_group_agents.items():
+                    mask_values = tf.reshape(batch.valid_mask(group, n_agents), [-1])
+                    agent_keys = self.groups[group]
+
+                    # calculate the objective of actor
+                    actions_all = batch.actions.agent_wise.copy()
+                    for key in agent_keys:
+                        actions_all[key] = actions_eval_agent_wise[key]
+                    if self.use_rnn:
+                        actions_joint_eval = self.get_joint_input(actions_all, (batch.batch_size, batch.seq_length, -1))
                     else:
-                        a_joint = {k: actions_eval[k] if k == key else actions[k] for k in self.agent_keys}
-                        act_eval = tf.reshape(tf.concat(itemgetter(*self.agent_keys)(a_joint), axis=-1),
-                                              [batch_size, -1])
-                    _, _, q_policy = self.policy.Qpolicy(joint_observation=obs_joint, joint_actions=act_eval,
-                                                         agent_ids=IDs, agent_key=key)
-                    q_policy_i = tf.reshape(q_policy[key], [bs])
-                    loss_a = -tf.reduce_sum(q_policy_i * mask_values) / tf.reduce_sum(mask_values)
-                    gradients_a[key] = tape.gradient(loss_a, self.policy.actor_trainable_variables(key))
+                        actions_joint_eval = self.get_joint_input(actions_all, (batch.batch_size, -1))
+                    _, _, q_policy = self.model.Qpolicy(joint_observations=obs_joint_t,
+                                                        joint_actions=actions_joint_eval,
+                                                        agent_indices=agent_indices_t,
+                                                        group_key=group,
+                                                        rnn_states_1=rnn_states_critic_1,
+                                                        rnn_states_2=rnn_states_critic_2)
+                    q_policy_i = tf.reshape(q_policy.packed(group), [-1])
+
+                    loss_actor = -tf.reduce_sum(q_policy_i * mask_values) / tf.reduce_sum(mask_values)
+
+                    gradients = tape_actor.gradient(loss_actor, self.model.actors[group].trainable_variables)
                     if self.use_grad_clip:
-                        gradients_a[key], _ = tf.clip_by_global_norm(gradients_a[key], clip_norm=self.grad_clip_norm)
-                        self.optimizer[key]['actor'].apply_gradients(zip(gradients_a[key],
-                                                                         self.policy.actor_trainable_variables(key)))
+                        gradients, _ = tf.clip_by_global_norm(gradients, clip_norm=self.grad_clip_norm)
+                        self.optimizer['actor'].apply_gradients(
+                            zip(gradients, self.model.actors[group].trainable_variables))
                     else:
-                        self.optimizer[key]['actor'].apply_gradients(zip(gradients_a[key],
-                                                                         self.policy.actor_trainable_variables(key)))
+                        self.optimizer['actor'].apply_gradients(
+                            zip(gradients, self.model.actors[group].trainable_variables))
 
-                    info_train.update({
-                        f"{key}/loss_actor": loss_a,
-                        f"{key}/q_policy": tf.math.reduce_mean(q_policy_i),
-                    })
+            self.model.soft_update(self.tau)
+
         return info_train
 
-    @tf.function
-    def learn(self, *inputs):
-        if self.distributed_training:
-            info_train = self.policy.mirrored_strategy.run(self.forward_fn, args=inputs)
-            return info_train[0]
-        else:
-            return self.forward_fn(*inputs)
-
-    def update(self, sample):
-        self.iterations += 1
-
-        # prepare training data
-        sample_Tensor = self.build_training_data(sample,
-                                                 use_parameter_sharing=self.use_parameter_sharing,
-                                                 use_actions_mask=False)
-        batch_size = sample_Tensor['batch_size']
-        obs = sample_Tensor['obs']
-        actions = sample_Tensor['actions']
-        obs_next = sample_Tensor['obs_next']
-        rewards = sample_Tensor['rewards']
-        terminals = sample_Tensor['terminals']
-        agent_mask = sample_Tensor['agent_mask']
-        IDs = sample_Tensor['agent_ids']
-        if self.use_parameter_sharing:
-            key = self.model_keys[0]
-            bs = batch_size * self.n_agents
-            obs_joint = tf.reshape(obs[key], [batch_size, -1])
-            next_obs_joint = tf.reshape(obs_next[key], [batch_size, -1])
-            actions_joint = tf.reshape(actions[key], [batch_size, -1])
-            rewards[key] = tf.reshape(rewards[key], [batch_size * self.n_agents])
-            terminals[key] = tf.reshape(terminals[key], [batch_size * self.n_agents])
-        else:
-            bs = batch_size
-            obs_joint = tf.reshape(tf.concat(itemgetter(*self.agent_keys)(obs), dim=-1), [batch_size, -1])
-            next_obs_joint = tf.reshape(tf.concat(itemgetter(*self.agent_keys)(obs_next), axis=-1), [batch_size, -1])
-            actions_joint = tf.reshape(tf.concat(itemgetter(*self.agent_keys)(actions), axis=-1), [batch_size, -1])
-
-        info = self.callback.on_update_start(self.iterations, method="update", policy=self.policy,
-                                             sample_Tensor=sample_Tensor, bs=bs, obs_joint=obs_joint,
-                                             next_obs_joint=next_obs_joint, actions_joint=actions_joint)
-
-        info_train = self.learn(batch_size, bs, obs, obs_joint, actions, actions_joint, rewards,
-                                obs_next, next_obs_joint, terminals, IDs, agent_mask)
-        for k, v in info_train.items():
-            info_train[k] = v.numpy()
-        info.update(info_train)
-
-        self.policy.soft_update(self.tau)
-
-        info.update(self.callback.on_update_end(self.iterations, method="update", policy=self.policy, info=info))
-
-        return info

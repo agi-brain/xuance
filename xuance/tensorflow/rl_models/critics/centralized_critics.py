@@ -225,12 +225,8 @@ class TwinCentralizedActionValueCritic(Module):
              rnn_states_1: Dict[str, RNN_State | dict] = None,
              rnn_states_2: Dict[str, RNN_State | dict] = None,
              **kwargs) -> TwinCriticOutput:
-        if rnn_states_1 is not None:
-            kwargs["rnn_states"] = rnn_states_1
-        rep_out_1 = self.representation_1(joint_observations, **kwargs)
-        if rnn_states_1 is not None:
-            kwargs["rnn_states"] = rnn_states_2
-        rep_out_2 = self.representation_2(joint_observations, **kwargs)
+        rep_out_1 = self.representation_1(joint_observations, rnn_states=None if rnn_states_1 is None else rnn_states_1)
+        rep_out_2 = self.representation_2(joint_observations, rnn_states=None if rnn_states_2 is None else rnn_states_2)
         return TwinCriticOutput(
             representations_1=rep_out_1,
             representations_2=rep_out_2,
@@ -241,8 +237,8 @@ class TwinCentralizedActionValueCritic(Module):
     def get_config(self):
         config = super().get_config()
         config.update(dict(
-            representations=self.representation_1.clone(copy_weights=True,
-                                                        trainable=False, name="target_critic_representation"),
+            representation=self.representation_1.clone(copy_weights=True,
+                                                       trainable=False, name="target_critic_representation"),
             action_space=self.action_space,
             critic_hidden_size=self.critic_hidden_size,
             normalizer=self.normalizer,

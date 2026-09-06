@@ -29,7 +29,7 @@ class IDDPG_Learner(OffPolicyMultiAgentLearner):
 
     @tf.function
     def forward_fn(self, **kwargs):
-        info_train, gradients = {}, {}
+        info_train = {}
 
         #########################################
         # Prepare training data

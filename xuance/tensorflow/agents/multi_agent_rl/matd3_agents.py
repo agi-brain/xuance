@@ -1,4 +1,3 @@
-import gymnasium
 from argparse import Namespace
 from gymnasium.spaces import Space
 from xuance.common import List, Optional, MultiAgentBaseCallback
@@ -60,8 +59,7 @@ class MATD3_Agents(ITD3_Agents):
                 normalizer=self.normalizer_fn,
                 initializer=self.initializer,
                 activation=self.activation,
-                activation_action=ActivationFunctions[self.config.activation_action],
-                device=self.device
+                activation_action=ActivationFunctions[self.config.activation_action]
             )
             # build critic feature encoder as critic representations
             critic_feature_encoder = self._build_agent_feature_encoder(
@@ -76,8 +74,7 @@ class MATD3_Agents(ITD3_Agents):
                 critic_hidden_size=self.config.critic_hidden_size,
                 normalizer=self.normalizer_fn,
                 initializer=self.initializer,
-                activation=self.activation,
-                device=self.device
+                activation=self.activation
             )
 
         # build the RL model
@@ -86,7 +83,6 @@ class MATD3_Agents(ITD3_Agents):
             actors=actor_networks,
             critics=critic_networks,
             use_rnn=self.use_rnn,
-            device=self.device,
             use_distributed_training=self.distributed_training
         )
 

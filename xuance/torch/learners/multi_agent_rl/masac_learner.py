@@ -36,9 +36,6 @@ class MASAC_Learner(ISAC_Learner):
             obs_joint_t = obs_joint[:, :-1]
             actions_joint_t = self.get_joint_input(batch.actions.agent_wise,
                                                    output_shape=(batch.batch_size, batch.seq_length, -1))
-            observations_t = AgentGroupedTensor(
-                {k: v[:, :, :-1] for k, v in batch.observations.grouped_tensor.items()}, self.agent_grouping
-            )
             agent_indices_t = AgentGroupedTensor(
                 {k: v[:, :, :-1] for k, v in batch.agent_indices.grouped_tensor.items()}, self.agent_grouping
             )
@@ -46,7 +43,6 @@ class MASAC_Learner(ISAC_Learner):
             obs_joint_t = obs_joint = self.get_joint_input(batch.observations.agent_wise,
                                                            output_shape=(batch.batch_size, -1))
             actions_joint_t = self.get_joint_input(batch.actions.agent_wise, output_shape=(batch.batch_size, -1))
-            observations_t = batch.observations
             agent_indices_t = batch.agent_indices
 
         # initial hidden states for rnn

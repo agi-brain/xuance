@@ -1,8 +1,9 @@
 from typing import Type, Sequence, Optional, Union
 from gymnasium.spaces import Space, Discrete
+
 from xuance.tensorflow import keras, Tensor, Module
 from xuance.tensorflow.rl_models.heads import CategoricalActorHead
-from xuance.tensorflow.rl_models.modules import StochasticActorOutput
+from xuance.tensorflow.rl_models.modules import StochasticActorOutput, RNN_State
 
 
 class CategoricalActor(Module):
@@ -20,6 +21,12 @@ class CategoricalActor(Module):
         else:
             raise ValueError('action_space must be Discrete')
         self.representation = representation
+        self.actor_hidden_size = actor_hidden_size
+        self.action_space = action_space
+        self.normalizer = normalizer
+        self.initializer = initializer
+        self.activation = activation
+
         self.representation_info_shape = representation.output_shapes
         self.actor_head = CategoricalActorHead(
             feature_dim=self.representation_info_shape['state'][0],
@@ -34,11 +41,26 @@ class CategoricalActor(Module):
     def call(self,
              observation: Union[Tensor, dict],
              avail_actions: Optional[Tensor] = None,
+             agent_indices: Optional[Tensor] = None,
+             rnn_states: Optional[RNN_State] = None,
              **kwargs) -> StochasticActorOutput:
-        rep_out = self.representation(observation, **kwargs)
+        rep_out = self.representation(observation, agent_indices=agent_indices, rnn_states=rnn_states, **kwargs)
         return StochasticActorOutput(
             representations=rep_out,
             distributions=self.actor_head(rep_out.embeddings,
                                           avail_actions=avail_actions,
                                           **kwargs)
         )
+
+    def get_config(self):
+        config = super().get_config()
+        config.update(dict(
+            representation=self.representation.clone(copy_weights=True, trainable=False,
+                                                     name="target_actor_representation"),
+            actor_hidden_size=self.actor_hidden_size,
+            action_space=self.action_space,
+            normalizer=self.normalizer,
+            initializer=self.initializer,
+            activation=self.activation,
+        ))
+        return config

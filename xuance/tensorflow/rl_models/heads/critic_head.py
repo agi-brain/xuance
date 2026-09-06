@@ -11,7 +11,7 @@ class ValueHead(Module):
                  initializer: Optional[keras.initializers.Initializer] = None,
                  activation: Optional[Type[Module]] = None,
                  **kwargs):
-        super().__init__(**kwargs)
+        super().__init__()
         self.feature_dim = feature_dim
         self.hidden_size = hidden_size
         self.normalizer = normalizer
