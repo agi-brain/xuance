@@ -341,7 +341,7 @@ class OffPolicyMARLAgents(MARLAgents):
                 step_start, step_last = deepcopy(self.current_step), deepcopy(self.current_step)
                 train_steps_all = train_steps * self.n_envs
                 while step_last - step_start < train_steps_all:
-                    self.run_episodes(None, n_episodes=self.n_envs, test_mode=False)
+                    self.run_episodes(n_episodes=self.n_envs, test_mode=False, close_envs=False)
                     if self.current_step >= self.start_training:
                         update_info = self.train_epochs(n_epochs=self.n_epochs)
                         self.log_infos(update_info, self.current_step)
