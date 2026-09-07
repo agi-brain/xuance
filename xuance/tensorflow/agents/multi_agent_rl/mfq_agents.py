@@ -1,14 +1,13 @@
-import torch
 import numpy as np
 from operator import itemgetter
 from argparse import Namespace
 from tqdm import tqdm
 from copy import deepcopy
 from gymnasium.spaces import Space
-from typing import List, Optional, Dict
+from typing import List, Optional, Dict, Tuple
 from xuance.common import MeanField_OffPolicyBuffer, MeanField_OffPolicyBuffer_RNN, MultiAgentBaseCallback
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
-from xuance.tensorflow import Module, ModuleDict
+from xuance.tensorflow import tf, Tensor, Module, ModuleDict
 from xuance.tensorflow.agents import OffPolicyMARLAgents
 from xuance.tensorflow.utils import AgentGroupedTensor
 from xuance.tensorflow.rl_models import MeanFieldActionValueCritic
@@ -96,8 +95,7 @@ class MFQ_Agents(OffPolicyMARLAgents):
                 critic_hidden_size=self.config.q_hidden_size,
                 normalizer=self.normalizer_fn,
                 initializer=self.initializer,
-                activation=self.activation,
-                device=self.device
+                activation=self.activation
             )
 
         # build MARL model
@@ -106,7 +104,6 @@ class MFQ_Agents(OffPolicyMARLAgents):
             q_networks=q_networks,
             mixer=IndependentMixer(),
             use_rnn=self.use_rnn,
-            device=self.device,
             use_distributed_training=self.distributed_training,
             policy_type="Boltzmann",  # "Boltzmann" or "greedy"
             temperature=self.config.temperature,
@@ -119,14 +116,14 @@ class MFQ_Agents(OffPolicyMARLAgents):
                                 agent_mask: Optional[dict] = None,
                                 act_mean_list=None):
         mean_actions_input = {}
-        agent_mask_array = torch.as_tensor(np.array([[data[k] for k in self.agent_keys] for data in agent_mask]),
-                                           dtype=torch.float, device=self.device)
+        agent_mask_array = tf.convert_to_tensor(np.array([[data[k] for k in self.agent_keys] for data in agent_mask]),
+                                                dtype=tf.float32)
         # get mean actions as input
         for group in self.group_keys:
-            mean_actions_input[group] = torch.as_tensor(np.array([[data[k] for k in self.agent_keys]
-                                                                  for data in act_mean_list]), device=self.device)
+            mean_actions_input[group] = tf.convert_to_tensor(np.array([[data[k] for k in self.agent_keys]
+                                                                       for data in act_mean_list]))
             if self.use_rnn:
-                mean_actions_input[group] = mean_actions_input[group].unsqueeze(2)
+                mean_actions_input[group] = tf.expand_dims(mean_actions_input[group], axis=2)
 
         return AgentGroupedTensor(mean_actions_input, self.agent_grouping), agent_mask_array
 
@@ -169,34 +166,114 @@ class MFQ_Agents(OffPolicyMARLAgents):
                                                 for k in self.agent_keys}
         self.memory.store(**experience_data)
 
-    @torch.no_grad()
+    @tf.function(reduce_retracing=True)
+    def _rollout_step(
+            self,
+            observations: Dict[str, Tensor],
+            agent_indices: Dict[str, Tensor],
+            mean_actions: Dict[str, Tensor],
+            agent_masks: Dict[str, Tensor],
+            epsilon: Tensor,
+            **kwargs
+    ) -> Tuple[Dict[str, Tuple], ...]:
+        observations = AgentGroupedTensor(observations, self.agent_grouping)
+        agent_indices = AgentGroupedTensor(agent_indices, self.agent_grouping)
+        mean_actions = AgentGroupedTensor(mean_actions, self.agent_grouping)
+
+        if self.use_actions_mask:
+            avail_actions = AgentGroupedTensor(kwargs["avail_actions"], self.agent_grouping)
+        else:
+            avail_actions = None
+        if self.use_rnn:
+            rnn_states = {
+                k: RNN_State(hidden_states=v[0], cell_states=v[1] if len(v) > 1 else None)
+                for k, v in kwargs["rnn_states"].items()
+            }
+        else:
+            rnn_states = None
+
+        model_output = self.model(observations=observations,
+                                  agent_indices=agent_indices,
+                                  mean_actions=mean_actions,
+                                  avail_actions=avail_actions,
+                                  rnn_states=rnn_states)
+        actions = model_output.actions
+        actions_mean_masked = self.model.get_mean_actions(actions=actions.agent_wise,
+                                                          agent_mask_tensor=agent_masks,
+                                                          batch_size=self.n_envs)
+
+        if self.use_rnn:
+            rnn_states_new = {
+                k: (v.hidden_states,) if v.cell_states is None else (v.hidden_states, v.cell_states)
+                for k, v in model_output.rnn_states.items()
+            }
+        else:
+            rnn_states_new = None
+        greedy_actions = model_output.actions.grouped_tensor
+
+        # Epsilon-greedy
+        actions = {}
+        for group in self.group_keys:
+            greedy = greedy_actions[group]
+
+            explore_mask = tf.random.uniform(shape=tf.shape(greedy), minval=0.0, maxval=1.0,
+                                             dtype=tf.float32) < epsilon
+            if self.use_actions_mask:
+                available = avail_actions.grouped_tensor[group]
+                random_scores = tf.random.uniform(shape=tf.shape(available), minval=0.0, maxval=1.0,
+                                                  dtype=tf.float32)
+                random_scores = tf.where(available > 0, random_scores, tf.cast(-1.0, random_scores.dtype))
+                random_actions = tf.argmax(random_scores, axis=-1, output_type=greedy.dtype)
+            else:
+                reference_agent = self.groups[group][0]
+                n_actions = self.action_space[reference_agent].n
+                random_actions = tf.random.uniform(shape=tf.shape(greedy), minval=0, maxval=n_actions,
+                                                   dtype=greedy.dtype)
+            actions[group] = tf.where(explore_mask, random_actions, greedy)
+
+        return rnn_states_new, actions, actions_mean_masked
+
     def get_actions(
             self,
-                    obs_list: List[dict],
-                    agent_mask: Optional[List[dict]] = None,
-                    act_mean_list: Optional[List[dict]] = None,
-                    avail_actions_list: Optional[List[dict]] = None,
-                    rnn_states: Optional[Dict[str, RNN_State]] = None,
-                    test_mode: Optional[bool] = False
+            obs_list: List[dict],
+            agent_mask: Optional[List[dict]] = None,
+            act_mean_list: Optional[List[dict]] = None,
+            avail_actions_list: Optional[List[dict]] = None,
+            rnn_states: Optional[Dict[str, RNN_State]] = None,
+            test_mode: Optional[bool] = False
     ) -> MARLActionOutput:
         batch_size = len(obs_list)
         mean_actions_input, agent_mask_tensor = self._build_inputs_mean_mask(agent_mask, act_mean_list)
         obs_input, agent_indices, avail_actions_input = self._build_inputs(obs_list, avail_actions_list)
+        epsilon = tf.convert_to_tensor(0.0 if test_mode else self.e_greedy, dtype=tf.float32)
 
-        model_output = self.model(observations=obs_input,
-                                  agent_indices=agent_indices,
-                                  mean_actions=mean_actions_input,
-                                  avail_actions=avail_actions_input,
-                                  rnn_states=rnn_states)
-        rnn_states_new = model_output.rnn_states
-        actions = model_output.actions
+        rollout_kwargs = {}
+        if self.use_actions_mask:
+            rollout_kwargs["avail_actions"] = avail_actions_input.grouped_tensor
+        if self.use_rnn:
+            rollout_kwargs["rnn_states"] = {
+                k: (v.hidden_states,) if v.cell_states is None else (v.hidden_states, v.cell_states)
+                for k, v in rnn_states.items()
+            }
 
-        actions_mean_masked = self.model.get_mean_actions(actions=actions.agent_wise,
-                                                          agent_mask_tensor=agent_mask_tensor,
-                                                          batch_size=batch_size)
+        rnn_states_new, actions, actions_mean_masked = self._rollout_step(
+            observations=obs_input.grouped_tensor,
+            agent_indices=agent_indices.grouped_tensor,
+            mean_actions=mean_actions_input.grouped_tensor,
+            agent_masks=agent_mask_tensor,
+            epsilon=epsilon,
+            **rollout_kwargs
+        )
+        if self.use_rnn:
+            rnn_states_new = {
+                k: RNN_State(hidden_states=v[0], cell_states=v[1] if len(v) > 1 else None)
+                for k, v in rnn_states_new.items()
+            }
+        else:
+            rnn_states_new = None
 
-        actions.grouped_tensor = {k: actions.grouped_tensor[k].reshape(batch_size, n).numpy()
-                                  for k, n in self.n_group_agents.items()}
+        actions = {k: tf.reshape(actions[k], [batch_size, n]).numpy() for k, n in self.n_group_agents.items()}
+        actions = AgentGroupedTensor(actions, self.agent_grouping)
         actions_list = [{k: actions.agent_wise[k][i] for k in self.agent_keys} for i in range(batch_size)]
 
         actions_mean_masked = {k: v.numpy() for k, v in actions_mean_masked.items()}

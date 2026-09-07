@@ -373,6 +373,14 @@ class OffPolicyMultiAgentLearner(LearnerMAS):
         self.build_optimizer()
         self.mse_loss = tf.keras.losses.MeanSquaredError()
 
+    @tf.function
+    def learn(self, **kwargs):
+        if self.distributed_training:
+            info_train = self.model.mirrored_strategy.run(self.forward_fn, kwargs=kwargs)
+            return info_train[0]
+        else:
+            return self.forward_fn(**kwargs)
+
     @abstractmethod
     def update(self, *args, **kwargs):
         raise NotImplementedError

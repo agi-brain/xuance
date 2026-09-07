@@ -27,10 +27,10 @@ class MeanFieldQNetwork(MixingQNetwork):
         # The choice of policy: Boltzmann policy or greedy policy. (Default is 'greedy')
         self.n_actions_max = kwargs['n_actions_max']
         self.policy_type = kwargs['policy_type']
-        self.softmax = tf.nn.Softmax(dim=-1)
+        self.softmax = tf.keras.layers.Softmax(axis=-1)
         self.temperature = kwargs['temperature']
 
-    def forward(
+    def call(
             self,
             observations: AgentGroupedTensor,
             agent_indices: AgentGroupedTensor,
@@ -40,7 +40,7 @@ class MeanFieldQNetwork(MixingQNetwork):
             rnn_states: Dict[str, RNN_State | dict] = None
     ) -> MultiAgentModelOutput:
         rep_out, rnn_states_new, actions, evalQ = {}, {}, {}, {}
-        input_shape = observations.grouped_tensor[self.group_keys[0]].shape
+        input_shape = tf.shape(observations.grouped_tensor[self.group_keys[0]])
         batch_size = input_shape[0]
         seq_len = input_shape[2] if self.use_rnn else 1
 
@@ -50,30 +50,32 @@ class MeanFieldQNetwork(MixingQNetwork):
             n_agent = self.n_group_agents[group]
             batch_shape = (batch_size, n_agent, seq_len) if self.use_rnn else (batch_size, n_agent)
 
-            input_kwargs = {
-                "agent_indices": agent_indices.packed(group)
-            }
-            if self.use_rnn:
-                input_kwargs["rnn_states"] = rnn_states[group]
-
-            individual_output = self.individual_q_networks[group](observations.packed(group),
-                                                                  mean_actions.packed(group),
-                                                                  **input_kwargs)
+            individual_output = self.individual_q_networks[group](
+                observations.packed(group),
+                mean_actions.packed(group),
+                agent_indices=agent_indices.packed(group),
+                rnn_states=rnn_states[group] if self.use_rnn else None
+            )
 
             rnn_states_new[group] = individual_output.representations.rnn_states
             rep_out[group] = individual_output.representations
             # Q value shape: batch_size * n_agent * -1 or batch_size * n_agent * seq_len * -1
-            evalQ[group] = individual_output.values.reshape(*batch_shape, -1)
+            evalQ[group] = tf.reshape(individual_output.values, (*batch_shape, -1))
 
-            evalQ_detach = evalQ[group].clone().detach()
+            evalQ_detach = tf.stop_gradient(evalQ[group])
             if avail_actions is not None:
-                evalQ_detach[avail_actions.group(group) == 0] = -1e10
+                evalQ_detach = tf.where(avail_actions.group(group) == 0,
+                                        tf.cast(-1e10, evalQ_detach.dtype),
+                                        evalQ_detach)
 
             if self.policy_type == "Boltzmann":
                 actions_prob = self.get_boltzmann_policy(evalQ_detach)
-                actions[group] = Categorical(probs=actions_prob).sample()
+                shape = tf.shape(actions_prob)
+                actions_prob_flat = tf.reshape(actions_prob, [-1, shape[-1]])
+                actions_flat = tf.random.categorical(tf.math.log(actions_prob_flat), num_samples=1)
+                actions[group] = tf.reshape(actions_flat, shape[:-1])
             elif self.policy_type == "greedy":
-                actions[group] = evalQ_detach.argmax(dim=-1, keepdim=False)
+                actions[group] = tf.argmax(evalQ_detach, axis=-1, output_type=tf.int32)
             else:
                 raise NotImplementedError
 
@@ -94,7 +96,7 @@ class MeanFieldQNetwork(MixingQNetwork):
             rnn_states: Dict[str, RNN_State | dict] = None
     ) -> MultiAgentModelOutput:
         rep_out, rnn_states_new, actions, targetQ = {}, {}, {}, {}
-        input_shape = observations.grouped_tensor[self.group_keys[0]].shape
+        input_shape = tf.shape(observations.grouped_tensor[self.group_keys[0]])
         batch_size = input_shape[0]
         seq_len = input_shape[2] if self.use_rnn else 1
 
@@ -104,29 +106,31 @@ class MeanFieldQNetwork(MixingQNetwork):
             n_agent = self.n_group_agents[group]
             batch_shape = (batch_size, n_agent, seq_len) if self.use_rnn else (batch_size, n_agent)
 
-            target_input_kwargs = {
-                "agent_indices": agent_indices.packed(group)
-            }
-            if self.use_rnn:
-                target_input_kwargs["rnn_states"] = rnn_states[group]
-
-            individual_output = self.target_individual_q_networks[group](observations.packed(group),
-                                                                         mean_actions.packed(group),
-                                                                         **target_input_kwargs)
+            individual_output = self.target_individual_q_networks[group](
+                observations.packed(group),
+                mean_actions.packed(group),
+                agent_indices=agent_indices.packed(group),
+                rnn_states=rnn_states[group] if self.use_rnn else None
+            )
 
             rnn_states_new[group] = individual_output.representations.rnn_states
             rep_out[group] = individual_output.representations
-            targetQ[group] = individual_output.values.reshape(*batch_shape, -1)
+            targetQ[group] = tf.reshape(individual_output.values, (*batch_shape, -1))
 
-            targetQ_detach = targetQ[group].clone().detach()
+            targetQ_detach = tf.stop_gradient(targetQ[group])
             if avail_actions is not None:
-                targetQ_detach[avail_actions.group(group) == 0] = -1e10
+                targetQ_detach = tf.where(avail_actions.group(group) == 0,
+                                          tf.cast(-1e10, targetQ_detach.dtype),
+                                          targetQ_detach)
 
             if self.policy_type == "Boltzmann":
                 actions_prob = self.get_boltzmann_policy(targetQ_detach)
-                actions[group] = Categorical(probs=actions_prob).sample()
+                shape = tf.shape(actions_prob)
+                actions_prob_flat = tf.reshape(actions_prob, [-1, shape[-1]])
+                actions_flat = tf.random.categorical(tf.math.log(actions_prob_flat), num_samples=1)
+                actions[group] = tf.reshape(actions_flat, shape[:-1])
             elif self.policy_type == "greedy":
-                actions[group] = targetQ_detach.argmax(dim=-1, keepdim=False)
+                actions[group] = tf.argmax(targetQ_detach, axis=-1, output_type=tf.int32)
             else:
                 raise NotImplementedError
 
@@ -145,19 +149,22 @@ class MeanFieldQNetwork(MixingQNetwork):
                          actions: Dict[str, Tensor],  # Dict of agent-wise tensor
                          agent_mask_tensor: Tensor, batch_size: int) -> Dict[str, Tensor]:
         masked_mean_actions_dict = {}
-        actions_tensor = torch.stack([v for v in actions.values()], dim=-1).reshape([-1, self.n_agents])
-        actions_onehot = F.one_hot(actions_tensor, num_classes=self.n_actions_max)
+        actions_tensor = tf.reshape(tf.stack([v for v in actions.values()], axis=-1), [-1, self.n_agents])
+        actions_onehot = tf.one_hot(actions_tensor, depth=self.n_actions_max)
 
         # count alive neighbors
-        _eyes = torch.eye(self.n_agents).unsqueeze(0).repeat(batch_size, 1, 1).to(self.device)
-        agent_mask_diagonal = agent_mask_tensor.unsqueeze(-1).repeat(1, 1, self.n_agents) * _eyes
-        agent_mask_neighbors = agent_mask_tensor.unsqueeze(-1).repeat(1, 1, self.n_agents) - agent_mask_diagonal
-        agent_alive_neighbors = agent_mask_neighbors.sum(dim=-1, keepdim=True)
+        _eyes = tf.repeat(tf.expand_dims(tf.eye(self.n_agents, dtype=tf.float32), axis=0),
+                          repeats=batch_size, axis=0)
+        agent_mask_diagonal = tf.repeat(tf.expand_dims(agent_mask_tensor, axis=-1),
+                                        repeats=self.n_agents, axis=2) * _eyes
+        agent_mask_neighbors = tf.repeat(tf.expand_dims(agent_mask_tensor, axis=-1),
+                                         repeats=self.n_agents, axis=2) - agent_mask_diagonal
+        agent_alive_neighbors = tf.reduce_sum(agent_mask_neighbors, axis=-1, keepdims=True)
 
         # calculate mean actions of each agent's neighbors
-        agent_mask_repeat = agent_mask_tensor.unsqueeze(-1).repeat(1, 1, self.n_actions_max)
+        agent_mask_repeat = tf.repeat(tf.expand_dims(agent_mask_tensor, axis=-1), repeats=self.n_actions_max, axis=2)
         actions_onehot = actions_onehot * agent_mask_repeat
-        actions_sum = actions_onehot.sum(dim=-2, keepdim=True).repeat(1, self.n_agents, 1)
+        actions_sum = tf.repeat(tf.reduce_sum(actions_onehot, axis=-2, keepdims=True), repeats=self.n_agents, axis=1)
         actions_neighbors_sum = actions_sum - actions_onehot  # Sum of other agents' actions.
         actions_mean_masked = actions_neighbors_sum * agent_mask_repeat / agent_alive_neighbors
         for i, agent_key in enumerate(self.agent_keys):
@@ -165,7 +172,7 @@ class MeanFieldQNetwork(MixingQNetwork):
         return masked_mean_actions_dict
 
     def copy_target(self):
-        for ep, tp in zip(self.individual_q_networks.parameters(), self.target_individual_q_networks.parameters()):
+        for ep, tp in zip(self.individual_q_networks.variables, self.target_individual_q_networks.variables):
             tp.assign(ep)
 
 
@@ -201,7 +208,7 @@ class MeanFiledActorCritic(IndependentActorCritic):
         actions_prob = self.softmax(logits / self.temperature)
         return actions_prob
 
-    def forward(
+    def call(
             self,
             observations: AgentGroupedTensor,
             agent_indices: AgentGroupedTensor,

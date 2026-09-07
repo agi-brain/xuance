@@ -139,14 +139,6 @@ class IQL_Learner(OffPolicyMultiAgentLearner):
 
         return info_train
 
-    @tf.function
-    def learn(self, **kwargs):
-        if self.distributed_training:
-            info_train = self.model.mirrored_strategy.run(self.forward_fn, kwargs=kwargs)
-            return info_train[0]
-        else:
-            return self.forward_fn(**kwargs)
-
     def update(self, sample):
         self.iterations += 1
 
