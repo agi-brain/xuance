@@ -137,6 +137,6 @@ class IAC_Learner(OnPolicyMultiAgentLearner):
                                                            value_pred_i=value_pred_i, value_target=value_target,
                                                            values_i=values_i, loss_v=loss_v))
 
-        info.update(self.callback.on_update_end(self.iterations, method="update", model=self.model, info=info))
+        info.update(self.callback.on_update_end(self.iterations, model=self.model, info=info))
 
         return info

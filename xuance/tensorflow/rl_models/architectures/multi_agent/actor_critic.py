@@ -68,7 +68,7 @@ class IndependentActorCritic(Module):
                 sampled_actions = policy_dist.deterministic_sample()
             else:
                 sampled_actions = policy_dist.stochastic_sample()
-            actions[group] = tf.reshape(sampled_actions(*batch_shape, -1))
+            actions[group] = tf.reshape(sampled_actions, (*batch_shape, -1))
 
             rnn_states_new[group] = actor_out.representations.rnn_states
             pi_dists[group] = actor_out.distributions

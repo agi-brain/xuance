@@ -7,9 +7,9 @@ from gymnasium.spaces import Space
 from typing import Tuple, List, Optional, Dict
 from xuance.common import MARL_OnPolicyBuffer, MARL_OnPolicyBuffer_RNN, MultiAgentBaseCallback
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
-from xuance.tensorflow import Module
+from xuance.tensorflow import tf, Module
 from xuance.tensorflow.agents.base import MARLAgents
-from xuance.tensorflow.rl_models.modules import RNN_State, MARLActionOutput
+from xuance.tensorflow.rl_models.modules import RNN_State, MARLActionOutput, AgentGroupedTensor
 
 
 class OnPolicyMARLAgents(MARLAgents):
@@ -203,6 +203,14 @@ class OnPolicyMARLAgents(MARLAgents):
         return (self.model.init_actor_rnn_states_item(i_env, rnn_states_actor),
                 self.model.init_critic_rnn_states_item(i_env, rnn_states_critic))
 
+    @tf.function(reduce_retracing=True)
+    def _rollout_step(self, *args, **kwargs):
+        raise NotImplementedError
+
+    @tf.function(reduce_retracing=True)
+    def _rollout_get_values(self, *args, **kwargs):
+        raise NotImplementedError
+
     def get_actions(
             self,
             obs_list: List[dict],
@@ -331,6 +339,7 @@ class OnPolicyMARLAgents(MARLAgents):
                     when `self.use_rnn` is True; otherwise the value returned by the critic (typically None).
                 - values_dict (dict): Per-agent critic value estimates keyed by `self.agent_keys`.
         """
+        rollout_values_kwargs = {}
         if self.use_rnn:
             rnn_states_critic_i = {}
             for group, n_agents in self.n_group_agents.items():
@@ -338,17 +347,27 @@ class OnPolicyMARLAgents(MARLAgents):
                 rnn_states_critic_i[group] = self.model.critics[
                     group].representation.obs_representation.get_rnn_states_item(
                     hidden_item_index, rnn_states_critic[group])
-        else:
-            rnn_states_critic_i = None
+            rollout_values_kwargs["rnn_states_critic"] = {
+                k: (v.hidden_states,) if v.cell_states is None else (v.hidden_states, v.cell_states)
+                for k, v in rnn_states_critic_i.items()
+            }
+
+        if self.use_global_state:
+            rollout_values_kwargs['state'] = state
 
         obs_input, agent_indices, _ = self._build_inputs([obs_dict])
-        values_model_output = self.model.get_values(state=state if self.use_global_state else None,
-                                                    observations=obs_input,
-                                                    agent_indices=agent_indices,
-                                                    rnn_states=rnn_states_critic_i)
-        rnn_states_critic_new_i = values_model_output.critic_rnn_states
-        values = values_model_output.values
-        values.grouped_tensor = {k: v.numpy() for k, v in values.grouped_tensor.items()}
+        rnn_states_critic_new, values = self._rollout_get_values(observations=obs_input.grouped_tensor,
+                                                                 agent_indices=agent_indices.grouped_tensor,
+                                                                 **rollout_values_kwargs)
+        if self.use_rnn:
+            rnn_states_critic_new_i = {
+                k: RNN_State(hidden_states=v[0], cell_states=v[1] if len(v) > 1 else None)
+                for k, v in rnn_states_critic_new.items()
+            }
+        else:
+            rnn_states_critic_new_i = None
+        values = {k: v.numpy() for k, v in values.items()}
+        values = AgentGroupedTensor(values, self.agent_grouping)
         values_dict = {k: v.reshape([]) for k, v in values.agent_wise.items()}
 
         return rnn_states_critic_new_i, values_dict

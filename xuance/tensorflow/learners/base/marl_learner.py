@@ -66,18 +66,42 @@ class LearnerMAS(Learner):
         #   start_factor = 1.0
         #   end_factor = self.end_factor_lr_decay
         #   total_iters = self.total_iters
-        self.scheduler = tf.keras.optimizers.schedules.PolynomialDecay(
-            initial_learning_rate=self.learning_rate,
-            decay_steps=max(int(self.total_iters), 1),
-            end_learning_rate=self.learning_rate * self.end_factor_lr_decay,
-            power=1.0,
-        )
 
-        self.optimizer = tf.keras.optimizers.Adam(
-            learning_rate=self.scheduler,
-            epsilon=1e-5,
-            weight_decay=weight_decay,
-        )
+        if self.distributed_training:
+            with self.model.mirrored_strategy.scope():
+                self.scheduler = tf.keras.optimizers.schedules.PolynomialDecay(
+                    initial_learning_rate=self.learning_rate,
+                    decay_steps=max(int(self.total_iters), 1),
+                    end_learning_rate=self.learning_rate * self.end_factor_lr_decay,
+                    power=1.0,
+                )
+
+                self.optimizer = tf.keras.optimizers.Adam(
+                    learning_rate=self.scheduler,
+                    epsilon=1e-5,
+                    weight_decay=weight_decay,
+                )
+        else:
+            self.scheduler = tf.keras.optimizers.schedules.PolynomialDecay(
+                initial_learning_rate=self.learning_rate,
+                decay_steps=max(int(self.total_iters), 1),
+                end_learning_rate=self.learning_rate * self.end_factor_lr_decay,
+                power=1.0,
+            )
+
+            self.optimizer = tf.keras.optimizers.Adam(
+                learning_rate=self.scheduler,
+                epsilon=1e-5,
+                weight_decay=weight_decay,
+            )
+
+    @tf.function
+    def learn(self, **kwargs):
+        if self.distributed_training:
+            info_train = self.model.mirrored_strategy.run(self.forward_fn, kwargs=kwargs)
+            return info_train[0]
+        else:
+            return self.forward_fn(**kwargs)
 
     @abstractmethod
     def update(self, *args, **kwargs):
@@ -372,14 +396,6 @@ class OffPolicyMultiAgentLearner(LearnerMAS):
         super(OffPolicyMultiAgentLearner, self).__init__(config, agent_grouping, model, callback)
         self.build_optimizer()
         self.mse_loss = tf.keras.losses.MeanSquaredError()
-
-    @tf.function
-    def learn(self, **kwargs):
-        if self.distributed_training:
-            info_train = self.model.mirrored_strategy.run(self.forward_fn, kwargs=kwargs)
-            return info_train[0]
-        else:
-            return self.forward_fn(**kwargs)
 
     @abstractmethod
     def update(self, *args, **kwargs):
