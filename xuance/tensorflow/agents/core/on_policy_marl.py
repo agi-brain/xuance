@@ -7,7 +7,7 @@ from gymnasium.spaces import Space
 from typing import Tuple, List, Optional, Dict
 from xuance.common import MARL_OnPolicyBuffer, MARL_OnPolicyBuffer_RNN, MultiAgentBaseCallback
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
-from xuance.tensorflow import tf, Module
+from xuance.tensorflow import tf, Tensor, Module
 from xuance.tensorflow.agents.base import MARLAgents
 from xuance.tensorflow.rl_models.modules import RNN_State, MARLActionOutput, AgentGroupedTensor
 
@@ -204,12 +204,104 @@ class OnPolicyMARLAgents(MARLAgents):
                 self.model.init_critic_rnn_states_item(i_env, rnn_states_critic))
 
     @tf.function(reduce_retracing=True)
-    def _rollout_step(self, *args, **kwargs):
-        raise NotImplementedError
+    def _rollout_get_values(
+            self,
+            observations: Dict[str, Tensor],
+            agent_indices: Dict[str, Tensor],
+            **kwargs
+    ) -> Tuple[Dict[str, Tuple], Dict[str, Tensor]]:
+        observations = AgentGroupedTensor(observations, self.agent_grouping)
+        agent_indices = AgentGroupedTensor(agent_indices, self.agent_grouping)
+        if self.use_rnn:
+            rnn_states_critic = {
+                k: RNN_State(hidden_states=v[0], cell_states=v[1] if len(v) > 1 else None)
+                for k, v in kwargs["rnn_states_critic"].items()
+            }
+        else:
+            rnn_states_critic = None
+
+        values_model_output = self.model.get_values(observations=observations,
+                                                    agent_indices=agent_indices,
+                                                    rnn_states=rnn_states_critic)
+        if self.use_rnn:
+            rnn_states_critic_new = {
+                k: (v.hidden_states,) if v.cell_states is None else (v.hidden_states, v.cell_states)
+                for k, v in values_model_output.critic_rnn_states.items()
+            }
+        else:
+            rnn_states_critic_new = None
+        actions = values_model_output.values.grouped_tensor
+
+        return rnn_states_critic_new, actions
 
     @tf.function(reduce_retracing=True)
-    def _rollout_get_values(self, *args, **kwargs):
-        raise NotImplementedError
+    def _rollout_step(
+            self,
+            observations: Dict[str, Tensor],
+            agent_indices: Dict[str, Tensor],
+            deterministic: bool = False,
+            **kwargs
+    ) -> Tuple[Dict[str, Tuple], Dict[str, Tensor]]:
+        observations = AgentGroupedTensor(observations, self.agent_grouping)
+        agent_indices = AgentGroupedTensor(agent_indices, self.agent_grouping)
+        if self.use_actions_mask:
+            avail_actions = AgentGroupedTensor(kwargs["avail_actions"], self.agent_grouping)
+        else:
+            avail_actions = None
+        if self.use_rnn:
+            rnn_states_actor = {
+                k: RNN_State(hidden_states=v[0], cell_states=v[1] if len(v) > 1 else None)
+                for k, v in kwargs["rnn_states_actor"].items()
+            }
+        else:
+            rnn_states_actor = None
+
+        model_output = self.model(observations=observations,
+                                  agent_indices=agent_indices,
+                                  avail_actions=avail_actions,
+                                  rnn_states=rnn_states_actor,
+                                  deterministic=deterministic)
+        if self.use_rnn:
+            rnn_states_actor_new = {
+                k: (v.hidden_states,) if v.cell_states is None else (v.hidden_states, v.cell_states)
+                for k, v in model_output.actor_rnn_states.items()
+            }
+        else:
+            rnn_states_actor_new = None
+        actions = model_output.actions.grouped_tensor
+
+        return rnn_states_actor_new, actions
+
+    @tf.function(reduce_retracing=True)
+    def _rollout_get_values_i(
+            self,
+            observations: Dict[str, Tensor],
+            agent_indices: Dict[str, Tensor],
+            **kwargs
+    ) -> Tuple[Dict[str, Tuple], Dict[str, Tensor]]:
+        observations = AgentGroupedTensor(observations, self.agent_grouping)
+        agent_indices = AgentGroupedTensor(agent_indices, self.agent_grouping)
+        if self.use_rnn:
+            rnn_states_critic = {
+                k: RNN_State(hidden_states=v[0], cell_states=v[1] if len(v) > 1 else None)
+                for k, v in kwargs["rnn_states_critic"].items()
+            }
+        else:
+            rnn_states_critic = None
+
+        values_model_output = self.model.get_values(observations=observations,
+                                                    agent_indices=agent_indices,
+                                                    rnn_states=rnn_states_critic)
+        if self.use_rnn:
+            rnn_states_critic_new = {
+                k: (v.hidden_states,) if v.cell_states is None else (v.hidden_states, v.cell_states)
+                for k, v in values_model_output.critic_rnn_states.items()
+            }
+        else:
+            rnn_states_critic_new = None
+        actions = values_model_output.values.grouped_tensor
+
+        return rnn_states_critic_new, actions
 
     def get_actions(
             self,
@@ -356,9 +448,9 @@ class OnPolicyMARLAgents(MARLAgents):
             rollout_values_kwargs['state'] = state
 
         obs_input, agent_indices, _ = self._build_inputs([obs_dict])
-        rnn_states_critic_new, values = self._rollout_get_values(observations=obs_input.grouped_tensor,
-                                                                 agent_indices=agent_indices.grouped_tensor,
-                                                                 **rollout_values_kwargs)
+        rnn_states_critic_new, values = self._rollout_get_values_i(observations=obs_input.grouped_tensor,
+                                                                   agent_indices=agent_indices.grouped_tensor,
+                                                                   **rollout_values_kwargs)
         if self.use_rnn:
             rnn_states_critic_new_i = {
                 k: RNN_State(hidden_states=v[0], cell_states=v[1] if len(v) > 1 else None)
