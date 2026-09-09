@@ -186,12 +186,14 @@ class IAC_Agents(OnPolicyMARLAgents):
         rnn_states_actor_new = model_output.actor_rnn_states
         actions = model_output.actions
 
-        actions.grouped_tensor = {k: actions.grouped_tensor[k].reshape(batch_size, n).cpu().numpy()
-                                  for k, n in self.n_group_agents.items()}
         if self.continuous_control:
+            actions.grouped_tensor = {k: actions.grouped_tensor[k].reshape(batch_size, n, -1).cpu().numpy()
+                                      for k, n in self.n_group_agents.items()}
             actions_list = [{k: actions.agent_wise[k][e].reshape([-1]) for k in self.agent_keys}
                             for e in range(batch_size)]
         else:
+            actions.grouped_tensor = {k: actions.grouped_tensor[k].reshape(batch_size, n).cpu().numpy()
+                                      for k, n in self.n_group_agents.items()}
             actions_list = [{k: actions.agent_wise[k][e].reshape([]) for k in self.agent_keys}
                             for e in range(batch_size)]
 

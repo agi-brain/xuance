@@ -169,7 +169,7 @@ class CategoricalDistribution(Distribution):
         return tf.reshape(samples, original_batch_shape)
 
     def deterministic_sample(self):
-        return tf.argmax(self.probs, axis=1)
+        return tf.argmax(self.probs, axis=-1)
 
     def kl_divergence(self, other: Distribution):
         assert isinstance(other,

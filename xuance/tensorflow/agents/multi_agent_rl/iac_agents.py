@@ -203,9 +203,13 @@ class IAC_Agents(OnPolicyMARLAgents):
         actions = AgentGroupedTensor(actions, self.agent_grouping)
 
         if self.continuous_control:
+            actions.grouped_tensor = {k: actions.grouped_tensor[k].reshape(batch_size, n, -1)
+                                      for k, n in self.n_group_agents.items()}
             actions_list = [{k: actions.agent_wise[k][e].reshape([-1]) for k in self.agent_keys}
                             for e in range(batch_size)]
         else:
+            actions.grouped_tensor = {k: actions.grouped_tensor[k].reshape(batch_size, n)
+                                      for k, n in self.n_group_agents.items()}
             actions_list = [{k: actions.agent_wise[k][e].reshape([]) for k in self.agent_keys}
                             for e in range(batch_size)]
 

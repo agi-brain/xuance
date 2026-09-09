@@ -37,8 +37,10 @@ class StateValueCritic(Module):
 
     def call(self,
              observation: Union[Tensor, dict],
+             agent_indices: Optional[Tensor] = None,
+             rnn_states: Optional[RNN_State] = None,
              **kwargs) -> CriticOutput:
-        rep_out = self.representation(observation, **kwargs)
+        rep_out = self.representation(observation, agent_indices=agent_indices, rnn_states=rnn_states, **kwargs)
         return CriticOutput(
             representations=rep_out,
             values=self.critic_head(rep_out.embeddings, **kwargs)
