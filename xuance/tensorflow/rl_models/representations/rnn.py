@@ -192,11 +192,13 @@ class Basic_RNN(Module):
         return states * mask
 
     def get_rnn_states_item(self, i: int, rnn_states: RNN_State) -> RNN_State:
+        hidden_states = tf.gather(rnn_states.hidden_states, i, axis=1)
         if self.lstm:
-            return RNN_State(hidden_states=rnn_states.hidden_states[:, i],
-                             cell_states=rnn_states.cell_states[:, i])
+            cell_states = tf.gather(rnn_states.cell_states, i, axis=1)
+            return RNN_State(hidden_states=hidden_states,
+                             cell_states=cell_states)
         else:
-            return RNN_State(hidden_states=rnn_states.hidden_states[:, i])
+            return RNN_State(hidden_states=hidden_states)
 
     def get_config(self):
         config = super().get_config()
