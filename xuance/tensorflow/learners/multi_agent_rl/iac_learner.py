@@ -3,7 +3,7 @@ Independent Advantage Actor Critic (IAC)
 Paper link: https://ojs.aaai.org/index.php/AAAI/article/view/11794
 Implementation: TensorFlow2
 """
-from xuance.tensorflow import tf, keras
+from xuance.tensorflow import tf
 from xuance.tensorflow.rl_models.modules import AgentGroupedTensor, OnPolicyMARLBatch
 from xuance.tensorflow.learners import OnPolicyMultiAgentLearner
 

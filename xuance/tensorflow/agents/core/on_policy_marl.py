@@ -230,9 +230,9 @@ class OnPolicyMARLAgents(MARLAgents):
             }
         else:
             rnn_states_critic_new = None
-        actions = values_model_output.values.grouped_tensor
+        values = values_model_output.values.grouped_tensor
 
-        return rnn_states_critic_new, actions
+        return rnn_states_critic_new, values
 
     @tf.function(reduce_retracing=True)
     def _rollout_step(
@@ -299,9 +299,9 @@ class OnPolicyMARLAgents(MARLAgents):
             }
         else:
             rnn_states_critic_new = None
-        actions = values_model_output.values.grouped_tensor
+        values = values_model_output.values.grouped_tensor
 
-        return rnn_states_critic_new, actions
+        return rnn_states_critic_new, values
 
     def get_actions(
             self,

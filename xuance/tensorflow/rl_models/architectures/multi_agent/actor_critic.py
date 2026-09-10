@@ -330,7 +330,7 @@ class ValueDecompositionActorCritic(IndependentActorCritic):
 
     def values_tot(self, individual_values: Dict[str, Tensor], global_states: Optional[Tensor] = None):
         # Expected shape: [tot_batch_size * 1, ...] -> tot_batch_size * n_agents_all
-        individual_inputs = tf.concat([tf.reshape(individual_values[k], [-1, 1]) for k in self.agent_keys], dim=-1)
+        individual_inputs = tf.concat([tf.reshape(individual_values[k], [-1, 1]) for k in self.agent_keys], axis=-1)
         # Output shape: tot_batch_size * 1
         values = self.v_tot(individual_inputs, global_states)
         return values
