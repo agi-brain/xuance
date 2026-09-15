@@ -188,10 +188,10 @@ class IAC_Agents(OnPolicyMARLAgents):
                 for k, v in rnn_states_critic.items()
             }
 
-        rnn_states_actor_new, actions = self._rollout_step(observations=obs_input.grouped_tensor,
-                                                           agent_indices=agent_indices.grouped_tensor,
-                                                           deterministic=deterministic,
-                                                           **rollout_kwargs)
+        rnn_states_actor_new, actions, _ = self._rollout_step(observations=obs_input.grouped_tensor,
+                                                              agent_indices=agent_indices.grouped_tensor,
+                                                              deterministic=deterministic,
+                                                              **rollout_kwargs)
         if self.use_rnn:
             rnn_states_actor_new = {
                 k: RNN_State(hidden_states=v[0], cell_states=v[1] if len(v) > 1 else None)
@@ -203,15 +203,21 @@ class IAC_Agents(OnPolicyMARLAgents):
         actions = AgentGroupedTensor(actions, self.agent_grouping)
 
         if self.continuous_control:
-            actions.grouped_tensor = {k: actions.grouped_tensor[k].reshape(batch_size, n, -1)
-                                      for k, n in self.n_group_agents.items()}
-            actions_list = [{k: actions.agent_wise[k][e].reshape([-1]) for k in self.agent_keys}
-                            for e in range(batch_size)]
+            actions.grouped_tensor = {
+                k: actions.grouped_tensor[k].reshape(batch_size, n, -1)
+                for k, n in self.n_group_agents.items()
+            }
+            actions_list = [{
+                k: actions.agent_wise[k][e].reshape([-1]) for k in self.agent_keys
+            } for e in range(batch_size)]
         else:
-            actions.grouped_tensor = {k: actions.grouped_tensor[k].reshape(batch_size, n)
-                                      for k, n in self.n_group_agents.items()}
-            actions_list = [{k: actions.agent_wise[k][e].reshape([]) for k in self.agent_keys}
-                            for e in range(batch_size)]
+            actions.grouped_tensor = {
+                k: actions.grouped_tensor[k].reshape(batch_size, n)
+                for k, n in self.n_group_agents.items()
+            }
+            actions_list = [{
+                k: actions.agent_wise[k][e].reshape([]) for k in self.agent_keys
+            } for e in range(batch_size)]
 
         if not test_mode:
             rnn_states_critic_new, values = self._rollout_get_values(observations=obs_input.grouped_tensor,

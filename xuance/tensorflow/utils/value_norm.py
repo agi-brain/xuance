@@ -1,4 +1,5 @@
 import numpy as np
+import tensorflow as tf
 
 
 class ValueNorm:
@@ -18,6 +19,14 @@ class ValueNorm:
 
         self.reset_parameters()
 
+    def update_tensor(self,
+                      running_mean: tf.Tensor,
+                      running_mean_sq: tf.Tensor,
+                      debiasing_term: tf.Tensor):
+        self.running_mean = running_mean.numpy()
+        self.running_mean_sq = running_mean_sq.numpy()
+        self.debiasing_term = debiasing_term.numpy()
+
     def reset_parameters(self):
         self.running_mean = np.zeros(self.input_shapes)
         self.running_mean_sq = np.zeros(self.input_shapes)
@@ -29,31 +38,49 @@ class ValueNorm:
         debiased_var = np.clip(debiased_mean_sq - debiased_mean ** 2, 1e-2, np.inf)
         return debiased_mean, debiased_var
 
-    def update(self, input_vector):
-        input_vector = input_vector.numpy()
-        batch_mean = input_vector.mean(axis=tuple(range(self.norm_axes)))
-        batch_sq_mean = (input_vector ** 2).mean(axis=tuple(range(self.norm_axes)))
+    def update(self, input_vector,
+               running_mean=None,
+               running_mean_sq=None,
+               debiasing_term=None):
+        input_vector = tf.cast(input_vector, tf.float32)
+        axes = tuple(range(self.norm_axes))
+        batch_mean = tf.reduce_mean(input_vector, axis=axes)
+        batch_sq_mean = tf.reduce_mean(tf.square(input_vector), axis=axes)
 
         if self.per_element_update:
-            batch_size = np.prod(input_vector.size()[:self.norm_axes])
-            weight = self.beta ** batch_size
+            shape = tf.shape(input_vector)
+            batch_size = tf.reduce_prod(shape[:self.norm_axes])
+            weight = tf.pow(tf.cast(self.beta, tf.float32), tf.cast(batch_size, tf.float32))
         else:
-            weight = self.beta
+            weight = tf.cast(self.beta, tf.float32)
 
-        self.running_mean = self.running_mean.__mul__(weight).__add__(batch_mean * (1.0 - weight))
-        self.running_mean_sq = self.running_mean_sq.__mul__(weight).__add__(batch_sq_mean * (1.0 - weight))
-        self.debiasing_term = self.debiasing_term.__mul__(weight).__add__(1.0 * (1.0 - weight))
+        running_mean_new = running_mean * weight + batch_mean * (1.0 - weight)
+        running_mean_sq_new = running_mean_sq * weight + batch_sq_mean * (1.0 - weight)
+        debiasing_term_new = debiasing_term * weight + (1.0 - weight)
 
-    def normalizer(self, input_vector):
+        return running_mean_new, running_mean_sq_new, debiasing_term_new
+
+    def normalize(self, input_vector,
+                  running_mean: tf.Tensor = None,
+                  running_mean_sq: tf.Tensor = None,
+                  debiasing_term: tf.Tensor = None):
         # Make sure input is float32
-        input_vector = input_vector  # not elegant, but works in most cases
+        input_vector = tf.cast(input_vector, tf.float32)  # not elegant, but works in most cases
 
-        mean, var = self.running_mean_var()
-        out = (input_vector - mean[(None,) * self.norm_axes]) / np.sqrt(var)[(None,) * self.norm_axes]
+        debiasing_term = tf.clip_by_value(
+            debiasing_term,
+            clip_value_min=self.epsilon,
+            clip_value_max=tf.float32.max,
+        )
+        debiased_mean = running_mean / debiasing_term
+        debiased_mean_sq = running_mean_sq / debiasing_term
+        debiased_var = tf.maximum(debiased_mean_sq - tf.square(debiased_mean), 1e-2)
+        mean, var = debiased_mean, debiased_var
+        out = (input_vector - mean) / tf.sqrt(var)
 
         return out
 
-    def denormalizer(self, input_vector):
+    def denormalize(self, input_vector):
         """ Transform normalizerd data back into original distribution """
         input_vector = input_vector  # not elegant, but works in most cases
 
