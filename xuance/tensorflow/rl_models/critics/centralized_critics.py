@@ -63,7 +63,7 @@ class CentralizedStateValueCritic(Module):
              rnn_states: Dict[str, RNN_State | dict] = None,
              **kwargs) -> MultiAgentModelOutput:
         rnn_states_new, rep_out, obs_features, evalQ = {}, {}, {}, {}
-        input_shape = observations.grouped_tensor[self.group_keys[0]].shape
+        input_shape = tf.shape(observations.grouped_tensor[self.group_keys[0]])
         batch_size = input_shape[0]
         seq_len = input_shape[2] if self.use_rnn else 1
 
@@ -71,18 +71,13 @@ class CentralizedStateValueCritic(Module):
             n_agent = self.n_group_agents[group]
             batch_shape = (batch_size, n_agent, seq_len) if self.use_rnn else (batch_size, n_agent)
 
-            input_kwargs = {
-                "agent_indices": agent_indices.packed(group)
-            }
-            if self.use_rnn:
-                input_kwargs["rnn_states"] = rnn_states[group]
-
             representation_output = self.representations[group](observations.packed(group),
-                                                                **input_kwargs)
+                                                                agent_indices=agent_indices.packed(group),
+                                                                rnn_states=rnn_states[group] if self.use_rnn else None)
             rep_out[group] = representation_output
             rnn_states_new[group] = representation_output.rnn_states
             # Features shape: batch_size * n_agent * seq_len * feature_dim
-            group_obs_features = representation_output.embeddings.reshape(*batch_shape, -1)
+            group_obs_features = tf.reshape(representation_output.embeddings, (*batch_shape, -1))
 
             for i, agent_key in enumerate(group_agents):
                 obs_features[agent_key] = group_obs_features[:, i]
