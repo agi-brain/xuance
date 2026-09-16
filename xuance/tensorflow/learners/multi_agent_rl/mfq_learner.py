@@ -7,7 +7,7 @@ Implementation: TensorFlow 2.X
 from argparse import Namespace
 from xuance.common import AgentGrouping, Optional
 
-from xuance.tensorflow import tf, keras, Module
+from xuance.tensorflow import tf, Module
 from xuance.tensorflow.rl_models.modules import AgentGroupedTensor, OffPolicyMARLBatch
 from xuance.tensorflow.learners import OffPolicyMultiAgentLearner
 

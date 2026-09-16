@@ -193,7 +193,7 @@ class MeanFiledActorCritic(IndependentActorCritic):
             **kwargs
         )
         self.n_actions_max = kwargs['n_actions_max']
-        self.softmax = tf.nn.Softmax(dim=-1)
+        self.softmax = tf.keras.layers.Softmax(axis=-1)
         self.temperature = kwargs['temperature']
 
     def get_boltzmann_policy(self, logits: Tensor) -> Tensor:
@@ -218,7 +218,7 @@ class MeanFiledActorCritic(IndependentActorCritic):
             deterministic: bool = False
     ) -> MultiAgentModelOutput:
         rnn_states_new, pi_dists, actions = {}, {}, {}
-        input_shape = observations.grouped_tensor[self.group_keys[0]].shape
+        input_shape = tf.shape(observations.grouped_tensor[self.group_keys[0]])
         batch_size = input_shape[0]
         seq_len = input_shape[2] if self.use_rnn else 1
 
@@ -228,15 +228,10 @@ class MeanFiledActorCritic(IndependentActorCritic):
             n_agent = self.n_group_agents[group]
             batch_shape = (batch_size, n_agent, seq_len) if self.use_rnn else (batch_size, n_agent)
 
-            actor_kwargs = {
-                "agent_indices": agent_indices.packed(group)
-            }
-            if avail_actions is not None:
-                actor_kwargs["avail_actions"] = avail_actions.packed(group)
-            if self.use_rnn:
-                actor_kwargs["rnn_states"] = rnn_states[group]
-
-            actor_out = self.actors[group](observations.packed(group), **actor_kwargs)
+            actor_out = self.actors[group](observations.packed(group),
+                                           agent_indices=agent_indices.packed(group),
+                                           avail_actions=None if avail_actions is None else avail_actions.packed(group),
+                                           rnn_states=rnn_states[group] if self.use_rnn else None)
 
             pi_logits = actor_out.distributions.logits
             pi_probs = self.get_boltzmann_policy(pi_logits)
@@ -248,7 +243,7 @@ class MeanFiledActorCritic(IndependentActorCritic):
             else:
                 sampled_actions = policy_dist.stochastic_sample()
 
-            actions[group] = sampled_actions.reshape(*batch_shape)
+            actions[group] = tf.reshape(sampled_actions, batch_shape)
 
             rnn_states_new[group] = actor_out.representations.rnn_states
             pi_dists[group] = policy_dist
@@ -263,23 +258,27 @@ class MeanFiledActorCritic(IndependentActorCritic):
                          actions: Dict[str, Tensor],
                          agent_mask_tensor: Tensor, batch_size: int) -> Dict[str, Tensor]:
         masked_mean_actions_dict = {}
-        actions_tensor = torch.stack([v for v in actions.values()], dim=-1).reshape([-1, self.n_agents])
-        actions_onehot = F.one_hot(actions_tensor, num_classes=self.n_actions_max)
+        actions_tensor = tf.reshape(tf.stack([v for v in actions.values()], axis=-1), [-1, self.n_agents])
+        actions_onehot = tf.one_hot(actions_tensor, depth=self.n_actions_max)
 
         # count alive neighbors
-        _eyes = torch.eye(self.n_agents).unsqueeze(0).repeat(batch_size, 1, 1).to(self.device)
-        agent_mask_diagonal = agent_mask_tensor.unsqueeze(-1).repeat(1, 1, self.n_agents) * _eyes
-        agent_mask_neighbors = agent_mask_tensor.unsqueeze(-1).repeat(1, 1, self.n_agents) - agent_mask_diagonal
-        agent_alive_neighbors = agent_mask_neighbors.sum(dim=-1, keepdim=True)
+        _eyes = tf.repeat(tf.expand_dims(tf.eye(self.n_agents, dtype=tf.float32), axis=0),
+                          repeats=batch_size, axis=0)
+        agent_mask_diagonal = tf.repeat(tf.expand_dims(agent_mask_tensor, axis=-1),
+                                        repeats=self.n_agents, axis=2) * _eyes
+        agent_mask_neighbors = tf.repeat(tf.expand_dims(agent_mask_tensor, axis=-1),
+                                         repeats=self.n_agents, axis=2) - agent_mask_diagonal
+        agent_alive_neighbors = tf.reduce_sum(agent_mask_neighbors, axis=-1, keepdims=True)
 
         # calculate mean actions of each agent's neighbors
-        agent_mask_repeat = agent_mask_tensor.unsqueeze(-1).repeat(1, 1, self.n_actions_max)
+        agent_mask_repeat = tf.repeat(tf.expand_dims(agent_mask_tensor, axis=-1), repeats=self.n_actions_max, axis=2)
         actions_onehot = actions_onehot * agent_mask_repeat
-        actions_sum = actions_onehot.sum(dim=-2, keepdim=True).repeat(1, self.n_agents, 1)
+        actions_sum = tf.repeat(tf.reduce_sum(actions_onehot, axis=-2, keepdims=True), repeats=self.n_agents, axis=1)
         actions_neighbors_sum = actions_sum - actions_onehot  # Sum of other agents' actions.
         actions_mean_masked = actions_neighbors_sum * agent_mask_repeat / agent_alive_neighbors
         for i, agent_key in enumerate(self.agent_keys):
             masked_mean_actions_dict[agent_key] = actions_mean_masked[:, i]
+
         return masked_mean_actions_dict
 
     def get_values(
@@ -292,7 +291,7 @@ class MeanFiledActorCritic(IndependentActorCritic):
             **kwargs
     ) -> MultiAgentModelOutput:
         rnn_states_new, values = {}, {}
-        input_shape = observations.grouped_tensor[self.group_keys[0]].shape
+        input_shape = tf.shape(observations.grouped_tensor[self.group_keys[0]])
         batch_size = input_shape[0]
         seq_len = input_shape[2] if self.use_rnn else 1
 
@@ -302,17 +301,12 @@ class MeanFiledActorCritic(IndependentActorCritic):
             n_agent = self.n_group_agents[group]
             batch_shape = (batch_size, n_agent, seq_len) if self.use_rnn else (batch_size, n_agent)
 
-            critic_kwargs = {
-                "agent_indices": agent_indices.packed(group)
-            }
-            if self.use_rnn:
-                critic_kwargs["rnn_states"] = rnn_states[group]
-
             critic_out = self.critics[group](observations.packed(group),
                                              mean_actions.packed(group),
-                                             **critic_kwargs)
+                                             agent_indices=agent_indices.packed(group),
+                                             rnn_states=rnn_states[group] if self.use_rnn else None)
 
-            values[group] = critic_out.values.reshape(*batch_shape, 1)
+            values[group] = tf.reshape(critic_out.values, (*batch_shape, 1))
             rnn_states_new[group] = critic_out.representations.rnn_states
 
         return MultiAgentModelOutput(

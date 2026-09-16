@@ -116,7 +116,7 @@ class MFQ_Agents(OffPolicyMARLAgents):
                                 agent_mask: Optional[dict] = None,
                                 act_mean_list=None):
         mean_actions_input = {}
-        agent_mask_array = tf.convert_to_tensor(np.array([[data[k] for k in self.agent_keys] for data in agent_mask]),
+        agent_mask_tensor = tf.convert_to_tensor(np.array([[data[k] for k in self.agent_keys] for data in agent_mask]),
                                                 dtype=tf.float32)
         # get mean actions as input
         for group in self.group_keys:
@@ -125,7 +125,7 @@ class MFQ_Agents(OffPolicyMARLAgents):
             if self.use_rnn:
                 mean_actions_input[group] = tf.expand_dims(mean_actions_input[group], axis=2)
 
-        return AgentGroupedTensor(mean_actions_input, self.agent_grouping), agent_mask_array
+        return AgentGroupedTensor(mean_actions_input, self.agent_grouping), agent_mask_tensor
 
     def store_experience(self, obs_list, avail_actions, actions_list, obs_next_list,
                          avail_actions_next, rewards_list, terminals_list, info, **kwargs):

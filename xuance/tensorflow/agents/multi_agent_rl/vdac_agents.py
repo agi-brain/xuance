@@ -268,10 +268,10 @@ class VDAC_Agents(OnPolicyMARLAgents):
                 for k, v in rnn_states_actor.items()
             }
 
-        rnn_states_actor_new, actions = self._rollout_step(observations=obs_input.grouped_tensor,
-                                                           agent_indices=agent_indices.grouped_tensor,
-                                                           deterministic=deterministic,
-                                                           **rollout_kwargs)
+        rnn_states_actor_new, actions, _ = self._rollout_step(observations=obs_input.grouped_tensor,
+                                                              agent_indices=agent_indices.grouped_tensor,
+                                                              deterministic=deterministic,
+                                                              **rollout_kwargs)
         if self.use_rnn:
             rnn_states_actor_new = {
                 k: RNN_State(hidden_states=v[0], cell_states=v[1] if len(v) > 1 else None)

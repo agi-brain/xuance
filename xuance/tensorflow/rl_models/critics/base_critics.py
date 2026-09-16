@@ -286,7 +286,7 @@ class MeanFieldStateValueCritic(Module):
              rnn_states: Optional[RNN_State] = None,
              **kwargs) -> CriticOutput:
         rep_out = self.representation(observation, agent_indices=agent_indices, rnn_states=rnn_states, **kwargs)
-        mean_actions_rep_out = self.mean_actions_encoder(mean_actions, **kwargs)
+        mean_actions_rep_out = self.mean_actions_encoder(mean_actions, agent_indices=agent_indices, **kwargs)
         critic_input = tf.concat([rep_out.embeddings, mean_actions_rep_out.embeddings], axis=-1)
         return CriticOutput(
             representations=rep_out,
