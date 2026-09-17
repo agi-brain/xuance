@@ -1,21 +1,20 @@
 import gymnasium
-import torch
 import numpy as np
 from tqdm import tqdm
 from copy import deepcopy
 from argparse import Namespace
 from operator import itemgetter
-from torch.nn.functional import one_hot
 from gymnasium.spaces import Space
-from xuance.common import List, Optional, MultiAgentBaseCallback
+from typing import Tuple, List, Optional, Dict
+from xuance.common import MultiAgentBaseCallback
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
-from xuance.tensorflow import Module, ModuleDict
-from xuance.tensorflow.utils import AgentGroupedTensor
+
+from xuance.tensorflow import tf, Tensor, Module, ModuleDict
 from xuance.tensorflow.agents import OnPolicyMARLAgents
 from xuance.tensorflow.rl_models import CategoricalActor
 from xuance.tensorflow.rl_models import CounterfactualCentralizedCritic as Critic
-from xuance.tensorflow.rl_models.modules import MARLActionOutput
 from xuance.tensorflow.rl_models.architectures import CounterfactualMultiAgentActorCritic
+from xuance.tensorflow.rl_models.modules import RNN_State, MARLActionOutput, AgentGroupedTensor
 
 
 class COMA_Agents(OnPolicyMARLAgents):
@@ -34,7 +33,7 @@ class COMA_Agents(OnPolicyMARLAgents):
             config, envs, num_agents, agent_keys, state_space, observation_space, action_space, callback
         )
         self.start_greedy, self.end_greedy = config.start_greedy, config.end_greedy
-        self.egreedy = self.start_greedy
+        self.e_greedy = self.start_greedy
         self.delta_egreedy = (self.start_greedy - self.end_greedy) / config.decay_step_greedy
 
         self.use_global_state = True
@@ -44,7 +43,7 @@ class COMA_Agents(OnPolicyMARLAgents):
         self.model = self._build_model()  # build the MARL model
         self.memory = self._build_memory()  # build memory
         self.learner = self._build_learner(self.config, self.agent_grouping, self.model, self.callback)
-        self.learner.egreedy = self.egreedy
+        self.learner.e_greedy = self.e_greedy
 
     def _build_model(self) -> Module:
         """
@@ -169,7 +168,121 @@ class COMA_Agents(OnPolicyMARLAgents):
                                                 for k in self.agent_keys}
         self.memory.store(**experience_data)
 
-    @torch.no_grad()
+    @tf.function(reduce_retracing=True)
+    def _rollout_step(
+            self,
+            observations: Dict[str, Tensor],
+            agent_indices: Dict[str, Tensor],
+            epsilon: Tensor,
+            deterministic: bool = False,
+            test_mode: bool = False,
+            **kwargs
+    ) -> Tuple[Dict[str, Tuple], ...]:
+        observations = AgentGroupedTensor(observations, self.agent_grouping)
+        agent_indices = AgentGroupedTensor(agent_indices, self.agent_grouping)
+        if self.use_actions_mask:
+            avail_actions = AgentGroupedTensor(kwargs["avail_actions"], self.agent_grouping)
+        else:
+            avail_actions = None
+        if self.use_rnn:
+            rnn_states_actor = {
+                k: RNN_State(hidden_states=v[0], cell_states=v[1] if len(v) > 1 else None)
+                for k, v in kwargs["rnn_states_actor"].items()
+            }
+        else:
+            rnn_states_actor = None
+
+        model_output = self.model(observations=observations,
+                                  agent_indices=agent_indices,
+                                  avail_actions=avail_actions,
+                                  rnn_states=rnn_states_actor,
+                                  epsilon=epsilon,
+                                  deterministic=deterministic,
+                                  test_mode=test_mode)
+        if self.use_rnn:
+            rnn_states_actor_new = {
+                k: (v.hidden_states,) if v.cell_states is None else (v.hidden_states, v.cell_states)
+                for k, v in model_output.actor_rnn_states.items()
+            }
+        else:
+            rnn_states_actor_new = None
+
+        actions = model_output.actions.grouped_tensor
+
+        return rnn_states_actor_new, actions
+
+    @tf.function(reduce_retracing=True)
+    def _rollout_get_values(
+            self,
+            states: Tensor,
+            observations: Dict[str, Tensor],
+            joint_actions: Tensor,
+            agent_indices: Dict[str, Tensor],
+            **kwargs
+    ) -> Tuple[Dict[str, Tuple], ...]:
+        observations = AgentGroupedTensor(observations, self.agent_grouping)
+        agent_indices = AgentGroupedTensor(agent_indices, self.agent_grouping)
+        if self.use_rnn:
+            rnn_states_critic = {
+                k: RNN_State(hidden_states=v[0], cell_states=v[1] if len(v) > 1 else None)
+                for k, v in kwargs["rnn_states_critic"].items()
+            }
+        else:
+            rnn_states_critic = None
+
+        values_model_output = self.model.get_values(states=states,
+                                                    observations=observations,
+                                                    joint_actions=joint_actions,
+                                                    agent_indices=agent_indices,
+                                                    rnn_states=rnn_states_critic,
+                                                    target=True)
+        if self.use_rnn:
+            rnn_states_critic_new = {
+                k: (v.hidden_states,) if v.cell_states is None else (v.hidden_states, v.cell_states)
+                for k, v in values_model_output.critic_rnn_states.items()
+            }
+        else:
+            rnn_states_critic_new = None
+        values = values_model_output.values.grouped_tensor
+
+        return rnn_states_critic_new, values
+
+    @tf.function(reduce_retracing=True)
+    def _rollout_get_values_i(
+            self,
+            states: Tensor,
+            observations: Dict[str, Tensor],
+            joint_actions: Tensor,
+            agent_indices: Dict[str, Tensor],
+            **kwargs
+    ) -> Tuple[Dict[str, Tuple], ...]:
+        observations = AgentGroupedTensor(observations, self.agent_grouping)
+        agent_indices = AgentGroupedTensor(agent_indices, self.agent_grouping)
+        if self.use_rnn:
+            rnn_states_critic = {
+                k: RNN_State(hidden_states=v[0], cell_states=v[1] if len(v) > 1 else None)
+                for k, v in kwargs["rnn_states_critic"].items()
+            }
+        else:
+            rnn_states_critic = None
+
+        values_model_output = self.model.get_values(states=states,
+                                                    observations=observations,
+                                                    joint_actions=joint_actions,
+                                                    agent_indices=agent_indices,
+                                                    rnn_states=rnn_states_critic,
+                                                    target=True)
+        if self.use_rnn:
+            rnn_states_critic_new = {
+                k: (v.hidden_states,) if v.cell_states is None else (v.hidden_states, v.cell_states)
+                for k, v in values_model_output.critic_rnn_states.items()
+            }
+        else:
+            rnn_states_critic_new = None
+        values = values_model_output.values.grouped_tensor
+
+        return rnn_states_critic_new, values
+
     def get_actions(
             self,
             obs_list: List[dict],
@@ -221,46 +334,82 @@ class COMA_Agents(OnPolicyMARLAgents):
         rnn_states_critic_new, values_dict, actions_out = {}, {}, None
 
         obs_input, agent_indices, avail_actions_input = self._build_inputs(obs_list, avail_actions_list)
-        model_output = self.model(observations=obs_input,
-                                  agent_indices=agent_indices,
-                                  avail_actions=avail_actions_input,
-                                  rnn_states=rnn_states_actor,
-                                  epsilon=self.egreedy,
-                                  deterministic=deterministic,
-                                  test_mode=test_mode)
-        rnn_states_actor_new = model_output.actor_rnn_states
-        actions = model_output.actions
+        epsilon = tf.convert_to_tensor(0.0 if test_mode else self.e_greedy, dtype=tf.float32)
+
+        rollout_kwargs = {}
+        rollout_values_kwargs = {}
+        if self.use_actions_mask:
+            rollout_kwargs["avail_actions"] = avail_actions_input.grouped_tensor
+        if self.use_rnn:
+            rollout_kwargs["rnn_states_actor"] = {
+                k: (v.hidden_states,) if v.cell_states is None else (v.hidden_states, v.cell_states)
+                for k, v in rnn_states_actor.items()
+            }
+            rollout_values_kwargs["rnn_states_critic"] = {
+                k: (v.hidden_states,) if v.cell_states is None else (v.hidden_states, v.cell_states)
+                for k, v in rnn_states_critic.items()
+            }
+
+        rnn_states_actor_new, actions = self._rollout_step(observations=obs_input.grouped_tensor,
+                                                           agent_indices=agent_indices.grouped_tensor,
+                                                           epsilon=epsilon,
+                                                           deterministic=deterministic,
+                                                           test_mode=test_mode,
+                                                           **rollout_kwargs)
+        if self.use_rnn:
+            rnn_states_actor_new = {
+                k: RNN_State(hidden_states=v[0], cell_states=v[1] if len(v) > 1 else None)
+                for k, v in rnn_states_actor_new.items()
+            }
+        else:
+            rnn_states_actor_new = None
+        actions = {k: v.numpy() for k, v in actions.items()}
+        actions = AgentGroupedTensor(actions, self.agent_grouping)
+
+        actions.grouped_tensor = {
+            k: actions.grouped_tensor[k].reshape(batch_size, n)
+            for k, n in self.n_group_agents.items()
+        }
+        actions_list = [{
+            k: actions.agent_wise[k][e].reshape([]) for k in self.agent_keys
+        } for e in range(batch_size)]
 
         if not test_mode:  # calculate target values
+            state = tf.convert_to_tensor(np.array(state), dtype=tf.float32)
             if self.use_rnn:
-                state = torch.as_tensor(np.array(state), device=self.device).reshape(batch_size, 1, -1)
-                joint_actions = torch.concat(
-                    [one_hot(v, self.action_space[k].n) for k, v in actions.agent_wise.items()], dim=1
-                ).reshape([batch_size, 1, -1])
+                state = tf.reshape(state, [batch_size, 1, -1])
+                joint_actions = tf.reshape(
+                    tf.concat([tf.one_hot(v, depth=self.action_space[k].n) for k, v in actions.agent_wise.items()],
+                              axis=1),
+                    [batch_size, 1, -1]
+                )
             else:
-                state = torch.as_tensor(np.array(state), device=self.device).reshape(batch_size, -1)
-                joint_actions = torch.concat(
-                    [one_hot(v, self.action_space[k].n) for k, v in actions.agent_wise.items()], dim=1
-                ).reshape([batch_size, -1])
+                state = tf.reshape(state, [batch_size, -1])
+                joint_actions = tf.reshape(
+                    tf.concat([tf.one_hot(v, depth=self.action_space[k].n) for k, v in actions.agent_wise.items()],
+                              axis=1),
+                    [batch_size, -1]
+                )
 
-            values_model_output = self.model.get_values(states=state,
-                                                        observations=obs_input,
-                                                        joint_actions=joint_actions,
-                                                        agent_indices=agent_indices,
-                                                        rnn_states=rnn_states_critic,
-                                                        target=True)
-            rnn_states_critic_new = values_model_output.critic_rnn_states
-            values = values_model_output.values
+            rnn_states_critic_new, values = self._rollout_get_values(states=state,
+                                                                     observations=obs_input.grouped_tensor,
+                                                                     joint_actions=joint_actions,
+                                                                     agent_indices=agent_indices.grouped_tensor,
+                                                                     **rollout_values_kwargs)
+            if self.use_rnn:
+                rnn_states_critic_new = {
+                    k: RNN_State(hidden_states=v[0], cell_states=v[1] if len(v) > 1 else None)
+                    for k, v in rnn_states_critic_new.items()
+                }
+            else:
+                rnn_states_critic_new = None
+            values = {k: v.numpy() for k, v in values.items()}
+            values = AgentGroupedTensor(values, self.agent_grouping)
             values.grouped_tensor = {
-                k: values.group(k).gather(-1, actions.group(k)).reshape([batch_size, -1]).numpy()
+                k: np.take_along_axis(values.group(k), actions.group(k)[:, :, None], axis=-1).reshape([batch_size, -1])
                 for k in self.group_keys
             }
             values_dict = values.agent_wise
-
-        actions.grouped_tensor = {
-            k: actions.grouped_tensor[k].reshape(batch_size, n).numpy() for k, n in self.n_group_agents.items()
-        }
-        actions_list = [{k: actions.agent_wise[k][e].reshape([]) for k in self.agent_keys} for e in range(batch_size)]
 
         return MARLActionOutput(
             env_actions=actions_list,
@@ -269,7 +418,6 @@ class COMA_Agents(OnPolicyMARLAgents):
             rnn_states_critic=rnn_states_critic_new
         )
 
-    @torch.no_grad()
     def values_next(self,
                     i_env: int,
                     obs_dict: dict,
@@ -298,40 +446,51 @@ class COMA_Agents(OnPolicyMARLAgents):
                     when `self.use_rnn` is True; otherwise the value returned by the critic (typically None).
                 - values_dict (dict): Per-agent critic value estimates keyed by `self.agent_keys`.
         """
+        rollout_values_kwargs = {}
         if self.use_rnn:
             rnn_states_critic_i = {}
             for group, n_agents in self.n_group_agents.items():
                 hidden_item_index = np.arange(i_env * n_agents, (i_env + 1) * n_agents)
-                rnn_states_critic_i[group] = self.model.critics.representations[
-                    group].obs_representation.get_rnn_states_item(hidden_item_index, rnn_states_critic[group])
-        else:
-            rnn_states_critic_i = None
+                rnn_states_critic_i[group] = self.model.critics[
+                    group].representation.obs_representation.get_rnn_states_item(
+                    hidden_item_index, rnn_states_critic[group])
+            rollout_values_kwargs["rnn_states_critic"] = {
+                k: (v.hidden_states,) if v.cell_states is None else (v.hidden_states, v.cell_states)
+                for k, v in rnn_states_critic_i.items()
+            }
 
         obs_input, agent_indices, _ = self._build_inputs([obs_dict])
         if self.use_rnn:
-            actions_agent_wise = {k: torch.as_tensor(v, device=self.device).reshape(1, 1, -1) for k, v in
-                                  actions_n.items()}
+            actions_agent_wise = {k: tf.reshape(tf.convert_to_tensor(v, dtype=tf.float32), [1, 1, -1])
+                                  for k, v in actions_n.items()}
             actions_grouped = AgentGroupedTensor.from_agent_wise(actions_agent_wise, self.agent_grouping)
-            state = torch.as_tensor(np.array(state), device=self.device).reshape(1, 1, -1)
-            joint_actions = torch.stack([one_hot(v, self.action_space[k].n)
-                                         for k, v in actions_agent_wise.items()], dim=0).reshape([1, 1, -1])
+            state = tf.reshape(tf.convert_to_tensor(np.array(state), dtype=tf.float32), [1, 1, -1])
+            joint_actions = tf.reshape(tf.stack([tf.one_hot(tf.cast(v, dtype=tf.int32), depth=self.action_space[k].n)
+                                                 for k, v in actions_agent_wise.items()], axis=0), [1, 1, -1])
         else:
-            actions_agent_wise = {k: torch.as_tensor(v, device=self.device).reshape(1, -1) for k, v in
-                                  actions_n.items()}
+            actions_agent_wise = {k: tf.reshape(tf.convert_to_tensor(v, dtype=tf.float32), [1, -1])
+                                  for k, v in actions_n.items()}
             actions_grouped = AgentGroupedTensor.from_agent_wise(actions_agent_wise, self.agent_grouping)
-            state = torch.as_tensor(np.array(state), device=self.device).reshape(1, -1)
-            joint_actions = torch.stack([one_hot(v, self.action_space[k].n)
-                                         for k, v in actions_agent_wise.items()], dim=0).reshape([1, -1])
-        values_model_output = self.model.get_values(states=state,
-                                                    observations=obs_input,
-                                                    joint_actions=joint_actions,
-                                                    agent_indices=agent_indices,
-                                                    rnn_states=rnn_states_critic_i,
-                                                    target=True)
-        rnn_states_critic_new_i = values_model_output.critic_rnn_states
-        values = values_model_output.values
+            state = tf.reshape(tf.convert_to_tensor(np.array(state), dtype=tf.float32), [1, -1])
+            joint_actions = tf.reshape(tf.stack([tf.one_hot(tf.cast(v, dtype=tf.int32), depth=self.action_space[k].n)
+                                                 for k, v in actions_agent_wise.items()], axis=0), [1, -1])
+
+        rnn_states_critic_new, values = self._rollout_get_values_i(states=state,
+                                                                   observations=obs_input.grouped_tensor,
+                                                                   joint_actions=joint_actions,
+                                                                   agent_indices=agent_indices.grouped_tensor,
+                                                                   **rollout_values_kwargs)
+        if self.use_rnn:
+            rnn_states_critic_new_i = {
+                k: RNN_State(hidden_states=v[0], cell_states=v[1] if len(v) > 1 else None)
+                for k, v in rnn_states_critic_new.items()
+            }
+        else:
+            rnn_states_critic_new_i = None
+        values = AgentGroupedTensor(values, self.agent_grouping)
         values.grouped_tensor = {
-            k: v.gather(-1, actions_grouped.group(k)).numpy() for k, v in values.grouped_tensor.items()
+            k: tf.gather(v, indices=tf.cast(actions_grouped.group(k), tf.int32), axis=-1, batch_dims=2).numpy()
+            for k, v in values.grouped_tensor.items()
         }
         values_dict = {k: v.reshape([]) for k, v in values.agent_wise.items()}
 
@@ -627,8 +786,8 @@ class COMA_Agents(OnPolicyMARLAgents):
                 loss, value loss, entropy, KL divergence). Implementations may include additional diagnostics depending
                 on the algorithm.
         """
-        if self.egreedy >= self.end_greedy:
-            self.egreedy = self.start_greedy - self.delta_egreedy * self.current_step
+        if self.e_greedy >= self.end_greedy:
+            self.e_greedy = self.start_greedy - self.delta_egreedy * self.current_step
         info_train = {}
         if self.memory.full:
             indexes = np.arange(self.buffer_size)
@@ -638,10 +797,10 @@ class COMA_Agents(OnPolicyMARLAgents):
                     end = start + self.batch_size
                     sample_idx = indexes[start:end]
                     sample = self.memory.sample(sample_idx)
-                    info_train = self.learner.update(sample, self.egreedy)
+                    info_train = self.learner.update(sample, self.e_greedy)
             self.callback.on_train_epochs_end(self.current_step, policy=self.model, memory=self.memory,
                                               current_episode=self.current_episode, n_epochs=n_epochs,
                                               buffer_size=self.buffer_size, update_info=info_train)
             self.memory.clear()
-        info_train["epsilon-greedy"] = self.egreedy
+        info_train["epsilon-greedy"] = self.e_greedy
         return info_train

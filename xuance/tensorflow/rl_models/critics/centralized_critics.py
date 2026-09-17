@@ -298,35 +298,36 @@ class CounterfactualCentralizedCritic(Module):
              rnn_states: Dict[str, RNN_State | dict] = None,
              **kwargs) -> MultiAgentModelOutput:
         rnn_states_new, rep_out, evalQ = {}, {}, {}
-        input_shape = observations.grouped_tensor[self.group_keys[0]].shape
+        input_shape = tf.shape(observations.grouped_tensor[self.group_keys[0]])
         batch_size = input_shape[0]
         seq_len = input_shape[2] if self.use_rnn else 1
 
-        agent_mask_base = (1 - torch.eye(self.n_agents, dtype=torch.float32, device=self.device)).unsqueeze(-1)
+        agent_mask_base = tf.expand_dims(1.0 - tf.eye(self.n_agents, dtype=tf.float32), axis=-1)
         for group, group_agents in self.groups.items():
             n_agent = self.n_group_agents[group]
             batch_shape = (batch_size, n_agent, seq_len) if self.use_rnn else (batch_size, n_agent)
 
-            agent_mask = agent_mask_base.repeat(1, 1, self.critic_head.n_actions).reshape(n_agent, -1).unsqueeze(0)
+            agent_mask = tf.expand_dims(tf.reshape(tf.repeat(
+                agent_mask_base, repeats=self.critic_head.n_actions, axis=-1), [n_agent, -1]), axis=0)
 
-            input_kwargs = {
-                "agent_indices": agent_indices.packed(group)
-            }
             if self.use_rnn:
-                input_kwargs["rnn_states"] = rnn_states[group]
-                agent_mask = agent_mask.unsqueeze(2)
-                expanded_states = states.unsqueeze(1).repeat(1, n_agent, 1, 1)  # batch * T * N * dim_S
-                expanded_joint_actions = joint_actions.unsqueeze(1).repeat(1, n_agent, 1, 1)
+                agent_mask = tf.expand_dims(agent_mask, axis=2)
+                expanded_states = tf.repeat(tf.expand_dims(states, axis=1),
+                                            repeats=n_agent, axis=1)  # batch * T * N * dim_S
+                expanded_joint_actions = tf.repeat(tf.expand_dims(joint_actions, axis=1), repeats=n_agent, axis=1)
             else:
-                expanded_states = states.unsqueeze(1).repeat(1, n_agent, 1)  # batch * N * dim_S
-                expanded_joint_actions = joint_actions.unsqueeze(1).repeat(1, n_agent, 1)
+                expanded_states = tf.repeat(tf.expand_dims(states, axis=1),
+                                            repeats=n_agent, axis=1)  # batch * N * dim_S
+                expanded_joint_actions = tf.repeat(tf.expand_dims(joint_actions, axis=1), repeats=n_agent, axis=1)
 
-            representation_output = self.representations[group](observations.packed(group), **input_kwargs)
+            representation_output = self.representations[group](observations.packed(group),
+                                                                agent_indices=agent_indices.packed(group),
+                                                                rnn_states=rnn_states[group] if self.use_rnn else None)
 
             rnn_states_new[group] = representation_output.rnn_states
             rep_out[group] = representation_output
             # Features shape: batch_size * n_agent * seq_len * feature_dim or batch_size * n_agent * feature_dim
-            group_obs_features = representation_output.embeddings.reshape(*batch_shape, -1)
+            group_obs_features = tf.reshape(representation_output.embeddings, (*batch_shape, -1))
 
             masked_joint_actions = expanded_joint_actions * agent_mask
             critic_input = tf.concat([expanded_states, group_obs_features, masked_joint_actions], axis=-1)
@@ -344,7 +345,7 @@ class CounterfactualCentralizedCritic(Module):
             grouping=self.grouping,
             representations=ModuleDict({k: v.clone(copy_weights=True,
                                                    trainable=False, name=f"target_critic_representation_{k}")
-                                        for k, v in self.representations}),
+                                        for k, v in self.representations.items()}),
             state_space=self.state_space,
             action_space=self.action_space,
             critic_hidden_size=self.critic_hidden_size,

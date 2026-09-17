@@ -213,7 +213,7 @@ class MultiAgentActorCritic(IndependentActorCritic):
 class CounterfactualMultiAgentActorCritic(IndependentActorCritic):
     def __init__(self, *args, **kwargs) -> None:
         super(CounterfactualMultiAgentActorCritic, self).__init__(*args, **kwargs)
-        self.target_critics = deepcopy(self.critics)
+        self.target_critics = self.critics.clone(copy_weights=True, trainable=False, name="target_critics")
 
     def call(
             self,
@@ -240,7 +240,7 @@ class CounterfactualMultiAgentActorCritic(IndependentActorCritic):
             actor_out = self.actors[group](observations.packed(group),
                                            agent_indices=agent_indices.packed(group),
                                            avail_actions=None if avail_actions is None else avail_actions.packed(group),
-                                           rnn_states=rnn_states[group])
+                                           rnn_states=rnn_states[group] if self.use_rnn else None)
 
             group_probs = actor_out.distributions.probs
 
