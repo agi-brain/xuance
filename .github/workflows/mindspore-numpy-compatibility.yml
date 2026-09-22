@@ -1,0 +1,72 @@
+name: MindSpore NumPy Compatibility
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "xuance/**"
+      - "tests/**"
+      - "setup.py"
+      - ".github/workflows/mindspore-numpy-compatibility.yml"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v10.1.0
+        with:
+          enable-cache: true
+
+      - name: Install Python
+        run: |
+          uv python install 3.11
+
+      - name: Create environment
+        run: |
+          uv venv --python 3.11
+
+      - name: Install Xuance with all extras
+        run: |
+          uv pip install \
+            -e ".[mindspore,torch,tune,mujoco,atari,box2d,minigrid,metadrive,rware,einops]" \
+            mpe2 \
+            pytest \
+            ruff
+
+      - name: Check dependencies
+        run: |
+          uv pip check
+
+      - name: Show environment
+        run: |
+          .venv/bin/python - <<'PY'
+          import sys
+          import numpy
+          import mindspore
+          import xuance
+
+          print("Python :", sys.version)
+          print("NumPy  :", numpy.__version__)
+          print("MindSpore:", mindspore.__version__)
+          print("Xuance :", xuance.__version__)
+          print("Path   :", xuance.__file__)
+          PY
+
+      - name: Static NumPy compatibility check
+        run: |
+          .venv/bin/ruff check xuance \
+            --select NPY201,NPY001,NPY003
+
+      - name: Run full test suite
+        run: |
+          .venv/bin/pytest tests/mindspore -q 

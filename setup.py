@@ -69,7 +69,8 @@ setup(
         "einops": ["einops==0.8.1"],  # default version is 0.8.1 for ViT
     },
     install_requires=[
-        "numpy>=1.21.0, <2.0.0",  # suggest version: >=1.21.6
+        "numpy",  # suggest version: >=1.21.6
+        #NumPy does not need to be pinned explicitly here; each ML backend will resolve a compatible version through its dependency stack.
         "gymnasium>=0.28.0, <1.3.0",  # suggest version: >=1.1.1
         "torch>=2.0.0, <3.0.0",
         "torchvision",
