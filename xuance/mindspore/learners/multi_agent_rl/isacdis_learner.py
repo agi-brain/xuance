@@ -4,7 +4,7 @@ Implementation: Pytorch
 """
 import torch
 from torch import nn
-from xuance.torch.learners import LearnerMAS
+from xuance.mindspore.learners import LearnerMAS
 from xuance.common import List
 from argparse import Namespace
 

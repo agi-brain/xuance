@@ -5,7 +5,7 @@ import torch
 from argparse import Namespace
 from typing import List, Optional
 from torch import nn, Tensor
-from xuance.torch.learners.multi_agent_rl.commnet_learner import CommNet_Learner
+from xuance.mindspore.learners.multi_agent_rl.commnet_learner import CommNet_Learner
 
 
 class IC3Net_Learner(CommNet_Learner):

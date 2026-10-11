@@ -1,11 +1,12 @@
 import numpy as np
-import torch.ao.quantization.utils
 from tqdm import tqdm
 from copy import deepcopy
 from argparse import Namespace
 from gymnasium.spaces import Space
 from xuance.common import Optional, DummyOffPolicyBuffer, DummyOffPolicyBuffer_Atari, BaseCallback
 from xuance.environment import DummyVecEnv, SubprocVecEnv
+
+import torch
 from xuance.torch import Module
 from xuance.torch.agents import Agent
 from xuance.torch.rl_models.modules import ActionOutput
@@ -75,7 +76,7 @@ class NoisyDQN_Agent(Agent):
             train_info = self.learner.update(**samples)
         return train_info
 
-    def train(self, train_steps: int) -> dict:
+    def train(self, train_steps: int, **kwargs) -> dict:
         train_info = {}
         obs = self.train_envs.buf_obs
         for _ in tqdm(range(train_steps)):
@@ -137,7 +138,8 @@ class NoisyDQN_Agent(Agent):
     def test(self,
              test_episodes: int,
              test_envs: Optional[DummyVecEnv | SubprocVecEnv] = None,
-             close_envs: bool = True) -> list:
+             close_envs: bool = True,
+             **kwargs) -> list:
         if test_envs is None:
             raise ValueError("`test_envs` must be provided for evaluation.")
         num_envs = test_envs.num_envs

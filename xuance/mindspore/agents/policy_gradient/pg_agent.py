@@ -1,12 +1,15 @@
+import gymnasium
 import numpy as np
 from argparse import Namespace
 from gymnasium.spaces import Space
 from xuance.common import Optional, BaseCallback
 from xuance.environment import DummyVecEnv, SubprocVecEnv
-from xuance.mindspore import Module
-from xuance.mindspore.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions
-from xuance.mindspore.policies import REGISTRY_Policy
+from xuance.mindspore import ms, ops, Tensor, Module
+from xuance.mindspore.utils import ActivationFunctions
 from xuance.mindspore.agents import OnPolicyAgent
+from xuance.mindspore.rl_models import CategoricalActor, GaussianActor
+from xuance.mindspore.rl_models.architectures import VanillaPolicyGradient
+from xuance.mindspore.rl_models.modules import ActionOutput
 
 
 class PG_Agent(OnPolicyAgent):
@@ -27,35 +30,61 @@ class PG_Agent(OnPolicyAgent):
             callback: Optional[BaseCallback] = None
     ):
         super(PG_Agent, self).__init__(config, envs, observation_space, action_space, callback)
+        self.model = self._build_model()  # build RL model
         self.memory = self._build_memory()  # build memory
-        self.policy = self._build_policy()  # build policy
-        self.learner = self._build_learner(self.config, self.policy, self.callback)  # build learner
+        self.learner = self._build_learner(self.config, self.model, self.callback)  # build learner
 
-    def _build_policy(self) -> Module:
-        normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None
-        initializer = InitializeFunctions[self.config.initialize] if hasattr(self.config, "initialize") else None
-        activation = ActivationFunctions[self.config.activation]
-        device = self.device
-
+    def _build_model(self) -> Module:
         # build representation.
         representation = self._build_representation(self.config.representation, self.observation_space, self.config)
 
-        # build policy.
-        if self.config.policy == "Categorical_Actor":
-            policy = REGISTRY_Policy["Categorical_Actor"](
-                action_space=self.action_space, representation=representation,
-                actor_hidden_size=self.config.actor_hidden_size,
-                normalize=normalize_fn, initialize=initializer, activation=activation)
-        elif self.config.policy == "Gaussian_Actor":
-            policy = REGISTRY_Policy["Gaussian_Actor"](
-                action_space=self.action_space, representation=representation,
-                actor_hidden_size=self.config.actor_hidden_size,
-                normalize=normalize_fn, initialize=initializer, activation=activation,
-                activation_action=ActivationFunctions[self.config.activation_action])
+        # build actor network
+        actor_input = dict(
+            representation=representation,
+            actor_hidden_size=self.config.actor_hidden_size,
+            action_space=self.action_space,
+            normalizer=self.normalize_fn,
+            initializer=self.initializer,
+            activation=self.activation
+        )
+        if isinstance(self.action_space, gymnasium.spaces.Box):
+            Actor = GaussianActor
+            actor_input['activation_action'] = ActivationFunctions[self.config.activation_action]
+        elif isinstance(self.action_space, gymnasium.spaces.Discrete):
+            Actor = CategoricalActor
         else:
-            raise AttributeError(f"PG currently does not support the policy named {self.config.policy}.")
+            raise NotImplementedError
+        actor = Actor(**actor_input)
+        # build the RL model
+        model = VanillaPolicyGradient(actor=actor)
 
-        return policy
+        return model
+
+    @ms.jit
+    def _rollout_step(
+            self,
+            observations: Tensor
+    ) -> Tensor:
+        if self.model.is_continuous:
+            a_mean, log_std = self.model(observations)
+            a_std = ops.exp(log_std)
+            eps = ops.normal(shape=a_mean.shape, mean=Tensor(0.0), stddev=Tensor(1.0))  # 𝜖 ~ N(0, 1)
+            action_sampled = a_mean + a_std * eps
+        else:
+            logits = self.model(observations)
+            pi_dists = ops.RandomCategorical(ms.int32)
+            action_sampled = pi_dists(logits, 1, 0).squeeze(-1)
+        return action_sampled
+
+    def get_actions(self, observations: np.ndarray, **kwargs) -> ActionOutput:
+        observations = Tensor(observations, dtype=ms.float32)
+        actions = self._rollout_step(observations)
+
+        if not self.is_tensor_memory:
+            actions = actions.numpy()
+        return ActionOutput(
+            env_actions=actions
+        )
 
     def get_terminated_values(self, observations_next: np.ndarray, rewards: np.ndarray = None):
         """Returns values for terminated states.

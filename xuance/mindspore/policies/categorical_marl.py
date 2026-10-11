@@ -310,7 +310,7 @@ class CommNet_Policy(MAAC_Policy):
             parameters += list(self.mixer.parameters())
         return parameters
 
-    def forward(self, observation: Dict[str, Tensor], agent_ids: Optional[Tensor] = None,
+    def construct(self, observation: Dict[str, Tensor], agent_ids: Optional[Tensor] = None,
                 avail_actions: Dict[str, Tensor] = None, agent_key: str = None,
                 rnn_hidden: Optional[Dict[str, List[Tensor]]] = None, alive_ally: Optional[dict] = None):
         rnn_hidden_new, pi_dists = {}, {}
@@ -414,7 +414,7 @@ class IC3Net_Policy(CommNet_Policy):
         self.gate = {k: self.communicator[k].create_mlp(self.config.recurrent_hidden_size, self.config.gate_hidden_size, 2, nn.LeakyReLU())
                      for k in self.model_keys}
 
-    def forward(self, observation: Dict[str, Tensor], agent_ids: Optional[Tensor] = None,
+    def construct(self, observation: Dict[str, Tensor], agent_ids: Optional[Tensor] = None,
                 avail_actions: Dict[str, Tensor] = None, agent_key: str = None,
                 rnn_hidden: Optional[Dict[str, List[Tensor]]] = None, alive_ally: Optional[dict] = None):
         rnn_hidden_new, pi_dists = {}, {}
@@ -529,7 +529,7 @@ class TarMAC_Policy(IC3Net_Policy):
                                              initialize=initialize, activation=activation,
                                              use_distributed_training=use_distributed_training, **kwargs)
 
-    def forward(self, observation: Dict[str, Tensor], agent_ids: Optional[Tensor] = None,
+    def construct(self, observation: Dict[str, Tensor], agent_ids: Optional[Tensor] = None,
                 avail_actions: Dict[str, Tensor] = None, agent_key: str = None,
                 rnn_hidden: Optional[Dict[str, List[Tensor]]] = None, alive_ally: Optional[dict] = None):
         rnn_hidden_new, pi_dists = {}, {}

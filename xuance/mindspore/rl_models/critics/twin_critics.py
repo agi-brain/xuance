@@ -1,0 +1,110 @@
+from copy import deepcopy
+from typing import Type, Sequence, Optional, Callable, Union, Dict, Tuple
+from gymnasium.spaces import Box, Discrete
+
+from xuance.mindspore import ops, Tensor, Module
+from xuance.mindspore.rl_models.heads import ValueHead, QValueHead
+
+
+class TwinActionValueCritic(Module):
+    def __init__(self,
+                 representation: Module,
+                 action_space: Box,
+                 critic_hidden_size: Sequence[int],
+                 normalizer: Optional[Type[Module]] = None,
+                 initializer: Optional[Callable[..., Tensor]] = None,
+                 activation: Optional[Type[Module]] = None,
+                 **kwargs) -> None:
+        super().__init__()
+        if isinstance(action_space, Box):
+            self.action_space = action_space
+            self.action_dim = action_space.shape[-1]
+        else:
+            raise ValueError('action_space must be Box.')
+        self.representation_1 = representation
+        self.representation_2 = deepcopy(representation)
+
+        self.representation_info_shape = representation.output_shapes
+        self.feature_dim = self.representation_info_shape['state'][0] + self.action_dim
+        value_head_input = dict(
+            feature_dim=self.feature_dim,
+            hidden_size=critic_hidden_size,
+            normalizer=normalizer,
+            initializer=initializer,
+            activation=activation,
+            **kwargs,
+        )
+
+        self.critic_head_1 = ValueHead(**value_head_input)
+        self.critic_head_2 = ValueHead(**value_head_input)
+
+    def construct(self,
+                  observation: Union[Tensor, dict],
+                  actions: Union[Tensor, dict],
+                  rnn_states_1: Union[Tensor, Optional[Tensor]] = None,
+                  rnn_states_2: Union[Tensor, Optional[Tensor]] = None,
+                  **kwargs) -> Tuple[Tensor, ...]:
+        if rnn_states_1 is not None:
+            kwargs["rnn_states"] = rnn_states_1
+        rep_embeddings_1, rnn_states_1_new = self.representation_1(observation, **kwargs)
+        if rnn_states_1 is not None:
+            kwargs["rnn_states"] = rnn_states_2
+        rep_embeddings_2, rnn_states_2_new = self.representation_2(observation, **kwargs)
+
+        values_1 = self.critic_head_1(ops.concat([rep_embeddings_1, actions], axis=-1), **kwargs)
+        values_2 = self.critic_head_2(ops.concat([rep_embeddings_2, actions], axis=-1), **kwargs)
+
+        return values_1, values_2, rnn_states_1_new, rnn_states_2_new
+
+
+class TwinDiscreteActionValueCritic(Module):
+
+    def __init__(self,
+                 representation: Module,
+                 action_space: Discrete,
+                 critic_hidden_size: Sequence[int],
+                 normalizer: Optional[Type[Module]] = None,
+                 initializer: Optional[Callable[..., Tensor]] = None,
+                 activation: Optional[Type[Module]] = None,
+                 **kwargs) -> None:
+        super().__init__()
+        if isinstance(action_space, Discrete):
+            self.action_space = action_space
+            self.n_actions = action_space.n
+        else:
+            raise ValueError('action_space must be Box.')
+        self.representation_1 = representation
+        self.representation_2 = deepcopy(representation)
+
+        self.representation_info_shape = representation.output_shapes
+        self.feature_dim = self.representation_info_shape['state'][0]
+        value_head_input = dict(
+            feature_dim=self.feature_dim,
+            hidden_size=critic_hidden_size,
+            n_actions=self.n_actions,
+            normalizer=normalizer,
+            initializer=initializer,
+            activation=activation,
+            **kwargs,
+        )
+
+        self.critic_head_1 = QValueHead(**value_head_input)
+        self.critic_head_2 = QValueHead(**value_head_input)
+
+    def construct(self,
+                  observation: Union[Tensor, dict],
+                  rnn_states_1: Union[Tensor, Optional[Tensor]] = None,
+                  rnn_states_2: Union[Tensor, Optional[Tensor]] = None,
+                  **kwargs) -> Tuple[Tensor, ...]:
+        if rnn_states_1 is not None:
+            kwargs["rnn_states"] = rnn_states_1
+        rep_embeddings_1, rnn_states_1_new = self.representation_1(observation, **kwargs)
+        if rnn_states_1 is not None:
+            kwargs["rnn_states"] = rnn_states_2
+        rep_embeddings_2, rnn_states_2_new = self.representation_2(observation, **kwargs)
+
+        values_1 = self.critic_head_1(rep_embeddings_1, **kwargs)
+        values_2 = self.critic_head_2(rep_embeddings_2, **kwargs)
+
+        return values_1, values_2, rnn_states_1_new, rnn_states_2_new
+

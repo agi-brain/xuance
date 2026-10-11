@@ -1,7 +1,6 @@
 import gymnasium
 import numpy as np
 from argparse import Namespace
-from copy import deepcopy
 from gymnasium.spaces import Space
 from typing import Optional, Tuple
 from xuance.common import BaseCallback

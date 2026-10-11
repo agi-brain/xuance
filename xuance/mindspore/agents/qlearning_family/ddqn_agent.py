@@ -22,3 +22,4 @@ class DDQN_Agent(DQN_Agent):
             callback: Optional[BaseCallback] = None
     ):
         super(DDQN_Agent, self).__init__(config, envs, observation_space, action_space, callback)
+

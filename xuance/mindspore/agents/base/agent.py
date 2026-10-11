@@ -7,14 +7,18 @@ import mindspore.ops as ops
 from abc import ABC, abstractmethod
 from pathlib import Path
 from argparse import Namespace
+from typing import Optional, Any
 from gymnasium.spaces import Dict, Space
 from torch.utils.tensorboard import SummaryWriter
-from mindspore import Tensor
-from mindspore.communication import init, get_rank, get_group_size
-from xuance.common import get_time_string, create_directory, RunningMeanStd, EPS, Optional, BaseCallback
+from xuance.common import get_time_string, create_directory, RunningMeanStd, EPS, BaseCallback
 from xuance.environment import DummyVecEnv, SubprocVecEnv, space2shape
-from xuance.mindspore import REGISTRY_Representation, REGISTRY_Learners, Module, ms
-from xuance.mindspore.utils import InitializeFunctions, NormalizeFunctions, ActivationFunctions, set_seed, set_device
+
+from mindspore.communication import init, get_rank, get_group_size
+from xuance.mindspore import ms, Tensor, Module, REGISTRY_Representation, REGISTRY_Learners
+from xuance.mindspore.utils import (NormalizeFunctions, ActivationFunctions, InitializeFunctions,
+                                    set_seed,
+                                    set_device,
+                                    TensorEnvWrapper, TensorRunningMeanStd)
 
 
 class Agent(ABC):
@@ -63,10 +67,13 @@ class Agent(ABC):
             action_space: Optional[Space] = None,
             callback: Optional[BaseCallback] = None
     ):
+        set_seed(config.seed)
+
         # Training settings.
         self.config = config
-        self.use_rnn = config.use_rnn if hasattr(config, "use_rnn") else False
-        self.use_actions_mask = config.use_actions_mask if hasattr(config, "use_actions_mask") else False
+        self.use_rnn = getattr(config, "use_rnn", False)
+        self.use_actions_mask = getattr(config, "use_actions_mask", False)
+        self.is_tensor_memory = getattr(self.config, "use_tensor_memory", False)
         self.distributed_training = getattr(config, "distributed_training", False)
         self.static_graph = getattr(config, "static_graph", True)
         if self.static_graph:
@@ -87,16 +94,18 @@ class Agent(ABC):
         else:
             self.world_size = 1
             self.rank = 0
-        set_seed(config.seed + self.rank * 1000)
 
         self.gamma = config.gamma
-        self.start_training = config.start_training if hasattr(config, "start_training") else 1
-        self.training_frequency = config.training_frequency if hasattr(config, "start_training") else 1
-        self.n_epochs = config.n_epochs if hasattr(config, "n_epochs") else 1
+        self.start_training = getattr(config, "start_training", 1)
+        self.training_frequency = getattr(config, "training_frequency", 1)
+        self.n_epochs = getattr(config, "n_epochs", 1)
         self.device = self.config.device = set_device(self.config.device)
 
         # Environment attributes.
-        self.train_envs = envs
+        if self.is_tensor_memory:
+            self.train_envs = TensorEnvWrapper(envs, self.device)
+        else:
+            self.train_envs = envs
         self.render = config.render
         self.fps = config.fps
         if self.train_envs is None:
@@ -118,13 +127,24 @@ class Agent(ABC):
         self.current_episode = np.zeros((self.n_envs,), np.int32)
 
         # Set normalizations for observations and rewards.
-        self.obs_rms = RunningMeanStd(shape=space2shape(self.observation_space))
-        self.ret_rms = RunningMeanStd(shape=())
+        if self.is_tensor_memory:
+            self.obs_rms = TensorRunningMeanStd(shape=space2shape(self.observation_space),
+                                                device=self.device, distributed=self.distributed_training)
+            self.ret_rms = TensorRunningMeanStd(shape=(), device=self.device, distributed=self.distributed_training)
+            self.returns = self.returns = ops.zeros((self.n_envs,), dtype=ms.float32)
+        else:
+            self.obs_rms = RunningMeanStd(shape=space2shape(self.observation_space))
+            self.ret_rms = RunningMeanStd(shape=())
+            self.returns = np.zeros((self.n_envs,), np.float32)
         self.use_obsnorm = config.use_obsnorm
         self.use_rewnorm = config.use_rewnorm
         self.obsnorm_range = config.obsnorm_range
         self.rewnorm_range = config.rewnorm_range
-        self.returns = np.zeros((self.train_envs.num_envs,), np.float32)
+
+        # Set network's normalizer, initializer, activation.
+        self.normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None
+        self.initializer = InitializeFunctions[getattr(self.config, "initializer", "orthogonal")]
+        self.activation = ActivationFunctions[self.config.activation]
 
         # Prepare directories.
         if self.distributed_training and self.world_size > 1:
@@ -177,7 +197,7 @@ class Agent(ABC):
         self.log_dir = log_dir
 
         # Prepare necessary components.
-        self.policy: Optional[Module] = None
+        self.model: Optional[Module] = None
         self.learner: Optional[Module] = None
         self.memory: Optional[object] = None
         self.callback = callback or BaseCallback()
@@ -248,26 +268,49 @@ class Agent(ABC):
         if self.use_obsnorm:
             if isinstance(self.observation_space, Dict):
                 for key in self.observation_space.spaces.keys():
-                    observations[key] = np.clip(
-                        (observations[key] - self.obs_rms.mean[key]) / (self.obs_rms.std[key] + EPS),
-                        -self.obsnorm_range, self.obsnorm_range)
+                    if self.is_tensor_memory:
+                        observations[key] = ops.clip_by_value(
+                            (observations[key] - self.obs_rms.mean[key]) / (self.obs_rms.std[key] + EPS),
+                            -self.obsnorm_range, self.obsnorm_range)
+                    else:
+                        observations[key] = np.clip(
+                            (observations[key] - self.obs_rms.mean[key]) / (self.obs_rms.std[key] + EPS),
+                            -self.obsnorm_range, self.obsnorm_range)
             else:
-                observations = np.clip((observations - self.obs_rms.mean) / (self.obs_rms.std + EPS),
-                                       -self.obsnorm_range, self.obsnorm_range)
+                if self.is_tensor_memory:
+                    observations = ops.clip_by_value(
+                        (observations - self.obs_rms.mean) / (self.obs_rms.std + EPS),
+                        -self.obsnorm_range, self.obsnorm_range
+                    )
+                else:
+                    observations = np.clip(
+                        (observations - self.obs_rms.mean) / (self.obs_rms.std + EPS),
+                        -self.obsnorm_range, self.obsnorm_range
+                    )
             return observations
         else:
             return observations
 
     def _process_reward(self, rewards):
         if self.use_rewnorm:
-            std = np.clip(self.ret_rms.std, 0.1, 100)
-            return np.clip(rewards / std, -self.rewnorm_range, self.rewnorm_range)
+            if self.is_tensor_memory:
+                std = ops.clip_by_value(self.ret_rms.std, 0.1, 100)
+                return ops.clip_by_value(rewards / std, -self.rewnorm_range, self.rewnorm_range)
+            else:
+                std = np.clip(self.ret_rms.std, 0.1, 100)
+                return np.clip(rewards / std, -self.rewnorm_range, self.rewnorm_range)
         else:
             return rewards
 
+    def _to_tensor(self, x):
+        if x is None:
+            return None
+        else:
+            return Tensor(x)
+
     def _build_representation(self, representation_key: str,
-                              input_space: Optional[Space],
-                              config: Namespace):
+                              input_space: Space[Any],
+                              config: Namespace) -> Module:
         """
         Build representation for policies.
 
@@ -281,40 +324,49 @@ class Agent(ABC):
         """
         input_representations = dict(
             input_shape=space2shape(input_space),
-            hidden_sizes=config.representation_hidden_size if hasattr(config, "representation_hidden_size") else None,
-            normalize=NormalizeFunctions[config.normalize] if hasattr(config, "normalize") else None,
-            initialize=InitializeFunctions['orthogonal'] if hasattr(config, "orthogonal") else None,
-            activation=ActivationFunctions[config.activation],
-            kernels=config.kernels if hasattr(config, "kernels") else None,
-            strides=config.strides if hasattr(config, "strides") else None,
-            filters=config.filters if hasattr(config, "filters") else None,
-            fc_hidden_sizes=config.fc_hidden_sizes if hasattr(config, "fc_hidden_sizes") else None,
-            device=self.device)
+            hidden_sizes=getattr(config, "representation_hidden_size", None),
+            normalize=self.normalize_fn,
+            initialize=self.initializer,
+            activation=self.activation,
+            kernels=getattr(config, "kernels", None),
+            strides=getattr(config, "strides", None),
+            filters=getattr(config, "filters", None),
+            fc_hidden_sizes=getattr(config, "fc_hidden_sizes", None),
+            image_patch_size=getattr(config, "image_patch_size", None),
+            frame_patch_size=getattr(config, "frame_patch_size", None),
+            final_dim=getattr(config, "final_dim", None),
+            embedding_dim=getattr(config, "embedding_dim", None),
+            depth=getattr(config, "depth", None),
+            heads=getattr(config, "heads", None),
+            FFN_dim=getattr(config, "FFN_dim", None),
+            device=self.device
+        )
         representation = REGISTRY_Representation[representation_key](**input_representations)
         if representation_key not in REGISTRY_Representation:
             raise AttributeError(f"{representation_key} is not registered in REGISTRY_Representation.")
         return representation
 
     @abstractmethod
-    def _build_policy(self) -> Module:
+    def _build_model(self, *args, **kwargs) -> Module:
         raise NotImplementedError
 
-    def _build_learner(self, *args):
-        return REGISTRY_Learners[self.config.learner](*args)
+    def _build_learner(self, *args, **kwargs):
+        return REGISTRY_Learners[self.config.learner](*args, **kwargs)
 
     @abstractmethod
-    def get_actions(self, observations):
+    def get_actions(self, *args, **kwargs):
         raise NotImplementedError
 
     @abstractmethod
-    def train(self, train_steps: int) -> dict:
+    def train(self, train_steps: int, **kwargs) -> dict:
         raise NotImplementedError
 
     @abstractmethod
     def test(self,
              test_episodes: int,
              test_envs: Optional[DummyVecEnv | SubprocVecEnv] = None,
-             close_envs: bool = True):
+             close_envs: bool = True,
+             **kwargs):
         raise NotImplementedError
 
     def finish(self):

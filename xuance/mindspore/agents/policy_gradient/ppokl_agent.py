@@ -1,16 +1,10 @@
 from tqdm import tqdm
 from copy import deepcopy
-from argparse import Namespace
-from gymnasium.spaces import Space
-from xuance.common import Optional, BaseCallback
-from xuance.environment import DummyVecEnv, SubprocVecEnv
-from xuance.mindspore import Module
-from xuance.mindspore.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions
-from xuance.mindspore.policies import REGISTRY_Policy
-from xuance.mindspore.agents import OnPolicyAgent
+from xuance.mindspore.rl_models.modules import ActionOutput
+from xuance.mindspore.agents.policy_gradient.ppo_agent import PPO_Agent
 
 
-class PPOKL_Agent(OnPolicyAgent):
+class PPOKL_Agent(PPO_Agent):
     """The implementation of PPO agent with KL divergence.
 
     Args:
@@ -18,46 +12,12 @@ class PPOKL_Agent(OnPolicyAgent):
         envs: the vectorized environments.
         callback: A user-defined callback function object to inject custom logic during training.
     """
-    def __init__(
-            self,
-            config: Namespace,
-            envs: Optional[DummyVecEnv | SubprocVecEnv] = None,
-            observation_space: Optional[Space] = None,
-            action_space: Optional[Space] = None,
-            callback: Optional[BaseCallback] = None
-    ):
-        super(PPOKL_Agent, self).__init__(config, envs, observation_space, action_space, callback)
-        self.auxiliary_info_shape = {"old_dist": None}
-        self.memory = self._build_memory(self.auxiliary_info_shape)  # build memory
-        self.policy = self._build_policy()  # build policy
-        self.learner = self._build_learner(self.config, self.policy, self.callback)  # build learner
 
-    def _build_policy(self) -> Module:
-        normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None
-        initializer = InitializeFunctions[self.config.initialize] if hasattr(self.config, "initialize") else None
-        activation = ActivationFunctions[self.config.activation]
+    @property
+    def auxiliary_info_shape(self):
+        return {"old_dist": None}
 
-        # build representation.
-        representation = self._build_representation(self.config.representation, self.observation_space, self.config)
-
-        # build policy.
-        if self.config.policy == "Categorical_AC":
-            policy = REGISTRY_Policy["Categorical_AC"](
-                action_space=self.action_space, representation=representation,
-                actor_hidden_size=self.config.actor_hidden_size, critic_hidden_size=self.config.critic_hidden_size,
-                normalize=normalize_fn, initialize=initializer, activation=activation)
-        elif self.config.policy == "Gaussian_AC":
-            policy = REGISTRY_Policy["Gaussian_AC"](
-                action_space=self.action_space, representation=representation,
-                actor_hidden_size=self.config.actor_hidden_size, critic_hidden_size=self.config.critic_hidden_size,
-                normalize=normalize_fn, initialize=initializer, activation=activation,
-                activation_action=ActivationFunctions[self.config.activation_action])
-        else:
-            raise AttributeError(f"PPO_KL currently does not support the policy named {self.config.policy}.")
-
-        return policy
-
-    def get_aux_info(self, policy_output: dict = None):
+    def get_aux_info(self, policy_output: ActionOutput = None):
         """Returns auxiliary information.
 
         Parameters:
@@ -66,7 +26,7 @@ class PPOKL_Agent(OnPolicyAgent):
         Returns:
             aux_info (dict): The auxiliary information.
         """
-        aux_info = {"old_dist": policy_output['dists']}
+        aux_info = {"old_dist": policy_output.distributions}
         return aux_info
 
     def train(self, train_steps):
@@ -76,11 +36,12 @@ class PPOKL_Agent(OnPolicyAgent):
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
             policy_out = self.get_actions(obs, return_dists=True, return_logpi=False)
-            acts, vals = policy_out['actions'], policy_out['values']
+            acts = policy_out.env_actions
+            vals = policy_out.values
             next_obs, rewards, terminals, truncations, infos = self.train_envs.step(acts)
             aux_info = self.get_aux_info(policy_out)
 
-            self.callback.on_train_step(self.current_step, envs=self.train_envs, policy=self.policy,
+            self.callback.on_train_step(self.current_step, envs=self.train_envs, model=self.model,
                                         obs=obs, policy_out=policy_out, acts=acts, vals=vals, next_obs=next_obs,
                                         rewards=rewards, terminals=terminals, truncations=truncations,
                                         infos=infos, aux_info=aux_info, train_steps=train_steps)
@@ -96,7 +57,7 @@ class PPOKL_Agent(OnPolicyAgent):
                 update_info = self.train_epochs(self.n_epochs)
                 self.log_infos(update_info, self.current_step)
                 train_info.update(update_info)
-                self.callback.on_train_epochs_end(self.current_step, policy=self.policy, memory=self.memory,
+                self.callback.on_train_epochs_end(self.current_step, model=self.model, memory=self.memory,
                                                   current_episode=self.current_episode, train_steps=train_steps,
                                                   update_info=update_info)
                 self.memory.clear()
@@ -120,22 +81,22 @@ class PPOKL_Agent(OnPolicyAgent):
                         self.current_episode[i] += 1
                         if self.use_wandb:
                             episode_info = {
-                                f"Episode-Steps/env-{i}": infos[i]["episode_step"],
-                                f"Train-Episode-Rewards/env-{i}": infos[i]["episode_score"]
+                                f"Episode-Steps/rank_{self.rank}/env-{i}": infos[i]["episode_step"],
+                                f"Train-Episode-Rewards/rank_{self.rank}/env-{i}": infos[i]["episode_score"]
                             }
                         else:
                             episode_info = {
-                                f"Episode-Steps": {f"env-{i}": infos[i]["episode_step"]},
-                                f"Train-Episode-Rewards": {f"env-{i}": infos[i]["episode_score"]}
+                                f"Episode-Steps/rank_{self.rank}": {f"env-{i}": infos[i]["episode_step"]},
+                                f"Train-Episode-Rewards/rank_{self.rank}": {f"env-{i}": infos[i]["episode_score"]}
                             }
                         self.log_infos(episode_info, self.current_step)
                         train_info.update(episode_info)
-                        self.callback.on_train_episode_info(envs=self.train_envs, policy=self.policy, env_id=i,
-                                                            infos=infos, use_wandb=self.use_wandb,
+                        self.callback.on_train_episode_info(envs=self.train_envs, model=self.model, env_id=i,
+                                                            infos=infos, rank=self.rank, use_wandb=self.use_wandb,
                                                             current_step=self.current_step,
                                                             current_episode=self.current_episode,
                                                             train_steps=train_steps)
             self.current_step += self.n_envs
-            self.callback.on_train_step_end(self.current_step, envs=self.train_envs, policy=self.policy,
+            self.callback.on_train_step_end(self.current_step, envs=self.train_envs, model=self.model,
                                             train_steps=train_steps, train_info=train_info)
         return train_info

@@ -1,24 +1,23 @@
+import mindspore.nn as nn
+from mindspore.common.initializer import Normal, One, Zero, Orthogonal
+
+from .data import AgentGroupedTensor
 from .device import set_device, collect_device_info
-from .layers import (
-    ms, nn,
-    ModuleType,
-    mlp_block, cnn_block, pooling_block, gru_block, lstm_block
-)
-from .distributions import (
-    split_distributions,
-    merge_distributions,
-    Distribution,
-    CategoricalDistribution,
-    DiagGaussianDistribution,
-    ActivatedDiagGaussianDistribution
-)
-from .operations import (update_linear_decay, set_seed, get_flat_grad, get_flat_params, assign_from_flat_grads,
-                         assign_from_flat_params, clip_grads)
+from .operations import (update_linear_decay, set_seed,
+                         get_flat_grad, get_flat_params,
+                         assign_from_flat_params, assign_from_flat_grads,
+                         clip_grads)
 from .value_norm import ValueNorm
+from .tensor_memory import (TensorOnPolicyBuffer, TensorOnPolicyBufferAtari,
+                            TensorOffPolicyBuffer, TensorOffPolicyBufferAtari)
+from .tensor_env import TensorEnvWrapper, TensorMultiAgentEnvWrapper
+from .tensor_statistics import TensorRunningMeanStd
+
 
 class LeakyReLU_01(nn.LeakyReLU):
     def __init__(self):
         super(LeakyReLU_01, self).__init__(alpha=0.01)
+
 
 ActivationFunctions = {
     "relu": nn.ReLU,
@@ -39,6 +38,10 @@ NormalizeFunctions = {
     "InstanceNorm2d": nn.InstanceNorm2d
 }
 
+
 InitializeFunctions = {
-    "orthogonal": ms.common.initializer.Orthogonal,
+    "orthogonal": Orthogonal,
+    "normal": Normal,
+    "ones": One,
+    "zeros": Zero,
 }

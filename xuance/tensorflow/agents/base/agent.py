@@ -10,10 +10,8 @@ from gymnasium.spaces import Dict, Space
 from xuance.common import get_time_string, create_directory, RunningMeanStd, EPS, Optional, BaseCallback
 from xuance.environment import DummyVecEnv, SubprocVecEnv, space2shape
 
-import tensorflow as tf
-from xuance.tensorflow import Module
-from xuance.tensorflow import REGISTRY_Representation, REGISTRY_Learners
-from xuance.tensorflow.utils import (normalizerFunctions, ActivationFunctions, initializerFunctions,
+from xuance.tensorflow import tf, Module, REGISTRY_Representation, REGISTRY_Learners
+from xuance.tensorflow.utils import (NormalizerFunctions, ActivationFunctions, InitializerFunctions,
                                      set_seed,
                                      set_device,
                                      TensorEnvWrapper, TensorRunningMeanStd)
@@ -150,8 +148,8 @@ class Agent(ABC):
         self.rewnorm_range = config.rewnorm_range
 
         # Network helpers.
-        self.normalizer_fn = normalizerFunctions[self.config.normalizer] if hasattr(self.config, "normalizer") else None
-        self.initializer = initializerFunctions[getattr(self.config, "initializer", "orthogonal")]
+        self.normalizer_fn = NormalizerFunctions[self.config.normalizer] if hasattr(self.config, "normalizer") else None
+        self.initializer = InitializerFunctions[getattr(self.config, "initializer", "orthogonal")]
         self.activation = ActivationFunctions[self.config.activation]
 
         # Prepare directories.
@@ -426,7 +424,7 @@ class Agent(ABC):
         raise NotImplementedError
 
     def _build_learner(self, *args, **kwargs):
-        return REGISTRY_Learners[self.config.learner](*args)
+        return REGISTRY_Learners[self.config.learner](*args, **kwargs)
 
     @abstractmethod
     def get_actions(self, *args, **kwargs):

@@ -1,9 +1,9 @@
 import random
+import numpy as np
+
 import mindspore as ms
 import mindspore.nn as nn
-import numpy as np
-from mindspore.ops import ExpandDims, Concat, clip_by_value
-from .distributions import CategoricalDistribution, DiagGaussianDistribution
+from mindspore.ops import clip_by_value
 
 
 def update_linear_decay(optimizer, step, total_steps, initial_lr, end_factor):

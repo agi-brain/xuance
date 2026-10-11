@@ -24,7 +24,6 @@ class DreamerV3_Learner(Learner):
         self.config = dotdict(vars(config))
         self.is_continuous = self.config.is_continuous
         self.tau = self.config.critic.tau
-        self.gamma = self.config.gamma
         self.soft_update_freq = self.config.critic.soft_update_freq
 
         self.kl_dynamic = self.config.world_model.kl_dynamic  # 0.5

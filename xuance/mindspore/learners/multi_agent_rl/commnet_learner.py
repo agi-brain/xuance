@@ -4,7 +4,7 @@ from typing import List
 import torch
 from torch import nn
 
-from xuance.torch.learners.multi_agent_rl.ippo_learner import IPPO_Learner
+from xuance.mindspore.learners.multi_agent_rl.ippo_learner import IPPO_Learner
 
 
 class CommNet_Learner(IPPO_Learner):

@@ -3,7 +3,7 @@ from typing import List
 
 from torch import nn
 
-from xuance.torch.learners.multi_agent_rl.ic3net_learner import IC3Net_Learner
+from xuance.mindspore.learners.multi_agent_rl.ic3net_learner import IC3Net_Learner
 
 
 class TarMAC_Learner(IC3Net_Learner):

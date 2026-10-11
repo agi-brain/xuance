@@ -84,6 +84,7 @@ class NoisyDQN_Agent(Agent):
             The ActionOutput containing actions to be executed in the environment.
         """
         observations = tf.convert_to_tensor(observations, dtype=tf.float32)
+        self.model.noise_scale = self.noise_scale
         actions = self._rollout_step(observations)
         if not self.is_tensor_memory:
             actions = actions.numpy()

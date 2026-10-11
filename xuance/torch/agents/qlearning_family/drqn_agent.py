@@ -152,7 +152,8 @@ class DRQN_Agent(OffPolicyAgent):
     def test(self,
              test_episodes: int,
              test_envs: Optional[DummyVecEnv | SubprocVecEnv] = None,
-             close_envs: bool = True) -> list:
+             close_envs: bool = True,
+             **kwargs) -> list:
         if test_envs is None:
             raise ValueError("`test_envs` must be provided for evaluation.")
         num_envs = test_envs.num_envs

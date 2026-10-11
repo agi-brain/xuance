@@ -1,3 +1,13 @@
+"""
+PyTorch-compatible module utilities for the XuanCe TensorFlow backend.
+
+This module provides custom abstractions to bridge API differences between
+PyTorch and TensorFlow/Keras. It implements PyTorch-style module cloning and
+module containers, including ModuleList and ModuleDict, to support consistent
+model construction, parameter management, and model copying across XuanCe's
+deep learning backends.
+"""
+
 from abc import ABC
 from typing import Dict, Iterator
 

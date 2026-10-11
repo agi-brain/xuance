@@ -13,7 +13,7 @@ from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv, s
 import tensorflow as tf
 from xuance.tensorflow import Module, REGISTRY_Representation, REGISTRY_Learners
 from xuance.tensorflow.learners import LearnerMAS
-from xuance.tensorflow.utils import (normalizerFunctions, ActivationFunctions, initializerFunctions, AgentGroupedTensor,
+from xuance.tensorflow.utils import (NormalizerFunctions, ActivationFunctions, InitializerFunctions, AgentGroupedTensor,
                                      set_seed, set_device)
 from xuance.tensorflow.rl_models import AgentFeatureEncoder
 from xuance.tensorflow.rl_models import IdentityFeatureFusion, build_identity_encoder
@@ -149,8 +149,8 @@ class MARLAgents(ABC):
             }
 
         # Network helpers.
-        self.normalizer_fn = normalizerFunctions[self.config.normalizer] if hasattr(self.config, "normalizer") else None
-        self.initializer = initializerFunctions[getattr(self.config, "initializer", "orthogonal")]
+        self.normalizer_fn = NormalizerFunctions[self.config.normalizer] if hasattr(self.config, "normalizer") else None
+        self.initializer = InitializerFunctions[getattr(self.config, "initializer", "orthogonal")]
         self.activation = ActivationFunctions[self.config.activation]
 
         # Prepare directories.

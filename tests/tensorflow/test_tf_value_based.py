@@ -1,4 +1,4 @@
-# Test the value-based algorithms with PyTorch.
+# Test the value-based algorithms with TensorFlow.
 
 from argparse import Namespace
 from xuance import get_runner

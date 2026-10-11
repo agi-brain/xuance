@@ -5,9 +5,12 @@ from argparse import Namespace
 from gymnasium.spaces import Space
 from xuance.common import Optional, DummyOnPolicyBuffer, DummyOnPolicyBuffer_Atari, BaseCallback
 from xuance.environment import DummyVecEnv, SubprocVecEnv
-from xuance.mindspore import Module, Tensor
-from xuance.mindspore.utils import split_distributions
+
+from xuance.mindspore import Module
+from xuance.mindspore.rl_models.modules import split_distributions
 from xuance.mindspore.agents.base import Agent
+from xuance.mindspore.rl_models.modules import ActionOutput
+from xuance.mindspore.utils import TensorOnPolicyBuffer, TensorOnPolicyBufferAtari, TensorEnvWrapper
 
 
 class OnPolicyAgent(Agent):
@@ -43,6 +46,7 @@ class OnPolicyAgent(Agent):
         - In evaluation mode, actions are sampled without exploration schedules specific to training
             (e.g., no epsilon-greedy / action noise).
     """
+
     def __init__(
             self,
             config: Namespace,
@@ -56,7 +60,6 @@ class OnPolicyAgent(Agent):
         self.n_epochs = config.n_epochs
         self.n_minibatch = config.n_minibatch
         self.gae_lam = config.gae_lambda
-        self.auxiliary_info_shape = None
         self.memory: Optional[DummyOnPolicyBuffer] = None
 
     def _build_memory(self, auxiliary_info_shape=None) -> DummyOnPolicyBuffer:
@@ -81,10 +84,6 @@ class OnPolicyAgent(Agent):
             - When `use_gae` is enabled, the buffer computes advantages using `gamma` and `gae_lam`;
                 when `use_advnorm` is enabled, advantages are normalized before updates.
         """
-        self.atari = True if self.config.env_name == "Atari" else False
-        Buffer = DummyOnPolicyBuffer_Atari if self.atari else DummyOnPolicyBuffer
-        self.buffer_size = self.n_envs * self.horizon_size
-        self.batch_size = self.buffer_size // self.n_minibatch
         input_buffer = dict(observation_space=self.observation_space,
                             action_space=self.action_space,
                             auxiliary_shape=auxiliary_info_shape,
@@ -94,9 +93,17 @@ class OnPolicyAgent(Agent):
                             use_advnorm=self.config.use_advnorm,
                             gamma=self.gamma,
                             gae_lam=self.gae_lam)
+        self.atari = self.config.env_name == "Atari"
+        if self.is_tensor_memory:
+            Buffer = TensorOnPolicyBufferAtari if self.atari else TensorOnPolicyBuffer
+            input_buffer['device'] = self.device
+        else:
+            Buffer = DummyOnPolicyBuffer_Atari if self.atari else DummyOnPolicyBuffer
+        self.buffer_size = self.n_envs * self.horizon_size
+        self.batch_size = self.buffer_size // self.n_minibatch
         return Buffer(**input_buffer)
 
-    def _build_policy(self) -> Module:
+    def _build_model(self) -> Module:
         raise NotImplementedError
 
     def get_terminated_values(self, observations_next: np.ndarray, rewards: np.ndarray = None) -> np.ndarray:
@@ -115,11 +122,11 @@ class OnPolicyAgent(Agent):
             np.ndarray: Value estimates for the provided terminal observations.
         """
         policy_out = self.get_actions(self._process_observation(observations_next))
-        values_next = policy_out['values']
+        values_next = policy_out.values
         return values_next
 
-    def get_actions(self, observations: np.ndarray,
-               return_dists: bool = False, return_logpi: bool = False) -> dict:
+    def get_actions(self, observations: np.ndarray, deterministic: bool = False,
+                    return_dists: bool = False, return_logpi: bool = False) -> ActionOutput:
         """Compute actions and value estimates for a batch of observations.
 
         This method performs a forward pass through the current policy to obtain action distributions
@@ -128,11 +135,12 @@ class OnPolicyAgent(Agent):
         Args:
             observations (np.ndarray): Batch of observations. The array is expected to have shape compatible with
                 the underlying policy.
+            deterministic (bool): True for deterministic policy and False for stochastic policy.
             return_dists (bool): Whether to return the action distributions (split into a Python-friendly structure).
             return_logpi (bool): Whether to return the log-probabilities of the sampled actions.
 
         Returns:
-            dict: A dictionary containing:
+            ActionOutput:
                 - actions (np.ndarray): Sampled actions to execute in the environment(s).
                 - values (np.ndarray): Value estimates for the input observations.
                     If the policy does not produce values, this is set to 0.
@@ -140,22 +148,24 @@ class OnPolicyAgent(Agent):
                 - log_pi (Optional[np.ndarray]): Log-probabilities of sampled actions (when `return_logpi=True`);
                     otherwise None.
         """
-        if self.policy.is_continuous:
-            _, mu, std, values = self.policy(Tensor(observations))
-            policy_dists = self.policy.actor.distribution(mu=mu, std=std)
-        else:
-            _, logits, values = self.policy(Tensor(observations))
-            policy_dists = self.policy.actor.distribution(logits=logits)
-        actions = policy_dists.stochastic_sample()
-        log_pi = policy_dists.log_prob(actions).asnumpy() if return_logpi else None
-
+        model_output = self.model(observations)
+        policy_dists = model_output.distributions
+        values = model_output.values
+        actions = policy_dists.deterministic_sample() if deterministic else policy_dists.stochastic_sample()
         dists = split_distributions(policy_dists) if return_dists else None
-        actions = actions.asnumpy()
-        if values is None:
-            values = 0
+        if self.is_tensor_memory:
+            log_pi = policy_dists.log_prob(actions) if return_logpi else None
+            values = 0 if values is None else values
         else:
-            values = values.asnumpy()
-        return {"actions": actions, "values": values, "dists": dists, "log_pi": log_pi}
+            log_pi = policy_dists.log_prob(actions).asnumpy() if return_logpi else None
+            actions = actions.asnumpy()
+            values = 0 if values is None else values.asnumpy()
+        return ActionOutput(
+                env_actions=actions,
+                values=values,
+                distributions=dists,
+                log_probs=log_pi
+            )
 
     def get_aux_info(self, policy_output: dict = None) -> dict:
         """Returns auxiliary information.
@@ -223,11 +233,12 @@ class OnPolicyAgent(Agent):
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
             policy_out = self.get_actions(obs, return_dists=False, return_logpi=False)
-            acts, vals = policy_out['actions'], policy_out['values']
+            acts = policy_out.env_actions
+            vals = policy_out.values
             next_obs, rewards, terminals, truncations, infos = self.train_envs.step(acts)
             aux_info = self.get_aux_info()
 
-            self.callback.on_train_step(self.current_step, envs=self.train_envs, policy=self.policy,
+            self.callback.on_train_step(self.current_step, envs=self.train_envs, model=self.model,
                                         obs=obs, policy_out=policy_out, acts=acts, vals=vals, next_obs=next_obs,
                                         rewards=rewards, terminals=terminals, truncations=truncations,
                                         infos=infos, aux_info=aux_info, train_steps=train_steps)
@@ -243,7 +254,7 @@ class OnPolicyAgent(Agent):
                 update_info = self.train_epochs(self.n_epochs)
                 self.log_infos(update_info, self.current_step)
                 train_info.update(update_info)
-                self.callback.on_train_epochs_end(self.current_step, policy=self.policy, memory=self.memory,
+                self.callback.on_train_epochs_end(self.current_step, model=self.model, memory=self.memory,
                                                   current_episode=self.current_episode, train_steps=train_steps,
                                                   update_info=update_info)
                 self.memory.clear()
@@ -267,29 +278,30 @@ class OnPolicyAgent(Agent):
                         self.current_episode[i] += 1
                         if self.use_wandb:
                             episode_info = {
-                                f"Episode-Steps/env-{i}": infos[i]["episode_step"],
-                                f"Train-Episode-Rewards/env-{i}": infos[i]["episode_score"]
+                                f"Episode-Steps/rank_{self.rank}/env-{i}": infos[i]["episode_step"],
+                                f"Train-Episode-Rewards/rank_{self.rank}/env-{i}": infos[i]["episode_score"]
                             }
                         else:
                             episode_info = {
-                                f"Episode-Steps": {f"env-{i}": infos[i]["episode_step"]},
-                                f"Train-Episode-Rewards": {f"env-{i}": infos[i]["episode_score"]}
+                                f"Episode-Steps/rank_{self.rank}": {f"env-{i}": infos[i]["episode_step"]},
+                                f"Train-Episode-Rewards/rank_{self.rank}": {f"env-{i}": infos[i]["episode_score"]}
                             }
                         self.log_infos(episode_info, self.current_step)
                         train_info.update(episode_info)
-                        self.callback.on_train_episode_info(envs=self.train_envs, policy=self.policy, env_id=i,
-                                                            infos=infos, use_wandb=self.use_wandb,
+                        self.callback.on_train_episode_info(envs=self.train_envs, model=self.model, env_id=i,
+                                                            infos=infos, rank=self.rank, use_wandb=self.use_wandb,
                                                             current_step=self.current_step,
                                                             current_episode=self.current_episode,
                                                             train_steps=train_steps)
 
             self.current_step += self.n_envs
-            self.callback.on_train_step_end(self.current_step, envs=self.train_envs, policy=self.policy,
+            self.callback.on_train_step_end(self.current_step, envs=self.train_envs, model=self.model,
                                             train_steps=train_steps, train_info=train_info)
         return train_info
 
     def test(self,
              test_episodes: int,
+             deterministic_policy: bool = True,
              test_envs: Optional[DummyVecEnv | SubprocVecEnv] = None,
              close_envs: bool = True) -> list:
         """Evaluate the current policy in a vectorized environment.
@@ -300,6 +312,8 @@ class OnPolicyAgent(Agent):
 
         Args:
             test_episodes (int): Total number of evaluation episodes to run across all vectorized environments.
+            deterministic_policy (bool): True for evaluating the deterministic policy,
+                and False for evaluating the stochastic policy.
             test_envs (Optional[DummyVecEnv | SubprocVecEnv]): Vectorized environments used for evaluation.
                 Must not be None.
             close_envs (bool): Whether to close `test_envs` before returning.
@@ -318,6 +332,8 @@ class OnPolicyAgent(Agent):
         """
         if test_envs is None:
             raise ValueError("`test_envs` must be provided for evaluation.")
+        if self.is_tensor_memory:
+            test_envs = TensorEnvWrapper(test_envs, device=self.device)
         num_envs = test_envs.num_envs
         videos, episode_videos, images = [[] for _ in range(num_envs)], [], None
         current_episode, current_step, scores, best_score = 0, 0, [], -np.inf
@@ -330,14 +346,15 @@ class OnPolicyAgent(Agent):
         while current_episode < test_episodes:
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
-            policy_out = self.get_actions(obs)
-            next_obs, rewards, terminals, truncations, infos = test_envs.step(policy_out['actions'])
+            policy_out = self.get_actions(obs, deterministic=deterministic_policy)
+            acts = policy_out.env_actions
+            next_obs, rewards, terminals, truncations, infos = test_envs.step(acts)
             if self.config.render_mode == "rgb_array" and self.render:
                 images = test_envs.render(self.config.render_mode)
                 for idx, img in enumerate(images):
                     videos[idx].append(img)
 
-            self.callback.on_test_step(envs=test_envs, policy=self.policy, images=images,
+            self.callback.on_test_step(envs=test_envs, model=self.model, images=images,
                                        obs=obs, policy_out=policy_out, next_obs=next_obs, rewards=rewards,
                                        terminals=terminals, truncations=truncations, infos=infos,
                                        current_train_step=self.current_step,
@@ -355,7 +372,6 @@ class OnPolicyAgent(Agent):
                         if best_score < infos[i]["episode_score"]:
                             best_score = infos[i]["episode_score"]
                             episode_videos = videos[i].copy()
-
             current_step += num_envs
 
         if self.config.render_mode == "rgb_array" and self.render:
@@ -369,7 +385,7 @@ class OnPolicyAgent(Agent):
         }
         self.log_infos(test_info, self.current_step)
 
-        self.callback.on_test_end(envs=test_envs, policy=self.policy,
+        self.callback.on_test_end(envs=test_envs, model=self.model,
                                   current_train_step=self.current_step,
                                   current_step=current_step, current_episode=current_episode,
                                   scores=scores, best_score=best_score)
@@ -378,4 +394,3 @@ class OnPolicyAgent(Agent):
             test_envs.close()
 
         return scores
-

@@ -8,32 +8,34 @@ from argparse import Namespace
 from mindspore import nn
 from xuance.mindspore import ms, ops, Module, Tensor, optim
 from xuance.mindspore.learners import Learner
+from xuance.mindspore.utils import clip_grads
 
 
 class SACDIS_Learner(Learner):
     def __init__(self,
                  config: Namespace,
-                 policy: Module,
+                 model: Module,
                  callback):
-        super(SACDIS_Learner, self).__init__(config, policy, callback)
+        super(SACDIS_Learner, self).__init__(config, model, callback)
         self.optimizer = {
-            'actor': optim.Adam(params=self.policy.actor_parameters, lr=self.config.learning_rate, eps=1e-5),
-            'critic': optim.Adam(params=self.policy.critic_parameters, lr=self.config.learning_rate, eps=1e-5),
+            'actor': optim.Adam(params=self.model.actor.trainable_params(), lr=self.config.learning_rate, eps=1e-5),
+            'critic': optim.Adam(params=self.model.critic.trainable_params(), lr=self.config.learning_rate, eps=1e-5),
         }
         self.scheduler = {
-            'actor': optim.lr_scheduler.LinearLR(self.optimizer['actor'], start_factor=1.0, end_factor=self.end_factor_lr_decay,
+            'actor': optim.lr_scheduler.LinearLR(self.optimizer['actor'], start_factor=1.0,
+                                                 end_factor=self.end_factor_lr_decay,
                                                  total_iters=self.config.running_steps),
-            'critic': optim.lr_scheduler.LinearLR(self.optimizer['critic'], start_factor=1.0, end_factor=self.end_factor_lr_decay,
+            'critic': optim.lr_scheduler.LinearLR(self.optimizer['critic'], start_factor=1.0,
+                                                  end_factor=self.end_factor_lr_decay,
                                                   total_iters=self.config.running_steps)
         }
         self.mse_loss = nn.MSELoss()
         self._ones = ops.Ones()
         self.tau = config.tau
-        self.gamma = config.gamma
         self.alpha = config.alpha
         self.use_automatic_entropy_tuning = config.use_automatic_entropy_tuning
         if self.use_automatic_entropy_tuning:
-            self.target_entropy = -np.prod(self.action_space.n).item()
+            self.target_entropy = -np.prod(self.model.actor.action_space.n).item()
             self.log_alpha = ms.Parameter(-self._ones(1, ms.float32))
             self.alpha = ops.exp(self.log_alpha)
             self.alpha_optimizer = optim.Adam(params=[self.log_alpha], lr=config.learning_rate_actor)
@@ -45,21 +47,54 @@ class SACDIS_Learner(Learner):
         self.grad_fn_critic = ms.value_and_grad(self.forward_fn_critic, None, self.optimizer['critic'].parameters,
                                                 has_aux=True)
 
-        self.policy.set_train()
+        self.model.set_train()
+        self.grad_reducer_actor = self.get_grad_reducer(self.optimizer["actor"])
+        self.grad_reducer_critic = self.get_grad_reducer(self.optimizer["critic"])
+
+    @ms.jit
+    def training_step_alpha(self, log_pi):
+        (alpha_loss, log_alpha), grads = self.grad_fn_alpha(log_pi)
+        if self.distributed_training:
+            grads = self.grad_reducer_alpha(grads)
+        if self.use_grad_clip:
+            grads = clip_grads(grads, Tensor(-self.grad_clip_norm), Tensor(self.grad_clip_norm))
+        self.alpha_optimizer(grads)
+        return alpha_loss, log_alpha
+
+    @ms.jit
+    def training_step_actor(self, obs_batch):
+        (p_loss, action_prob, log_pi, policy_q_1, policy_q_2, policy_q), grads = self.grad_fn_actor(obs_batch)
+        if self.distributed_training:
+            grads = self.grad_reducer_actor(grads)
+        if self.use_grad_clip:
+            grads = clip_grads(grads, Tensor(-self.grad_clip_norm), Tensor(self.grad_clip_norm))
+        self.optimizer["actor"](grads)
+        return p_loss, action_prob, log_pi, policy_q_1, policy_q_2, policy_q
+
+    @ms.jit
+    def training_step_critic(self, obs_batch, act_batch, rew_batch, next_batch, ter_batch):
+        (q_loss, action_q_1, action_q_2, action_prob_next, log_pi_next, target_q, backup), grads = self.grad_fn_critic(
+            obs_batch, act_batch, rew_batch, next_batch, ter_batch)
+        if self.distributed_training:
+            grads = self.grad_reducer_critic(grads)
+        if self.use_grad_clip:
+            grads = clip_grads(grads, Tensor(-self.grad_clip_norm), Tensor(self.grad_clip_norm))
+        self.optimizer["critic"](grads)
+        return q_loss, action_q_1, action_q_2, action_prob_next, log_pi_next, target_q, backup
 
     def forward_fn_alpha(self, log_pi):
         alpha_loss = -(self.log_alpha * (log_pi + self.target_entropy)).mean()
         return alpha_loss, self.log_alpha
 
     def forward_fn_actor(self, obs_batch):
-        action_prob, log_pi, policy_q_1, policy_q_2 = self.policy.Qpolicy(obs_batch)
+        action_prob, log_pi, policy_q_1, policy_q_2 = self.model.Qpolicy(obs_batch)
         policy_q = ops.minimum(policy_q_1, policy_q_2)
         p_loss = (action_prob * (self.alpha * log_pi - policy_q)).sum(axis=1).mean()
         return p_loss, action_prob, log_pi, policy_q_1, policy_q_2, policy_q
 
     def forward_fn_critic(self, obs_batch, act_batch, rew_batch, next_batch, ter_batch):
-        action_q_1, action_q_2 = self.policy.Qaction(obs_batch)
-        action_prob_next, log_pi_next, target_q = self.policy.Qtarget(next_batch)
+        action_q_1, action_q_2 = self.model.Qaction(obs_batch)
+        action_prob_next, log_pi_next, target_q = self.model.Qtarget(next_batch)
         target_q = action_prob_next * (target_q - self.alpha * log_pi_next)
         target_q = target_q.sum(axis=1)
         backup = rew_batch + (1 - ter_batch) * self.gamma * target_q
@@ -81,28 +116,21 @@ class SACDIS_Learner(Learner):
         act_batch = ops.expand_dims(act_batch, -1)
 
         info = self.callback.on_update_start(self.iterations,
-                                             policy=self.policy, obs=obs_batch, act=act_batch,
+                                             model=self.model, obs=obs_batch, act=act_batch,
                                              next_obs=next_batch, rew=rew_batch, termination=ter_batch)
 
-        (q_loss, action_q_1, action_q_2, action_prob_next, log_pi_next, target_q,
-         backup), grads_critic = self.grad_fn_critic(obs_batch, act_batch, rew_batch, next_batch, ter_batch)
-        if self.use_grad_clip:
-            grads_critic = ops.clip_by_norm(grads_critic, self.grad_clip_norm)
-        self.optimizer['critic'](grads_critic)
+        q_loss, action_q_1, action_q_2, action_prob_next, log_pi_next, target_q, backup = self.training_step_critic(
+            obs_batch, act_batch, rew_batch, next_batch, ter_batch)
 
-        (p_loss, action_prob, log_pi, policy_q_1, policy_q_2, policy_q), grads_actor = self.grad_fn_actor(obs_batch)
-        if self.use_grad_clip:
-            grads_actor = ops.clip_by_norm(grads_actor, self.grad_clip_norm)
-        self.optimizer['actor'](grads_actor)
+        p_loss, action_prob, log_pi, policy_q_1, policy_q_2, policy_q = self.training_step_actor(obs_batch)
 
         if self.use_automatic_entropy_tuning:
-            (alpha_loss, _), grads_alpha = self.grad_fn_alpha(log_pi)
-            self.alpha_optimizer(grads_alpha)
+            alpha_loss, _ = self.training_step_alpha(log_pi)
             self.alpha = ops.exp(self.log_alpha)
         else:
             alpha_loss = 0
 
-        self.policy.soft_update(self.tau)
+        self.model.soft_update(self.tau)
 
         self.scheduler['actor'].step()
         self.scheduler['critic'].step()
@@ -123,7 +151,7 @@ class SACDIS_Learner(Learner):
             })
 
         info.update(self.callback.on_update_end(self.iterations,
-                                                policy=self.policy, info=info,
+                                                model=self.model, info=info,
                                                 action_prob=action_prob, log_pi=log_pi,
                                                 policy_q_1=policy_q_1, policy_q_2=policy_q_2,
                                                 policy_q=policy_q, p_loss=p_loss,

@@ -1,11 +1,12 @@
+import numpy as np
 from argparse import Namespace
 from gymnasium.spaces import Space
 from xuance.common import Optional, BaseCallback
 from xuance.environment import DummyVecEnv, SubprocVecEnv
-from xuance.mindspore import Module
-from xuance.mindspore.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions
-from xuance.mindspore.policies import REGISTRY_Policy
+from xuance.mindspore import ms, ops, Tensor, Module
 from xuance.mindspore.agents import OffPolicyAgent
+from xuance.mindspore.rl_models.modules import ActionOutput
+from xuance.mindspore.rl_models.architectures import DeepQNetwork
 
 
 class DQN_Agent(OffPolicyAgent):
@@ -16,6 +17,7 @@ class DQN_Agent(OffPolicyAgent):
         envs: the vectorized environments.
         callback: A user-defined callback function object to inject custom logic during training.
     """
+
     def __init__(
             self,
             config: Namespace,
@@ -29,25 +31,62 @@ class DQN_Agent(OffPolicyAgent):
         self.e_greedy = config.start_greedy
         self.delta_egreedy = (self.start_greedy - self.end_greedy) / (config.decay_step_greedy / self.n_envs)
 
-        self.policy = self._build_policy()  # build policy
+        self.model = self._build_model()  # build RL model
         self.memory = self._build_memory()  # build memory
-        self.learner = self._build_learner(self.config, self.policy, self.callback)  # build learner
+        self.learner = self._build_learner(self.config, self.model, self.callback)  # build learner
 
-    def _build_policy(self) -> Module:
-        normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None
-        initializer = InitializeFunctions[self.config.initialize] if hasattr(self.config, "initialize") else None
-        activation = ActivationFunctions[self.config.activation]
-
+    def _build_model(self) -> Module:
         # build representation.
         representation = self._build_representation(self.config.representation, self.observation_space, self.config)
 
-        # build policy.
-        if self.config.policy == "Basic_Q_network":
-            policy = REGISTRY_Policy["Basic_Q_network"](
-                action_space=self.action_space, representation=representation, hidden_size=self.config.q_hidden_size,
-                normalize=normalize_fn, initialize=initializer, activation=activation,
-                use_distributed_training=self.distributed_training)
-        else:
-            raise AttributeError(f"{self.config.agent} does not support the policy named {self.config.policy}.")
+        # build the RL model.
+        model = DeepQNetwork(
+            representation=representation,
+            hidden_size=self.config.q_hidden_size,
+            action_space=self.action_space,
+            normalizer=self.normalize_fn,
+            initializer=self.initializer,
+            activation=self.activation,
+            use_distributed_training=self.distributed_training
+        )
 
-        return policy
+        return model
+
+    @ms.jit
+    def _rollout_step(
+            self,
+            observations: Tensor,
+            epsilon: Tensor,
+            **kwargs
+    ) -> Tensor:
+        _, greedy_actions = self.model(observations, epsilon=epsilon)
+        explore_mask = ops.rand(size=greedy_actions.shape, dtype=ms.float32) < epsilon
+        random_actions = ops.randint(low=0, high=int(self.action_space.n), size=greedy_actions.shape,
+                                     dtype=greedy_actions.dtype)
+        actions = ops.where(explore_mask, random_actions, greedy_actions)
+        return actions
+
+    def get_actions(
+            self,
+            observations: np.ndarray | Tensor,
+            test_mode: bool = False
+    ) -> ActionOutput:
+        """Returns actions for the given observations.
+
+        Args:
+            observations: Observations used by the policy to generate actions.
+            test_mode: Whether to disable exploration noise for evaluation.
+
+        Returns:
+            The ActionOutput containing actions to be executed in the environment.
+        """
+        observations = Tensor(observations, dtype=ms.float32)
+        epsilon = Tensor(0.0 if test_mode else self.e_greedy, dtype=ms.float32)
+
+        actions = self._rollout_step(observations, epsilon=epsilon)
+
+        if not self.is_tensor_memory:
+            actions = actions.asnumpy()
+
+        return ActionOutput(env_actions=actions)
+

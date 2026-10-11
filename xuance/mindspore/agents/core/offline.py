@@ -3,8 +3,8 @@ from tqdm import tqdm
 from argparse import Namespace
 from gymnasium.spaces import Space
 from xuance.common import Optional, DummyOffPolicyBuffer, OfflineBuffer_D4RL, BaseCallback
-from xuance.torch import Module
-from xuance.torch.agents.base import Agent
+from xuance.mindspore import Module
+from xuance.mindspore.agents.base import Agent
 
 
 class OfflineAgent(Agent):
@@ -41,7 +41,7 @@ class OfflineAgent(Agent):
                             batch_size=self.batch_size)
         return Buffer(**input_buffer)
 
-    def _build_policy(self) -> Module:
+    def _build_model(self) -> Module:
         raise NotImplementedError
 
     def train_epochs(self, n_epochs=1):

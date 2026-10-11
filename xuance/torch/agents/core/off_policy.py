@@ -1,4 +1,3 @@
-import torch
 import numpy as np
 from tqdm import tqdm
 from copy import deepcopy
@@ -6,6 +5,8 @@ from argparse import Namespace
 from gymnasium.spaces import Space
 from xuance.common import Optional, DummyOffPolicyBuffer, DummyOffPolicyBuffer_Atari, BaseCallback
 from xuance.environment import DummyVecEnv, SubprocVecEnv
+
+import torch
 from xuance.torch import Module, Tensor
 from xuance.torch.agents.base import Agent
 from xuance.torch.utils import TensorOffPolicyBuffer, TensorOffPolicyBufferAtari, TensorEnvWrapper
@@ -272,7 +273,8 @@ class OffPolicyAgent(Agent):
     def test(self,
              test_episodes: int,
              test_envs: Optional[DummyVecEnv | SubprocVecEnv] = None,
-             close_envs: bool = True) -> list:
+             close_envs: bool = True,
+             **kwargs) -> list:
         """Evaluate the current policy in a vectorized environment.
 
         This method runs evaluation episodes using `test_envs` and returns the per-episode scores. During evaluation,

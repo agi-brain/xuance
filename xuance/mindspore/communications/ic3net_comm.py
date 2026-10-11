@@ -3,7 +3,7 @@ from typing import Sequence, Optional, Union
 
 import torch
 
-from xuance.torch.communications.comm_net import CommNet
+from xuance.mindspore.communications.comm_net import CommNet
 
 
 class IC3NetComm(CommNet):
@@ -20,7 +20,7 @@ class IC3NetComm(CommNet):
         super(IC3NetComm, self).__init__(input_shape, hidden_sizes, comm_passes, model_keys,
                                           agent_keys, n_agents, device, config, **kwargs)
 
-    def forward(self, obs: torch.Tensor, msg_send: dict, alive_ally: dict, gate_control: dict = None,):
+    def construct(self, obs: torch.Tensor, msg_send: dict, alive_ally: dict, gate_control: dict = None,):
         alive_ally = {k: torch.as_tensor(alive_ally[k], dtype=torch.float32, device=self.device) for k in
                       self.agent_keys}
         batch_size, seq_length = obs.shape[0], obs.shape[1]

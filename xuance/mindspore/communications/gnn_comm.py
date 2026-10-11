@@ -53,7 +53,7 @@ class DGNComm(nn.Module):
         return obs + gnn_out
 
 
-    def forward(self, key: str, obs: dict, alive_ally: dict):
+    def construct(self, key: str, obs: dict, alive_ally: dict):
         alive_ally = {k: torch.as_tensor(alive_ally[k], dtype=torch.float32, device=self.device) for k in
                       alive_ally.keys()}
         # get matrix

@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 
 from xuance.common import Optional, Union, Sequence
-from xuance.torch import Module
+from xuance.mindspore import Module
 
 
 class CommNet(Module):
@@ -51,7 +51,7 @@ class CommNet(Module):
         else:
             network_layers = [nn.Linear(input_shape, out_shape)]
 
-        return nn.Sequential(*network_layers).to(device=device)
+        return nn.SequentialCell(*network_layers).to(device=device)
 
     def message_encode(self, message: torch.Tensor) -> torch.Tensor:
         return self.msg_encoder(message)
@@ -60,7 +60,7 @@ class CommNet(Module):
         obs = torch.as_tensor(observation, dtype=torch.float32, device=self.device)
         return self.obs_encoder(obs)
 
-    def forward(self, obs: torch.Tensor, msg_send: dict, alive_ally: dict) -> torch.Tensor:
+    def construct(self, obs: torch.Tensor, msg_send: dict, alive_ally: dict) -> torch.Tensor:
         alive_ally = {k: torch.as_tensor(alive_ally[k], dtype=torch.float32, device=self.device) for k in
                       self.agent_keys}
         batch_size, seq_length = obs.shape[0], obs.shape[1]

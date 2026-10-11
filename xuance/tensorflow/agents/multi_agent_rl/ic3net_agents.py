@@ -12,7 +12,7 @@ from xuance.common.memory_tools_marl import IC3Net_OnPolicyBuffer_RNN
 from xuance.tensorflow.communications import IC3NetComm
 
 # from xuance.tensorflow import REGISTRY_Policy
-from xuance.tensorflow.utils import normalizerFunctions, ActivationFunctions
+from xuance.tensorflow.utils import NormalizerFunctions, ActivationFunctions
 
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv, space2shape
 from xuance.common import MultiAgentBaseCallback
@@ -77,7 +77,7 @@ class IC3Net_Agents(CommNet_Agents):
         return communicator
 
     def _build_model(self) -> Module:
-        normalizer_fn = normalizerFunctions[self.config.normalizer] if hasattr(self.config, "normalizer") else None
+        normalizer_fn = NormalizerFunctions[self.config.normalizer] if hasattr(self.config, "normalizer") else None
         initializer = torch.nn.init.orthogonal_
         activation = ActivationFunctions[self.config.activation]
         device = self.device

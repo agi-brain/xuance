@@ -29,7 +29,6 @@ class DDPG_Learner(Learner):
                                                         end_factor=self.end_factor_lr_decay,
                                                         total_iters=self.total_iters)}
         self.tau = config.tau
-        self.gamma = config.gamma
         self.mse_loss = nn.MSELoss()
 
     def update(self, **samples):

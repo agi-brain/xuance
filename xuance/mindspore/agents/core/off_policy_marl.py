@@ -6,9 +6,10 @@ from operator import itemgetter
 from gymnasium.spaces import Space
 from xuance.common import Optional, List, Union, MARL_OffPolicyBuffer, MARL_OffPolicyBuffer_RNN, MultiAgentBaseCallback
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
-from xuance.mindspore import Tensor, Module
-from xuance.mindspore.utils.distributions import Categorical
+
+from xuance.mindspore import ms, Module
 from xuance.mindspore.agents.base import MARLAgents
+from xuance.mindspore.rl_models.modules import RNN_State, MARLActionOutput
 
 
 class OffPolicyMARLAgents(MARLAgents):
@@ -102,7 +103,7 @@ class OffPolicyMARLAgents(MARLAgents):
         Buffer = MARL_OffPolicyBuffer_RNN if self.use_rnn else MARL_OffPolicyBuffer
         return Buffer(**input_buffer)
 
-    def _build_policy(self) -> Module:
+    def _build_model(self) -> Module:
         raise NotImplementedError
 
     def store_experience(self, obs_dict, avail_actions, actions_dict, obs_next_dict, avail_actions_next,

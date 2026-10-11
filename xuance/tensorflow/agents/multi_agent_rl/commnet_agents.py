@@ -13,7 +13,7 @@ import gymnasium as gym
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv, space2shape
 from xuance.tensorflow import Module, ModuleDict
 from xuance.tensorflow.communications.comm_net import CommNet
-from xuance.tensorflow.utils import ActivationFunctions, normalizerFunctions
+from xuance.tensorflow.utils import ActivationFunctions, NormalizerFunctions
 
 
 class CommNet_Agents(MAPPO_Agents):
@@ -52,7 +52,7 @@ class CommNet_Agents(MAPPO_Agents):
         return communicator
 
     def _build_model(self) -> Module:
-        normalizer_fn = normalizerFunctions[self.config.normalizer] if hasattr(self.config, "normalizer") else None
+        normalizer_fn = NormalizerFunctions[self.config.normalizer] if hasattr(self.config, "normalizer") else None
         initializer = torch.nn.init.orthogonal_
         activation = ActivationFunctions[self.config.activation]
         device = self.device

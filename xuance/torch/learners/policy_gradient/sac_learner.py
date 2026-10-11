@@ -31,7 +31,6 @@ class SAC_Learner(Learner):
                                                         total_iters=self.total_iters)}
         self.mse_loss = nn.MSELoss()
         self.tau = config.tau
-        self.gamma = config.gamma
         self.alpha = config.alpha
         self.use_automatic_entropy_tuning = config.use_automatic_entropy_tuning
         if self.use_automatic_entropy_tuning:

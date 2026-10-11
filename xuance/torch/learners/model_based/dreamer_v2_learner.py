@@ -23,7 +23,6 @@ class DreamerV2_Learner(Learner):
         # config
         self.config = dotdict(vars(config))
         self.is_continuous = self.config.is_continuous
-        self.gamma = self.config.gamma
         self.hard_update_freq = self.config.critic.hard_update_freq
 
         self.kl_balancing_alpha = self.config.world_model.kl_balancing_alpha  # 0.8

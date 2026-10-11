@@ -31,7 +31,6 @@ class ISACDIS_Learner(LearnerMAS):
                                                               end_factor=self.end_factor_lr_decay,
                                                               total_iters=self.total_iters)}
             for key in self.model_keys}
-        self.gamma = config.gamma
         self.tau = config.tau
         self.alpha = {key: config.alpha for key in self.model_keys}
         self.mse_loss = nn.MSELoss()

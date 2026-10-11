@@ -1,8 +1,8 @@
 import torch
 import torch.nn as nn
 from xuance.common import Optional, Callable, Union, Sequence
-from xuance.torch import Module, Tensor
-from xuance.torch.utils import mlp_block, ModuleType
+from xuance.mindspore import Module, Tensor
+from xuance.mindspore.utils import mlp_block, ModuleType
 
 
 class BaseComm(Module):
@@ -26,9 +26,9 @@ class BaseComm(Module):
             mlp, input_shape = mlp_block(input_shape[0], h, normalize, activation, initialize, device)
             layers_.extend(mlp)
         layers_.extend(mlp_block(input_shape[0], msg_dim, None, None, initialize, device)[0])
-        self.msg_encoder = nn.Sequential(*layers_)
+        self.msg_encoder = nn.SequentialCell(*layers_)
 
-    def forward(self, hidden_features: Tensor):
+    def construct(self, hidden_features: Tensor):
         encoded_msg = self.msg_encoder(hidden_features)
         return encoded_msg
 
@@ -37,7 +37,7 @@ class NoneComm(Module):
     def __init__(self):
         super().__init__()
 
-    def forward(self, msg: Tensor, **kwargs):
+    def construct(self, msg: Tensor, **kwargs):
         return msg
 
 

@@ -17,7 +17,6 @@ class QRDQN_Learner(Learner):
                  callback):
         super(QRDQN_Learner, self).__init__(config, model, callback)
         self.optimizer = keras.optimizers.Adam(config.learning_rate)
-        self.gamma = config.gamma
         self.sync_frequency = config.sync_frequency
         self.mse_loss = keras.losses.MeanSquaredError()
 

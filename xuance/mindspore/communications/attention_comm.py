@@ -3,7 +3,7 @@ from typing import Sequence, Optional, Union
 import torch
 from torch import nn
 
-from xuance.torch.communications.ic3net_comm import IC3NetComm
+from xuance.mindspore.communications.ic3net_comm import IC3NetComm
 
 
 class TarMAC(IC3NetComm):
@@ -30,7 +30,7 @@ class TarMAC(IC3NetComm):
         message = torch.einsum('bikj,bjkd->bikd', attn_weights, v)
         return message
 
-    def forward(self, obs: torch.Tensor, msg_send: dict, alive_ally: dict, gate_control: dict = None, agent_key: Optional[str] = None) -> torch.Tensor:
+    def construct(self, obs: torch.Tensor, msg_send: dict, alive_ally: dict, gate_control: dict = None, agent_key: Optional[str] = None) -> torch.Tensor:
         alive_ally = {k: torch.as_tensor(alive_ally[k], dtype=torch.float32, device=self.device) for k in
                       self.agent_keys}
         batch_size, seq_length = obs.shape[0], obs.shape[1]

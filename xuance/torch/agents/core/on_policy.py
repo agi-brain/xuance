@@ -141,7 +141,7 @@ class OnPolicyAgent(Agent):
             return_logpi (bool): Whether to return the log-probabilities of the sampled actions.
 
         Returns:
-            dict: A dictionary containing:
+            ActionOutput:
                 - actions (np.ndarray): Sampled actions to execute in the environment(s).
                 - values (np.ndarray): Value estimates for the input observations.
                     If the policy does not produce values, this is set to 0.

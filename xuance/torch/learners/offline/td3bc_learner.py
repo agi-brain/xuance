@@ -25,7 +25,6 @@ class TD3_BC_Learner(Learner):
                                                         total_iters=self.total_iters)}
 
         self.tau = config.tau
-        self.gamma = config.gamma
         self.alpha = config.alpha
         self.actor_update_delay = config.actor_update_delay
         self.mse_loss = nn.MSELoss()

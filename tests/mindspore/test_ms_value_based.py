@@ -1,4 +1,4 @@
-# Test the value-based algorithms with PyTorch.
+# Test the value-based algorithms with MindSpore.
 
 from argparse import Namespace
 from xuance import get_runner
@@ -12,7 +12,8 @@ eval_interval = 5000
 device = 'CPU'
 test_mode = False
 args = Namespace(dl_toolbox='mindspore', device=device,
-                 running_steps=running_steps, eval_interval=eval_interval)
+                 running_steps=running_steps, eval_interval=eval_interval,
+                 static_graph=True)
 env_name = "classic_control"
 env_id = "CartPole-v1"
 

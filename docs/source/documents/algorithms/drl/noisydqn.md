@@ -1,6 +1,6 @@
-# DQN with Noisy Layers (Noisy DQN)
+# NoisyNet-DQN (Noisy DQN)
 
-**Paper Link:** [**https://arxiv.org/pdf/1706.01905**](https://arxiv.org/pdf/1706.01905).
+**Paper Link:** [**https://arxiv.org/pdf/1706.10295**](https://arxiv.org/pdf/1706.10295).
 
 Noisy DQN is a variant of the traditional Deep Q-Network (DQN) 
 that introduces noise into the weights of the Q-network to improve exploration during the learning process. 

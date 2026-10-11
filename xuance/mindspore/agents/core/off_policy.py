@@ -5,8 +5,11 @@ from argparse import Namespace
 from gymnasium.spaces import Space
 from xuance.common import Optional, DummyOffPolicyBuffer, DummyOffPolicyBuffer_Atari, BaseCallback
 from xuance.environment import DummyVecEnv, SubprocVecEnv
-from xuance.mindspore import Module, Tensor
+
+from xuance.mindspore import ms, ops, Module, Tensor
 from xuance.mindspore.agents.base import Agent
+from xuance.mindspore.utils import TensorOffPolicyBuffer, TensorOffPolicyBufferAtari, TensorEnvWrapper
+from xuance.mindspore.rl_models.modules import ActionOutput
 
 
 class OffPolicyAgent(Agent):
@@ -39,6 +42,7 @@ class OffPolicyAgent(Agent):
         - In evaluation mode, exploration noise is disabled and policy actions
           are executed deterministically by default.
     """
+
     def __init__(
             self,
             config: Namespace,
@@ -48,20 +52,31 @@ class OffPolicyAgent(Agent):
             callback: Optional[BaseCallback] = None
     ):
         super(OffPolicyAgent, self).__init__(config, envs, observation_space, action_space, callback)
-        self.start_greedy = config.start_greedy if hasattr(config, "start_greedy") else None
-        self.end_greedy = config.end_greedy if hasattr(config, "start_greedy") else None
-        self.delta_egreedy: Optional[float] = None
-        self.e_greedy: Optional[float] = None
+        self.start_greedy = getattr(config, "start_greedy", None)
+        self.end_greedy = getattr(config, "end_greedy", None)
+        self.e_greedy = self.start_greedy
+        if (self.start_greedy is not None) and (self.end_greedy is not None):
+            self.delta_egreedy = (self.start_greedy - self.end_greedy) / (config.decay_step_greedy / self.n_envs)
+        else:
+            self.delta_egreedy = None
 
-        self.start_noise = config.start_noise if hasattr(config, "start_noise") else None
-        self.end_noise = config.end_noise if hasattr(config, "end_noise") else None
-        self.delta_noise: Optional[float] = None
-        self.noise_scale: Optional[float] = None
-        self.actions_low = self.action_space.low if hasattr(self.action_space, "low") else None
-        self.actions_high = self.action_space.high if hasattr(self.action_space, "high") else None
+        self.start_noise = getattr(config, "start_noise", None)
+        self.end_noise = getattr(config, "end_noise", None)
+        self.noise_scale = self.start_noise
+        if self.start_noise is not None and self.end_noise is not None:
+            self.delta_noise = (self.start_noise - self.end_noise) / (config.running_steps / self.n_envs)
+        else:
+            self.delta_noise = None
+        self.actions_low = getattr(self.action_space, "low", None)
+        self.actions_high = getattr(self.action_space, "high", None)
+        self.actions_low_tensor = self._to_tensor(self.actions_low)
+        self.actions_high_tensor = self._to_tensor(self.actions_high)
 
         self.auxiliary_info_shape = None
         self.memory: Optional[DummyOffPolicyBuffer] = None
+
+        self.buffer_size = self.config.buffer_size
+        self.batch_size = self.config.batch_size
 
     def _build_memory(self, auxiliary_info_shape=None) -> DummyOffPolicyBuffer:
         """Build and initialize the replay buffer for off-policy training.
@@ -84,17 +99,21 @@ class OffPolicyAgent(Agent):
             - The replay buffer is shared across all parallel environments and
               supports batched sampling for off-policy updates.
         """
-        self.atari = True if self.config.env_name == "Atari" else False
-        Buffer = DummyOffPolicyBuffer_Atari if self.atari else DummyOffPolicyBuffer
         input_buffer = dict(observation_space=self.observation_space,
                             action_space=self.action_space,
                             auxiliary_shape=auxiliary_info_shape,
                             n_envs=self.n_envs,
-                            buffer_size=self.config.buffer_size,
-                            batch_size=self.config.batch_size)
+                            buffer_size=self.buffer_size,
+                            batch_size=self.batch_size)
+        self.atari = self.config.env_name == "Atari"
+        if self.is_tensor_memory:
+            Buffer = TensorOffPolicyBufferAtari if self.atari else TensorOffPolicyBuffer
+            input_buffer['device'] = self.device
+        else:
+            Buffer = DummyOffPolicyBuffer_Atari if self.atari else DummyOffPolicyBuffer
         return Buffer(**input_buffer)
 
-    def _build_policy(self) -> Module:
+    def _build_model(self) -> Module:
         raise NotImplementedError
 
     def _update_explore_factor(self):
@@ -107,48 +126,36 @@ class OffPolicyAgent(Agent):
         else:
             return
 
-    def exploration(self, pi_actions):
-        """Returns the actions for exploration.
+    def exploration(self, *args, **kwargs) -> Tensor:
+        raise NotImplementedError
 
-        Parameters:
-            pi_actions: The original output actions.
+    @ms.jit
+    def _rollout_step(self, observations: Tensor, **kwargs) -> Tensor:
+        raise NotImplementedError
 
-        Returns:
-            explore_actions: The actions with noisy values.
-        """
-        if self.e_greedy is not None:
-            random_actions = np.random.choice(self.action_space.n, self.n_envs)
-            if np.random.rand() < self.e_greedy:
-                explore_actions = random_actions
-            else:
-                explore_actions = pi_actions.asnumpy()
-        elif self.noise_scale is not None:
-            explore_actions = pi_actions + np.random.normal(size=pi_actions.shape) * self.noise_scale
-            explore_actions = np.clip(explore_actions, self.actions_low, self.actions_high)
-        else:
-            explore_actions = pi_actions
-        return explore_actions
+    def get_actions(
+            self,
+            observations: np.ndarray | Tensor,
+            test_mode: bool = False
+    ) -> ActionOutput:
+        """Returns actions for the given observations.
 
-    def get_actions(self, observations: np.ndarray,
-               test_mode: Optional[bool] = False) -> dict:
-        """Returns actions and values.
-
-        Parameters:
-            observations (np.ndarray): The observation.
-            test_mode (Optional[bool]): True for testing without noises.
+        Args:
+            observations: Observations used by the policy to generate actions.
+            test_mode: Whether to disable exploration noise for evaluation.
 
         Returns:
-            actions: The actions to be executed.
-            values: The evaluated values.
-            dists: The policy distributions.
-            log_pi: Log of stochastic actions.
+            The ActionOutput containing actions to be executed in the environment.
         """
-        _, actions_output, _ = self.policy(Tensor(observations))
-        if test_mode:
-            actions = actions_output.asnumpy()
-        else:
-            actions = self.exploration(actions_output)
-        return {"actions": actions}
+        observations = Tensor(observations, dtype=ms.float32)
+        actions = self._rollout_step(observations)
+        if not test_mode:
+            actions = self.exploration(actions)
+
+        if not self.is_tensor_memory:
+            actions = actions.asnumpy()
+
+        return ActionOutput(env_actions=actions)
 
     def train_epochs(self, n_epochs=1) -> dict:
         train_info = {}
@@ -194,20 +201,21 @@ class OffPolicyAgent(Agent):
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
             policy_out = self.get_actions(obs, test_mode=False)
-            acts = policy_out['actions']
-            next_obs, rewards, terminals, truncations, infos = self.train_envs.step(acts)
+            actions = policy_out.env_actions
+            next_obs, rewards, terminals, truncations, infos = self.train_envs.step(actions)
 
-            self.callback.on_train_step(self.current_step, envs=self.train_envs, policy=self.policy,
-                                        obs=obs, policy_out=policy_out, acts=acts, next_obs=next_obs, rewards=rewards,
+            self.callback.on_train_step(self.current_step, envs=self.train_envs, model=self.model,
+                                        obs=obs, policy_out=policy_out, next_obs=next_obs, rewards=rewards,
                                         terminals=terminals, truncations=truncations, infos=infos,
                                         train_steps=train_steps)
 
-            self.memory.store(obs, acts, self._process_reward(rewards), terminals, self._process_observation(next_obs))
+            self.memory.store(obs, actions, self._process_reward(rewards), terminals,
+                              self._process_observation(next_obs))
             if self.current_step > self.start_training and self.current_step % self.training_frequency == 0:
                 update_info = self.train_epochs(n_epochs=self.n_epochs)
                 self.log_infos(update_info, self.current_step)
                 train_info.update(update_info)
-                self.callback.on_train_epochs_end(self.current_step, policy=self.policy, memory=self.memory,
+                self.callback.on_train_epochs_end(self.current_step, model=self.model, memory=self.memory,
                                                   current_episode=self.current_episode, train_steps=train_steps,
                                                   update_info=update_info)
 
@@ -235,22 +243,23 @@ class OffPolicyAgent(Agent):
                             }
                         self.log_infos(episode_info, self.current_step)
                         train_info.update(episode_info)
-                        self.callback.on_train_episode_info(envs=self.train_envs, policy=self.policy, env_id=i,
-                                                            infos=infos, use_wandb=self.use_wandb,
+                        self.callback.on_train_episode_info(envs=self.train_envs, model=self.model, env_id=i,
+                                                            infos=infos, rank=self.rank, use_wandb=self.use_wandb,
                                                             current_step=self.current_step,
                                                             current_episode=self.current_episode,
                                                             train_steps=train_steps)
 
             self.current_step += self.n_envs
             self._update_explore_factor()
-            self.callback.on_train_step_end(self.current_step, envs=self.train_envs, policy=self.policy,
+            self.callback.on_train_step_end(self.current_step, envs=self.train_envs, model=self.model,
                                             train_steps=train_steps, train_info=train_info)
         return train_info
 
     def test(self,
              test_episodes: int,
              test_envs: Optional[DummyVecEnv | SubprocVecEnv] = None,
-             close_envs: bool = True) -> list:
+             close_envs: bool = True,
+             **kwargs) -> list:
         """Evaluate the current policy in a vectorized environment.
 
         This method runs evaluation episodes using `test_envs` and returns the per-episode scores. During evaluation,
@@ -290,13 +299,13 @@ class OffPolicyAgent(Agent):
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
             policy_out = self.get_actions(obs, test_mode=True)
-            next_obs, rewards, terminals, truncations, infos = test_envs.step(policy_out['actions'])
+            next_obs, rewards, terminals, truncations, infos = test_envs.step(policy_out.env_actions)
             if self.config.render_mode == "rgb_array" and self.render:
                 images = test_envs.render(self.config.render_mode)
                 for idx, img in enumerate(images):
                     videos[idx].append(img)
 
-            self.callback.on_test_step(envs=test_envs, policy=self.policy, images=images,
+            self.callback.on_test_step(envs=test_envs, model=self.model, images=images,
                                        obs=obs, policy_out=policy_out, next_obs=next_obs, rewards=rewards,
                                        terminals=terminals, truncations=truncations, infos=infos,
                                        current_train_step=self.current_step,
@@ -328,7 +337,7 @@ class OffPolicyAgent(Agent):
         }
         self.log_infos(test_info, self.current_step)
 
-        self.callback.on_test_end(envs=test_envs, policy=self.policy,
+        self.callback.on_test_end(envs=test_envs, model=self.model,
                                   current_train_step=self.current_step,
                                   current_step=current_step, current_episode=current_episode,
                                   scores=scores, best_score=best_score)
@@ -337,4 +346,3 @@ class OffPolicyAgent(Agent):
             test_envs.close()
 
         return scores
-

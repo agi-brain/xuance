@@ -12,39 +12,51 @@ from xuance.mindspore.learners import Learner
 class C51_Learner(Learner):
     def __init__(self,
                  config: Namespace,
-                 policy: Module,
+                 model: Module,
                  callback):
-        super(C51_Learner, self).__init__(config, policy, callback)
-        self.optimizer = optim.Adam(params=self.policy.trainable_params(), lr=self.config.learning_rate, eps=1e-5)
-        self.scheduler = optim.lr_scheduler.LinearLR(self.optimizer, start_factor=1.0, end_factor=self.end_factor_lr_decay,
+        super(C51_Learner, self).__init__(config, model, callback)
+        self.optimizer = optim.Adam(params=self.model.trainable_params(), lr=self.config.learning_rate, eps=1e-5)
+        self.scheduler = optim.lr_scheduler.LinearLR(self.optimizer,
+                                                     start_factor=1.0,
+                                                     end_factor=self.end_factor_lr_decay,
                                                      total_iters=self.config.running_steps)
-        self.gamma = config.gamma
         self.sync_frequency = config.sync_frequency
         self.mse_loss = nn.MSELoss()
         self.gather = ops.Gather(batch_dims=-1)
-        self.n_actions = self.policy.action_dim
+        self.n_actions = self.model.n_actions
         # Get gradient function
         self.grad_fn = ms.value_and_grad(self.forward_fn, None, self.optimizer.parameters, has_aux=True)
-        self.policy.set_train()
+        self.model.set_train()
+        self.grad_reducer = self.get_grad_reducer(self.optimizer)
 
     def forward_fn(self, obs_batch, act_batch, next_batch, rew_batch, ter_batch):
-        _, _, evalZ = self.policy(obs_batch)
-        _, targetA, targetZ = self.policy.target(next_batch)
+        evalZ, _ = self.model(obs_batch)
+        targetZ, targetA = self.model.target(next_batch)
 
         current_dist = self.gather(evalZ, act_batch, axis=1).squeeze(1)
         target_dist = self.gather(targetZ, targetA.unsqueeze(-1), axis=1).squeeze(1)
 
-        current_supports = self.policy.supports
-        next_supports = rew_batch.unsqueeze(1) + self.gamma * self.policy.supports * (1 - ter_batch.unsqueeze(1))
-        next_supports = ops.clamp(next_supports, self.policy.v_min, self.policy.v_max)
+        current_supports = self.model.supports
+        next_supports = rew_batch.unsqueeze(1) + self.gamma * self.model.supports * (1 - ter_batch.unsqueeze(1))
+        next_supports = ops.clamp(next_supports, self.model.v_min, self.model.v_max)
 
-        projection = 1 - ops.abs((next_supports.unsqueeze(-1) - current_supports.unsqueeze(0))) / self.policy.deltaz
+        projection = 1 - ops.abs((next_supports.unsqueeze(-1) - current_supports.unsqueeze(0))) / self.model.delta_z
         target_dist = ops.bmm(target_dist.unsqueeze(1), ops.clamp(projection, 0, 1)).squeeze(1)
         target_dist = ops.stop_gradient(target_dist)
 
         loss = -ops.mean(ops.sum(target_dist * ops.log(current_dist + 1e-8), dim=1))
 
-        return loss, evalZ, targetA, targetZ, current_dist, target_dist, current_supports, next_supports, projection
+        return loss, evalZ, current_dist, target_dist, current_supports, next_supports, projection
+
+    @ms.jit
+    def training_step(self, obs_batch, act_batch, next_batch, rew_batch, ter_batch):
+        (loss, evalZ, current_dist, target_dist, current_supports, next_supports, projection), grads = self.grad_fn(
+            obs_batch, act_batch, next_batch, rew_batch, ter_batch)
+        if self.distributed_training:
+            grads = self.grad_reducer(grads)
+        self.optimizer(grads)
+
+        return loss, evalZ, current_dist, target_dist, current_supports, next_supports, projection
 
     def update(self, **samples):
         self.iterations += 1
@@ -55,16 +67,16 @@ class C51_Learner(Learner):
         ter_batch = Tensor(samples['terminals'])
 
         info = self.callback.on_update_start(self.iterations,
-                                             policy=self.policy, obs=obs_batch, act=act_batch,
+                                             model=self.model, obs=obs_batch, act=act_batch,
                                              next_obs=next_batch, rew=rew_batch, termination=ter_batch)
 
-        (loss, evalZ, targetA, targetZ, current_dist, target_dist, current_supports, next_supports,
+        (loss, evalZ, current_dist, target_dist, current_supports, next_supports,
          projection), grads = self.grad_fn(obs_batch, act_batch, next_batch, rew_batch, ter_batch)
         self.optimizer(grads)
 
         # hard update for target network
         if self.iterations % self.sync_frequency == 0:
-            self.policy.copy_target()
+            self.model.copy_target()
 
         self.scheduler.step()
         lr = self.scheduler.get_last_lr()[0]
@@ -75,8 +87,8 @@ class C51_Learner(Learner):
         })
 
         info.update(self.callback.on_update_end(self.iterations,
-                                                policy=self.policy, info=info,
-                                                evalZ=evalZ, targetA=targetA, targetZ=targetZ,
+                                                model=self.model, info=info,
+                                                evalZ=evalZ,
                                                 current_dist=current_dist, target_dist=target_dist,
                                                 current_supports=current_supports, next_supports=next_supports,
                                                 projection=projection, loss=loss))

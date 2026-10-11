@@ -8,13 +8,15 @@ import torch.distributed as dist
 from abc import ABC, abstractmethod
 from pathlib import Path
 from argparse import Namespace
+from typing import Optional, Any
 from gymnasium.spaces import Dict, Space
+from xuance.common import get_time_string, create_directory, RunningMeanStd, EPS, BaseCallback
+from xuance.environment import DummyVecEnv, SubprocVecEnv, space2shape
+
 from torch.utils.tensorboard import SummaryWriter
 from torch.distributed import destroy_process_group
-from xuance.common import get_time_string, create_directory, RunningMeanStd, EPS, Optional, Any, BaseCallback
-from xuance.environment import DummyVecEnv, SubprocVecEnv, space2shape
 from xuance.torch import REGISTRY_Representation, REGISTRY_Learners, Module
-from xuance.torch.utils import (nn, NormalizeFunctions, InitializeFunctions, ActivationFunctions,
+from xuance.torch.utils import (NormalizeFunctions, InitializeFunctions, ActivationFunctions,
                                 init_distributed_mode, set_seed,
                                 set_device,
                                 TensorEnvWrapper, TensorRunningMeanStd)
@@ -342,7 +344,7 @@ class Agent(ABC):
         raise NotImplementedError
 
     def _build_learner(self, *args, **kwargs):
-        return REGISTRY_Learners[self.config.learner](*args)
+        return REGISTRY_Learners[self.config.learner](*args, **kwargs)
 
     @abstractmethod
     def get_actions(self, *args, **kwargs):

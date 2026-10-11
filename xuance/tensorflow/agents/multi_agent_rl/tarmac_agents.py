@@ -8,7 +8,7 @@ from torch.nn import Module, ModuleDict
 
 # from xuance.tensorflow import REGISTRY_Policy
 from xuance.tensorflow.communications.attention_comm import TarMAC
-from xuance.tensorflow.utils import normalizerFunctions, ActivationFunctions
+from xuance.tensorflow.utils import NormalizerFunctions, ActivationFunctions
 from xuance.common import MultiAgentBaseCallback
 
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv, space2shape
@@ -52,7 +52,7 @@ class TarMAC_Agents(IC3Net_Agents):
         return communicator
 
     def _build_model(self) -> Module:
-        normalizer_fn = normalizerFunctions[self.config.normalizer] if hasattr(self.config, "normalizer") else None
+        normalizer_fn = NormalizerFunctions[self.config.normalizer] if hasattr(self.config, "normalizer") else None
         initializer = torch.nn.init.orthogonal_
         activation = ActivationFunctions[self.config.activation]
         device = self.device

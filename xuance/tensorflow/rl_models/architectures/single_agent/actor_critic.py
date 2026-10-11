@@ -34,7 +34,7 @@ class ActorCritic(Module):
             actions = actor_output.distributions.stochastic_sample()
         return actions
 
-    def value(self,
+    def values(self,
               observation: Union[Tensor, dict],
               **kwargs) -> ModelOutput:
         critic_output = self.critic(observation, **kwargs)

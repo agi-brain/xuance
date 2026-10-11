@@ -16,13 +16,13 @@ class Learner(ABC):
         self.distributed_training = config.distributed_training
 
         self.episode_length = config.episode_length
-        self.learning_rate = config.learning_rate if hasattr(config, 'learning_rate') else None
-        self.use_linear_lr_decay = config.use_linear_lr_decay if hasattr(config, 'use_linear_lr_decay') else False
-        self.end_factor_lr_decay = config.end_factor_lr_decay if hasattr(config, 'end_factor_lr_decay') else 1.0
-        self.gamma = config.gamma if hasattr(config, 'gamma') else 0.99
+        self.learning_rate = getattr(config, "learning_rate", 0.001)
+        self.use_linear_lr_decay = getattr(config, "use_linear_lr_decay", False)
+        self.end_factor_lr_decay = getattr(config, "end_factor_lr_decay", 1.0)
+        self.gamma = getattr(config, "gamma", 0.99)
         self.use_cnn = getattr(config, "use_cnn", False)
-        self.use_rnn = config.use_rnn if hasattr(config, 'use_rnn') else False
-        self.use_actions_mask = config.use_actions_mask if hasattr(config, 'use_actions_mask') else False
+        self.use_rnn = getattr(config, "use_rnn", False)
+        self.use_actions_mask = getattr(config, "use_actions_mask", False)
         self.model = model
         self.optimizer: Union[dict, list, Optional[keras.optimizers.Optimizer]] = None
         self.scheduler: Union[dict, list, Optional[keras.optimizers.schedules.LinearLR]] = None

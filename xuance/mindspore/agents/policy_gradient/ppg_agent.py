@@ -1,3 +1,4 @@
+import gymnasium
 import numpy as np
 from tqdm import tqdm
 from copy import deepcopy
@@ -5,11 +6,14 @@ from argparse import Namespace
 from gymnasium.spaces import Space
 from xuance.common import Optional, BaseCallback
 from xuance.environment import DummyVecEnv, SubprocVecEnv
-from xuance.mindspore import Module, Tensor
-from xuance.mindspore.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions
-from xuance.mindspore.policies import REGISTRY_Policy
+from xuance.mindspore import ms, Tensor, Module
+from xuance.mindspore.utils import ActivationFunctions
+from xuance.mindspore.rl_models.modules import split_distributions
 from xuance.mindspore.agents import OnPolicyAgent
-from xuance.mindspore.utils import split_distributions
+from xuance.mindspore.rl_models import CategoricalActor, GaussianActor
+from xuance.mindspore.rl_models import StateValueCritic as Critic
+from xuance.mindspore.rl_models.modules import ActionOutput
+from xuance.mindspore.rl_models.architectures import PhasicActorCritic
 
 
 class PPG_Agent(OnPolicyAgent):
@@ -30,49 +34,66 @@ class PPG_Agent(OnPolicyAgent):
             callback: Optional[BaseCallback] = None
     ):
         super(PPG_Agent, self).__init__(config, envs, observation_space, action_space, callback)
-        self.continuous_control = False
-        self.policy_nepoch = config.policy_nepoch
+        self.model_nepoch = config.policy_nepoch
         self.value_nepoch = config.value_nepoch
         self.aux_nepoch = config.aux_nepoch
 
-        self.auxiliary_info_shape = {"old_dist": None}
+        self.model = self._build_model()  # build RL model
         self.memory = self._build_memory(self.auxiliary_info_shape)  # build memory
-        self.policy = self._build_policy()  # build policy
-        self.learner = self._build_learner(self.config, self.policy, self.callback)  # build learner.
+        self.learner = self._build_learner(self.config, self.model, self.callback)  # build learner.
 
-    def _build_policy(self) -> Module:
-        normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None
-        initializer = InitializeFunctions[self.config.initialize] if hasattr(self.config, "initialize") else None
-        activation = ActivationFunctions[self.config.activation]
-
+    def _build_model(self) -> Module:
         # build representation.
         representation = self._build_representation(self.config.representation, self.observation_space, self.config)
 
-        # build policy.
-        if self.config.policy == "Categorical_PPG":
-            policy = REGISTRY_Policy["Categorical_PPG"](
-                action_space=self.action_space, representation=representation,
-                actor_hidden_size=self.config.actor_hidden_size, critic_hidden_size=self.config.critic_hidden_size,
-                normalize=normalize_fn, initialize=initializer, activation=activation)
-            self.continuous_control = False
-        elif self.config.policy == "Gaussian_PPG":
-            policy = REGISTRY_Policy["Gaussian_PPG"](
-                action_space=self.action_space, representation=representation,
-                actor_hidden_size=self.config.actor_hidden_size, critic_hidden_size=self.config.critic_hidden_size,
-                normalize=normalize_fn, initialize=initializer, activation=activation,
-                activation_action=ActivationFunctions[self.config.activation_action])
-            self.continuous_control = True
+        # build actor network
+        actor_input = dict(
+            representation=representation,
+            actor_hidden_size=self.config.actor_hidden_size,
+            action_space=self.action_space,
+            normalizer=self.normalize_fn,
+            initializer=self.initializer,
+            activation=self.activation
+        )
+        if isinstance(self.action_space, gymnasium.spaces.Box):
+            Actor = GaussianActor
+            actor_input['activation_action'] = ActivationFunctions[self.config.activation_action]
+        elif isinstance(self.action_space, gymnasium.spaces.Discrete):
+            Actor = CategoricalActor
         else:
-            raise AttributeError(f"PPG currently does not support the policy named {self.config.policy}.")
+            raise NotImplementedError
+        actor = Actor(**actor_input)
 
-        return policy
+        # build critic network
+        critic = Critic(representation=deepcopy(representation),
+                        critic_hidden_size=self.config.critic_hidden_size,
+                        normalizer=self.normalize_fn,
+                        initializer=self.initializer,
+                        activation=self.activation)
 
-    def get_actions(self, observations: np.ndarray,
-               return_dists: bool = False, return_logpi: bool = False):
+        aux_critic = Critic(representation=deepcopy(representation),
+                            critic_hidden_size=self.config.critic_hidden_size,
+                            normalizer=self.normalize_fn,
+                            initializer=self.initializer,
+                            activation=self.activation)
+
+        # build the RL model
+        model = PhasicActorCritic(actor=actor, critic=critic, aux_critic=aux_critic)
+
+        return model
+
+    def get_actions(
+            self,
+            observations: np.ndarray,
+            deterministic: bool = False,
+            return_dists: bool = False,
+            return_logpi: bool = False
+    ) -> ActionOutput:
         """Returns actions and values.
 
         Parameters:
             observations (np.ndarray): The observation.
+            deterministic (bool): True for deterministic policy and False for stochastic policy.
             return_dists (bool): Whether to return dists.
             return_logpi (bool): Whether to return log_pi.
 
@@ -82,21 +103,25 @@ class PPG_Agent(OnPolicyAgent):
             dists: The policy distributions.
             log_pi: Log of stochastic actions.
         """
-        if self.policy.is_continuous:
-            _, mu, std, values, _ = self.policy(Tensor(observations))
-            policy_dists = self.policy.actor.distribution(mu=mu, std=std)
-        else:
-            _, logits, values, _ = self.policy(Tensor(observations))
-            policy_dists = self.policy.actor.distribution(logits=logits)
-
-        actions = policy_dists.stochastic_sample()
+        observations = Tensor(observations, dtype=ms.float32)
+        policy_dists, values, _, _ = self.model(observations)
+        actions = policy_dists.deterministic_sample() if deterministic else policy_dists.stochastic_sample()
         log_pi = policy_dists.log_prob(actions) if return_logpi else None
         dists = split_distributions(policy_dists) if return_dists else None
         actions = actions.asnumpy()
         values = values.asnumpy()
-        return {"actions": actions, "values": values, "dists": dists, "log_pi": log_pi}
+        return ActionOutput(
+            env_actions=actions,
+            values=values,
+            distributions=dists,
+            log_probs=log_pi
+        )
 
-    def get_aux_info(self, policy_output: dict = None):
+    @property
+    def auxiliary_info_shape(self):
+        return {"old_dist": None}
+
+    def get_aux_info(self, policy_output: ActionOutput = None):
         """Returns auxiliary information.
 
         Parameters:
@@ -105,7 +130,7 @@ class PPG_Agent(OnPolicyAgent):
         Returns:
             aux_info (dict): The auxiliary information.
         """
-        aux_info = {"old_dist": policy_output["dists"]}
+        aux_info = {"old_dist": policy_output.distributions}
         return aux_info
 
     def train(self, train_steps):
@@ -115,11 +140,12 @@ class PPG_Agent(OnPolicyAgent):
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
             policy_out = self.get_actions(obs, return_dists=True, return_logpi=False)
-            acts, rets = policy_out['actions'], policy_out['values']
+            acts = policy_out.env_actions
+            rets = policy_out.values
             next_obs, rewards, terminals, truncations, infos = self.train_envs.step(acts)
             aux_info = self.get_aux_info(policy_out)
 
-            self.callback.on_train_step(self.current_step, envs=self.train_envs, policy=self.policy,
+            self.callback.on_train_step(self.current_step, envs=self.train_envs, model=self.model,
                                         obs=obs, policy_out=policy_out, acts=acts, next_obs=next_obs, rewards=rewards,
                                         terminals=terminals, truncations=truncations, infos=infos,
                                         train_steps=train_steps, rets=rets, aux_info=aux_info)
@@ -135,13 +161,13 @@ class PPG_Agent(OnPolicyAgent):
                         self.memory.finish_path(vals[i], i)
                 # policy update
                 indexes = np.arange(self.buffer_size)
-                for _ in range(self.policy_nepoch):
+                for _ in range(self.model_nepoch):
                     np.random.shuffle(indexes)
                     for start in range(0, self.buffer_size, self.batch_size):
                         end = start + self.batch_size
                         sample_idx = indexes[start:end]
                         samples = self.memory.sample(sample_idx)
-                        update_info_policy = self.learner.update_policy(**samples)
+                        update_info_policy = self.learner.update_actor(**samples)
                 update_info.update(update_info_policy)
                 # critic update
                 for _ in range(self.value_nepoch):
@@ -164,11 +190,11 @@ class PPG_Agent(OnPolicyAgent):
                         end = start + self.batch_size
                         sample_idx = indexes[start:end]
                         samples = self.memory.sample(sample_idx)
-                        update_info_auxiliary = self.learner.update_auxiliary(**samples)
+                        update_info_auxiliary = self.learner.update_auxiliary_critic(**samples)
                 update_info.update(update_info_auxiliary)
                 self.log_infos(update_info, self.current_step)
                 train_info.update(update_info)
-                self.callback.on_train_epochs_end(self.current_step, policy=self.policy, memory=self.memory,
+                self.callback.on_train_epochs_end(self.current_step, model=self.model, memory=self.memory,
                                                   current_episode=self.current_episode, train_steps=train_steps,
                                                   update_info=update_info)
                 self.memory.clear()
@@ -192,23 +218,23 @@ class PPG_Agent(OnPolicyAgent):
                         self.current_episode[i] += 1
                         if self.use_wandb:
                             episode_info = {
-                                f"Episode-Steps/env-{i}": infos[i]["episode_step"],
-                                f"Train-Episode-Rewards/env-{i}": infos[i]["episode_score"]
+                                f"Episode-Steps/rank_{self.rank}/env-{i}": infos[i]["episode_step"],
+                                f"Train-Episode-Rewards/rank_{self.rank}/env-{i}": infos[i]["episode_score"]
                             }
                         else:
                             episode_info = {
-                                f"Episode-Steps": {f"env-{i}": infos[i]["episode_step"]},
-                                f"Train-Episode-Rewards": {f"env-{i}": infos[i]["episode_score"]}
+                                f"Episode-Steps/rank_{self.rank}": {f"env-{i}": infos[i]["episode_step"]},
+                                f"Train-Episode-Rewards/rank_{self.rank}": {f"env-{i}": infos[i]["episode_score"]}
                             }
                         self.log_infos(episode_info, self.current_step)
                         train_info.update(episode_info)
-                        self.callback.on_train_episode_info(envs=self.train_envs, policy=self.policy, env_id=i,
-                                                            infos=infos, use_wandb=self.use_wandb,
+                        self.callback.on_train_episode_info(envs=self.train_envs, model=self.model, env_id=i,
+                                                            infos=infos, rank=self.rank, use_wandb=self.use_wandb,
                                                             current_step=self.current_step,
                                                             current_episode=self.current_episode,
                                                             train_steps=train_steps)
 
             self.current_step += self.n_envs
-            self.callback.on_train_step_end(self.current_step, envs=self.train_envs, policy=self.policy,
+            self.callback.on_train_step_end(self.current_step, envs=self.train_envs, model=self.model,
                                             train_steps=train_steps, train_info=train_info)
         return train_info

@@ -6,7 +6,7 @@ import torch
 from torch import nn
 from xuance.common import List
 from argparse import Namespace
-from xuance.torch.learners.multi_agent_rl.isac_learner import ISAC_Learner
+from xuance.mindspore.learners.multi_agent_rl.isac_learner import ISAC_Learner
 from operator import itemgetter
 
 

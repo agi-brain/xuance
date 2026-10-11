@@ -1,4 +1,4 @@
-# Test the policy-based algorithms with PyTorch.
+# Test the policy-based algorithms with TensorFlow.
 
 from argparse import Namespace
 from xuance import get_runner

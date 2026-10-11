@@ -4,8 +4,8 @@ Paper link: http://proceedings.mlr.press/v80/fujimoto18a/fujimoto18a.pdf
 Implementation: MindSpore
 """
 from argparse import Namespace
-from mindspore import nn
-from xuance.mindspore import ms, ops, Module, Tensor, optim
+
+from xuance.mindspore import ms, ops, nn, Module, Tensor, optim
 from xuance.mindspore.learners import Learner
 from xuance.mindspore.utils import clip_grads
 
@@ -13,12 +13,12 @@ from xuance.mindspore.utils import clip_grads
 class TD3_Learner(Learner):
     def __init__(self,
                  config: Namespace,
-                 policy: Module,
+                 model: Module,
                  callback):
-        super(TD3_Learner, self).__init__(config, policy, callback)
+        super(TD3_Learner, self).__init__(config, model, callback)
         self.optimizer = {
-            'actor': optim.Adam(params=self.policy.actor_parameters, lr=self.config.learning_rate, eps=1e-5),
-            'critic': optim.Adam(params=self.policy.critic_parameters, lr=self.config.learning_rate, eps=1e-5),
+            'actor': optim.Adam(params=self.model.actor.trainable_params(), lr=self.config.learning_rate, eps=1e-5),
+            'critic': optim.Adam(params=self.model.critic.trainable_params(), lr=self.config.learning_rate, eps=1e-5),
         }
         self.scheduler = {
             'actor': optim.lr_scheduler.LinearLR(self.optimizer['actor'], start_factor=1.0,
@@ -29,7 +29,6 @@ class TD3_Learner(Learner):
                                                   total_iters=self.config.running_steps)
         }
         self.tau = config.tau
-        self.gamma = config.gamma
         self.actor_update_delay = config.actor_update_delay
         self.mse_loss = nn.MSELoss()
         # Get gradient function
@@ -37,18 +36,47 @@ class TD3_Learner(Learner):
                                                has_aux=True)
         self.grad_fn_critic = ms.value_and_grad(self.forward_fn_critic, None, self.optimizer['critic'].parameters,
                                                 has_aux=True)
-        self.policy.set_train()
+        self.model.set_train()
+        self.grad_reducer_actor = self.get_grad_reducer(self.optimizer["actor"])
+        self.grad_reducer_critic = self.get_grad_reducer(self.optimizer["critic"])
+
+    @ms.jit
+    def training_step_actor(self, obs_batch):
+        (loss_p, policy_q), grads = self.grad_fn_actor(obs_batch)
+        if self.distributed_training:
+            grads = self.grad_reducer_actor(grads)
+
+        if self.use_grad_clip:
+            grads = clip_grads(grads, Tensor(-self.grad_clip_norm), Tensor(self.grad_clip_norm))
+
+        self.optimizer["actor"](grads)
+
+        return loss_p, policy_q
+
+    @ms.jit
+    def training_step_critic(self, obs_batch, act_batch, next_batch, rew_batch, ter_batch):
+        (loss_q, next_q, action_q_A, action_q_B, target_q), grads = self.grad_fn_critic(
+            obs_batch, act_batch, next_batch, rew_batch, ter_batch)
+        if self.distributed_training:
+            grads = self.grad_reducer_critic(grads)
+
+        if self.use_grad_clip:
+            grads = clip_grads(grads, Tensor(-self.grad_clip_norm), Tensor(self.grad_clip_norm))
+
+        self.optimizer["critic"](grads)
+
+        return loss_q, next_q, action_q_A, action_q_B, target_q
 
     def forward_fn_actor(self, obs_batch):
-        policy_q = self.policy.Qpolicy(obs_batch).reshape([-1])
+        policy_q = self.model.Qpolicy(obs_batch).reshape([-1])
         loss_p = -ops.mean(policy_q)
         return loss_p, policy_q
 
     def forward_fn_critic(self, obs_batch, act_batch, next_batch, rew_batch, ter_batch):
-        next_q = self.policy.Qtarget(next_batch).reshape([-1])
+        next_q = self.model.Qtarget(next_batch).reshape([-1])
         target_q = rew_batch + self.gamma * (1 - ter_batch) * next_q
 
-        action_q_A, action_q_B = self.policy.Qaction(obs_batch, act_batch)
+        action_q_A, action_q_B = self.model.Qaction(obs_batch, act_batch)
         action_q_A = action_q_A.reshape([-1])
         action_q_B = action_q_B.reshape([-1])
         loss_q_A = self.mse_loss(logits=action_q_A, labels=ops.stop_gradient(target_q))
@@ -65,22 +93,16 @@ class TD3_Learner(Learner):
         ter_batch = Tensor(samples['terminals'])
 
         info = self.callback.on_update_start(self.iterations,
-                                             policy=self.policy, obs=obs_batch, act=act_batch,
+                                             model=self.model, obs=obs_batch, act=act_batch,
                                              next_obs=next_batch, rew=rew_batch, termination=ter_batch)
 
-        (q_loss, next_q, action_q_A, action_q_B, target_q), grads_critic = self.grad_fn_critic(
+        q_loss, next_q, action_q_A, action_q_B, target_q = self.training_step_critic(
             obs_batch, act_batch, next_batch, rew_batch, ter_batch)
-        if self.use_grad_clip:
-            grads_critic = clip_grads(grads_critic, Tensor(-self.grad_clip_norm), Tensor(self.grad_clip_norm))
-        self.optimizer['critic'](grads_critic)
 
         policy_q, p_loss = None, None
         if self.iterations % self.actor_update_delay == 0:
-            (p_loss, policy_q), grads_actor = self.grad_fn_actor(obs_batch)
-            if self.use_grad_clip:
-                grads_actor = clip_grads(grads_actor, Tensor(-self.grad_clip_norm), Tensor(self.grad_clip_norm))
-            self.optimizer['actor'](grads_actor)
-            self.policy.soft_update(self.tau)
+            p_loss, policy_q = self.training_step_actor(obs_batch)
+            self.model.soft_update(self.tau)
             info["Ploss"] = p_loss.asnumpy()
 
         self.scheduler['actor'].step()
@@ -97,7 +119,7 @@ class TD3_Learner(Learner):
         })
 
         info.update(self.callback.on_update_end(self.iterations,
-                                                policy=self.policy, info=info,
+                                                model=self.model, info=info,
                                                 action_q_A=action_q_A, action_q_B=action_q_B,
                                                 next_q=next_q, target_q=target_q, q_loss=q_loss,
                                                 policy_q=policy_q, p_loss=p_loss))

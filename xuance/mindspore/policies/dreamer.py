@@ -4,10 +4,10 @@ from torch.distributions.utils import logits_to_probs
 import numpy as np
 from argparse import Namespace
 from xuance.common import Any, Dict, Tuple, Sequence, List
-from xuance.torch import Tensor, Module
-from xuance.torch.utils.distributions import MSEDistribution, SymLogDistribution, TwoHotEncodingDistribution, BernoulliSafeMode
-from xuance.torch.utils import dotdict, Moments, compute_lambda_values
-from xuance.torch.utils.harmonizer import Harmonizer
+from xuance.mindspore import Tensor, Module
+from xuance.mindspore.utils.distributions import MSEDistribution, SymLogDistribution, TwoHotEncodingDistribution, BernoulliSafeMode
+from xuance.mindspore.utils import dotdict, Moments, compute_lambda_values
+from xuance.mindspore.utils.harmonizer import Harmonizer
 
 
 class DreamerV3Policy(Module):  # checked

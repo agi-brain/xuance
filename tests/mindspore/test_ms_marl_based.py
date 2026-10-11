@@ -1,4 +1,4 @@
-# Test the MARL-based algorithms with PyTorch.
+# Test the MARL-based algorithms with MindSpore.
 
 from argparse import Namespace
 from copy import deepcopy

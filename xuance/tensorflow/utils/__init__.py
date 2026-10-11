@@ -28,14 +28,14 @@ ActivationFunctions = {
     "elu": tf.nn.elu,
 }
 
-normalizerFunctions = {
+NormalizerFunctions = {
     "LayerNorm": keras.layers.LayerNormalization,
     "GroupNorm": keras.layers.GroupNormalization,
     "BatchNorm": keras.layers.BatchNormalization,
     "BatchNorm2d": keras.layers.BatchNormalization,
 }
 
-initializerFunctions = {
+InitializerFunctions = {
     "orthogonal": keras.initializers.Orthogonal,
     "normal": keras.initializers.RandomNormal,
     "zeros": keras.initializers.Zeros,

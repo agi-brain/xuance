@@ -21,7 +21,6 @@ class DQN_Learner(Learner):
                                                            start_factor=1.0,
                                                            end_factor=self.end_factor_lr_decay,
                                                            total_iters=self.total_iters)
-        self.gamma = config.gamma
         self.sync_frequency = config.sync_frequency
         self.mse_loss = nn.MSELoss()
         self.n_actions = self.model.n_actions
@@ -34,7 +33,7 @@ class DQN_Learner(Learner):
         rew_batch = torch.as_tensor(samples['rewards'], device=self.device)
         ter_batch = torch.as_tensor(samples['terminals'], dtype=torch.float, device=self.device)
         info = self.callback.on_update_start(self.iterations,
-                                             policy=self.model, obs=obs_batch, act=act_batch,
+                                             model=self.model, obs=obs_batch, act=act_batch,
                                              next_obs=next_batch, rew=rew_batch, termination=ter_batch)
 
         evalQ = self.model(obs_batch).values
@@ -71,6 +70,6 @@ class DQN_Learner(Learner):
                 "learning_rate": lr,
             })
         info.update(self.callback.on_update_end(self.iterations,
-                                                policy=self.model, info=info,
+                                                model=self.model, info=info,
                                                 evalQ=evalQ, predictQ=predictQ, targetQ=targetQ, loss=loss))
         return info
