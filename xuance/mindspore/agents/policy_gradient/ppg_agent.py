@@ -4,9 +4,10 @@ from tqdm import tqdm
 from copy import deepcopy
 from argparse import Namespace
 from gymnasium.spaces import Space
-from xuance.common import Optional, BaseCallback
+from typing import Optional
+from xuance.common import BaseCallback
 from xuance.environment import DummyVecEnv, SubprocVecEnv
-from xuance.mindspore import ms, Tensor, Module
+from xuance.mindspore import ms, ops, Tensor, Module
 from xuance.mindspore.utils import ActivationFunctions
 from xuance.mindspore.rl_models.modules import split_distributions
 from xuance.mindspore.agents import OnPolicyAgent
@@ -104,7 +105,14 @@ class PPG_Agent(OnPolicyAgent):
             log_pi: Log of stochastic actions.
         """
         observations = Tensor(observations, dtype=ms.float32)
-        policy_dists, values, _, _ = self.model(observations)
+        if self.model.is_continuous:
+            a_mean, log_std, values = self.model(observations)
+            a_std = ops.exp(log_std)
+            policy_dists = self.model.actor.actor_head.distribution(a_mean, a_std)
+        else:
+            logits, values = self.model(observations)
+            policy_dists = self.model.actor.actor_head.distribution(logits=logits)
+
         actions = policy_dists.deterministic_sample() if deterministic else policy_dists.stochastic_sample()
         log_pi = policy_dists.log_prob(actions) if return_logpi else None
         dists = split_distributions(policy_dists) if return_dists else None
@@ -190,7 +198,7 @@ class PPG_Agent(OnPolicyAgent):
                         end = start + self.batch_size
                         sample_idx = indexes[start:end]
                         samples = self.memory.sample(sample_idx)
-                        update_info_auxiliary = self.learner.update_auxiliary_critic(**samples)
+                        update_info_auxiliary = self.learner.update_auxiliary(**samples)
                 update_info.update(update_info_auxiliary)
                 self.log_infos(update_info, self.current_step)
                 train_info.update(update_info)

@@ -89,25 +89,6 @@ class PhasicActorCritic(ActorCritic):
         super().__init__(actor, critic)
         self.aux_critic = aux_critic
 
-    def construct(self,
-                  observation: Union[Tensor, dict],
-                  **kwargs) -> Tuple[Tensor, ...]:
-        distributions, rnn_states_actor = self.actor(observation, **kwargs)
-        values, rnn_states_critic = self.critic(observation, **kwargs)
-        return distributions, values, rnn_states_actor, rnn_states_critic
-
-    def act(self,
-            observation: Union[Tensor, dict],
-            deterministic: bool = False,
-            **kwargs) -> Tensor:
-        actor_output = self.actor(observation, **kwargs)
-
-        if deterministic:
-            actions = actor_output.distributions.deterministic_sample()
-        else:
-            actions = actor_output.distributions.stochastic_sample()
-        return actions
-
 
 class SoftActorCritic(ActorCritic):
     def __init__(self,

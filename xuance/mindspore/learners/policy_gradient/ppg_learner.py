@@ -40,13 +40,13 @@ class PPG_Learner(Learner):
 
     def forward_fn_policy(self, obs_batch, act_batch, adv_batch, old_log_prob_batch):
         if self.is_continuous:
-            outputs, mu, std, _, _ = self.model(obs_batch)
+            mu, std, _ = self.model(obs_batch)
             log_prob = self.a_dist._log_prob(value=act_batch, mean=mu, sd=std)
             log_prob = ops.reduce_sum(x=log_prob, axis=-1)
             entropy = self.a_dist._entropy(mean=mu, sd=std)
             entropy = ops.reduce_sum(x=entropy, axis=-1)
         else:
-            outputs, logits, _, _ = self.model(obs_batch)
+            logits, _ = self.model(obs_batch)
             probs = self.softmax(logits)
             log_prob = self.a_dist._log_prob(value=act_batch, probs=probs)
             entropy = self.a_dist.entropy(probs=probs)
@@ -59,13 +59,13 @@ class PPG_Learner(Learner):
         e_loss = ops.mean(entropy)
 
         loss = a_loss - self.ent_coef * e_loss
-        return loss, a_loss, e_loss, ratio, outputs, log_prob, surrogate1, surrogate2
+        return loss, a_loss, e_loss, ratio, log_prob, surrogate1, surrogate2
 
     def forward_fn_critic(self, obs_batch, ret_batch):
         if self.is_continuous:
-            _, _, _, v_pred, _ = self.model(obs_batch)
+            _, _, v_pred = self.model(obs_batch)
         else:
-            _, _, v_pred, _ = self.model(obs_batch)
+            _, v_pred = self.model(obs_batch)
 
         loss = self.mse_loss(v_pred, ops.stop_gradient(ret_batch))
         return loss, v_pred
@@ -73,12 +73,14 @@ class PPG_Learner(Learner):
     def forward_fn_auxiliary(self, *args):
         if self.is_continuous:
             obs_batch, ret_batch, old_mu, old_std = args
-            outputs, mu, std, v, aux_v = self.model(obs_batch)
+            mu, std, v = self.model(obs_batch)
+            aux_v, _ = self.model.aux_critic(obs_batch)
             # calculate kl divergence
             kl = self.a_dist._kl_loss("Normal", mean_b=old_mu, sd_b=old_std, mean=mu, sd=std)
         else:
             obs_batch, ret_batch, old_logits = args
-            outputs, logits, v, aux_v = self.model(obs_batch)
+            logits, v = self.model(obs_batch)
+            aux_v, _ = self.model.aux_critic(obs_batch)
             # calculate kl divergence
             old_probs = self.softmax(old_logits)
             probs = self.softmax(logits)
@@ -89,9 +91,9 @@ class PPG_Learner(Learner):
         value_loss = self.mse_loss(v, ret_batch)
 
         loss = aux_loss + self.kl_beta * kl_loss + value_loss
-        return loss, aux_loss, kl_loss, value_loss, outputs, v, aux_v
+        return loss, aux_loss, kl_loss, value_loss, v, aux_v
 
-    def update_policy(self, **samples):
+    def update_actor(self, **samples):
         self.policy_iterations += 1
         obs_batch = Tensor(samples['obs'])
         adv_batch = Tensor(samples['advantages'])
@@ -105,7 +107,7 @@ class PPG_Learner(Learner):
                                              model=self.model, obs=obs_batch, act=act_batch, advantages=adv_batch,
                                              old_dist=old_dists, old_logp=old_log_prob_batch)
 
-        (loss, a_loss, e_loss, ratio, outputs, log_prob, surrogate1, surrogate2), grads = self.grad_fn_policy(
+        (loss, a_loss, e_loss, ratio, log_prob, surrogate1, surrogate2), grads = self.grad_fn_policy(
             obs_batch, act_batch, adv_batch, old_log_prob_batch)
 
         if self.use_grad_clip:
@@ -123,7 +125,7 @@ class PPG_Learner(Learner):
             "clip_ratio": ratio.mean().asnumpy(),
         })
         info.update(self.callback.on_update_end(self.iterations, method="update_policy",
-                                                model=self.model, info=info, rep_output=outputs,
+                                                model=self.model, info=info,
                                                 log_prob=log_prob,
                                                 ratio=ratio, surrogate1=surrogate1, surrogate2=surrogate2,
                                                 a_loss=a_loss, e_loss=e_loss, loss=loss))
@@ -163,14 +165,14 @@ class PPG_Learner(Learner):
         if self.is_continuous:
             old_mu = old_dist.mu
             old_std = old_dist.std
-            (loss, aux_loss, kl_loss, value_loss, outputs, v, aux_v), grads = self.grad_fn_auxiliary(
+            (loss, aux_loss, kl_loss, value_loss, v, aux_v), grads = self.grad_fn_auxiliary(
                 obs_batch, ret_batch, old_mu, old_std)
             if self.use_grad_clip:
                 grads = clip_grads(grads, Tensor(-self.grad_clip_norm), Tensor(self.grad_clip_norm))
             self.optimizer(grads)
         else:
             old_logits = old_dist.logits
-            (loss, aux_loss, kl_loss, value_loss, outputs, v, aux_v), grads = self.grad_fn_auxiliary(
+            (loss, aux_loss, kl_loss, value_loss, v, aux_v), grads = self.grad_fn_auxiliary(
                 obs_batch, ret_batch, old_logits)
             if self.use_grad_clip:
                 grads = clip_grads(grads, Tensor(-self.grad_clip_norm), Tensor(self.grad_clip_norm))
@@ -184,7 +186,7 @@ class PPG_Learner(Learner):
         })
 
         info.update(self.callback.on_update_end(self.iterations, method="update_auxiliary",
-                                                model=self.model, info=info, rep_output=outputs,
+                                                model=self.model, info=info,
                                                 v_pred=v, v_aux=aux_v,
                                                 aux_loss=aux_loss, kl_loss=kl_loss, value_loss=value_loss, loss=loss))
         return info

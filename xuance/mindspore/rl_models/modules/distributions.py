@@ -108,7 +108,7 @@ class CategoricalDistribution(Distribution):
         return self.distribution.sample(probs=self.probs)
 
     def deterministic_sample(self):
-        return self.argmax(self.distribution.probs)
+        return ops.argmax(self.probs, dim=-1, keepdim=False)
 
     def kl_divergence(self, other: Distribution):
         assert isinstance(other,
