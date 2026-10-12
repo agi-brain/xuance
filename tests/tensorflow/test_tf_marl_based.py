@@ -17,7 +17,7 @@ env_name = "mpe"
 env_id = "simple_spread_v3"
 
 
-class TestValueBaseAlgo(unittest.TestCase):
+class TestMARL_Algo(unittest.TestCase):
     def test_coma(self):
         runner = get_runner(algo="coma", env=env_name, env_id=env_id, parser_args=args)
         runner.run(mode=run_mode, running_steps=running_steps, eval_interval=eval_interval)

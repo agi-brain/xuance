@@ -9,7 +9,7 @@ device = 'cuda:0'
 test_mode = False
 
 
-class TestValueBaseAlgo(unittest.TestCase):
+class TestAtari(unittest.TestCase):
     def test_dqn(self):
         args = Namespace(dl_toolbox='torch', device=device, running_steps=running_steps, test_mode=test_mode)
         runner = get_runner(algo="dqn", env='atari', env_id='ALE/Breakout-v5', parser_args=args)

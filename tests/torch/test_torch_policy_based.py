@@ -17,7 +17,7 @@ env_id_continuous = "Pendulum-v1"
 env_id_discrete = "CartPole-v1"
 
 
-class TestValueBaseAlgo(unittest.TestCase):
+class TestPolicyBaseAlgo(unittest.TestCase):
     
     """A2C"""
     def test_a2c_continuous(self):
