@@ -2,6 +2,7 @@
 
 from argparse import Namespace
 from xuance import get_runner
+from copy import deepcopy
 import unittest
 
 run_mode = "benchmark"  # Choices: "train", "test", "benchmark"
@@ -33,29 +34,18 @@ class TestPolicyBaseAlgo(unittest.TestCase):
         runner = get_runner(algo="ddpg", env=env_name, env_id=env_id_continuous, parser_args=args)
         runner.run(mode=run_mode, running_steps=running_steps, eval_interval=eval_interval)
 
-    """P-DQN"""
-    # def test_pdqn(self):
-    #     runner = get_runner(algo="pdqn", env='platform', env_id='Platform-v1', parser_args=args)
-    #     runner.run(mode=run_mode, running_steps=running_steps, eval_interval=eval_interval)
-
-    """MP-DQN"""
-    # def test_mpdqn(self):
-    #     runner = get_runner(algo="mpdqn", env='platform', env_id='Platform-v1', parser_args=args)
-    #     runner.run(mode=run_mode, running_steps=running_steps, eval_interval=eval_interval)
-
-    """SP-DQN"""
-    # def test_spdqn(self):
-    #     runner = get_runner(algo="spdqn", env='platform', env_id='Platform-v1', parser_args=args)
-    #     runner.run(mode=run_mode, running_steps=running_steps, eval_interval=eval_interval)
-
     """NPG"""
-    # def test_npg_continuous(self):
-    #     runner = get_runner(algo="npg", env=env_name, env_id=env_id_continuous, parser_args=args)
-    #     runner.run(mode=run_mode, running_steps=running_steps, eval_interval=eval_interval)
-    #
-    # def test_npg_discrete(self):
-    #     runner = get_runner(algo="npg", env=env_name, env_id=env_id_discrete, parser_args=args)
-    #     runner.run(mode=run_mode, running_steps=running_steps, eval_interval=eval_interval)
+    def test_npg_continuous(self):
+        args_npg = deepcopy(args)
+        args_npg.static_graph = False
+        runner = get_runner(algo="npg", env=env_name, env_id=env_id_continuous, parser_args=args_npg)
+        runner.run(mode=run_mode, running_steps=running_steps, eval_interval=eval_interval)
+
+    def test_npg_discrete(self):
+        args_npg = deepcopy(args)
+        args_npg.static_graph = False
+        runner = get_runner(algo="npg", env=env_name, env_id=env_id_discrete, parser_args=args_npg)
+        runner.run(mode=run_mode, running_steps=running_steps, eval_interval=eval_interval)
 
     """PG"""
     def test_pg_continuous(self):

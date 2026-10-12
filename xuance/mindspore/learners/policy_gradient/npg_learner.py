@@ -130,7 +130,7 @@ class NPG_Learner(Learner):
         fisher_information = ops.zeros(size=(param_num, param_num), dtype=params.dtype)
 
         def forward_fn(observations, actions):
-            if self.is_continuous:
+            if self.model.is_continuous:
                 mu, std, _ = self.model.actor(observations)
                 log_prob = self.a_dist._log_prob(value=actions, mean=mu, sd=std)
                 log_prob = ops.reduce_sum(x=log_prob, axis=-1)
