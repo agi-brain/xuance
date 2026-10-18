@@ -1,16 +1,17 @@
-import torch
-import torch.nn.functional as F
-from torch import Tensor, nn
-from typing import Optional, Union, Literal
+from typing import Optional, Literal
+
+import mindspore.nn as nn
+import mindspore.ops as ops
+from mindspore import Tensor
+from mindspore.nn import Cell as Module
 
 
-class IdentityEncoder(nn.Module):
+class IdentityEncoder(Module):
     def __init__(
             self,
             num_identities: int,
             mode: Literal["none", "one_hot", "embedding"] = "none",
             embedding_dim: Optional[int] = None,
-            device: Optional[Union[str, int, torch.device]] = None,
             **kwargs
     ):
         super().__init__()
@@ -34,7 +35,6 @@ class IdentityEncoder(nn.Module):
             self.embedding = nn.Embedding(
                 num_embeddings=num_identities,
                 embedding_dim=embedding_dim,
-                device=device
             )
         else:
             raise ValueError(f"Unsupported identity mode: {mode}.")
@@ -48,7 +48,7 @@ class IdentityEncoder(nn.Module):
             encoded_identities = None
 
         elif self.mode == "one_hot":  # batch * 1 -> batch * num_classes
-            encoded_identities = F.one_hot(agent_indices, num_classes=self.num_identities).squeeze(-2).float()
+            encoded_identities = ops.one_hot(agent_indices, depth=self.num_identities).squeeze(-2).float()
 
         elif self.mode == "embedding":
             encoded_identities = self.embedding(agent_indices).squeeze(-2)
@@ -59,7 +59,7 @@ class IdentityEncoder(nn.Module):
         return encoded_identities
 
 
-class IdentityFeatureFusion(nn.Module):
+class IdentityFeatureFusion(Module):
     def __init__(
             self,
             observation_feature_dim: int,
@@ -108,7 +108,7 @@ class IdentityFeatureFusion(nn.Module):
             return observation_features
 
         elif self.mode == "concat":
-            return torch.cat([observation_features, identity_features], dim=-1)
+            return ops.cat([observation_features, identity_features], axis=-1)
 
         elif self.mode == "add":
             return observation_features + self.identity_projection(identity_features)
@@ -125,14 +125,12 @@ class IdentityFeatureFusion(nn.Module):
 def build_identity_encoder(
         num_identities: int,
         mode: Literal["none", "one_hot", "embedding"] = "none",
-        embedding_dim: Optional[int] = None,
-        device: Optional[Union[str, int, torch.device]] = None
+        embedding_dim: Optional[int] = None
 ) -> IdentityEncoder:
     resolved_mode = "none" if num_identities == 1 else mode
 
     return IdentityEncoder(
         num_identities=num_identities,
         mode=resolved_mode,
-        embedding_dim=embedding_dim,
-        device=device
+        embedding_dim=embedding_dim
     )

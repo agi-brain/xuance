@@ -1,14 +1,10 @@
-import os
-import torch
-import torch.nn.functional as F
 from operator import itemgetter
 from copy import deepcopy
 from typing import Dict, Optional, Union, Tuple
 from gymnasium.spaces import Discrete
-from torch import Tensor
-from torch.nn import Module, ModuleDict
-from torch.nn.parallel import DistributedDataParallel
 from xuance.common import AgentGrouping
+
+from xuance.mindspore import ops, Tensor, Module, ModuleDict
 from xuance.mindspore.utils import AgentGroupedTensor
 from xuance.mindspore.rl_models.heads import QTRAN_Base, QTRAN_Alt, Coordination_Graph
 from xuance.mindspore.rl_models.modules import MultiAgentModelOutput, RNN_State
@@ -20,7 +16,6 @@ class MixingQNetwork(Module):
                  q_networks: ModuleDict,
                  mixer: Module,
                  use_rnn: bool = False,
-                 device: Optional[Union[str, int, torch.device]] = None,
                  use_distributed_training: bool = False,
                  **kwargs):
         super().__init__()
@@ -32,7 +27,6 @@ class MixingQNetwork(Module):
         self.n_agents = len(self.agent_keys)
         self.n_group_agents = {k: len(self.groups[k]) for k in self.group_keys}
         self.use_rnn = use_rnn
-        self.device = device
 
         self.individual_q_networks = q_networks
         self.target_individual_q_networks = deepcopy(self.individual_q_networks)
@@ -41,11 +35,6 @@ class MixingQNetwork(Module):
 
         # Prepare DDP module.
         self.distributed_training = use_distributed_training
-        if self.distributed_training:
-            self.rank = int(os.environ["RANK"])
-            self.individual_q_networks = DistributedDataParallel(module=self.individual_q_networks,
-                                                                 device_ids=[self.rank])
-            self.eval_Qtot = DistributedDataParallel(module=self.eval_Qtot, device_ids=[self.rank])
 
     @property
     def parameters_model(self):
@@ -76,13 +65,13 @@ class MixingQNetwork(Module):
             if self.use_rnn:
                 input_kwargs["rnn_states"] = rnn_states[group]
 
-            individual_output = self.individual_q_networks[group](observations.packed(group),
+            value, rnn_state = self.individual_q_networks[group](observations.packed(group),
                                                                   **input_kwargs)
 
-            rnn_states_new[group] = individual_output.representations.rnn_states
-            rep_out[group] = individual_output.representations
+            rnn_states_new[group] = rnn_state
+            # rep_out[group] = individual_output.representations
             # Q value shape: batch_size * n_agent * -1 or batch_size * n_agent * seq_len * -1
-            evalQ[group] = individual_output.values.reshape(*batch_shape, -1)
+            evalQ[group] = value.reshape(*batch_shape, -1)
 
             if avail_actions is not None:
                 evalQ_detach = evalQ[group].clone().detach()
@@ -95,7 +84,7 @@ class MixingQNetwork(Module):
             actions=AgentGroupedTensor(argmax_action, self.grouping),
             values=AgentGroupedTensor(evalQ, self.grouping),
             rnn_states=rnn_states_new,
-            rep_out=rep_out
+            # rep_out=rep_out
         )
 
     def Qtarget(self,
@@ -136,14 +125,14 @@ class MixingQNetwork(Module):
 
     def Q_tot(self, individual_values: Dict[str, Tensor], states: Optional[Tensor] = None):
         # Expected shape: [tot_batch_size * 1, ...] -> tot_batch_size * n_agents_all
-        individual_inputs = torch.concat([individual_values[k].reshape([-1, 1]) for k in self.agent_keys], dim=-1)
+        individual_inputs = ops.concat([individual_values[k].reshape([-1, 1]) for k in self.agent_keys], axis=-1)
         # Output shape: tot_batch_size * 1
         evalQ_tot = self.eval_Qtot(individual_inputs, states)
         return evalQ_tot
 
     def Qtarget_tot(self, individual_values: Dict[str, Tensor], states: Optional[Tensor] = None):
         # Expected shape: [tot_batch_size * 1, ...] -> tot_batch_size * n_agents_all
-        individual_inputs = torch.concat([individual_values[k].reshape([-1, 1]) for k in self.agent_keys], dim=-1)
+        individual_inputs = ops.concat([individual_values[k].reshape([-1, 1]) for k in self.agent_keys], axis=-1)
         # Output shape: tot_batch_size * 1
         q_target_tot = self.target_Qtot(individual_inputs, states)
         return q_target_tot
@@ -181,26 +170,18 @@ class WeightedMixingQNetwork(MixingQNetwork):
                  mixer: Module,
                  ff_mixer: Module,
                  use_rnn: bool = False,
-                 device: Optional[Union[str, int, torch.device]] = None,
                  use_distributed_training: bool = False,
                  **kwargs):
         super(WeightedMixingQNetwork, self).__init__(grouping=grouping,
                                                      q_networks=q_networks,
                                                      mixer=mixer,
                                                      use_rnn=use_rnn,
-                                                     device=device,
                                                      use_distributed_training=use_distributed_training,
                                                      **kwargs)
         self.individual_q_centralized = deepcopy(q_networks)
         self.target_individual_q_centralized = deepcopy(self.individual_q_centralized)
         self.ff_mixer = ff_mixer
         self.target_ff_mixer = deepcopy(self.ff_mixer)
-
-        # Prepare DDP module.
-        if self.distributed_training:
-            self.individual_q_centralized = DistributedDataParallel(module=self.individual_q_centralized,
-                                                                    device_ids=[self.rank])
-            self.ff_mixer = DistributedDataParallel(module=self.ff_mixer, device_ids=[self.rank])
 
     @property
     def parameters_model(self):
@@ -278,14 +259,14 @@ class WeightedMixingQNetwork(MixingQNetwork):
 
     def q_feedforward(self, individual_values: Dict[str, Tensor], states: Optional[Tensor] = None):
         # Expected shape: [tot_batch_size * 1, ...] -> tot_batch_size * n_agents_all
-        individual_inputs = torch.concat([individual_values[k].reshape([-1, 1]) for k in self.agent_keys], dim=-1)
+        individual_inputs = ops.concat([individual_values[k].reshape([-1, 1]) for k in self.agent_keys], axis=-1)
         # Output shape: tot_batch_size * 1
         evalQ_tot = self.ff_mixer(individual_inputs, states)
         return evalQ_tot
 
     def target_q_feedforward(self, individual_values: Dict[str, Tensor], states: Optional[Tensor] = None):
         # Expected shape: [tot_batch_size * 1, ...] -> tot_batch_size * n_agents_all
-        individual_inputs = torch.concat([individual_values[k].reshape([-1, 1]) for k in self.agent_keys], dim=-1)
+        individual_inputs = ops.concat([individual_values[k].reshape([-1, 1]) for k in self.agent_keys], axis=-1)
         # Output shape: tot_batch_size * 1
         evalQ_tot = self.target_ff_mixer(individual_inputs, states)
         return evalQ_tot
@@ -325,14 +306,12 @@ class QTranMixingNetwork(MixingQNetwork):
                  mixer: Module,
                  qtran_mixer: Union[QTRAN_Base, QTRAN_Alt],
                  use_rnn: bool = False,
-                 device: Optional[Union[str, int, torch.device]] = None,
                  use_distributed_training: bool = False,
                  **kwargs):
         super(QTranMixingNetwork, self).__init__(grouping=grouping,
                                                  q_networks=q_networks,
                                                  mixer=mixer,
                                                  use_rnn=use_rnn,
-                                                 device=device,
                                                  use_distributed_training=use_distributed_training,
                                                  **kwargs)
         self.n_actions = {k: self.individual_q_networks[k].action_space.n for k in self.group_keys}
@@ -340,10 +319,6 @@ class QTranMixingNetwork(MixingQNetwork):
 
         self.qtran_net = qtran_mixer
         self.target_qtran_net = deepcopy(qtran_mixer)
-
-        # Prepare DDP module.
-        if self.distributed_training:
-            self.qtran_net = DistributedDataParallel(module=self.qtran_net, device_ids=[self.rank])
 
     @property
     def parameters_model(self):
@@ -367,7 +342,7 @@ class QTranMixingNetwork(MixingQNetwork):
             n_agents = self.n_group_agents[group]
             n_actions = self.n_actions[group]
             dim_hidden_state = hidden_states[group].shape[-1]
-            group_actions_onehot = F.one_hot(actions.packed(group).long(), n_actions)
+            group_actions_onehot = ops.one_hot(actions.packed(group).long(), n_actions)
             if self.use_rnn:
                 actions_onehot_dict[group] = group_actions_onehot.reshape(batch_size, n_agents, seq_len, -1)
                 hidden_states_dict[group] = hidden_states[group].reshape([-1, n_agents, seq_len, dim_hidden_state])
@@ -385,8 +360,8 @@ class QTranMixingNetwork(MixingQNetwork):
                     agt_mask = agent_mask.packed(group).reshape(batch_size, n_agents, 1).repeat(1, 1, dim_hidden_state)
                 hidden_states_dict[group] = hidden_states_dict[group] * agt_mask
 
-        hidden_states_tensor_in = torch.concat([hidden_states_dict[k] for k in self.group_keys], dim=1)
-        actions_onehot = torch.concat([actions_onehot_dict[k] for k in self.group_keys], dim=1)
+        hidden_states_tensor_in = ops.concat([hidden_states_dict[k] for k in self.group_keys], axis=1)
+        actions_onehot = ops.concat([actions_onehot_dict[k] for k in self.group_keys], axis=1)
 
         if self.use_rnn:
             states = states.reshape(batch_size * seq_len, -1)
@@ -412,7 +387,7 @@ class QTranMixingNetwork(MixingQNetwork):
             n_agents = self.n_group_agents[group]
             n_actions = self.n_actions[group]
             dim_hidden_state = hidden_states[group].shape[-1]
-            group_actions_onehot = F.one_hot(actions.packed(group).long(), n_actions)
+            group_actions_onehot = ops.one_hot(actions.packed(group).long(), n_actions)
             if self.use_rnn:
                 actions_onehot_dict[group] = group_actions_onehot.reshape(batch_size, n_agents, seq_len, -1)
                 hidden_states_dict[group] = hidden_states[group].reshape([-1, n_agents, seq_len, dim_hidden_state])
@@ -430,8 +405,8 @@ class QTranMixingNetwork(MixingQNetwork):
                     agt_mask = agent_mask.packed(group).reshape(batch_size, n_agents, 1).repeat(1, 1, dim_hidden_state)
                 hidden_states_dict[group] = hidden_states_dict[group] * agt_mask
 
-        hidden_states_tensor_in = torch.concat([hidden_states_dict[k] for k in self.group_keys], dim=1)
-        actions_onehot = torch.concat([actions_onehot_dict[k] for k in self.group_keys], dim=1)
+        hidden_states_tensor_in = ops.concat([hidden_states_dict[k] for k in self.group_keys], axis=1)
+        actions_onehot = ops.concat([actions_onehot_dict[k] for k in self.group_keys], axis=1)
 
         if self.use_rnn:
             states = states.reshape(batch_size * seq_len, -1)
@@ -458,7 +433,6 @@ class DeepCoordinationGraph(Module):
                  dcg_s: bool = False,
                  bias: Optional[Module] = None,
                  use_rnn: bool = False,
-                 device: Optional[Union[str, int, torch.device]] = None,
                  use_distributed_training: bool = False,
                  **kwargs):
         super().__init__()
@@ -472,7 +446,6 @@ class DeepCoordinationGraph(Module):
         self.n_group_agents = {k: len(self.groups[k]) for k in self.group_keys}
         self.dcg_s = dcg_s
         self.use_rnn = use_rnn
-        self.device = device
 
         self.representation = representation
         self.target_representation = deepcopy(representation)
@@ -486,13 +459,6 @@ class DeepCoordinationGraph(Module):
 
         # Prepare DDP module.
         self.distributed_training = use_distributed_training
-        if self.distributed_training:
-            self.rank = int(os.environ["RANK"])
-            self.representation = DistributedDataParallel(module=self.representation, device_ids=[self.rank])
-            self.utility = DistributedDataParallel(module=self.utility, device_ids=[self.rank])
-            self.payoffs = DistributedDataParallel(module=self.payoffs, device_ids=[self.rank])
-            if self.dcg_s:
-                self.bias = DistributedDataParallel(module=self.bias, device_ids=[self.rank])
 
     @property
     def parameters_model(self):
@@ -552,10 +518,10 @@ class DeepCoordinationGraph(Module):
                 hidden_states[agent_key] = hidden_states_out[:, i]
 
         if self.use_rnn:
-            hidden_states_n = torch.stack(itemgetter(*self.agent_keys)(hidden_states), dim=-2)
+            hidden_states_n = ops.stack(itemgetter(*self.agent_keys)(hidden_states), axis=-2)
             hidden_states_n = hidden_states_n.reshape(batch_size, seq_len, self.n_agents, -1)
         else:
-            hidden_states_n = torch.stack(itemgetter(*self.agent_keys)(hidden_states), dim=-2)
+            hidden_states_n = ops.stack(itemgetter(*self.agent_keys)(hidden_states), axis=-2)
             hidden_states_n = hidden_states_n.reshape(batch_size, self.n_agents, -1)
 
         return rnn_states_new, hidden_states_n

@@ -1,5 +1,5 @@
-from torch import Tensor
-from torch.nn import Module
+from mindspore import Tensor
+from mindspore.nn import Cell as Module
 from xuance.mindspore.rl_models.modules.outputs import RepresentationOutput
 from xuance.mindspore.rl_models.modules.identity_encoder import IdentityEncoder, IdentityFeatureFusion
 
@@ -20,23 +20,19 @@ class AgentFeatureEncoder(Module):
         }
 
     def construct(self,
-                observations: Tensor,
-                agent_indices=None,
-                **representation_kwargs) -> RepresentationOutput:
-        representation_output = self.obs_representation(observations, **representation_kwargs)
+                  observations: Tensor,
+                  agent_indices=None,
+                  **representation_kwargs) -> RepresentationOutput:
+        obs_embeddings, rnn_states = self.obs_representation(observations, **representation_kwargs)
 
         identity_embeddings = self.identity_representation(agent_indices=agent_indices)
 
         fused_embeddings = self.fusion(
-            observation_features=representation_output.embeddings,
+            observation_features=obs_embeddings,
             identity_features=identity_embeddings
         )
 
-        aux = dict(representation_output.aux)
-        aux['identity'] = identity_embeddings
+        # aux = dict(representation_output.aux)
+        # aux = {'identity': identity_embeddings}
 
-        return RepresentationOutput(
-            embeddings=fused_embeddings,
-            rnn_states=representation_output.rnn_states,
-            aux=aux
-        )
+        return fused_embeddings, rnn_states

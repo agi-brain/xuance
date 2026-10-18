@@ -1,10 +1,9 @@
 import os
-from pathlib import Path
 from abc import abstractmethod
 from argparse import Namespace
 from xuance.common import Optional, AgentGrouping
 
-from xuance.mindspore import Module, nn
+from xuance.mindspore import ms, ops, nn, Module, Tensor, optim
 from xuance.mindspore.utils import ValueNorm, AgentGroupedTensor
 from xuance.mindspore.rl_models.modules import OnPolicyMARLBatch, OffPolicyMARLBatch
 from xuance.mindspore.learners.base.drl_learner import Learner
@@ -57,8 +56,8 @@ class LearnerMAS(Learner):
 
     def build_optimizer(self):
         self.optimizer = optim.Adam(
-            params=self.policy.trainable_params(), 
-            lr=config.learning_rate, 
+            params=self.model.trainable_params(),
+            lr=self.config.learning_rate,
             eps=1e-5
         )
         self.scheduler = optim.lr_scheduler.LinearLR(
@@ -74,7 +73,7 @@ class LearnerMAS(Learner):
 
     def save_model(self, model_path):
         model_path += ".pth"
-        ms.save_checkpoint(self.policy, model_path)
+        ms.save_checkpoint(self.model, model_path)
 
     def load_model(self, path, model=None):
         path = os.path.join(path, model) if model is not None else path
@@ -98,7 +97,7 @@ class LearnerMAS(Learner):
             raise RuntimeError(f"There is no model file in '{path}'!")
         model_names.sort()
         model_path = os.path.join(path, model_names[-1])
-        ms.load_param_into_net(self.policy, ms.load_checkpoint(model_path))
+        ms.load_param_into_net(self.model, ms.load_checkpoint(model_path))
         print(f"Successfully load model from '{path}'.")
 
 
@@ -177,25 +176,25 @@ class OnPolicyMultiAgentLearner(LearnerMAS):
             for agent in self.agent_keys
         }
         values_agent_wise = {
-            agent: Tensor(sample['values'][agent], dtype=torch.float32)
+            agent: Tensor(sample['values'][agent], dtype=ms.float32)
             for agent in self.agent_keys
         }
         returns_agent_wise = {
-            agent: Tensor(sample['returns'][agent], dtype=torch.float32)
+            agent: Tensor(sample['returns'][agent], dtype=ms.float32)
             for agent in self.agent_keys
         }
         advantages_agent_wise = {
-            agent: Tensor(sample['advantages'][agent], dtype=torch.float32)
+            agent: Tensor(sample['advantages'][agent], dtype=ms.float32)
             for agent in self.agent_keys
         }
         log_pi_old_agent_wise = {
-            agent: Tensor(sample['log_pi_old'][agent], dtype=torch.float32)
+            agent: Tensor(sample['log_pi_old'][agent], dtype=ms.float32)
             for agent in self.agent_keys
         }
         avail_actions_agent_wise = None
         if use_actions_mask:
             avail_actions_agent_wise = {
-                agent: Tensor(sample['avail_actions'][agent], dtype=torch.float32)
+                agent: Tensor(sample['avail_actions'][agent], dtype=ms.float32)
                 for agent in self.agent_keys
             }
         state = None
@@ -204,7 +203,7 @@ class OnPolicyMultiAgentLearner(LearnerMAS):
 
         filled = None
         if self.use_rnn:
-            filled = Tensor(sample['filled'], dtype=torch.float32)
+            filled = Tensor(sample['filled'], dtype=ms.float32)
 
         agent_indices = {}
         for group, n_agents in self.n_group_agents.items():
@@ -264,41 +263,41 @@ class OffPolicyMultiAgentLearner(LearnerMAS):
         seq_length = sample['sequence_length'] if self.use_rnn else 1
 
         obs_agent_wise = {
-            agent: Tensor(sample['obs'][agent], dtype=torch.float32)
+            agent: Tensor(sample['obs'][agent], dtype=ms.float32)
             for agent in self.agent_keys
         }
         act_agent_wise = {
-            agent: Tensor(sample['actions'][agent], dtype=torch.float32)
+            agent: Tensor(sample['actions'][agent], dtype=ms.float32)
             for agent in self.agent_keys
         }
         if not self.use_rnn:
             obs_next_agent_wise = {
-                agent: Tensor(sample['obs_next'][agent], dtype=torch.float32)
+                agent: Tensor(sample['obs_next'][agent], dtype=ms.float32)
                 for agent in self.agent_keys
             }
         else:
             obs_next_agent_wise = None
         rewards_agent_wise = {
-            agent: Tensor(sample['rewards'][agent], dtype=torch.float32)
+            agent: Tensor(sample['rewards'][agent], dtype=ms.float32)
             for agent in self.agent_keys
         }
         terminals_agent_wise = {
-            agent: Tensor(sample['terminals'][agent], dtype=torch.float32)
+            agent: Tensor(sample['terminals'][agent], dtype=ms.float32)
             for agent in self.agent_keys
         }
         agent_mask_agent_wise = {
-            agent: Tensor(sample['agent_mask'][agent], dtype=torch.float32)
+            agent: Tensor(sample['agent_mask'][agent], dtype=ms.float32)
             for agent in self.agent_keys
         }
         avail_actions_agent_wise, avail_actions_next_agent_wise = None, None
         if use_actions_mask:
             avail_actions_agent_wise = {
-                agent: Tensor(sample['avail_actions'][agent], dtype=torch.float32)
+                agent: Tensor(sample['avail_actions'][agent], dtype=ms.float32)
                 for agent in self.agent_keys
             }
             if not self.use_rnn:
                 avail_actions_next_agent_wise = {
-                    agent: Tensor(sample['avail_actions_next'][agent], dtype=torch.float32)
+                    agent: Tensor(sample['avail_actions_next'][agent], dtype=ms.float32)
                     for agent in self.agent_keys
                 }
         state, state_next = None, None
@@ -309,7 +308,7 @@ class OffPolicyMultiAgentLearner(LearnerMAS):
 
         filled = None
         if self.use_rnn:
-            filled = Tensor(sample['filled'], dtype=torch.float32)
+            filled = Tensor(sample['filled'], dtype=ms.float32)
 
         agent_indices = {}
         for group, n_agents in self.n_group_agents.items():

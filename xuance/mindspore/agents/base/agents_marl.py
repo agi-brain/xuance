@@ -6,15 +6,18 @@ import numpy as np
 from abc import ABC, abstractmethod
 from pathlib import Path
 from argparse import Namespace
-from operator import itemgetter
+from typing import Optional, List, Dict, Union, Tuple
 from gymnasium.spaces import Space
 from torch.utils.tensorboard import SummaryWriter
 from mindspore.communication import init, get_rank, get_group_size
-from xuance.common import get_time_string, create_directory, Optional, List, Dict, Union, MultiAgentBaseCallback
+from xuance.common import get_time_string, create_directory, MultiAgentBaseCallback, AgentGrouping
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv, space2shape
 from xuance.mindspore import ms, Tensor, Module, ModuleDict, REGISTRY_Representation, REGISTRY_Learners, ops
-from xuance.mindspore.learners import learner
-from xuance.mindspore.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions, set_seed, set_device
+from xuance.mindspore.learners import LearnerMAS
+from xuance.mindspore.utils import (NormalizeFunctions, InitializeFunctions, ActivationFunctions, AgentGroupedTensor,
+                                    set_seed, set_device)
+from xuance.mindspore.rl_models import AgentFeatureEncoder
+from xuance.mindspore.rl_models import IdentityFeatureFusion, build_identity_encoder
 
 
 class MARLAgents(ABC):
@@ -69,11 +72,12 @@ class MARLAgents(ABC):
     ):
         # Training settings.
         self.config = config
-        self.use_rnn = config.use_rnn if hasattr(config, "use_rnn") else False
+        self.use_cnn = getattr(config, "use_cnn", False)
+        self.use_rnn = getattr(config, "use_rnn", False)
         self.use_parameter_sharing = config.use_parameter_sharing
-        self.use_actions_mask = config.use_actions_mask if hasattr(config, "use_actions_mask") else False
-        self.use_global_state = config.use_global_state if hasattr(config, "use_global_state") else False
-        self.distributed_training = getattr(config, "distributed_training", False)
+        self.use_actions_mask = getattr(config, "use_actions_mask", False)
+        self.use_global_state = getattr(config, "use_global_state", False)
+        self.distributed_training = config.distributed_training
         self.static_graph = getattr(config, "static_graph", True)
         if self.static_graph:
             ms.set_context(mode=ms.GRAPH_MODE)  # Static graph mode (accelerating the calculation)
@@ -96,10 +100,10 @@ class MARLAgents(ABC):
         set_seed(config.seed + self.rank * 1000)
 
         self.gamma = config.gamma
-        self.start_training = config.start_training if hasattr(config, "start_training") else 1
-        self.training_frequency = config.training_frequency if hasattr(config, "training_frequency") else 1
-        self.n_epochs = config.n_epochs if hasattr(config, "n_epochs") else 1
-        self.device = self.config.device = set_device(self.config.dl_toolbox, self.config.device)
+        self.start_training = getattr(config, "start_training", 1)
+        self.training_frequency = getattr(config, "training_frequency", 1)
+        self.n_epochs = getattr(config, "n_epochs", 1)
+        self.device = self.config.device = set_device(self.config.device)
 
         # Environment attributes.
         self.train_envs = envs
@@ -134,6 +138,18 @@ class MARLAgents(ABC):
         self.config.episode_length = self.episode_length
         self.current_step = 0
         self.current_episode = np.zeros((self.n_envs,), np.int32)
+
+        self.agent_grouping = self.set_agent_group(self.agent_keys)
+        self.groups = self.agent_grouping.groups
+        self.group_keys = self.agent_grouping.group_keys
+        self.n_group_agents = {k: len(self.groups[k]) for k in self.group_keys}
+        self.agent_indices = {k: Tensor(self.agent_grouping.agent_indices(k), dtype=ms.int64)
+                              for k in self.group_keys}
+
+        # Set network's normalizer, initializer, activation.
+        self.normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None
+        self.initializer = InitializeFunctions[getattr(self.config, "initializer", "orthogonal")]
+        self.activation = ActivationFunctions[self.config.activation]
 
         # Prepare directories.
         if self.distributed_training and self.world_size > 1:
@@ -186,9 +202,8 @@ class MARLAgents(ABC):
         self.log_dir = log_dir
 
         # predefine necessary components
-        self.model_keys = [self.agent_keys[0]] if self.use_parameter_sharing else self.agent_keys
-        self.policy: Optional[Module] = None
-        self.learner: Optional[learner] = None
+        self.model: Optional[Module] = None
+        self.learner: Optional[LearnerMAS] = None
         self.memory: Optional[object] = None
         self.callback = callback or MultiAgentBaseCallback()
         self.eye = ops.Eye()
@@ -196,6 +211,13 @@ class MARLAgents(ABC):
         self.meta_data = dict(algo=self.config.agent, env=self.config.env_name, env_id=self.config.env_id,
                               dl_toolbox=self.config.dl_toolbox, device=self.device, seed=self.config.seed,
                               xuance_version=xuance.__version__)
+
+    def set_agent_group(self, agent_keys):
+        if self.use_parameter_sharing:
+            agent_grouping = AgentGrouping.shared(agent_keys)
+        else:
+            agent_grouping = AgentGrouping.independent(agent_keys)
+        return agent_grouping
 
     def store_experience(self, *args, **kwargs):
         raise NotImplementedError
@@ -241,47 +263,68 @@ class MARLAgents(ABC):
                     continue
                 self.writer.add_video(k, v, fps=fps, global_step=x_index)
 
-    def _build_representation(self, representation_key: str,
-                              input_space: Union[Dict[str, Space], tuple],
-                              config: Namespace):
+    def _build_representation(self,
+                              representation_choice: str,
+                              input_space: Union[Dict[str, Space], Dict[str, tuple]],
+                              config: Namespace) -> Module:
         """
         Build representation for policies.
 
         Parameters:
-            representation_key (str): The selection of representation, e.g., "Basic_MLP", "Basic_RNN", etc.
+            representation_choice (str): The selection of representation, e.g., "Basic_MLP", "Basic_RNN", etc.
             config: The configurations for creating the representation module.
 
         Returns:
             representation (Module): The representation Module.
         """
-
         # build representations
-        representation = ModuleDict()
-        for key in self.model_keys:
-            if self.use_rnn:
-                hidden_sizes = {'fc_hidden_sizes': self.config.fc_hidden_sizes,
-                                'recurrent_hidden_size': self.config.recurrent_hidden_size}
-            else:
-                hidden_sizes = config.representation_hidden_size if hasattr(config,
-                                                                            "representation_hidden_size") else None
-            input_representations = dict(
-                input_shape=space2shape(input_space[key]),
-                hidden_sizes=hidden_sizes,
-                normalize=NormalizeFunctions[config.normalize] if hasattr(config, "normalize") else None,
-                initialize=InitializeFunctions[config.initialize] if hasattr(self.config, "initialize") else None,
-                activation=ActivationFunctions[config.activation],
-                kernels=config.kernels if hasattr(config, "kernels") else None,
-                strides=config.strides if hasattr(config, "strides") else None,
-                filters=config.filters if hasattr(config, "filters") else None,
-                fc_hidden_sizes=config.fc_hidden_sizes if hasattr(config, "fc_hidden_sizes") else None,
-                N_recurrent_layers=config.N_recurrent_layers if hasattr(config, "N_recurrent_layers") else None,
-                rnn=config.rnn if hasattr(config, "rnn") else None,
-                dropout=config.dropout if hasattr(config, "dropout") else None,
-                device=self.device)
-            representation[key] = REGISTRY_Representation[representation_key](**input_representations)
-            if representation_key not in REGISTRY_Representation:
-                raise AttributeError(f"{representation_key} is not registered in REGISTRY_Representation.")
+        input_representations = dict(
+            input_shape=space2shape(input_space),
+            hidden_sizes=getattr(config, "representation_hidden_size", None),
+            normalize=self.normalize_fn,
+            initialize=self.initializer,
+            activation=self.activation,
+            kernels=getattr(config, "kernels", None),
+            strides=getattr(config, "strides", None),
+            filters=getattr(config, "filters", None),
+            fc_hidden_sizes=getattr(config, "fc_hidden_sizes", None),
+            N_recurrent_layers=getattr(config, "N_recurrent_layers", None),
+            recurrent_hidden_size=getattr(config, "recurrent_hidden_size", None),
+            rnn=getattr(config, "rnn", None),
+            dropout=getattr(config, "dropout", None))
+        representation = REGISTRY_Representation[representation_choice](**input_representations)
+        if representation_choice not in REGISTRY_Representation:
+            raise AttributeError(f"{representation_choice} is not registered in REGISTRY_Representation.")
         return representation
+
+    def _build_agent_feature_encoder(
+            self,
+            representation_choice: str,
+            group_agents: Tuple[str, ...],
+            input_space: Union[Dict[str, Space], Dict[str, tuple], tuple]
+    ) -> AgentFeatureEncoder:
+        # build representations
+        representation = self._build_representation(representation_choice,
+                                                    input_space,
+                                                    self.config)
+        # build identity encoder
+        agent_identity_encoder = build_identity_encoder(
+            num_identities=len(group_agents),
+            mode=getattr(self.config, "identity_embedding_mode", 'none'),
+            embedding_dim=getattr(self.config, "identity_embedding_dim", None),
+        )
+        # build feature fusion
+        identity_feature_fusion = IdentityFeatureFusion(
+            observation_feature_dim=representation.output_shapes['state'][0],
+            identity_feature_dim=agent_identity_encoder.output_dim,
+            mode=getattr(self.config, "identity_feature_fusion_mode", "concat")
+        )
+        # build feature encoder
+        return AgentFeatureEncoder(
+            representation=representation,
+            identity_encoder=agent_identity_encoder,
+            fusion=identity_feature_fusion
+        )
 
     @abstractmethod
     def _build_model(self) -> Module:
@@ -291,56 +334,50 @@ class MARLAgents(ABC):
         return REGISTRY_Learners[self.config.learner](*args)
 
     def _build_inputs(self,
-                      obs_dict: List[dict],
-                      avail_actions_dict: Optional[List[dict]] = None):
+                      obs_list: List[dict],
+                      avail_actions_list: Optional[List[dict]] = None):
         """
         Build inputs for representations before calculating actions.
 
         Parameters:
-            obs_dict (List[dict]): Observations for each agent in self.agent_keys.
-            avail_actions_dict (Optional[List[dict]]): Actions mask values, default is None.
+            obs_list (List[dict]): List of observations for each agent in self.agent_keys.
+            avail_actions_list (Optional[List[dict]]): Actions mask values, default is None.
 
         Returns:
             obs_input: The represented observations.
             agents_id: The agent id (One-Hot variables).
         """
-        batch_size = len(obs_dict)
-        bs = batch_size * self.n_agents if self.use_parameter_sharing else batch_size
-        avail_actions_input = None
+        batch_size = len(obs_list)
+        obs_input = {}
+        agent_indices = {}
+        avail_actions = {} if self.use_actions_mask else None
 
-        if self.use_parameter_sharing:
-            key = self.agent_keys[0]
-            obs_array = Tensor([itemgetter(*self.agent_keys)(data) for data in obs_dict])
-            agents_id = Tensor(np.eye(self.n_agents, dtype=np.float32)[None].repeat(batch_size, axis=0))
-            avail_actions_array = Tensor([itemgetter(*self.agent_keys)(data)
-                                          for data in avail_actions_dict]) if self.use_actions_mask else None
-            if self.use_rnn:
-                obs_input = {key: obs_array.reshape([bs, 1, -1])}
-                agents_id = agents_id.reshape(bs, 1, -1)
-                if self.use_actions_mask:
-                    avail_actions_input = {key: avail_actions_array.reshape([bs, 1, -1])}
-            else:
-                obs_input = {key: obs_array.reshape([bs, -1])}
-                agents_id = agents_id.reshape(bs, -1)
-                if self.use_actions_mask:
-                    avail_actions_input = {key: avail_actions_array.reshape([bs, -1])}
+        for group, group_agents in self.groups.items():
+            obs_input[group] = Tensor(
+                np.array([[obs[k] for k in group_agents] for obs in obs_list])
+            )  # shape: batch_size * n_agent * obs_dim
+
+            agent_indices[group] = ops.repeat_elements(
+                self.agent_indices[group].reshape(-1, 1, 1), batch_size, axis=1)
+            if self.use_rnn:  # sequence length T=1
+                obs_input[group] = obs_input[group].unsqueeze(2)  # shape: batch_size * n_agent * 1 * obs_dim
+                agent_indices[group] = agent_indices[group].unsqueeze(2)  # shape: batch_size * n_agent * 1 * 1
+
+            if self.use_actions_mask:
+                avail_actions[group] = Tensor(
+                    np.array([[avail_a[k] for k in group_agents] for avail_a in avail_actions_list])
+                )  # shape: batch_size * n_agent * n_actions
+                if self.use_rnn:
+                    avail_actions[group] = avail_actions[group].unsqueeze(2)
+
+        if self.use_actions_mask:
+            grouped_avail_actions = AgentGroupedTensor(avail_actions, self.agent_grouping)
         else:
-            agents_id = None
-            if self.use_rnn:
-                obs_input = {k: Tensor(np.stack([data[k] for data in obs_dict]).reshape([bs, 1, -1]))
-                             for k in self.agent_keys}
-                if self.use_actions_mask:
-                    avail_actions_input = {
-                        k: Tensor(np.stack([data[k] for data in avail_actions_dict]).reshape([bs, 1, -1]))
-                        for k in self.agent_keys}
-            else:
-                obs_input = {k: Tensor(np.stack([data[k] for data in obs_dict]).reshape(bs, -1))
-                             for k in self.agent_keys}
-                if self.use_actions_mask:
-                    avail_actions_input = {k: Tensor(np.stack([data[k]
-                                                               for data in avail_actions_dict]).reshape([bs, -1]))
-                                           for k in self.agent_keys}
-        return obs_input, agents_id, avail_actions_input
+            grouped_avail_actions = None
+
+        return (AgentGroupedTensor(obs_input, self.agent_grouping),
+                AgentGroupedTensor(agent_indices, self.agent_grouping),
+                grouped_avail_actions)
 
     @abstractmethod
     def get_actions(self, **kwargs):
