@@ -156,7 +156,8 @@ class MixingQNetwork(Module):
         return rnn_states
 
     def copy_target(self):
-        for ep, tp in zip(self.individual_q_networks.trainable_params(), self.target_individual_q_networks.trainable_params()):
+        for ep, tp in zip(self.individual_q_networks.trainable_params(),
+                          self.target_individual_q_networks.trainable_params()):
             tp.assign_value(ep)
         for ep, tp in zip(self.eval_Qtot.trainable_params(), self.target_Qtot.trainable_params()):
             tp.assign_value(ep)
@@ -211,10 +212,10 @@ class WeightedMixingQNetwork(MixingQNetwork):
             if self.use_rnn:
                 input_kwargs["rnn_states"] = rnn_states[group]
 
-            individual_output = self.individual_q_centralized[group](observations.packed(group), **input_kwargs)
+            value, rnn_state = self.individual_q_centralized[group](observations.packed(group), **input_kwargs)
 
-            evalQ[group] = individual_output.values.reshape(*batch_shape, -1)
-            rnn_states_new[group] = individual_output.representations.rnn_states
+            evalQ[group] = value.reshape(*batch_shape, -1)
+            rnn_states_new[group] = rnn_state
 
         return MultiAgentModelOutput(
             values=AgentGroupedTensor(evalQ, self.grouping),
@@ -245,11 +246,11 @@ class WeightedMixingQNetwork(MixingQNetwork):
             if self.use_rnn:
                 target_input_kwargs["rnn_states"] = rnn_states[group]
 
-            individual_output = self.target_individual_q_centralized[group](observations.packed(group),
-                                                                            **target_input_kwargs)
+            value, rnn_state = self.target_individual_q_centralized[group](observations.packed(group),
+                                                                           **target_input_kwargs)
 
-            q_target[group] = individual_output.values.reshape(*batch_shape, -1)
-            rnn_states_new[group] = individual_output.representations.rnn_states
+            q_target[group] = value.reshape(*batch_shape, -1)
+            rnn_states_new[group] = rnn_state
 
         return MultiAgentModelOutput(
             values=AgentGroupedTensor(q_target, self.grouping),

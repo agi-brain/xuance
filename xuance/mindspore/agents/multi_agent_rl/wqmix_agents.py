@@ -56,8 +56,7 @@ class WQMIX_Agents(QMIX_Agents):
                 critic_hidden_size=self.config.q_hidden_size,
                 normalizer=self.normalize_fn,
                 initializer=self.initializer,
-                activation=self.activation,
-                device=self.device
+                activation=self.activation
             )
 
         # build mixer
@@ -65,15 +64,13 @@ class WQMIX_Agents(QMIX_Agents):
             dim_state=self.state_space.shape[0],
             dim_hidden=self.config.hidden_dim_mixing_net,
             dim_hypernet_hidden=self.config.hidden_dim_hyper_net,
-            n_agents=self.n_agents,
-            device=self.device
+            n_agents=self.n_agents
         )
 
         ff_mixer = QMIX_FF_Mixer(
             dim_state=self.state_space.shape[0],
             dim_hidden=self.config.hidden_dim_ff_mix_net,
-            n_agents=self.n_agents,
-            device=self.device)
+            n_agents=self.n_agents)
 
         model = WeightedMixingQNetwork(
             grouping=self.agent_grouping,
@@ -81,7 +78,6 @@ class WQMIX_Agents(QMIX_Agents):
             mixer=mixer,
             ff_mixer=ff_mixer,
             use_rnn=self.use_rnn,
-            device=self.device,
             use_distributed_training=self.distributed_training
         )
 

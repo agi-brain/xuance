@@ -4,58 +4,174 @@ Paper link:
 https://proceedings.neurips.cc/paper/2020/file/73a427badebe0e32caa2e1fc7530b7f3-Paper.pdf
 Implementation: MindSpore
 """
-from mindspore.nn import MSELoss
-from xuance.mindspore import ms, Module, Tensor, optim, ops
-from xuance.mindspore.learners import LearnerMAS
-from xuance.mindspore.utils import clip_grads
-from xuance.common import List
 from argparse import Namespace
-from operator import itemgetter
+from xuance.common import AgentGrouping
+
+from xuance.mindspore import ms, Module, Tensor, ops
+from xuance.mindspore.rl_models.modules import OffPolicyMARLBatch, AgentGroupedTensor
+from xuance.mindspore.learners import OffPolicyMultiAgentLearner
+from xuance.mindspore.utils import clip_grads
 
 
-class WQMIX_Learner(LearnerMAS):
+class WQMIX_Learner(OffPolicyMultiAgentLearner):
     def __init__(self,
                  config: Namespace,
-                 model_keys: List[str],
-                 agent_keys: List[str],
-                 policy: Module,
+                 agent_grouping: AgentGrouping,
+                 model: Module,
                  callback):
-        super(WQMIX_Learner, self).__init__(config, model_keys, agent_keys, policy, callback)
-        self.optimizer = optim.Adam(params=self.policy.trainable_params(), lr=config.learning_rate, eps=1e-5)
-        self.scheduler = optim.lr_scheduler.LinearLR(self.optimizer, start_factor=1.0, end_factor=self.end_factor_lr_decay,
-                                                     total_iters=self.config.running_steps)
-        self.alpha = config.alpha
-        self.gamma = config.gamma
+        super(WQMIX_Learner, self).__init__(config, agent_grouping, model, callback)
         self.sync_frequency = config.sync_frequency
-        self.mse_loss = MSELoss()
-        self.n_actions = {k: self.policy.action_space[k].n for k in self.model_keys}
+        self.n_actions = {k: self.model.individual_q_networks[k].action_space.n for k in self.group_keys}
+        self.alpha = config.alpha
         # Get gradient function
         self.grad_fn = ms.value_and_grad(self.forward_fn, None, self.optimizer.parameters, has_aux=True)
-        self.policy.set_train()
+        self.model.set_train()
 
-    def forward_fn(self, state, obs, actions, agt_mask, avail_actions, ids, target_value):
+    def forward_fn(self, batch: OffPolicyMARLBatch):
+        info_train = {}
+
+        rewards_tot = ops.stack([r for r in batch.rewards.agent_wise.values()], axis=1).mean(dim=1)
+        terminals_tot = ops.stack([d for d in batch.terminals.agent_wise.values()], axis=1).all(dim=1).float()
+
+        ############################################
+        #  Feedforward
+        ############################################
+
+        # calculate the individual Q value
+        rnn_states = self.model.init_rnn_states(batch.batch_size)
+        model_output = self.model(
+            observations=batch.observations,
+            agent_indices=batch.agent_indices,
+            avail_actions=batch.avail_actions,
+            rnn_states=rnn_states
+        )
+        actions_greedy = model_output.actions
+        q_eval = model_output.values
+
+        rnn_states_cent = self.model.init_centralized_rnn_states(batch.batch_size)
+        q_eval_centralized = self.model.q_centralized(
+            observations=batch.observations,
+            agent_indices=batch.agent_indices,
+            rnn_states=rnn_states_cent
+        ).values
+
+        if self.use_rnn:
+            q_next_centralized = self.model.target_q_centralized(
+                observations=batch.observations,
+                agent_indices=batch.agent_indices,
+                rnn_states=rnn_states_cent
+            ).values
+
+            if not self.config.double_q:
+                q_next = self.model.Qtarget(
+                    observations=batch.observations,
+                    agent_indices=batch.agent_indices,
+                    rnn_states=rnn_states
+                ).values
+                q_next.grouped_tensor = {k: v[:, :, 1:] for k, v in q_next.grouped_tensor.items()}
+            else:
+                q_next = None
+
+            q_eval.grouped_tensor = {k: v[:, :, :-1] for k, v in q_eval.grouped_tensor.items()}
+            q_eval_centralized.grouped_tensor = {k: v[:, :, :-1]
+                                                 for k, v in q_eval_centralized.grouped_tensor.items()}
+            q_next_centralized.grouped_tensor = {k: v[:, :, 1:]
+                                                 for k, v in q_next_centralized.grouped_tensor.items()}
+            next_actions_greedy = AgentGroupedTensor({k: v[:, :, 1:]
+                                                      for k, v in actions_greedy.grouped_tensor.items()},
+                                                     self.agent_grouping)
+            actions_greedy.grouped_tensor = {k: v[:, :, :-1] for k, v in actions_greedy.grouped_tensor.items()}
+
+        else:
+            q_next_centralized = self.model.target_q_centralized(
+                observations=batch.next_observations,
+                agent_indices=batch.agent_indices
+            ).values
+
+            if self.config.double_q:
+                a_next_greedy = self.model(
+                    observations=batch.next_observations,
+                    agent_indices=batch.agent_indices,
+                    avail_actions=batch.next_avail_actions
+                ).actions
+                next_actions_greedy = a_next_greedy
+                q_next = None
+            else:
+                q_next = self.model.Qtarget(
+                    observations=batch.next_observations,
+                    agent_indices=batch.agent_indices
+                ).values
+
+                if self.use_actions_mask:
+                    for group in self.group_keys:
+                        q_next.grouped_tensor[batch.next_avail_actions[group] == 0] = -1e10
+                next_actions_greedy = None
+
+        q_eval_a, q_eval_centralized_a, q_next_centralized_a = {}, {}, {}
+        for group, n_agents in self.n_group_agents.items():
+            mask_values = batch.valid_mask(group, n_agents).reshape([batch.batch_size, n_agents, batch.seq_length])
+
+            actions_taken = batch.actions.group(group).long().unsqueeze(-1)
+            q_eval_taken = q_eval.group(group).gather(-1, actions_taken).reshape(
+                [batch.batch_size, n_agents, batch.seq_length])
+            actions_greedy_taken = actions_greedy.group(group).long().unsqueeze(-1)
+            q_eval_centralized_taken = q_eval_centralized.group(group).gather(-1, actions_greedy_taken).reshape(
+                [batch.batch_size, n_agents, batch.seq_length])
+
+            if self.config.double_q:
+                actions_next_taken = next_actions_greedy.group(group).long().unsqueeze(-1)
+            else:
+                actions_next_taken = q_next.group(group).argmax(dim=-1, keepdim=True).long().unsqueeze(-1)
+
+            q_next_centralized_taken = q_next_centralized.group(group).gather(-1, actions_next_taken).reshape(
+                [batch.batch_size, n_agents, batch.seq_length])
+
+            q_eval_taken *= mask_values
+            q_eval_centralized_taken *= mask_values
+            q_next_centralized_taken *= mask_values
+
+            # get agent-wise values
+            for i, agent_key in enumerate(self.groups[group]):
+                q_eval_a[agent_key] = q_eval_taken[:, i]
+                q_eval_centralized_a[agent_key] = q_eval_centralized_taken[:, i]
+                q_next_centralized_a[agent_key] = q_next_centralized_taken[:, i]
+
+        ############################################
+        #  Calculate total values and loss
+        ############################################
+        if self.use_rnn:
+            state_input = batch.global_states[:, :-1].reshape([batch.batch_size * batch.seq_length, -1])
+            state_input_next = batch.global_states[:, 1:].reshape([batch.batch_size * batch.seq_length, -1])
+        else:
+            state_input = batch.global_states
+            state_input_next = batch.next_global_states
         # calculate Q_tot
-        _, action_max, q_eval = self.policy(observation=obs, agent_ids=ids, avail_actions=avail_actions)
-        _, q_eval_centralized = self.policy.q_centralized(observation=obs, agent_ids=ids)
+        q_tot_eval = self.model.Q_tot(individual_values=q_eval_a, states=state_input).reshape(-1)
+        # calculate centralized Q
+        q_tot_centralized = self.model.q_feedforward(individual_values=q_eval_centralized_a,
+                                                     states=state_input).reshape(-1)
+        # calculate y_i
+        q_tot_next_centralized = self.model.target_q_feedforward(individual_values=q_next_centralized_a,
+                                                                 states=state_input_next).reshape(-1)
+        rewards_tot = rewards_tot.reshape(-1)
+        terminals_tot = terminals_tot.reshape(-1)
 
-        q_eval_a, q_eval_centralized_a, q_eval_next_centralized_a, act_next = {}, {}, {}, {}
-        for key in self.model_keys:
-            action_max[key] = action_max[key].unsqueeze(-1)
-            q_eval_a[key] = q_eval[key].gather(actions[key].unsqueeze(-1).astype(ms.int32), -1, -1).reshape(-1)
-            q_eval_centralized_a[key] = q_eval_centralized[key].gather(action_max[key].astype(ms.int32),
-                                                                       -1, -1).reshape(-1)
-            q_eval_a[key] *= agt_mask[key]
-            q_eval_centralized_a[key] *= agt_mask[key]
-
-        q_tot_eval = self.policy.Q_tot(q_eval_a, state)  # calculate Q_tot
-        q_tot_centralized = self.policy.q_feedforward(q_eval_centralized_a, state)  # calculate centralized Q
+        target_value = rewards_tot + (1 - terminals_tot) * self.gamma * q_tot_next_centralized
+        target_value = ops.stop_gradient(target_value)
         td_error = q_tot_eval - target_value
 
-        # calculate weights
+        # calculate the weights
         ones = ops.ones_like(td_error)
         w = ones * self.alpha
         if self.config.agent == "CWQMIX":
-            condition_1 = ((action_max == actions.reshape([-1, self.n_agents, 1])) * agt_mask).all(axis=1)
+            condition_1_list = []
+            for group, agent_keys in self.groups.items():
+                n_agents = self.n_group_agents[group]
+                mask_values = batch.valid_mask(group, n_agents).reshape([batch.batch_size, n_agents, batch.seq_length])
+                a_greedy = actions_greedy.group(group)
+                act = batch.actions[group].reshape([batch.batch_size, n_agents, batch.seq_length])
+                condition_1_list.append(((a_greedy == act) * mask_values))
+            condition_1 = ops.concat(condition_1_list, axis=1).all(dim=1).reshape(-1)
             condition_2 = target_value > q_tot_centralized
             conditions = condition_1 | condition_2
             w = ops.where(conditions, ones, w)
@@ -65,97 +181,53 @@ class WQMIX_Learner(LearnerMAS):
         else:
             raise AttributeError(f"The agent named is {self.config.agent} is currently not supported.")
 
-        # calculate losses and train
-        loss_central = self.mse_loss(logits=q_tot_centralized, labels=ops.stop_gradient(target_value))
-        loss_qmix = (ops.stop_gradient(w) * (td_error ** 2)).mean()
+        # calculate the loss
+        if self.use_rnn:
+            filled = batch.filled_masks.reshape(-1)
+            loss_central = (((q_tot_centralized - target_value) ** 2) * filled).sum() / filled.sum()
+            loss_qmix = (ops.stop_gradient(w) * (td_error ** 2) * filled).sum() / filled.sum()
+        else:
+            loss_central = self.mse_loss(q_tot_centralized, target_value)
+            loss_qmix = (ops.stop_gradient(w) * (td_error ** 2)).mean()
+
         loss = loss_qmix + loss_central
-        return loss, loss_qmix, loss_central, q_tot_eval, q_tot_centralized, td_error, ones, w
+
+        info_train.update({
+            "loss_Qmix": loss_qmix.numpy(),
+            "loss_central": loss_central.numpy(),
+            "loss": loss.numpy(),
+            "predictQ": q_tot_eval.mean().numpy()
+        })
+
+        return loss, info_train
 
     def update(self, sample):
         self.iterations += 1
 
         # prepare training data
-        sample_Tensor = self.build_training_data(sample=sample,
-                                                 use_parameter_sharing=self.use_parameter_sharing,
-                                                 use_actions_mask=self.use_actions_mask,
-                                                 use_global_state=True)
-        batch_size = sample_Tensor['batch_size']
-        state = sample_Tensor['state']
-        state_next = sample_Tensor['state_next']
-        obs = sample_Tensor['obs']
-        actions = sample_Tensor['actions']
-        obs_next = sample_Tensor['obs_next']
-        rewards = sample_Tensor['rewards']
-        terminals = sample_Tensor['terminals']
-        agent_mask = sample_Tensor['agent_mask']
-        avail_actions = sample_Tensor['avail_actions']
-        avail_actions_next = sample_Tensor['avail_actions_next']
-        IDs = sample_Tensor['agent_ids']
+        batch = self.build_training_data(
+            sample=sample,
+            use_actions_mask=self.use_actions_mask,
+            use_global_state=True
+        )
 
-        if self.use_parameter_sharing:
-            key = self.model_keys[0]
-            bs = batch_size * self.n_agents
-            rewards_tot = rewards[key].mean(axis=1).reshape(batch_size, 1)
-            terminals_tot = terminals[key].all(axis=1).astype(ms.float32).reshape(batch_size, 1)
-        else:
-            bs = batch_size
-            rewards_tot = ops.stack(itemgetter(*self.agent_keys)(rewards), axis=1).mean(axis=-1).reshape(batch_size, 1)
-            terminals_tot = ops.stack(itemgetter(*self.agent_keys)(terminals),
-                                      axis=1).all(axis=1).astype(ms.float32).reshape(batch_size, 1)
+        info = self.callback.on_update_start(self.iterations, model=self.model, batch=batch)
 
-        info = self.callback.on_update_start(self.iterations, method="update", policy=self.policy,
-                                             sample_Tensor=sample_Tensor, bs=bs,
-                                             rewards_tot=rewards_tot, terminals_tot=terminals_tot)
+        (loss, info_train), grads = self.grad_fn(batch)
 
-        # calculate Q_tot
-        _, q_eval_next_centralized = self.policy.target_q_centralized(observation=obs_next, agent_ids=IDs)
-
-        q_eval_next_centralized_a, act_next = {}, {}
-        for key in self.model_keys:
-            mask_values = agent_mask[key]
-            if self.config.double_q:
-                _, a_next_greedy, _ = self.policy(observation=obs_next, agent_ids=IDs,
-                                                  avail_actions=avail_actions_next, agent_key=key)
-                act_next[key] = a_next_greedy[key].unsqueeze(-1)
-            else:
-                _, q_next_eval = self.policy.Qtarget(observation=obs_next, agent_ids=IDs, agent_key=key)
-                if self.use_actions_mask:
-                    q_next_eval[key][avail_actions_next[key] == 0] = -1e10
-                act_next[key] = q_next_eval[key].argmax(dim=-1, keepdim=True)
-            q_eval_next_centralized_a[key] = q_eval_next_centralized[key].gather(act_next[key], -1, -1).reshape(bs)
-            q_eval_next_centralized_a[key] *= agent_mask[key]
-
-            info.update(self.callback.on_update_agent_wise(self.iterations, key, info=info, method="update",
-                                                           mask_values=mask_values,
-                                                           act_next=act_next,
-                                                           q_eval_next_centralized_a=q_eval_next_centralized_a))
-
-        q_tot_next_centralized = self.policy.target_q_feedforward(q_eval_next_centralized_a, state_next)  # y_i
-
-        target_value = rewards_tot + (1 - terminals_tot) * self.gamma * q_tot_next_centralized
-
-        (loss, loss_qmix, loss_central, q_tot_eval, q_tot_centralized, td_error, ones, w), grads = self.grad_fn(
-            state, obs, actions, agent_mask, avail_actions, IDs, target_value)
         if self.use_grad_clip:
             grads = clip_grads(grads, Tensor(-self.grad_clip_norm), Tensor(self.grad_clip_norm))
         self.optimizer(grads)
 
-        if self.iterations % self.sync_frequency == 0:
-            self.policy.copy_target()
         self.scheduler.step()
         lr = self.scheduler.get_last_lr()[0]
 
-        info.update({
-            "learning_rate": lr.asnumpy(),
-            "loss_Qmix": loss_qmix.asnumpy(),
-            "loss_central": loss_central.asnumpy(),
-            "loss": loss.asnumpy(),
-            "predictQ": q_tot_eval.mean().asnumpy()
-        })
+        info.update(info_train)
+        info["learning_rate"] = lr.numpy()
 
-        info.update(self.callback.on_update_end(self.iterations, method="update", policy=self.policy, info=info,
-                                                q_tot_eval=q_tot_eval, q_tot_centralized=q_tot_centralized,
-                                                q_tot_next_centralized=q_tot_next_centralized,
-                                                target_value=target_value, td_error=td_error, ones=ones, w=w))
+        if self.iterations % self.sync_frequency == 0:
+            self.model.copy_target()
+
+        info.update(self.callback.on_update_end(self.iterations, model=self.model, info=info))
 
         return info
