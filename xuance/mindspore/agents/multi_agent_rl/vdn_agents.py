@@ -64,8 +64,7 @@ class VDN_Agents(OffPolicyMARLAgents):
                 critic_hidden_size=self.config.q_hidden_size,
                 normalizer=self.normalize_fn,
                 initializer=self.initializer,
-                activation=self.activation,
-                device=self.device
+                activation=self.activation
             )
 
         # build mixer
@@ -77,7 +76,6 @@ class VDN_Agents(OffPolicyMARLAgents):
             q_networks=q_networks,
             mixer=mixer,
             use_rnn=self.use_rnn,
-            device=self.device,
             use_distributed_training=self.distributed_training
         )
 
