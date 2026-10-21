@@ -37,8 +37,44 @@ class QMIX_Learner(OffPolicyMultiAgentLearner):
         info = self.callback.on_update_start(self.iterations, model=self.model, batch=batch,
                                              rewards_tot=rewards_tot, terminals_tot=terminals_tot)
 
-        # feedforward
-        q_eval, q_next, actions_next = self._forward_transitions(batch)
+        # initialize rnn hidden states when use rnn
+        rnn_states = self.model.init_rnn_states(batch.batch_size)
+
+        # calculate the individual Q values
+        model_output = self.model(
+            observations=batch.observations,
+            agent_indices=batch.agent_indices,
+            avail_actions=batch.avail_actions,
+            rnn_states=rnn_states
+        )
+        q_eval = model_output.values  # the individual Q values
+
+        # calculate output with target networks
+        with torch.no_grad():
+            if self.use_rnn:
+                actions_next = model_output.actions
+
+                q_next = self.model.Qtarget(
+                    observations=batch.observations,
+                    agent_indices=batch.agent_indices,
+                    rnn_states=rnn_states
+                ).values
+                q_eval.grouped_tensor = {k: v[:, :, :-1] for k, v in q_eval.grouped_tensor.items()}
+                q_next.grouped_tensor = {k: v[:, :, 1:] for k, v in q_next.grouped_tensor.items()}
+                actions_next.grouped_tensor = {k: v[:, :, 1:] for k, v in actions_next.grouped_tensor.items()}
+
+            else:
+                q_next = self.model.Qtarget(
+                    observations=batch.next_observations,
+                    agent_indices=batch.agent_indices,
+                ).values
+
+                if self.config.double_q:
+                    actions_next = self.model(observations=batch.next_observations,
+                                              agent_indices=batch.agent_indices,
+                                              avail_actions=batch.next_avail_actions).actions
+                else:
+                    actions_next = None
 
         # calculate target values
         q_eval_a, q_next_a = {}, {}

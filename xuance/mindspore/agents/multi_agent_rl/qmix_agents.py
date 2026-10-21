@@ -67,8 +67,7 @@ class QMIX_Agents(OffPolicyMARLAgents):
                 critic_hidden_size=self.config.q_hidden_size,
                 normalizer=self.normalize_fn,
                 initializer=self.initializer,
-                activation=self.activation,
-                device=self.device
+                activation=self.activation
             )
 
         # build mixer
@@ -76,8 +75,7 @@ class QMIX_Agents(OffPolicyMARLAgents):
             dim_state=self.state_space.shape[0],
             dim_hidden=self.config.hidden_dim_mixing_net,
             dim_hypernet_hidden=self.config.hidden_dim_hyper_net,
-            n_agents=self.n_agents,
-            device=self.device
+            n_agents=self.n_agents
         )
 
         # build MARL model
@@ -86,7 +84,6 @@ class QMIX_Agents(OffPolicyMARLAgents):
             q_networks=q_networks,
             mixer=mixer,
             use_rnn=self.use_rnn,
-            device=self.device,
             use_distributed_training=self.distributed_training
         )
 
