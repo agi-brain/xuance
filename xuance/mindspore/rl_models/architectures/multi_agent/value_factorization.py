@@ -38,7 +38,7 @@ class MixingQNetwork(Module):
 
     @property
     def parameters_model(self):
-        return list(self.individual_q_networks.parameters()) + list(self.eval_Qtot.parameters())
+        return list(self.individual_q_networks.trainable_params()) + list(self.eval_Qtot.trainable_params())
 
     def construct(
             self,
@@ -66,7 +66,7 @@ class MixingQNetwork(Module):
                 input_kwargs["rnn_states"] = rnn_states[group]
 
             value, rnn_state = self.individual_q_networks[group](observations.packed(group),
-                                                                  **input_kwargs)
+                                                                 **input_kwargs)
 
             rnn_states_new[group] = rnn_state
             # rep_out[group] = individual_output.representations
@@ -84,7 +84,7 @@ class MixingQNetwork(Module):
             actions=AgentGroupedTensor(argmax_action, self.grouping),
             values=AgentGroupedTensor(evalQ, self.grouping),
             rnn_states=rnn_states_new,
-            # rep_out=rep_out
+            rep_out=rep_out
         )
 
     def Qtarget(self,
@@ -109,13 +109,12 @@ class MixingQNetwork(Module):
             if self.use_rnn:
                 target_input_kwargs["rnn_states"] = rnn_states[group]
 
-            individual_output = self.target_individual_q_networks[group](observations.packed(group),
-                                                                         **target_input_kwargs)
+            value, rnn_state = self.target_individual_q_networks[group](observations.packed(group),
+                                                                        **target_input_kwargs)
 
-            rnn_states_new[group] = individual_output.representations.rnn_states
-            rep_out[group] = individual_output.representations
+            rnn_states_new[group] = rnn_state
             # Q value shape: batch_size * n_agent * -1 or batch_size * n_agent * seq_len * -1
-            q_target[group] = individual_output.values.reshape(*batch_shape, -1)
+            q_target[group] = value.reshape(*batch_shape, -1)
 
         return MultiAgentModelOutput(
             values=AgentGroupedTensor(q_target, self.grouping),
@@ -157,10 +156,10 @@ class MixingQNetwork(Module):
         return rnn_states
 
     def copy_target(self):
-        for ep, tp in zip(self.individual_q_networks.parameters(), self.target_individual_q_networks.parameters()):
-            tp.data.copy_(ep)
-        for ep, tp in zip(self.eval_Qtot.parameters(), self.target_Qtot.parameters()):
-            tp.data.copy_(ep)
+        for ep, tp in zip(self.individual_q_networks.trainable_params(), self.target_individual_q_networks.trainable_params()):
+            tp.assign_value(ep)
+        for ep, tp in zip(self.eval_Qtot.trainable_params(), self.target_Qtot.trainable_params()):
+            tp.assign_value(ep)
 
 
 class WeightedMixingQNetwork(MixingQNetwork):
@@ -185,8 +184,8 @@ class WeightedMixingQNetwork(MixingQNetwork):
 
     @property
     def parameters_model(self):
-        return list(self.individual_q_networks.parameters()) + list(self.eval_Qtot.parameters()) + list(
-            self.individual_q_centralized.parameters()) + list(self.ff_mixer.parameters())
+        return list(self.individual_q_networks.trainable_params()) + list(self.eval_Qtot.trainable_params()) + list(
+            self.individual_q_centralized.trainable_params()) + list(self.ff_mixer.trainable_params())
 
     def q_centralized(
             self,
@@ -292,11 +291,11 @@ class WeightedMixingQNetwork(MixingQNetwork):
 
     def copy_target(self):
         super().copy_target()
-        for ep, tp in zip(self.individual_q_centralized.parameters(),
-                          self.target_individual_q_centralized.parameters()):
-            tp.data.copy_(ep)
-        for ep, tp in zip(self.ff_mixer.parameters(), self.target_ff_mixer.parameters()):
-            tp.data.copy_(ep)
+        for ep, tp in zip(self.individual_q_centralized.trainable_params(),
+                          self.target_individual_q_centralized.trainable_params()):
+            tp.assign_value(ep)
+        for ep, tp in zip(self.ff_mixer.trainable_params(), self.target_ff_mixer.trainable_params()):
+            tp.assign_value(ep)
 
 
 class QTranMixingNetwork(MixingQNetwork):
@@ -322,8 +321,8 @@ class QTranMixingNetwork(MixingQNetwork):
 
     @property
     def parameters_model(self):
-        parameters_model = list(self.qtran_net.parameters()) + list(self.eval_Qtot.parameters()) + list(
-            self.individual_q_networks.parameters())
+        parameters_model = list(self.qtran_net.trainable_params()) + list(self.eval_Qtot.trainable_params()) + list(
+            self.individual_q_networks.trainable_params())
         return parameters_model
 
     def Q_tran(self,
@@ -418,8 +417,8 @@ class QTranMixingNetwork(MixingQNetwork):
 
     def copy_target(self):
         super().copy_target()
-        for ep, tp in zip(self.qtran_net.parameters(), self.target_qtran_net.parameters()):
-            tp.data.copy_(ep)
+        for ep, tp in zip(self.qtran_net.trainable_params(), self.target_qtran_net.trainable_params()):
+            tp.assign_value(ep)
 
 
 class DeepCoordinationGraph(Module):
@@ -462,11 +461,11 @@ class DeepCoordinationGraph(Module):
 
     @property
     def parameters_model(self):
-        parameters_model = list(self.representation.parameters()) + \
-                           list(self.utility.parameters()) + \
-                           list(self.payoffs.parameters())
+        parameters_model = list(self.representation.trainable_params()) + \
+                           list(self.utility.trainable_params()) + \
+                           list(self.payoffs.trainable_params())
         if self.dcg_s:
-            parameters_model += list(self.bias.parameters())
+            parameters_model += list(self.bias.trainable_params())
         return parameters_model
 
     def get_hidden_states(self,
@@ -545,12 +544,12 @@ class DeepCoordinationGraph(Module):
         return rnn_states
 
     def copy_target(self):
-        for ep, tp in zip(self.representation.parameters(), self.target_representation.parameters()):
-            tp.data.copy_(ep)
-        for ep, tp in zip(self.utility.parameters(), self.target_utility.parameters()):
-            tp.data.copy_(ep)
-        for ep, tp in zip(self.payoffs.parameters(), self.target_payoffs.parameters()):
-            tp.data.copy_(ep)
+        for ep, tp in zip(self.representation.trainable_params(), self.target_representation.trainable_params()):
+            tp.assign_value(ep)
+        for ep, tp in zip(self.utility.trainable_params(), self.target_utility.trainable_params()):
+            tp.assign_value(ep)
+        for ep, tp in zip(self.payoffs.trainable_params(), self.target_payoffs.trainable_params()):
+            tp.assign_value(ep)
         if self.dcg_s:
-            for ep, tp in zip(self.bias.parameters(), self.target_bias.parameters()):
-                tp.data.copy_(ep)
+            for ep, tp in zip(self.bias.trainable_params(), self.target_bias.trainable_params()):
+                tp.assign_value(ep)

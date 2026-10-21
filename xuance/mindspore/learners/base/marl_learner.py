@@ -312,7 +312,8 @@ class OffPolicyMultiAgentLearner(LearnerMAS):
 
         agent_indices = {}
         for group, n_agents in self.n_group_agents.items():
-            agent_indices[group] = self.agent_indices[group].repeat(batch_size, 1).reshape(batch_size, n_agents, 1)
+            agent_indices[group] = ops.repeat_elements(self.agent_indices[group].reshape(1, n_agents, 1),
+                                                       rep=batch_size, axis=0)
             if self.use_rnn:
                 agent_indices[group] = agent_indices[group].unsqueeze(2).expand(-1, -1, seq_length + 1, -1)
 
