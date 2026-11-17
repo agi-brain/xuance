@@ -67,8 +67,7 @@ class QTRAN_Agents(OffPolicyMARLAgents):
                 critic_hidden_size=self.config.q_hidden_size,
                 normalizer=self.normalize_fn,
                 initializer=self.initializer,
-                activation=self.activation,
-                device=self.device
+                activation=self.activation
             )
 
         # build mixers
@@ -80,8 +79,7 @@ class QTRAN_Agents(OffPolicyMARLAgents):
             dim_hidden=self.config.qtran_net_hidden_dim,
             n_agents=self.config.n_agents,
             dim_utility_hidden=self.config.q_hidden_size[0],
-            use_parameter_sharing=self.use_parameter_sharing,
-            device=self.device
+            use_parameter_sharing=self.use_parameter_sharing
         )
         if self.config.agent == "QTRAN_base":
             qtran_mixer = QTRAN_Base(**input_qtran_mixer)
@@ -96,7 +94,6 @@ class QTRAN_Agents(OffPolicyMARLAgents):
             mixer=mixer,
             qtran_mixer=qtran_mixer,
             use_rnn=self.use_rnn,
-            device=self.device,
             use_distributed_training=self.distributed_training
         )
 

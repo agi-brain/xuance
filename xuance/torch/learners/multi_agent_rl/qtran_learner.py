@@ -130,11 +130,11 @@ class QTRAN_Learner(OffPolicyMultiAgentLearner):
         elif self.config.agent == "QTRAN_alt":
             # -- TD Loss -- (Computed for all agents)
             q_count, v_joint = self.model.Q_tran(state, hidden_state, actions, agent_mask)
-            actions_choosen = torch.stack([actions[k] for k in self.agent_keys], dim=1)
+            actions_choosen = torch.stack([actions.agent_wise[k] for k in self.agent_keys], dim=1)
             actions_choosen = actions_choosen.reshape(-1, self.n_agents, 1)
             q_joint_choosen = q_count.gather(-1, actions_choosen.long()).reshape(-1, self.n_agents)
             q_next_count, _ = self.model.Q_tran_target(state_next, hidden_state_next, a_next_greedy, agent_mask)
-            actions_next_choosen = torch.stack([a_next_greedy[k] for k in self.agent_keys], dim=1)
+            actions_next_choosen = torch.stack([a_next_greedy.agent_wise[k] for k in self.agent_keys], dim=1)
             actions_next_choosen = actions_next_choosen.reshape(-1, self.n_agents, 1)
             q_joint_next_choosen = q_next_count.gather(-1, actions_next_choosen.long()).reshape(-1, self.n_agents)
 
@@ -144,7 +144,7 @@ class QTRAN_Learner(OffPolicyMultiAgentLearner):
             # -- Opt Loss -- (Computed for all agents)
             q_tot_greedy = self.model.Q_tot(q_eval_greedy_a)
             q_joint_greedy_hat, _ = self.model.Q_tran(state, hidden_state, actions_greedy, agent_mask)
-            actions_greedy_current = torch.stack([actions_greedy[k] for k in self.agent_keys], dim=1)
+            actions_greedy_current = torch.stack([actions_greedy.agent_wise[k] for k in self.agent_keys], dim=1)
             actions_greedy_current = actions_greedy_current.reshape(-1, self.n_agents, 1)
             q_joint_greedy_hat_all = q_joint_greedy_hat.gather(
                 -1, actions_greedy_current.long()).reshape(-1, self.n_agents)
@@ -152,7 +152,7 @@ class QTRAN_Learner(OffPolicyMultiAgentLearner):
             loss_opt = torch.mean(error_opt ** 2)  # Opt loss
 
             # -- Nopt Loss --
-            q_eval_count = torch.stack([q_eval[k] for k in self.agent_keys], dim=1)
+            q_eval_count = torch.stack([q_eval.agent_wise[k] for k in self.agent_keys], dim=1)
             q_eval_count = q_eval_count.reshape(batch_size * self.n_agents, -1)
             q_sums = torch.stack([q_eval_a[k] for k in self.agent_keys], dim=1).reshape(-1, self.n_agents)
             q_sums_repeat = q_sums.unsqueeze(dim=1).repeat(1, self.n_agents, 1)

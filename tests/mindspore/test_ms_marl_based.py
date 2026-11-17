@@ -13,6 +13,7 @@ device = 'GPU'
 test_mode = False
 args = Namespace(dl_toolbox='mindspore', device=device,
                  running_steps=running_steps, eval_interval=eval_interval)
+args.static_graph = False
 env_name = "mpe"
 env_id = "simple_spread_v3"
 

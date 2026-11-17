@@ -30,8 +30,8 @@ class WQMIX_Learner(OffPolicyMultiAgentLearner):
     def forward_fn(self, batch: OffPolicyMARLBatch):
         info_train = {}
 
-        rewards_tot = ops.stack([r for r in batch.rewards.agent_wise.values()], axis=1).mean(dim=1)
-        terminals_tot = ops.stack([d for d in batch.terminals.agent_wise.values()], axis=1).all(dim=1).float()
+        rewards_tot = ops.stack([r for r in batch.rewards.agent_wise.values()], axis=1).mean(axis=1)
+        terminals_tot = ops.stack([d for d in batch.terminals.agent_wise.values()], axis=1).all(axis=1).float()
 
         ############################################
         #  Feedforward

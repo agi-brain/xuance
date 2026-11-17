@@ -4,10 +4,10 @@ from typing import Dict, Optional, Union, Tuple
 from gymnasium.spaces import Discrete
 from xuance.common import AgentGrouping
 
-from xuance.mindspore import ops, Tensor, Module, ModuleDict
+from xuance.mindspore import ms, ops, Tensor, Module, ModuleDict
 from xuance.mindspore.utils import AgentGroupedTensor
 from xuance.mindspore.rl_models.heads import QTRAN_Base, QTRAN_Alt, Coordination_Graph
-from xuance.mindspore.rl_models.modules import MultiAgentModelOutput, RNN_State
+from xuance.mindspore.rl_models.modules import MultiAgentModelOutput, RNN_State, RepresentationOutput
 
 
 class MixingQNetwork(Module):
@@ -326,6 +326,91 @@ class QTranMixingNetwork(MixingQNetwork):
             self.individual_q_networks.trainable_params())
         return parameters_model
 
+    def construct(
+            self,
+            observations: AgentGroupedTensor,
+            agent_indices: AgentGroupedTensor,
+            avail_actions: AgentGroupedTensor | None = None,
+            group_key: Optional[str] = None,
+            rnn_states: Dict[str, RNN_State | dict] = None,
+    ) -> MultiAgentModelOutput:
+        rep_out, rnn_states_new, argmax_action, evalQ = {}, {}, {}, {}
+        input_shape = observations.grouped_tensor[self.group_keys[0]].shape
+        batch_size = input_shape[0]
+        seq_len = input_shape[2] if self.use_rnn else 1
+
+        group_list = self.group_keys if group_key is None else [group_key]
+
+        for group in group_list:
+            n_agent = self.n_group_agents[group]
+            batch_shape = (batch_size, n_agent, seq_len) if self.use_rnn else (batch_size, n_agent)
+
+            input_kwargs = {
+                "agent_indices": agent_indices.packed(group)
+            }
+            if self.use_rnn:
+                input_kwargs["rnn_states"] = rnn_states[group]
+
+            rep_embeddings, rnn_state = self.individual_q_networks[group].representation(
+                observations.packed(group), **input_kwargs)
+            value = self.individual_q_networks[group].critic_head(rep_embeddings, **input_kwargs)
+
+            rnn_states_new[group] = rnn_state
+            rep_out[group] = RepresentationOutput(embeddings=rep_embeddings, rnn_states=rnn_state)
+            # Q value shape: batch_size * n_agent * -1 or batch_size * n_agent * seq_len * -1
+            evalQ[group] = value.reshape(*batch_shape, -1)
+
+            if avail_actions is not None:
+                evalQ_detach = evalQ[group].clone().detach()
+                evalQ_detach[avail_actions.group(group) == 0] = -1e10
+                argmax_action[group] = evalQ_detach.argmax(dim=-1, keepdim=False)
+            else:
+                argmax_action[group] = evalQ[group].argmax(dim=-1, keepdim=False)
+
+        return MultiAgentModelOutput(
+            actions=AgentGroupedTensor(argmax_action, self.grouping),
+            values=AgentGroupedTensor(evalQ, self.grouping),
+            rnn_states=rnn_states_new,
+            rep_out=rep_out
+        )
+
+    def Qtarget(self,
+                observations: AgentGroupedTensor,
+                agent_indices: AgentGroupedTensor,
+                group_key: Optional[str] = None,
+                rnn_states: Dict[str, RNN_State | dict] = None) -> MultiAgentModelOutput:
+        rep_out, rnn_states_new, q_target = {}, {}, {}
+        input_shape = observations.grouped_tensor[self.group_keys[0]].shape
+        batch_size = input_shape[0]
+        seq_len = input_shape[2] if self.use_rnn else 1
+
+        group_list = self.group_keys if group_key is None else [group_key]
+
+        for group in group_list:
+            n_agent = self.n_group_agents[group]
+            batch_shape = (batch_size, n_agent, seq_len) if self.use_rnn else (batch_size, n_agent)
+
+            target_input_kwargs = {
+                "agent_indices": agent_indices.packed(group)
+            }
+            if self.use_rnn:
+                target_input_kwargs["rnn_states"] = rnn_states[group]
+
+            rep_embeddings, rnn_state = self.target_individual_q_networks[group].representation(
+                observations.packed(group), **target_input_kwargs)
+            value = self.target_individual_q_networks[group].critic_head(rep_embeddings, **target_input_kwargs)
+
+            rnn_states_new[group] = rnn_state
+            rep_out[group] = RepresentationOutput(embeddings=rep_embeddings, rnn_states=rnn_state)
+            # Q value shape: batch_size * n_agent * -1 or batch_size * n_agent * seq_len * -1
+            q_target[group] = value.reshape(*batch_shape, -1)
+
+        return MultiAgentModelOutput(
+            values=AgentGroupedTensor(q_target, self.grouping),
+            rnn_states=rnn_states_new,
+            rep_out=rep_out
+        )
+
     def Q_tran(self,
                states: Tensor,
                hidden_states: Dict[str, Tensor],
@@ -342,7 +427,7 @@ class QTranMixingNetwork(MixingQNetwork):
             n_agents = self.n_group_agents[group]
             n_actions = self.n_actions[group]
             dim_hidden_state = hidden_states[group].shape[-1]
-            group_actions_onehot = ops.one_hot(actions.packed(group).long(), n_actions)
+            group_actions_onehot = ops.one_hot(actions.packed(group).long(), n_actions).astype(dtype=ms.float32)
             if self.use_rnn:
                 actions_onehot_dict[group] = group_actions_onehot.reshape(batch_size, n_agents, seq_len, -1)
                 hidden_states_dict[group] = hidden_states[group].reshape([-1, n_agents, seq_len, dim_hidden_state])
@@ -354,10 +439,12 @@ class QTranMixingNetwork(MixingQNetwork):
                 actions_onehot_dict[group] *= avail_actions.packed(group)
             if agent_mask is not None:
                 if self.use_rnn:
-                    agt_mask = agent_mask.packed(group).reshape(
-                        batch_size, n_agents, seq_len, 1).repeat(1, 1, 1, dim_hidden_state)
+                    agt_mask = ops.repeat_elements(agent_mask.packed(group).reshape(batch_size, n_agents, seq_len, 1),
+                                                   dim_hidden_state, axis=3)
                 else:
-                    agt_mask = agent_mask.packed(group).reshape(batch_size, n_agents, 1).repeat(1, 1, dim_hidden_state)
+                    agt_mask = ops.repeat_elements(agent_mask.packed(group).reshape(batch_size, n_agents, 1),
+                                                   dim_hidden_state, axis=2)
+
                 hidden_states_dict[group] = hidden_states_dict[group] * agt_mask
 
         hidden_states_tensor_in = ops.concat([hidden_states_dict[k] for k in self.group_keys], axis=1)
@@ -387,7 +474,7 @@ class QTranMixingNetwork(MixingQNetwork):
             n_agents = self.n_group_agents[group]
             n_actions = self.n_actions[group]
             dim_hidden_state = hidden_states[group].shape[-1]
-            group_actions_onehot = ops.one_hot(actions.packed(group).long(), n_actions)
+            group_actions_onehot = ops.one_hot(actions.packed(group).long(), n_actions).astype(ms.float32)
             if self.use_rnn:
                 actions_onehot_dict[group] = group_actions_onehot.reshape(batch_size, n_agents, seq_len, -1)
                 hidden_states_dict[group] = hidden_states[group].reshape([-1, n_agents, seq_len, dim_hidden_state])
@@ -399,10 +486,11 @@ class QTranMixingNetwork(MixingQNetwork):
                 actions_onehot_dict[group] *= avail_actions.packed(group)
             if agent_mask is not None:
                 if self.use_rnn:
-                    agt_mask = agent_mask.packed(group).reshape(
-                        batch_size, n_agents, seq_len, 1).repeat(1, 1, 1, dim_hidden_state)
+                    agt_mask = ops.repeat_elements(agent_mask.packed(group).reshape(batch_size, n_agents, seq_len, 1),
+                                                   dim_hidden_state, axis=3)
                 else:
-                    agt_mask = agent_mask.packed(group).reshape(batch_size, n_agents, 1).repeat(1, 1, dim_hidden_state)
+                    agt_mask = ops.repeat_elements(agent_mask.packed(group).reshape(batch_size, n_agents, 1),
+                                                   dim_hidden_state, axis=2)
                 hidden_states_dict[group] = hidden_states_dict[group] * agt_mask
 
         hidden_states_tensor_in = ops.concat([hidden_states_dict[k] for k in self.group_keys], axis=1)
