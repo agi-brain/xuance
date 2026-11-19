@@ -31,7 +31,12 @@ class MPE_Env(RawMultiAgentEnv):
         self.render_mode = config.render_mode
         self.continuous_actions = config.continuous_action
         self.scenario_name = env_name + "." + env_id
-        scenario = importlib.import_module(f'pettingzoo.{env_name}.{env_id}')  # create scenario
+        try:
+            importlib.import_module("mpe2")
+        except ImportError:
+            scenario = importlib.import_module(f'pettingzoo.{env_name}.{env_id}')  # create scenario
+        else:
+            scenario = importlib.import_module(f'mpe2.{env_id}')  # create scenario
         self.env = scenario.parallel_env(continuous_actions=self.continuous_actions, render_mode=self.render_mode)
         self.env.reset(config.env_seed)
 
