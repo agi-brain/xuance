@@ -1,4 +1,3 @@
-import torch
 from argparse import Namespace
 from gymnasium.spaces import Space
 from typing import List, Optional, Dict
@@ -71,8 +70,7 @@ class IDDPG_Agents(OffPolicyMARLAgents):
                 normalizer=self.normalize_fn,
                 initializer=self.initializer,
                 activation=self.activation,
-                activation_action=ActivationFunctions[self.config.activation_action],
-                device=self.device
+                activation_action=ActivationFunctions[self.config.activation_action]
             )
             # build critic feature encoder as critic representations
             critic_feature_encoder = self._build_agent_feature_encoder(
@@ -87,8 +85,7 @@ class IDDPG_Agents(OffPolicyMARLAgents):
                 critic_hidden_size=self.config.critic_hidden_size,
                 normalizer=self.normalize_fn,
                 initializer=self.initializer,
-                activation=self.activation,
-                device=self.device
+                activation=self.activation
             )
 
         # build the RL model
@@ -97,13 +94,11 @@ class IDDPG_Agents(OffPolicyMARLAgents):
             actors=actor_networks,
             critics=critic_networks,
             use_rnn=self.use_rnn,
-            device=self.device,
             use_distributed_training=self.distributed_training
         )
 
         return model
 
-    @torch.no_grad()
     def get_actions(
             self,
             obs_list: List[dict],
@@ -133,7 +128,7 @@ class IDDPG_Agents(OffPolicyMARLAgents):
                                   rnn_states=rnn_states)
         rnn_states_new = model_output.actor_rnn_states
         actions = model_output.actions
-        actions.grouped_tensor = {k: actions.grouped_tensor[k].reshape(batch_size, n, -1).cpu().numpy()
+        actions.grouped_tensor = {k: actions.grouped_tensor[k].reshape(batch_size, n, -1).asnumpy()
                                   for k, n in self.n_group_agents.items()}
 
         if not test_mode:

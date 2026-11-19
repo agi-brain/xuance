@@ -1,11 +1,8 @@
-import os
-import torch
 from copy import deepcopy
-from typing import Dict, Optional, Union, Tuple
-from torch import Tensor
-from torch.nn import Module, ModuleDict
-from torch.nn.parallel import DistributedDataParallel
+from typing import Dict, Optional, Tuple
 from xuance.common import AgentGrouping
+
+from xuance.mindspore import ops, Tensor, Module, ModuleDict
 from xuance.mindspore.utils import AgentGroupedTensor
 from xuance.mindspore.rl_models.modules import RNN_State, MultiAgentModelOutput
 from .base import OffPolicyMultiAgentActorCritic
@@ -17,7 +14,6 @@ class IndependentActorCritic(Module):
                  actors: ModuleDict,
                  critics: Module | ModuleDict,
                  use_rnn: bool = False,
-                 device: Optional[Union[str, int, torch.device]] = None,
                  use_distributed_training: bool = False,
                  **kwargs):
         super().__init__()
@@ -29,17 +25,12 @@ class IndependentActorCritic(Module):
         self.n_agents = len(self.agent_keys)
         self.n_group_agents = {k: len(self.groups[k]) for k in self.group_keys}
         self.use_rnn = use_rnn
-        self.device = device
 
         self.actors = actors
         self.critics = critics
 
         # Prepare DDP module.
         self.distributed_training = use_distributed_training
-        if self.distributed_training:
-            self.rank = int(os.environ["RANK"])
-            self.actors = DistributedDataParallel(module=self.actors, device_ids=[self.rank])
-            self.critics = DistributedDataParallel(module=self.critics, device_ids=[self.rank])
 
     @property
     def parameters_model(self):
@@ -353,7 +344,6 @@ class ValueDecompositionActorCritic(IndependentActorCritic):
                  critics: Module | ModuleDict,
                  mixer: Module,
                  use_rnn: bool = False,
-                 device: Optional[Union[str, int, torch.device]] = None,
                  use_distributed_training: bool = False,
                  **kwargs):
         super().__init__(
@@ -361,19 +351,14 @@ class ValueDecompositionActorCritic(IndependentActorCritic):
             actors=actors,
             critics=critics,
             use_rnn=use_rnn,
-            device=device,
             use_distributed_training=use_distributed_training,
             **kwargs
         )
         self.v_tot = mixer
-        # Prepare DDP module.
-        if self.distributed_training:
-            self.rank = int(os.environ["RANK"])
-            self.v_tot = DistributedDataParallel(module=self.v_tot, device_ids=[self.rank])
 
     def values_tot(self, individual_values: Dict[str, Tensor], global_states: Optional[Tensor] = None):
         # Expected shape: [tot_batch_size * 1, ...] -> tot_batch_size * n_agents_all
-        individual_inputs = torch.concat([individual_values[k].reshape([-1, 1]) for k in self.agent_keys], dim=-1)
+        individual_inputs = ops.concat([individual_values[k].reshape([-1, 1]) for k in self.agent_keys], axis=-1)
         # Output shape: tot_batch_size * 1
         values = self.v_tot(individual_inputs, global_states)
         return values
@@ -405,10 +390,10 @@ class IndependentDeterministicActorCritic(OffPolicyMultiAgentActorCritic):
             if self.use_rnn:
                 actor_kwargs["rnn_states"] = rnn_states[group]
 
-            actor_out = self.actors[group](observations.packed(group), **actor_kwargs)
+            actions_out, rnn_states_out = self.actors[group](observations.packed(group), **actor_kwargs)
 
-            rnn_states_new[group] = actor_out.representations.rnn_states
-            actions[group] = actor_out.actions.reshape(*batch_shape, -1)
+            rnn_states_new[group] = rnn_states_out
+            actions[group] = actions_out.reshape(*batch_shape, -1)
 
         return MultiAgentModelOutput(
             actions=AgentGroupedTensor(actions, self.grouping),
@@ -441,11 +426,11 @@ class IndependentDeterministicActorCritic(OffPolicyMultiAgentActorCritic):
             if self.use_rnn:
                 critic_kwargs["rnn_states"] = rnn_states[group]
 
-            critic_out = self.critics[group](observations.packed(group),
-                                             actions.packed(group),
-                                             **critic_kwargs)
+            values, _ = self.critics[group](observations.packed(group),
+                                            actions.packed(group),
+                                            **critic_kwargs)
 
-            q_eval[group] = critic_out.values.reshape(*batch_shape, -1)
+            q_eval[group] = values.reshape(*batch_shape, -1)
 
         return AgentGroupedTensor(q_eval, self.grouping)
 
@@ -475,11 +460,11 @@ class IndependentDeterministicActorCritic(OffPolicyMultiAgentActorCritic):
             if self.use_rnn:
                 critic_kwargs["rnn_states"] = rnn_states[group]
 
-            target_critic_out = self.target_critics[group](observations.packed(group),
-                                                           actions.packed(group),
-                                                           **critic_kwargs)
+            values, _ = self.target_critics[group](observations.packed(group),
+                                                   actions.packed(group),
+                                                   **critic_kwargs)
 
-            q_target[group] = target_critic_out.values.reshape(*batch_shape, -1)
+            q_target[group] = values.reshape(*batch_shape, -1)
 
         return AgentGroupedTensor(q_target, self.grouping)
 
@@ -508,9 +493,9 @@ class IndependentDeterministicActorCritic(OffPolicyMultiAgentActorCritic):
             if self.use_rnn:
                 actor_kwargs["rnn_states"] = rnn_states[group]
 
-            target_actor_out = self.target_actors[group](observations.packed(group), **actor_kwargs)
+            actions_out, _ = self.target_actors[group](observations.packed(group), **actor_kwargs)
 
-            actions[group] = target_actor_out.actions.reshape(*batch_shape, -1)
+            actions[group] = actions_out.reshape(*batch_shape, -1)
 
         return AgentGroupedTensor(actions, self.grouping)
 
@@ -712,7 +697,7 @@ class IndependentSoftActorCritic(OffPolicyMultiAgentActorCritic):
 
             group_values_1 = target_critic_out.values_1
             group_values_2 = target_critic_out.values_2
-            q_target[group] = torch.min(group_values_1, group_values_2).reshape(*batch_shape, -1)
+            q_target[group] = ops.minimum(group_values_1, group_values_2).reshape(*batch_shape, -1)
 
         return AgentGroupedTensor(q_target, self.grouping)
 
@@ -830,7 +815,7 @@ class MultiAgentSoftActorCritic(IndependentSoftActorCritic):
 
             group_values_1 = target_critic_out.values_1
             group_values_2 = target_critic_out.values_2
-            q_target[group] = torch.min(group_values_1, group_values_2).reshape(*batch_shape, -1)
+            q_target[group] = ops.minimum(group_values_1, group_values_2).reshape(*batch_shape, -1)
 
         return AgentGroupedTensor(q_target, self.grouping)
 
@@ -910,7 +895,7 @@ class IndependentTwinDelayedActorCritic(IndependentDeterministicActorCritic):
 
             group_values_1 = target_critic_out.values_1
             group_values_2 = target_critic_out.values_2
-            q_target[group] = torch.min(group_values_1, group_values_2).reshape(*batch_shape, -1)
+            q_target[group] = ops.minimum(group_values_1, group_values_2).reshape(*batch_shape, -1)
 
         return AgentGroupedTensor(q_target, self.grouping)
 
@@ -1024,6 +1009,6 @@ class MultiAgentTwinDelayedActorCritic(IndependentTwinDelayedActorCritic):
 
             group_values_1 = target_critic_out.values_1
             group_values_2 = target_critic_out.values_2
-            q_target[group] = torch.min(group_values_1, group_values_2).reshape(*batch_shape, -1)
+            q_target[group] = ops.minimum(group_values_1, group_values_2).reshape(*batch_shape, -1)
 
         return AgentGroupedTensor(q_target, self.grouping)

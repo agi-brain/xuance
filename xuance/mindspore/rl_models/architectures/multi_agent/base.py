@@ -1,12 +1,9 @@
-import os
-import torch
 from copy import deepcopy
 from abc import abstractmethod
-from typing import Dict, Optional, Union
-from torch import Tensor
-from torch.nn import Module, ModuleDict
-from torch.nn.parallel import DistributedDataParallel
+from typing import Dict, Optional
 from xuance.common import AgentGrouping
+
+from xuance.mindspore import Tensor, Module, ModuleDict
 from xuance.mindspore.rl_models.modules import RNN_State, MultiAgentModelOutput
 
 
@@ -16,7 +13,6 @@ class OffPolicyMultiAgentActorCritic(Module):
                  actors: ModuleDict,
                  critics: ModuleDict,
                  use_rnn: bool = False,
-                 device: Optional[Union[str, int, torch.device]] = None,
                  use_distributed_training: bool = False,
                  **kwargs):
         super().__init__()
@@ -28,7 +24,6 @@ class OffPolicyMultiAgentActorCritic(Module):
         self.n_agents = len(self.agent_keys)
         self.n_group_agents = {k: len(self.groups[k]) for k in self.group_keys}
         self.use_rnn = use_rnn
-        self.device = device
 
         self.actors = actors
         self.target_actors = deepcopy(self.actors)
@@ -37,10 +32,6 @@ class OffPolicyMultiAgentActorCritic(Module):
 
         # Prepare DDP module.
         self.distributed_training = use_distributed_training
-        if self.distributed_training:
-            self.rank = int(os.environ["RANK"])
-            self.actors = DistributedDataParallel(module=self.actors, device_ids=[self.rank])
-            self.critics = DistributedDataParallel(module=self.critics, device_ids=[self.rank])
 
     @abstractmethod
     def construct(
@@ -129,9 +120,7 @@ class OffPolicyMultiAgentActorCritic(Module):
         return rnn_states
 
     def soft_update(self, tau=0.005):
-        for ep, tp in zip(self.actors.parameters(), self.target_actors.parameters()):
-            tp.data.mul_(1 - tau)
-            tp.data.add_(tau * ep.data)
-        for ep, tp in zip(self.critics.parameters(), self.target_critics.parameters()):
-            tp.data.mul_(1 - tau)
-            tp.data.add_(tau * ep.data)
+        for ep, tp in zip(self.actors.trainable_params(), self.target_actors.trainable_params()):
+            tp.assign_value((tau * ep.data + (1 - tau) * tp.data))
+        for ep, tp in zip(self.critics.trainable_params(), self.target_critics.trainable_params()):
+            tp.assign_value((tau * ep.data + (1 - tau) * tp.data))

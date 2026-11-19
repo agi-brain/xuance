@@ -1,3 +1,4 @@
+import mindspore as ms
 import mindspore.nn as nn
 from mindspore.common.initializer import Normal, One, Zero, Orthogonal
 
@@ -19,11 +20,20 @@ class LeakyReLU_01(nn.LeakyReLU):
         super(LeakyReLU_01, self).__init__(alpha=0.01)
 
 
+class SafeSigmoid(nn.Cell):
+    def __init__(self):
+        super().__init__()
+        self.sigmoid = nn.Sigmoid()
+
+    def construct(self, x):
+        return self.sigmoid(x.astype(ms.float64)).astype(x.dtype)
+
+
 ActivationFunctions = {
     "relu": nn.ReLU,
     "leaky_relu": LeakyReLU_01,  # nn.LeakyReLU,
     "tanh": nn.Tanh,
-    "sigmoid": nn.Sigmoid,
+    "sigmoid": SafeSigmoid,
     "softmax": nn.Softmax,
     "softmax2d": nn.Softmax2d,
     "elu": nn.ELU,

@@ -1,10 +1,8 @@
-import torch
-import torch.nn.functional as F
-from typing import Dict, Optional, Union
-from torch import Tensor
-from torch.nn import Module, ModuleDict
+from typing import Dict, Optional
 from torch.distributions import Categorical
 from xuance.common import AgentGrouping
+
+from xuance.mindspore import ops, nn, Tensor, Module, ModuleDict
 from xuance.mindspore.utils import AgentGroupedTensor
 from xuance.mindspore.rl_models.modules import MultiAgentModelOutput, RNN_State
 from xuance.mindspore.rl_models.architectures.multi_agent.value_factorization import MixingQNetwork
@@ -17,7 +15,6 @@ class MeanFieldQNetwork(MixingQNetwork):
                  q_networks: ModuleDict,
                  mixer: Module,
                  use_rnn: bool = False,
-                 device: Optional[Union[str, int, torch.device]] = None,
                  use_distributed_training: bool = False,
                  **kwargs):
         super(MeanFieldQNetwork, self).__init__(
@@ -25,14 +22,13 @@ class MeanFieldQNetwork(MixingQNetwork):
             q_networks=q_networks,
             mixer=mixer,
             use_rnn=use_rnn,
-            device=device,
             use_distributed_training=use_distributed_training,
             **kwargs
         )
         # The choice of policy: Boltzmann policy or greedy policy. (Default is 'greedy')
         self.n_actions_max = kwargs['n_actions_max']
         self.policy_type = kwargs['policy_type']
-        self.softmax = torch.nn.Softmax(dim=-1)
+        self.softmax = nn.Softmax(dim=-1)
         self.temperature = kwargs['temperature']
 
     def construct(
@@ -150,11 +146,11 @@ class MeanFieldQNetwork(MixingQNetwork):
                          actions: Dict[str, Tensor],  # Dict of agent-wise tensor
                          agent_mask_tensor: Tensor, batch_size: int) -> Dict[str, Tensor]:
         masked_mean_actions_dict = {}
-        actions_tensor = torch.stack([v for v in actions.values()], dim=-1).reshape([-1, self.n_agents])
-        actions_onehot = F.one_hot(actions_tensor, num_classes=self.n_actions_max)
+        actions_tensor = ops.stack([v for v in actions.values()], axis=-1).reshape([-1, self.n_agents])
+        actions_onehot = ops.one_hot(actions_tensor, num_classes=self.n_actions_max)
 
         # count alive neighbors
-        _eyes = torch.eye(self.n_agents).unsqueeze(0).repeat(batch_size, 1, 1).to(self.device)
+        _eyes = ops.eye(self.n_agents).unsqueeze(0).repeat(batch_size, 1, 1).to(self.device)
         agent_mask_diagonal = agent_mask_tensor.unsqueeze(-1).repeat(1, 1, self.n_agents) * _eyes
         agent_mask_neighbors = agent_mask_tensor.unsqueeze(-1).repeat(1, 1, self.n_agents) - agent_mask_diagonal
         agent_alive_neighbors = agent_mask_neighbors.sum(dim=-1, keepdim=True)
@@ -180,7 +176,6 @@ class MeanFiledActorCritic(IndependentActorCritic):
                  actors: ModuleDict,
                  critics: Module | ModuleDict,
                  use_rnn: bool = False,
-                 device: Optional[Union[str, int, torch.device]] = None,
                  use_distributed_training: bool = False,
                  **kwargs):
         super(MeanFiledActorCritic, self).__init__(
@@ -188,12 +183,11 @@ class MeanFiledActorCritic(IndependentActorCritic):
             actors=actors,
             critics=critics,
             use_rnn=use_rnn,
-            device=device,
             use_distributed_training=use_distributed_training,
             **kwargs
         )
         self.n_actions_max = kwargs['n_actions_max']
-        self.softmax = torch.nn.Softmax(dim=-1)
+        self.softmax = nn.Softmax(axis=-1)
         self.temperature = kwargs['temperature']
 
     def get_boltzmann_policy(self, logits: Tensor) -> Tensor:
@@ -263,11 +257,11 @@ class MeanFiledActorCritic(IndependentActorCritic):
                          actions: Dict[str, Tensor],
                          agent_mask_tensor: Tensor, batch_size: int) -> Dict[str, Tensor]:
         masked_mean_actions_dict = {}
-        actions_tensor = torch.stack([v for v in actions.values()], dim=-1).reshape([-1, self.n_agents])
-        actions_onehot = F.one_hot(actions_tensor, num_classes=self.n_actions_max)
+        actions_tensor = ops.stack([v for v in actions.values()], axis=-1).reshape([-1, self.n_agents])
+        actions_onehot = ops.one_hot(actions_tensor, num_classes=self.n_actions_max)
 
         # count alive neighbors
-        _eyes = torch.eye(self.n_agents).unsqueeze(0).repeat(batch_size, 1, 1).to(self.device)
+        _eyes = ops.eye(self.n_agents).unsqueeze(0).repeat(batch_size, 1, 1).to(self.device)
         agent_mask_diagonal = agent_mask_tensor.unsqueeze(-1).repeat(1, 1, self.n_agents) * _eyes
         agent_mask_neighbors = agent_mask_tensor.unsqueeze(-1).repeat(1, 1, self.n_agents) - agent_mask_diagonal
         agent_alive_neighbors = agent_mask_neighbors.sum(dim=-1, keepdim=True)
