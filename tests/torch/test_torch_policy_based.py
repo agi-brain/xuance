@@ -2,8 +2,11 @@
 
 from argparse import Namespace
 from copy import deepcopy
+import importlib.util
 from xuance import get_runner
 import unittest
+
+HAS_GYM_PLATFORM = importlib.util.find_spec("gym_platform") is not None
 
 run_mode = "benchmark"  # Choices: "train", "test", "benchmark"
 
@@ -34,18 +37,21 @@ class TestPolicyBaseAlgo(unittest.TestCase):
         runner.run(mode=run_mode, running_steps=running_steps, eval_interval=eval_interval)
 
     """P-DQN"""
+    @unittest.skipUnless(HAS_GYM_PLATFORM, "gym_platform is not installed")
     def test_pdqn(self):
-        runner = get_runner(algo="pdqn", env='platform', env_id='Platform-v1', parser_args=args)
+        runner = get_runner(algo="pdqn", env='Platform', env_id='Platform-v0', parser_args=args)
         runner.run(mode=run_mode, running_steps=running_steps, eval_interval=eval_interval)
 
     """MP-DQN"""
+    @unittest.skipUnless(HAS_GYM_PLATFORM, "gym_platform is not installed")
     def test_mpdqn(self):
-        runner = get_runner(algo="mpdqn", env='platform', env_id='Platform-v1', parser_args=args)
+        runner = get_runner(algo="mpdqn", env='Platform', env_id='Platform-v0', parser_args=args)
         runner.run(mode=run_mode, running_steps=running_steps, eval_interval=eval_interval)
 
     """SP-DQN"""
+    @unittest.skipUnless(HAS_GYM_PLATFORM, "gym_platform is not installed")
     def test_spdqn(self):
-        runner = get_runner(algo="spdqn", env='platform', env_id='Platform-v1', parser_args=args)
+        runner = get_runner(algo="spdqn", env='Platform', env_id='Platform-v0', parser_args=args)
         runner.run(mode=run_mode, running_steps=running_steps, eval_interval=eval_interval)
     
     """NPG"""
