@@ -1,5 +1,6 @@
 from .layers import mlp_block, cnn_block, pooling_block, gru_block, lstm_block
 from .distributions import (
+    Distribution,
     CategoricalDistribution,
     DiagGaussianDistribution,
     ActivatedDiagGaussianDistribution,
