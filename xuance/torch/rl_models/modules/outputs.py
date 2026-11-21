@@ -1,8 +1,8 @@
-import torch
 from dataclasses import dataclass, field
 from typing import Any, Optional, Dict
 from xuance.torch import Tensor
 from xuance.torch.utils import AgentGroupedTensor
+from .distributions import Distribution
 
 
 @dataclass
@@ -21,7 +21,7 @@ class RepresentationOutput:
 @dataclass
 class StochasticActorOutput:
     representations: RepresentationOutput
-    distributions: Optional[torch.distributions] = None
+    distributions: Optional[Distribution] = None
 
 
 @dataclass
@@ -47,7 +47,7 @@ class TwinCriticOutput:
 @dataclass
 class ModelOutput:
     actions: Optional[Tensor] | None = None
-    distributions: Optional[torch.distributions] = None
+    distributions: Optional[Distribution] = None
     values: Optional[Tensor] | None = None
     rep_out: RepresentationOutput | None = None
     actor_rep_out: RepresentationOutput | None = None
@@ -58,7 +58,7 @@ class ModelOutput:
 class MultiAgentModelOutput:
     actions: AgentGroupedTensor | None = None
     log_probs: AgentGroupedTensor | None = None
-    distributions: Dict[str, torch.distributions] | None = None
+    distributions: Dict[str, Distribution] | None = None
     values: AgentGroupedTensor | None = None
     rnn_states: Dict[str, RNN_State] | None = None
     actor_rnn_states: Dict[str, RNN_State] | None = None
@@ -75,7 +75,7 @@ class ActionOutput:
     # Original actions that output by the model
     policy_actions: Optional[Tensor] = None
 
-    distributions: Optional[torch.distributions] | None = None
+    distributions: Optional[Distribution] | None = None
 
     log_probs: Optional[Any] = None
     values: Optional[Any] = None

@@ -1,5 +1,6 @@
 from .layers import _init_layer, mlp_block, cnn_block, pooling_block, gru_block, lstm_block, Moments
 from .distributions import (
+    Distribution,
     CategoricalDistribution,
     DiagGaussianDistribution,
     ActivatedDiagGaussianDistribution,
