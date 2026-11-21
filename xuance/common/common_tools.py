@@ -94,6 +94,9 @@ def get_arguments(algo, env, env_id, config_path=None, parser_args=None):
         # load parser_args and rewrite the parameters if their names are same.
         if parser_args is not None:
             configs = [recursive_dict_update(config_i, parser_args.__dict__) for config_i in configs]
+        for config_i in configs:
+            if not config_i.get('env_id'):
+                config_i['env_id'] = env_id
         args = [SN(**config_i) for config_i in configs]
         for arg in args:
             if arg.dl_toolbox == "torch":
@@ -129,7 +132,7 @@ def get_arguments(algo, env, env_id, config_path=None, parser_args=None):
         # load parser_args and rewrite the parameters if their names are same.
         if parser_args is not None:
             configs = recursive_dict_update(configs, parser_args.__dict__)
-        if not ('env_id' in configs.keys()):
+        if not configs.get('env_id'):
             configs['env_id'] = env_id
         args = SN(**configs)
         if args.dl_toolbox == "torch":
