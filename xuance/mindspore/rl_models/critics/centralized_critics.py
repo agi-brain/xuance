@@ -1,13 +1,12 @@
-import torch
 from copy import deepcopy
-from typing import Type, Sequence, Optional, Callable, Union, Dict, Any
+from typing import Type, Sequence, Optional, Callable, Union, Dict, Any, Tuple
 from gymnasium.spaces import Discrete, Box
-from torch import Tensor
-from torch.nn import Module, ModuleDict
 from xuance.common import AgentGrouping
+
+from xuance.mindspore import ms, ops, Tensor, Module, ModuleDict
 from xuance.mindspore.utils import AgentGroupedTensor
 from xuance.mindspore.rl_models.heads import ValueHead, QValueHead
-from xuance.mindspore.rl_models.modules import MultiAgentModelOutput, CriticOutput, TwinCriticOutput, RNN_State
+from xuance.mindspore.rl_models.modules import MultiAgentModelOutput, TwinCriticOutput, RNN_State
 
 
 class CentralizedStateValueCritic(Module):
@@ -22,7 +21,6 @@ class CentralizedStateValueCritic(Module):
                  initializer: Optional[Callable[..., Tensor]] = None,
                  activation: Optional[Type[Module]] = None,
                  use_rnn: bool = False,
-                 device: Optional[Union[str, int, torch.device]] = None,
                  **kwargs):
         super().__init__()
 
@@ -33,7 +31,6 @@ class CentralizedStateValueCritic(Module):
         self.n_agents = len(self.agent_keys)
         self.n_group_agents = {k: len(self.groups[k]) for k in self.group_keys}
         self.use_rnn = use_rnn
-        self.device = device
 
         self.state_space = state_space
         if isinstance(state_space, Box):
@@ -52,16 +49,16 @@ class CentralizedStateValueCritic(Module):
             normalizer=normalizer,
             initializer=initializer,
             activation=activation,
-            device=device,
             **kwargs,
         )
 
     def construct(self,
-                observations: AgentGroupedTensor,
-                agent_indices: AgentGroupedTensor,
-                expanded_states: Optional[Tensor] = None,  # shape: batch * T * dim_S or batch * T * N * dim_S (for RNN)
-                rnn_states: Dict[str, RNN_State | dict] = None,
-                **kwargs) -> MultiAgentModelOutput:
+                  observations: AgentGroupedTensor,
+                  agent_indices: AgentGroupedTensor,
+                  expanded_states: Optional[Tensor] = None,
+                  # shape: batch * T * dim_S or batch * T * N * dim_S (for RNN)
+                  rnn_states: Dict[str, RNN_State | dict] = None,
+                  **kwargs) -> MultiAgentModelOutput:
         rnn_states_new, rep_out, obs_features, evalQ = {}, {}, {}, {}
         input_shape = observations.grouped_tensor[self.group_keys[0]].shape
         batch_size = input_shape[0]
@@ -87,9 +84,9 @@ class CentralizedStateValueCritic(Module):
             for i, agent_key in enumerate(group_agents):
                 obs_features[agent_key] = group_obs_features[:, i]
 
-        critic_input = torch.stack([obs_features[k] for k in self.agent_keys], dim=1)  # batch * N * ...
+        critic_input = ops.stack([obs_features[k] for k in self.agent_keys], axis=1)  # batch * N * ...
         if expanded_states is not None:
-            critic_input = torch.concat([expanded_states, critic_input], dim=-1)
+            critic_input = ops.concat([expanded_states, critic_input], axis=-1)
         values = self.critic_head(critic_input, **kwargs)
 
         return MultiAgentModelOutput(
@@ -109,7 +106,6 @@ class CentralizedActionValueCritic(Module):
                  normalizer: Optional[Type[Module]] = None,
                  initializer: Optional[Callable[..., Tensor]] = None,
                  activation: Optional[Type[Module]] = None,
-                 device: Optional[Union[str, int, torch.device]] = None,
                  **kwargs):
         super().__init__()
 
@@ -125,19 +121,16 @@ class CentralizedActionValueCritic(Module):
             normalizer=normalizer,
             initializer=initializer,
             activation=activation,
-            device=device,
             **kwargs,
         )
 
     def construct(self,
-                joint_observations: Union[Tensor, dict],
-                joint_actions: Union[Tensor, dict],
-                **kwargs) -> CriticOutput:
-        joint_obs_rep_out = self.representation(joint_observations, **kwargs)
-        return CriticOutput(
-            representations=joint_obs_rep_out,
-            values=self.critic_head(torch.concat([joint_obs_rep_out.embeddings, joint_actions], dim=-1), **kwargs)
-        )
+                  joint_observations: Union[Tensor, dict],
+                  joint_actions: Union[Tensor, dict],
+                  **kwargs) -> Tuple[Tensor, ...]:
+        rep_embeddings, rnn_states = self.representation(joint_observations, **kwargs)
+        values = self.critic_head(ops.concat([rep_embeddings, joint_actions], axis=-1), **kwargs)
+        return values, rnn_states
 
 
 class TwinCentralizedActionValueCritic(Module):
@@ -153,7 +146,6 @@ class TwinCentralizedActionValueCritic(Module):
                  normalizer: Optional[Type[Module]] = None,
                  initializer: Optional[Callable[..., Tensor]] = None,
                  activation: Optional[Type[Module]] = None,
-                 device: Optional[Union[str, int, torch.device]] = None,
                  **kwargs):
         super().__init__()
 
@@ -172,7 +164,6 @@ class TwinCentralizedActionValueCritic(Module):
             normalizer=normalizer,
             initializer=initializer,
             activation=activation,
-            device=device,
             **kwargs,
         )
 
@@ -180,11 +171,11 @@ class TwinCentralizedActionValueCritic(Module):
         self.critic_head_2 = ValueHead(**value_head_input)
 
     def construct(self,
-                joint_observations: Union[Tensor, dict],
-                joint_actions: Union[Tensor, dict],
-                rnn_states_1: Dict[str, RNN_State | dict] = None,
-                rnn_states_2: Dict[str, RNN_State | dict] = None,
-                **kwargs) -> TwinCriticOutput:
+                  joint_observations: Union[Tensor, dict],
+                  joint_actions: Union[Tensor, dict],
+                  rnn_states_1: Dict[str, RNN_State | dict] = None,
+                  rnn_states_2: Dict[str, RNN_State | dict] = None,
+                  **kwargs) -> TwinCriticOutput:
         if rnn_states_1 is not None:
             kwargs["rnn_states"] = rnn_states_1
         rep_out_1 = self.representation_1(joint_observations, **kwargs)
@@ -194,8 +185,8 @@ class TwinCentralizedActionValueCritic(Module):
         return TwinCriticOutput(
             representations_1=rep_out_1,
             representations_2=rep_out_2,
-            values_1=self.critic_head_1(torch.concat([rep_out_1.embeddings, joint_actions], dim=-1), **kwargs),
-            values_2=self.critic_head_2(torch.concat([rep_out_2.embeddings, joint_actions], dim=-1), **kwargs)
+            values_1=self.critic_head_1(ops.concat([rep_out_1.embeddings, joint_actions], axis=-1), **kwargs),
+            values_2=self.critic_head_2(ops.concat([rep_out_2.embeddings, joint_actions], axis=-1), **kwargs)
         )
 
 
@@ -212,7 +203,6 @@ class CounterfactualCentralizedCritic(Module):
                  initializer: Optional[Callable[..., Tensor]] = None,
                  activation: Optional[Type[Module]] = None,
                  use_rnn: bool = False,
-                 device: Optional[Union[str, int, torch.device]] = None,
                  **kwargs):
         super().__init__()
 
@@ -223,7 +213,6 @@ class CounterfactualCentralizedCritic(Module):
         self.n_agents = len(self.agent_keys)
         self.n_group_agents = {k: len(self.groups[k]) for k in self.group_keys}
         self.use_rnn = use_rnn
-        self.device = device
 
         self.state_space = state_space
         self.action_space = action_space
@@ -240,23 +229,22 @@ class CounterfactualCentralizedCritic(Module):
             normalizer=normalizer,
             initializer=initializer,
             activation=activation,
-            device=device,
             **kwargs,
         )
 
     def construct(self,
-                states: Tensor,
-                observations: AgentGroupedTensor,
-                joint_actions: Tensor,
-                agent_indices: AgentGroupedTensor,
-                rnn_states: Dict[str, RNN_State | dict] = None,
-                **kwargs) -> MultiAgentModelOutput:
+                  states: Tensor,
+                  observations: AgentGroupedTensor,
+                  joint_actions: Tensor,
+                  agent_indices: AgentGroupedTensor,
+                  rnn_states: Dict[str, RNN_State | dict] = None,
+                  **kwargs) -> MultiAgentModelOutput:
         rnn_states_new, rep_out, evalQ = {}, {}, {}
         input_shape = observations.grouped_tensor[self.group_keys[0]].shape
         batch_size = input_shape[0]
         seq_len = input_shape[2] if self.use_rnn else 1
 
-        agent_mask_base = (1 - torch.eye(self.n_agents, dtype=torch.float32, device=self.device)).unsqueeze(-1)
+        agent_mask_base = (1 - ops.eye(self.n_agents, dtype=ms.float32)).unsqueeze(-1)
         for group, group_agents in self.groups.items():
             n_agent = self.n_group_agents[group]
             batch_shape = (batch_size, n_agent, seq_len) if self.use_rnn else (batch_size, n_agent)
@@ -283,7 +271,7 @@ class CounterfactualCentralizedCritic(Module):
             group_obs_features = representation_output.embeddings.reshape(*batch_shape, -1)
 
             masked_joint_actions = expanded_joint_actions * agent_mask
-            critic_input = torch.concat([expanded_states, group_obs_features, masked_joint_actions], dim=-1)
+            critic_input = ops.concat([expanded_states, group_obs_features, masked_joint_actions], axis=-1)
             evalQ[group] = self.critic_head(critic_input, **kwargs)
 
         return MultiAgentModelOutput(

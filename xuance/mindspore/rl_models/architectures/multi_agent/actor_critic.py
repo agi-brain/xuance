@@ -535,9 +535,9 @@ class MultiAgentDeterministicActorCritic(IndependentDeterministicActorCritic):
             if self.use_rnn:
                 critic_kwargs["rnn_states"] = rnn_states[group]
 
-            critic_out = self.critics[group](expand_joint_obs, expand_joint_act, **critic_kwargs)
+            values, _ = self.critics[group](expand_joint_obs, expand_joint_act, **critic_kwargs)
 
-            q_eval[group] = critic_out.values.reshape(*batch_shape, -1)
+            q_eval[group] = values.reshape(*batch_shape, -1)
 
         return AgentGroupedTensor(q_eval, self.grouping)
 
@@ -575,9 +575,9 @@ class MultiAgentDeterministicActorCritic(IndependentDeterministicActorCritic):
             if self.use_rnn:
                 target_critic_kwargs["rnn_states"] = rnn_states[group]
 
-            target_critic_out = self.target_critics[group](expand_joint_obs, expand_joint_act, **target_critic_kwargs)
+            values, _ = self.target_critics[group](expand_joint_obs, expand_joint_act, **target_critic_kwargs)
 
-            q_target[group] = target_critic_out.values.reshape(*batch_shape, -1)
+            q_target[group] = values.reshape(*batch_shape, -1)
 
         return AgentGroupedTensor(q_target, self.grouping)
 
