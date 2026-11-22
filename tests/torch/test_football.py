@@ -1,6 +1,7 @@
 # Test the value-based algorithms with PyTorch.
 
 from argparse import Namespace
+import importlib.util
 from xuance import get_runner
 import unittest
 
@@ -9,6 +10,7 @@ device = 'cuda:0'
 test_mode = False
 
 
+@unittest.skipUnless(importlib.util.find_spec("gfootball") is not None, "gfootball is not installed")
 class TestFootball(unittest.TestCase):
     def test_dqn(self):
         args = Namespace(dl_toolbox='torch', device=device, running_steps=running_steps, test_mode=test_mode)
