@@ -30,7 +30,7 @@ class COMA_Learner(LearnerMAS):
         self.use_value_norm = config.use_value_norm
         self.vf_coef, self.ent_coef = config.vf_coef, config.ent_coef
         self.mse_loss = nn.MSELoss()
-        self.huber_loss = nn.HuberLoss(reduction="none", delta=self.huber_delta)
+        self.huber_loss = nn.HuberLoss(reduction="none", delta=self.huber_delta) if self.use_huber_loss else None
 
         self.sync_frequency = config.sync_frequency
         self.n_actions = {k: int(self.policy.action_space[k].n) for k in self.model_keys}

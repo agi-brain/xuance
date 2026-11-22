@@ -26,7 +26,7 @@ class IAC_Learner(LearnerMAS):
         self.use_value_norm = config.use_value_norm
         self.vf_coef, self.ent_coef = config.vf_coef, config.ent_coef
         self.mse_loss = nn.MSELoss()
-        self.huber_loss = nn.HuberLoss(reduction="none", delta=self.huber_delta)
+        self.huber_loss = nn.HuberLoss(reduction="none", delta=self.huber_delta) if self.use_huber_loss else None
         self.softmax = nn.Softmax(axis=-1)
         self.is_continuous = self.policy.is_continuous
         if self.use_value_norm:

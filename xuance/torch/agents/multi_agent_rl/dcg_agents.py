@@ -1,8 +1,6 @@
 import torch
-import numpy as np
 from torch.nn import Module
 from argparse import Namespace
-from operator import itemgetter
 from gymnasium.spaces import Space
 from xuance.common import List, Optional, MultiAgentBaseCallback
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
@@ -135,13 +133,13 @@ class DCG_Agents(OffPolicyMARLAgents):
                                                                      rnn_states=rnn_states,
                                                                      use_target_net=False)
         if self.use_actions_mask:
-            if self.use_parameter_sharing:
-                avail_actions_input = avail_actions_input[self.model_keys[0]].reshape(batch_size, self.n_agents, -1)
-            else:
-                avail_actions_input = np.stack(itemgetter(*self.agent_keys)(avail_actions_input),
-                                               axis=-2).reshape(batch_size, self.n_agents, -1)
+            avail_actions = torch.stack(
+                [avail_actions_input.agent_wise[k] for k in self.agent_keys], dim=1
+            ).reshape(batch_size, self.n_agents, -1)
+        else:
+            avail_actions = None
         hidden_states = hidden_states.reshape([batch_size, self.n_agents, -1])
-        actions = self.learner.act(hidden_states, avail_actions=avail_actions_input.grouped_tensor)
+        actions = self.learner.act(hidden_states, avail_actions=avail_actions)
 
         actions_out = actions.reshape([batch_size, self.n_agents]).cpu().numpy()
         actions_list = [{k: actions_out[e, i] for i, k in enumerate(self.agent_keys)} for e in range(batch_size)]

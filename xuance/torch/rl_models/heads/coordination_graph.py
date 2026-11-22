@@ -4,10 +4,20 @@ import torch.nn as nn
 from torch import Tensor
 from xuance.common import Optional, Union
 
-try:
-    import torch_scatter
-except ImportError:
-    print("The module torch_scatter is not installed.")
+
+def scatter_add(src: Tensor, index: Tensor, dim: int, dim_size: int) -> Tensor:
+    """Pure-PyTorch equivalent of ``torch_scatter.scatter_add`` along ``dim``."""
+    out_shape = list(src.shape)
+    out_shape[dim] = dim_size
+    out = src.new_zeros(out_shape)
+    if index.numel() == 0:
+        return out
+    idx = index.to(dtype=torch.long, device=src.device)
+    if idx.dim() == 1 and src.dim() > 1:
+        view_shape = [1] * src.dim()
+        view_shape[dim] = idx.shape[0]
+        idx = idx.view(*view_shape).expand_as(src)
+    return out.scatter_add_(dim, idx, src)
 
 
 class DCG_Utility(nn.Module):
@@ -143,9 +153,9 @@ class Coordination_Graph(object):
         for i, edge in enumerate(self.edges):
             self.edges_from[i] = edge[0]
             self.edges_to[i] = edge[1]
-        self.edges_n_in = torch_scatter.scatter_add(src=self.edges_to.new_ones(len(self.edges_to)),
-                                                    index=self.edges_to, dim=0, dim_size=self.n_vertexes) \
-                          + torch_scatter.scatter_add(src=self.edges_to.new_ones(len(self.edges_to)),
-                                                      index=self.edges_from, dim=0, dim_size=self.n_vertexes)
-        self.edges_n_in = self.edges_n_in.float()
+        ones = self.edges_to.new_ones(len(self.edges_to))
+        self.edges_n_in = (
+            scatter_add(src=ones, index=self.edges_to, dim=0, dim_size=self.n_vertexes)
+            + scatter_add(src=ones, index=self.edges_from, dim=0, dim_size=self.n_vertexes)
+        ).float()
         return

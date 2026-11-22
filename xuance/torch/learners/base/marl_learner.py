@@ -199,7 +199,7 @@ class OnPolicyMultiAgentLearner(LearnerMAS):
         self.ent_coef = config.ent_coef
 
         self.mse_loss = nn.MSELoss()
-        self.huber_loss = nn.HuberLoss(reduction="none", delta=self.huber_delta)
+        self.huber_loss = nn.HuberLoss(reduction="none", delta=self.huber_delta) if self.use_huber_loss else None
         if self.use_value_norm:
             self.value_normalizer = {key: ValueNorm(1).to(self.device) for key in self.group_keys}
         else:

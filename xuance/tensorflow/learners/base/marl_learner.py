@@ -274,8 +274,11 @@ class OnPolicyMultiAgentLearner(LearnerMAS):
         self.ent_coef = config.ent_coef
 
         self.mse_loss = tf.keras.losses.MeanSquaredError()
-        self.huber_loss = tf.keras.losses.Huber(delta=self.huber_delta,
-                                                reduction=tf.keras.losses.Reduction.NONE)
+        self.huber_loss = (
+            tf.keras.losses.Huber(delta=self.huber_delta, reduction=tf.keras.losses.Reduction.NONE)
+            if self.use_huber_loss
+            else None
+        )
         if self.use_value_norm:
             self.value_normalizer = {key: ValueNorm(1) for key in self.group_keys}
         else:

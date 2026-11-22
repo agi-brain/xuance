@@ -9,12 +9,8 @@ from xuance.common import AgentGrouping
 import torch
 from xuance.torch import Tensor, Module
 from xuance.torch.learners import OffPolicyMultiAgentLearner
+from xuance.torch.rl_models.heads.coordination_graph import scatter_add
 from xuance.torch.rl_models.modules import OffPolicyMARLBatch
-
-try:
-    import torch_scatter
-except ImportError:
-    print("The module torch_scatter is not installed.")
 
 
 class DCG_Learner(OffPolicyMultiAgentLearner):
@@ -59,10 +55,8 @@ class DCG_Learner(OffPolicyMultiAgentLearner):
         msg_ij = torch.zeros(batch_size, n_edges, self.dim_act).to(self.device)  # i -> j (send)
         msg_ji = torch.zeros(batch_size, n_edges, self.dim_act).to(self.device)  # j -> i (receive)
         #
-        msg_forward = torch_scatter.scatter_add(src=msg_ij, index=self.model.graph.edges_to, dim=1,
-                                                dim_size=n_vertexes)
-        msg_backward = torch_scatter.scatter_add(src=msg_ji, index=self.model.graph.edges_from, dim=1,
-                                                 dim_size=n_vertexes)
+        msg_forward = scatter_add(src=msg_ij, index=self.model.graph.edges_to, dim=1, dim_size=n_vertexes)
+        msg_backward = scatter_add(src=msg_ji, index=self.model.graph.edges_from, dim=1, dim_size=n_vertexes)
         utility = f_i_mean + msg_forward + msg_backward
         if len(self.model.graph.edges) != 0:
             for i in range(self.config.n_msg_iterations):
@@ -74,10 +68,8 @@ class DCG_Learner(OffPolicyMultiAgentLearner):
                     msg_ij -= msg_ij.mean(dim=-1, keepdim=True)
                     msg_ji -= msg_ji.mean(dim=-1, keepdim=True)
 
-                msg_forward = torch_scatter.scatter_add(src=msg_ij, index=self.model.graph.edges_to, dim=1,
-                                                        dim_size=n_vertexes)
-                msg_backward = torch_scatter.scatter_add(src=msg_ji, index=self.model.graph.edges_from, dim=1,
-                                                         dim_size=n_vertexes)
+                msg_forward = scatter_add(src=msg_ij, index=self.model.graph.edges_to, dim=1, dim_size=n_vertexes)
+                msg_backward = scatter_add(src=msg_ji, index=self.model.graph.edges_from, dim=1, dim_size=n_vertexes)
                 utility = f_i_mean + msg_forward + msg_backward
         if avail_actions is not None:
             avail_actions = torch.as_tensor(avail_actions, device=self.device)
