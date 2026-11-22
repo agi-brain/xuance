@@ -42,14 +42,14 @@ setup(
                   "torchvision"],
         "tensorflow": ["tensorflow==2.19.0",
                        "keras==3.10.0"],
-        "mindspore": ["mindspore==2.6.0",
+        "mindspore": ["mindspore==2.7.2",
                       "protobuf==3.20.0"],
         "all": [
             "torch",
             "torchvision",
             "tensorflow==2.19.0",
             "tf_keras==2.19.0",
-            "mindspore==2.6.0",  # mindspore might be installed manually.
+            "mindspore==2.7.2",  # mindspore might be installed manually.
             "protobuf==3.20.0",
         ],
         "tune": [
