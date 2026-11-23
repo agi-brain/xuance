@@ -136,7 +136,7 @@ class ITD3_Learner(OffPolicyMultiAgentLearner):
                 _, _, q_policy = self.model.Qpolicy(observations=observations_t,
                                                     actions=actions_eval,
                                                     agent_indices=agent_indices_t,
-                                                    grou_key=group,
+                                                    group_key=group,
                                                     rnn_states_1=rnn_states_critic_1,
                                                     rnn_states_2=rnn_states_critic_2)
                 q_policy_i = q_policy.packed(group).reshape(-1)

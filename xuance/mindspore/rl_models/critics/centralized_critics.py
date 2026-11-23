@@ -175,19 +175,18 @@ class TwinCentralizedActionValueCritic(Module):
                   joint_actions: Union[Tensor, dict],
                   rnn_states_1: Dict[str, RNN_State | dict] = None,
                   rnn_states_2: Dict[str, RNN_State | dict] = None,
-                  **kwargs) -> TwinCriticOutput:
+                  **kwargs) -> Tuple[Tensor, ...]:
         if rnn_states_1 is not None:
             kwargs["rnn_states"] = rnn_states_1
-        rep_out_1 = self.representation_1(joint_observations, **kwargs)
-        if rnn_states_1 is not None:
+        rep_embeddings_1, rnn_states_new_1 = self.representation_1(joint_observations, **kwargs)
+        if rnn_states_2 is not None:
             kwargs["rnn_states"] = rnn_states_2
-        rep_out_2 = self.representation_2(joint_observations, **kwargs)
-        return TwinCriticOutput(
-            representations_1=rep_out_1,
-            representations_2=rep_out_2,
-            values_1=self.critic_head_1(ops.concat([rep_out_1.embeddings, joint_actions], axis=-1), **kwargs),
-            values_2=self.critic_head_2(ops.concat([rep_out_2.embeddings, joint_actions], axis=-1), **kwargs)
-        )
+        rep_embeddings_2, rnn_states_new_2 = self.representation_2(joint_observations, **kwargs)
+
+        values_1 = self.critic_head_1(ops.concat([rep_embeddings_1, joint_actions], axis=-1), **kwargs)
+        values_2 = self.critic_head_2(ops.concat([rep_embeddings_2, joint_actions], axis=-1), **kwargs)
+
+        return values_1, values_2, rnn_states_new_1, rnn_states_new_2
 
 
 class CounterfactualCentralizedCritic(Module):
