@@ -32,6 +32,7 @@ from .dummy import DummyVecEnv_Atari
 from .dummy import DummyVecMultiAgentEnv
 from .dummy import DummyVecEnv_StarCraft2
 from .dummy import DummyVecEnv_Football
+from .native import NativeVecMultiAgentEnv
 
 REGISTRY_VEC_ENV = {
     "DummyVecEnv": DummyVecEnv,

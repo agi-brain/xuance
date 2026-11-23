@@ -1,9 +1,11 @@
 from xuance.environment.utils import EnvironmentDict
 from xuance.common import Optional
 from xuance.environment.multi_agent_env.mpe import MPE_Env
+from xuance.environment.multi_agent_env.vmas import VMAS_Env
 
 REGISTRY_MULTI_AGENT_ENV: Optional[EnvironmentDict] = {
     "mpe": MPE_Env,
+    "vmas": VMAS_Env,
 }
 
 try:

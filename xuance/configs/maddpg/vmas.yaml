@@ -1,0 +1,54 @@
+agent: "MADDPG"  # The agent name.
+env_name: "vmas"  # The environment name.
+env_id: null  # Set dynamically via get_runner(..., env_id="<scenario>") or CLI.
+env_seed: 1  # The random seed of the environment.
+continuous_action: True  # VMAS continuous control.
+vmas_device: "cpu"  # Simulation device for VMAS ("cpu" or "cuda").
+max_episode_steps: 200  # Horizon per episode (VMAS max_steps).
+scenario_kwargs: {}  # Extra scenario arguments forwarded to vmas.make_env.
+render: False
+learner: "MADDPG_Learner"
+policy: "MADDPG_Policy"
+representation: "Basic_Identical"
+vectorize: "NativeVecMultiAgentEnv"  # Uses VMAS's native batched stepping.
+runner: "MARL"
+
+use_rnn: False
+rnn: "GRU"
+N_recurrent_layers: 1
+fc_hidden_sizes: [64, ]
+recurrent_hidden_size: 64
+dropout: 0
+
+representation_hidden_size: []
+actor_hidden_size: [128, 128]
+critic_hidden_size: [128, 128]
+activation: "leaky_relu"
+activation_action: "tanh"  # VMAS continuous actions lie in [-1, 1].
+use_parameter_sharing: False
+use_actions_mask: False
+
+seed: 1
+parallels: 32
+buffer_size: 100000
+batch_size: 256
+learning_rate_actor: 0.001
+learning_rate_critic: 0.001
+gamma: 0.99
+tau: 0.005
+
+start_noise: 1.0
+end_noise: 0.01
+sigma: 0.1
+start_training: 1000
+running_steps: 1000000
+training_frequency: 25
+
+use_grad_clip: False
+grad_clip_norm: 0.5
+
+eval_interval: 50000
+test_episode: 5
+
+log_dir: "logs/maddpg/"
+model_dir: "models/maddpg/"

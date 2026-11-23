@@ -66,6 +66,7 @@ setup(
         "minigrid": ["minigrid==3.0.0"],
         "metadrive": ["metadrive"],
         "rware": ["rware"],
+        "vmas": ["vmas"],
         "einops": ["einops==0.8.1"],  # default version is 0.8.1 for ViT
     },
     install_requires=[

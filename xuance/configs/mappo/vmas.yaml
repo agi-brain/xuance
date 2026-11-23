@@ -1,0 +1,70 @@
+agent: "MAPPO"  # The agent name.
+env_name: "vmas"  # The environment name.
+env_id: null  # Set dynamically via get_runner(..., env_id="<scenario>") or CLI.
+env_seed: 1  # The random seed of the environment.
+continuous_action: True  # VMAS supports continuous control by default.
+vmas_device: "cpu"  # Simulation device for VMAS ("cpu" or "cuda").
+max_episode_steps: 200  # Horizon per episode (VMAS max_steps).
+scenario_kwargs: {}  # Extra scenario arguments forwarded to vmas.make_env.
+render: False
+learner: "MAPPO_Learner"
+policy: "Gaussian_MAAC_Policy"
+representation: "Basic_MLP"
+vectorize: "NativeVecMultiAgentEnv"  # Uses VMAS's native batched stepping.
+runner: "MARL"
+
+# recurrent settings for Basic_RNN representation.
+use_rnn: False
+rnn: "GRU"
+fc_hidden_sizes: [64, 64, 64]
+recurrent_hidden_size: 64
+N_recurrent_layers: 1
+dropout: 0
+normalize: "LayerNorm"
+initialize: "orthogonal"
+gain: 0.01
+
+representation_hidden_size: [128, ]
+actor_hidden_size: [128, ]
+critic_hidden_size: [128, ]
+activation: "relu"
+activation_action: "tanh"  # VMAS continuous actions lie in [-1, 1].
+use_parameter_sharing: True
+use_actions_mask: False
+
+seed: 1
+parallels: 32
+buffer_size: 3200
+n_epochs: 10
+n_minibatch: 4
+learning_rate: 0.0005
+weight_decay: 0
+
+vf_coef: 0.5
+ent_coef: 0.01
+target_kl: 0.25
+clip_range: 0.2
+clip_type: 1
+gamma: 0.99
+
+# tricks
+use_linear_lr_decay: False
+end_factor_lr_decay: 0.5
+use_global_state: False
+use_value_clip: True
+value_clip_range: 0.2
+use_value_norm: True
+use_huber_loss: True
+huber_delta: 10.0
+use_advnorm: True
+use_gae: True
+gae_lambda: 0.95
+use_grad_clip: True
+grad_clip_norm: 10.0
+
+running_steps: 1000000
+eval_interval: 50000
+test_episode: 5
+
+log_dir: "logs/mappo/"
+model_dir: "models/mappo/"
