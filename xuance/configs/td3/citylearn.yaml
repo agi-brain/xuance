@@ -1,0 +1,48 @@
+agent: "TD3"
+env_name: "CityLearn"
+env_id: null  # Set dynamically via get_runner(..., env_id="<dataset>") or CLI.
+env_seed: 1
+episode_time_steps: 168
+normalize_obs: True
+citylearn_kwargs: {}
+render: False
+vectorize: "DummyVecEnv"
+representation: "Basic_Identical"
+policy: "TD3_Policy"
+learner: "TD3_Learner"
+runner: "DRL"
+
+representation_hidden_size:
+actor_hidden_size: [256, 256]
+critic_hidden_size: [256, 256]
+activation: "leaky_relu"
+activation_action: "tanh"
+
+seed: 1
+parallels: 4
+buffer_size: 100000
+batch_size: 256
+learning_rate_actor: 0.0003
+actor_update_delay: 2
+learning_rate_critic: 0.0003
+gamma: 0.99
+tau: 0.005
+
+start_noise: 0.2
+end_noise: 0.05
+training_frequency: 1
+running_steps: 100000
+start_training: 1000
+
+use_grad_clip: False
+clip_type: 1
+grad_clip_norm: 0.5
+use_obsnorm: False
+use_rewnorm: False
+obsnorm_range: 5
+rewnorm_range: 5
+
+eval_interval: 10000
+test_episode: 3
+log_dir: "logs/td3/"
+model_dir: "models/td3/"

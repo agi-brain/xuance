@@ -48,6 +48,12 @@ try:
 except Exception as error:
     REGISTRY_MULTI_AGENT_ENV["atari"] = str(error)
 
+try:
+    from xuance.environment.multi_agent_env.citylearn import CityLearn_MultiAgentEnv
+    REGISTRY_MULTI_AGENT_ENV['citylearn'] = CityLearn_MultiAgentEnv
+except Exception as error:
+    REGISTRY_MULTI_AGENT_ENV["citylearn"] = str(error)
+
 __all__ = [
     "REGISTRY_MULTI_AGENT_ENV",
 ]

@@ -38,6 +38,12 @@ try:
 except Exception as error:
     REGISTRY_ENV["Platform"] = str(error)
 
+try:
+    from xuance.environment.single_agent_env.citylearn import CityLearn_Env
+    REGISTRY_ENV['CityLearn'] = CityLearn_Env
+except Exception as error:
+    REGISTRY_ENV["CityLearn"] = str(error)
+
 __all__ = [
     "REGISTRY_ENV",
 ]

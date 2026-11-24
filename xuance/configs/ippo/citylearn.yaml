@@ -1,0 +1,71 @@
+agent: "IPPO"
+env_name: "citylearn"
+env_id: null  # Set dynamically via get_runner(..., env_id="<dataset>") or CLI.
+env_seed: 1
+continuous_action: True
+episode_time_steps: 168
+normalize_obs: True
+pad_spaces: True  # Zero-pads heterogeneous building observations/actions when sharing parameters.
+citylearn_kwargs: {}
+render: False
+learner: "IPPO_Learner"
+policy: "Gaussian_MAAC_Policy"
+representation: "Basic_MLP"
+vectorize: "DummyVecMultiAgentEnv"
+runner: "MARL"
+
+# recurrent settings for Basic_RNN representation.
+use_rnn: False
+rnn: "GRU"
+fc_hidden_sizes: [64, 64, 64]
+recurrent_hidden_size: 64
+N_recurrent_layers: 1
+dropout: 0
+normalize: "LayerNorm"
+initialize: "orthogonal"
+gain: 0.01
+
+representation_hidden_size: [128, ]
+actor_hidden_size: [128, ]
+critic_hidden_size: [128, ]
+activation: "relu"
+activation_action: "tanh"
+use_parameter_sharing: True
+use_actions_mask: False
+
+seed: 1
+parallels: 4
+buffer_size: 672
+n_epochs: 10
+n_minibatch: 4
+learning_rate: 0.0005
+weight_decay: 0
+
+vf_coef: 0.5
+ent_coef: 0.01
+target_kl: 0.25
+clip_range: 0.2
+clip_type: 1
+gamma: 0.99
+
+# tricks
+use_linear_lr_decay: False
+end_factor_lr_decay: 0.5
+use_global_state: False
+use_value_clip: True
+value_clip_range: 0.2
+use_value_norm: True
+use_huber_loss: True
+huber_delta: 10.0
+use_advnorm: True
+use_gae: True
+gae_lambda: 0.95
+use_grad_clip: True
+grad_clip_norm: 10.0
+
+running_steps: 100000
+eval_interval: 10000
+test_episode: 3
+
+log_dir: "logs/ippo/"
+model_dir: "models/ippo/"
