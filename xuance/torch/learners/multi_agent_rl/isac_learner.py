@@ -22,12 +22,15 @@ class ISAC_Learner(OffPolicyMultiAgentLearner):
         self.alpha = {key: config.alpha for key in self.group_keys}
         self.use_automatic_entropy_tuning = config.use_automatic_entropy_tuning
         if self.use_automatic_entropy_tuning:
-            self.target_entropy = {key: -model.actors[key].action_space.shape[-1] for key in self.group_keys}
+            self.target_entropy = self.get_target_entropy()
             self.log_alpha = {key: nn.Parameter(torch.zeros(1, requires_grad=True, device=self.device))
                               for key in self.group_keys}
             self.alpha = {key: self.log_alpha[key].exp() for key in self.group_keys}
             self.alpha_optimizer = {key: torch.optim.Adam([self.log_alpha[key]], lr=config.learning_rate_actor)
                                     for key in self.group_keys}
+
+    def get_target_entropy(self):
+        return {key: -self.model.actors[key].action_space.shape[-1] for key in self.group_keys}
 
     def build_optimizer(self):
         self.optimizer = {

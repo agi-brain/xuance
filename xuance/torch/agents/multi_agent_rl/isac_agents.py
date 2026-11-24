@@ -11,7 +11,7 @@ from xuance.torch.agents import OffPolicyMARLAgents
 from xuance.torch.rl_models import (CategoricalActor, SAC_GaussianActor, TwinActionValueCritic,
                                     TwinDiscreteActionValueCritic)
 from xuance.torch.rl_models.modules import RNN_State, MARLActionOutput
-from xuance.torch.rl_models.architectures import IndependentSoftActorCritic
+from xuance.torch.rl_models.architectures import IndependentSoftActorCritic, IndependentSoftActorCriticDiscrete
 
 
 class ISAC_Agents(OffPolicyMARLAgents):
@@ -65,7 +65,7 @@ class ISAC_Agents(OffPolicyMARLAgents):
         elif isinstance(self.action_space[self.agent_keys[0]], gymnasium.spaces.Discrete):
             Actor = CategoricalActor
             Critic = TwinDiscreteActionValueCritic
-            # Architecture = IndependentSoftActorCriticDiscrete
+            Architecture = IndependentSoftActorCriticDiscrete
             self.continuous_control = False
         else:
             raise NotImplementedError

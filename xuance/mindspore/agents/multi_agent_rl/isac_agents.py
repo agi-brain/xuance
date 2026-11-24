@@ -1,4 +1,3 @@
-import torch
 import gymnasium
 from argparse import Namespace
 from gymnasium.spaces import Space
@@ -9,7 +8,7 @@ from xuance.mindspore import Module, ModuleDict
 from xuance.mindspore.utils import ActivationFunctions
 from xuance.mindspore.agents import OffPolicyMARLAgents
 from xuance.mindspore.rl_models import (CategoricalActor, SAC_GaussianActor, TwinActionValueCritic,
-                                    TwinDiscreteActionValueCritic)
+                                        TwinDiscreteActionValueCritic)
 from xuance.mindspore.rl_models.modules import RNN_State, MARLActionOutput
 from xuance.mindspore.rl_models.architectures import IndependentSoftActorCritic
 
@@ -53,8 +52,7 @@ class ISAC_Agents(OffPolicyMARLAgents):
             actor_hidden_size=self.config.actor_hidden_size,
             normalizer=self.normalize_fn,
             initializer=self.initializer,
-            activation=self.activation,
-            device=self.device
+            activation=self.activation
         )
         if isinstance(self.action_space[self.agent_keys[0]], gymnasium.spaces.Box):
             Actor = SAC_GaussianActor
@@ -97,8 +95,7 @@ class ISAC_Agents(OffPolicyMARLAgents):
                 critic_hidden_size=self.config.critic_hidden_size,
                 normalizer=self.normalize_fn,
                 initializer=self.initializer,
-                activation=self.activation,
-                device=self.device
+                activation=self.activation
             )
 
         # build the RL model
@@ -107,13 +104,11 @@ class ISAC_Agents(OffPolicyMARLAgents):
             actors=actor_networks,
             critics=critic_networks,
             use_rnn=self.use_rnn,
-            device=self.device,
             use_distributed_training=self.distributed_training
         )
 
         return model
 
-    @torch.no_grad()
     def get_actions(
             self,
             obs_list: List[dict],
@@ -148,7 +143,7 @@ class ISAC_Agents(OffPolicyMARLAgents):
 
         if self.continuous_control:
             actions.grouped_tensor = {
-                k: actions.grouped_tensor[k].reshape(batch_size, n, -1).cpu().numpy() for k, n in
+                k: actions.grouped_tensor[k].reshape(batch_size, n, -1).asnumpy() for k, n in
                 self.n_group_agents.items()
             }
             actions_list = [{
@@ -156,7 +151,7 @@ class ISAC_Agents(OffPolicyMARLAgents):
             } for e in range(batch_size)]
         else:
             actions.grouped_tensor = {
-                k: actions.grouped_tensor[k].reshape(batch_size, n).cpu().numpy() for k, n in
+                k: actions.grouped_tensor[k].reshape(batch_size, n).asnumpy() for k, n in
                 self.n_group_agents.items()
             }
             actions_list = [{
@@ -167,4 +162,3 @@ class ISAC_Agents(OffPolicyMARLAgents):
             env_actions=actions_list,
             rnn_states=rnn_states_new
         )
-

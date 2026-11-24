@@ -608,16 +608,15 @@ class IndependentSoftActorCritic(OffPolicyMultiAgentActorCritic):
             if self.use_rnn:
                 actor_kwargs["rnn_states"] = rnn_states[group]
 
-            actor_out = self.actors[group](observations.packed(group),
-                                           **actor_kwargs)
+            mu, log_std, rnn_states_new[group] = self.actors[group](observations.packed(group), **actor_kwargs)
+            self.actors[group].actor_head.policy_distribution.set_param(mu, ops.exp(log_std))
 
-            policy_dist = actor_out.distributions
+            policy_dist = self.actors[group].actor_head.policy_distribution
             group_actions, group_log_action_prob = policy_dist.activated_rsample_and_logprob()
 
             actions[group] = group_actions.reshape(*batch_shape, -1)
             log_probs[group] = group_log_action_prob.reshape(*batch_shape, -1)
             pi_dists[group] = policy_dist
-            rnn_states_new[group] = actor_out.representations.rnn_states
 
         return MultiAgentModelOutput(
             actions=AgentGroupedTensor(actions, self.grouping),
@@ -654,12 +653,12 @@ class IndependentSoftActorCritic(OffPolicyMultiAgentActorCritic):
                 critic_kwargs["rnn_states_1"] = rnn_states_1[group]
                 critic_kwargs["rnn_states_2"] = rnn_states_2[group]
 
-            critic_out = self.critics[group](observations.packed(group),
-                                             actions.packed(group),
-                                             **critic_kwargs)
+            values_1, values_2, _, _ = self.critics[group](observations.packed(group),
+                                                           actions.packed(group),
+                                                           **critic_kwargs)
 
-            q_eval_1[group] = critic_out.values_1.reshape(*batch_shape, -1)
-            q_eval_2[group] = critic_out.values_2.reshape(*batch_shape, -1)
+            q_eval_1[group] = values_1.reshape(*batch_shape, -1)
+            q_eval_2[group] = values_2.reshape(*batch_shape, -1)
 
         return AgentGroupedTensor(q_eval_1, self.grouping), AgentGroupedTensor(q_eval_2, self.grouping)
 
@@ -691,12 +690,10 @@ class IndependentSoftActorCritic(OffPolicyMultiAgentActorCritic):
                 critic_kwargs["rnn_states_1"] = rnn_states_1[group]
                 critic_kwargs["rnn_states_2"] = rnn_states_2[group]
 
-            target_critic_out = self.target_critics[group](observations.packed(group),
-                                                           actions.packed(group),
-                                                           **critic_kwargs)
+            group_values_1, group_values_2, _, _ = self.target_critics[group](observations.packed(group),
+                                                                              actions.packed(group),
+                                                                              **critic_kwargs)
 
-            group_values_1 = target_critic_out.values_1
-            group_values_2 = target_critic_out.values_2
             q_target[group] = ops.minimum(group_values_1, group_values_2).reshape(*batch_shape, -1)
 
         return AgentGroupedTensor(q_target, self.grouping)
@@ -724,9 +721,8 @@ class IndependentSoftActorCritic(OffPolicyMultiAgentActorCritic):
         return rnn_states_1, rnn_states_2
 
     def soft_update(self, tau=0.005):
-        for ep, tp in zip(self.critics.parameters(), self.target_critics.parameters()):
-            tp.data.mul_(1 - tau)
-            tp.data.add_(tau * ep.data)
+        for ep, tp in zip(self.critics.trainable_params(), self.target_critics.trainable_params()):
+            tp.assign_value((tau * ep.data + (1 - tau) * tp.data))
 
 
 class MultiAgentSoftActorCritic(IndependentSoftActorCritic):

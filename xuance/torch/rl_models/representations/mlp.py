@@ -17,7 +17,7 @@ class Basic_Identical(Module):
         self.output_shapes = {'state': (input_shape[0],)}
         self.device = device
 
-    def forward(self, observations: Tensor) -> RepresentationOutput:
+    def forward(self, observations: Tensor, **kwargs) -> RepresentationOutput:
         return RepresentationOutput(
             embeddings=torch.as_tensor(observations, dtype=torch.float32, device=self.device)
         )

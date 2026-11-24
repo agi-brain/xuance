@@ -7,6 +7,7 @@ from xuance.torch.rl_models.architectures.multi_agent.actor_critic import (
     IndependentDeterministicActorCritic,
     MultiAgentDeterministicActorCritic,
     IndependentSoftActorCritic,
+    IndependentSoftActorCriticDiscrete,
     MultiAgentSoftActorCritic,
     IndependentTwinDelayedActorCritic,
     MultiAgentTwinDelayedActorCritic
