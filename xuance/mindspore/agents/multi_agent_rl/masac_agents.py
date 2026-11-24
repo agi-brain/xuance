@@ -45,8 +45,7 @@ class MASAC_Agents(ISAC_Agents):
             actor_hidden_size=self.config.actor_hidden_size,
             normalizer=self.normalize_fn,
             initializer=self.initializer,
-            activation=self.activation,
-            device=self.device
+            activation=self.activation
         )
         if isinstance(self.action_space[self.agent_keys[0]], gymnasium.spaces.Box):
             Actor = SAC_GaussianActor
@@ -86,8 +85,7 @@ class MASAC_Agents(ISAC_Agents):
                 critic_hidden_size=self.config.critic_hidden_size,
                 normalizer=self.normalize_fn,
                 initializer=self.initializer,
-                activation=self.activation,
-                device=self.device
+                activation=self.activation
             )
 
         # build the RL model
@@ -96,7 +94,6 @@ class MASAC_Agents(ISAC_Agents):
             actors=actor_networks,
             critics=critic_networks,
             use_rnn=self.use_rnn,
-            device=self.device,
             use_distributed_training=self.distributed_training
         )
 

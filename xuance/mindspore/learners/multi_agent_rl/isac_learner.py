@@ -5,7 +5,7 @@ Implementation: MindSpore
 from argparse import Namespace
 from xuance.common import AgentGrouping
 
-from xuance.mindspore import ms, ops, nn, optim, Module, Tensor
+from xuance.mindspore import ms, ops, optim, Module, Tensor
 from xuance.mindspore.utils import clip_grads, AgentGroupedTensor
 from xuance.mindspore.learners import OffPolicyMultiAgentLearner
 from xuance.mindspore.rl_models.modules import OffPolicyMARLBatch
@@ -178,6 +178,7 @@ class ISAC_Learner(OffPolicyMultiAgentLearner):
         rnn_states_critic_1, rnn_states_critic_2 = self.model.init_critic_rnn_states(batch.batch_size)
 
         for group_key in self.group_keys:
+            # update critic
             (loss_c, action_q_1_i, action_q_2_i, td_error_1, td_error_2), grads_critic = self.grad_fn_critic[group_key](
                 batch, observations_t, agent_indices_t, rnn_states_actor, rnn_states_critic_1, rnn_states_critic_2,
                 group_key)
@@ -214,7 +215,7 @@ class ISAC_Learner(OffPolicyMultiAgentLearner):
                 f"{group_key}/alpha": self.alpha[group_key].asnumpy(),
             })
 
-            info.update(self.callback.on_update_agent_wise(self.iterations, group_key, info=info, method="update",
+            info.update(self.callback.on_update_agent_wise(self.iterations, group_key, info=info,
                                                            action_q_1_i=action_q_1_i, action_q_2_i=action_q_2_i,
                                                            td_error_1=td_error_1, td_error_2=td_error_2,
                                                            policy_q_1=policy_q_1, policy_q_2=policy_q_2,

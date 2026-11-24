@@ -763,10 +763,10 @@ class MultiAgentSoftActorCritic(IndependentSoftActorCritic):
                 critic_kwargs["rnn_states_1"] = rnn_states_1[group]
                 critic_kwargs["rnn_states_2"] = rnn_states_2[group]
 
-            critic_out = self.critics[group](expand_joint_obs, expand_joint_act, **critic_kwargs)
+            values_1, values_2, _, _ = self.critics[group](expand_joint_obs, expand_joint_act, **critic_kwargs)
 
-            q_eval_1[group] = critic_out.values_1.reshape(*batch_shape, -1)
-            q_eval_2[group] = critic_out.values_2.reshape(*batch_shape, -1)
+            q_eval_1[group] = values_1.reshape(*batch_shape, -1)
+            q_eval_2[group] = values_2.reshape(*batch_shape, -1)
 
         return AgentGroupedTensor(q_eval_1, self.grouping), AgentGroupedTensor(q_eval_2, self.grouping)
 
@@ -807,10 +807,8 @@ class MultiAgentSoftActorCritic(IndependentSoftActorCritic):
                 target_critic_kwargs["rnn_states_1"] = rnn_states_1[group]
                 target_critic_kwargs["rnn_states_2"] = rnn_states_2[group]
 
-            target_critic_out = self.target_critics[group](expand_joint_obs, expand_joint_act, **target_critic_kwargs)
-
-            group_values_1 = target_critic_out.values_1
-            group_values_2 = target_critic_out.values_2
+            group_values_1, group_values_2, _, _ = self.target_critics[group](
+                expand_joint_obs, expand_joint_act, **target_critic_kwargs)
             q_target[group] = ops.minimum(group_values_1, group_values_2).reshape(*batch_shape, -1)
 
         return AgentGroupedTensor(q_target, self.grouping)
