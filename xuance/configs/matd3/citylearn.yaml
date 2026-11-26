@@ -1,0 +1,56 @@
+agent: "MATD3"
+env_name: "citylearn"
+env_id: null  # Set dynamically via get_runner(..., env_id="<dataset>") or CLI.
+env_seed: 1
+continuous_action: True
+episode_time_steps: 168
+normalize_obs: True
+pad_spaces: True  # Zero-pads heterogeneous building observations/actions when sharing parameters.
+citylearn_kwargs: {}
+render: False
+learner: "MATD3_Learner"
+policy: "MATD3_Policy"
+representation: "Basic_Identical"
+vectorize: "DummyVecMultiAgentEnv"
+runner: "MARL"
+
+use_rnn: False
+rnn: "GRU"
+N_recurrent_layers: 1
+fc_hidden_sizes: [64, ]
+recurrent_hidden_size: 64
+dropout: 0
+
+representation_hidden_size: []
+actor_hidden_size: [128, 128]
+critic_hidden_size: [128, 128]
+activation: "leaky_relu"
+activation_action: "tanh"
+use_parameter_sharing: True
+use_actions_mask: False
+
+seed: 1
+parallels: 4
+buffer_size: 100000
+batch_size: 256
+learning_rate_actor: 0.0005
+learning_rate_critic: 0.0005
+gamma: 0.99
+tau: 0.005
+actor_update_delay: 2
+
+start_noise: 0.5
+end_noise: 0.05
+sigma: 0.1
+start_training: 500
+running_steps: 100000
+training_frequency: 10
+
+use_grad_clip: False
+grad_clip_norm: 0.5
+
+eval_interval: 10000
+test_episode: 3
+
+log_dir: "logs/matd3/"
+model_dir: "models/matd3/"

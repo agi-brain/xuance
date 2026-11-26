@@ -67,6 +67,7 @@ setup(
         "metadrive": ["metadrive"],
         "rware": ["rware"],
         "vmas": ["vmas"],
+        "citylearn": ["citylearn>=2.0.0"],
         "einops": ["einops==0.8.1"],  # default version is 0.8.1 for ViT
     },
     install_requires=[
