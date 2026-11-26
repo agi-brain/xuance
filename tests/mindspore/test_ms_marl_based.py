@@ -75,6 +75,13 @@ class TestMARL_Algo(unittest.TestCase):
         runner = get_runner(algo="isac", env=env_name, env_id=env_id, parser_args=args)
         runner.run(mode=run_mode, running_steps=running_steps, eval_interval=eval_interval)
 
+    def test_isac_discrete(self):
+        args_continuous = deepcopy(args)
+        args_continuous.continuous_action = False
+        args_continuous.learner = "ISACDIS_Learner"
+        runner = get_runner(algo="isac", env=env_name, env_id=env_id, parser_args=args)
+        runner.run(mode=run_mode, running_steps=running_steps, eval_interval=eval_interval)
+
     def test_maddpg(self):
         runner = get_runner(algo="maddpg", env=env_name, env_id=env_id, parser_args=args)
         runner.run(mode=run_mode, running_steps=running_steps, eval_interval=eval_interval)

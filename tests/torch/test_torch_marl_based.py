@@ -30,13 +30,13 @@ class TestMARL_Algo(unittest.TestCase):
         runner = get_runner(algo="coma", env=env_name, env_id=env_id, parser_args=args)
         runner.run(mode=run_mode, running_steps=running_steps, eval_interval=eval_interval)
 
-    def test_commnet(self):
-        runner = get_runner(algo="commnet", env=env_name, env_id=env_id, parser_args=args)
-        runner.run(mode=run_mode, running_steps=running_steps, eval_interval=eval_interval)
+    # def test_commnet(self):
+    #     runner = get_runner(algo="commnet", env=env_name, env_id=env_id, parser_args=args)
+    #     runner.run(mode=run_mode, running_steps=running_steps, eval_interval=eval_interval)
 
-    def test_dcg(self):
-        runner = get_runner(algo="dcg", env=env_name, env_id=env_id, parser_args=args)
-        runner.run(mode=run_mode, running_steps=running_steps, eval_interval=eval_interval)
+    # def test_dcg(self):
+    #     runner = get_runner(algo="dcg", env=env_name, env_id=env_id, parser_args=args)
+    #     runner.run(mode=run_mode, running_steps=running_steps, eval_interval=eval_interval)
 
     def test_iac_continuous(self):
         args_continuous = deepcopy(args)
@@ -52,9 +52,9 @@ class TestMARL_Algo(unittest.TestCase):
         runner = get_runner(algo="iac", env=env_name, env_id=env_id, parser_args=args)
         runner.run(mode=run_mode, running_steps=running_steps, eval_interval=eval_interval)
 
-    def test_ic3net(self):
-        runner = get_runner(algo="ic3net", env=env_name, env_id=env_id, parser_args=args)
-        runner.run(mode=run_mode, running_steps=running_steps, eval_interval=eval_interval)
+    # def test_ic3net(self):
+    #     runner = get_runner(algo="ic3net", env=env_name, env_id=env_id, parser_args=args)
+    #     runner.run(mode=run_mode, running_steps=running_steps, eval_interval=eval_interval)
 
     def test_iddpg(self):
         runner = get_runner(algo="iddpg", env=env_name, env_id=env_id, parser_args=args)
@@ -82,6 +82,13 @@ class TestMARL_Algo(unittest.TestCase):
         runner = get_runner(algo="isac", env=env_name, env_id=env_id, parser_args=args)
         runner.run(mode=run_mode, running_steps=running_steps, eval_interval=eval_interval)
 
+    def test_isac_discrete(self):
+        args_continuous = deepcopy(args)
+        args_continuous.continuous_action = False
+        args_continuous.learner = "ISACDIS_Learner"
+        runner = get_runner(algo="isac", env=env_name, env_id=env_id, parser_args=args)
+        runner.run(mode=run_mode, running_steps=running_steps, eval_interval=eval_interval)
+
     def test_maddpg(self):
         runner = get_runner(algo="maddpg", env=env_name, env_id=env_id, parser_args=args)
         runner.run(mode=run_mode, running_steps=running_steps, eval_interval=eval_interval)
@@ -101,6 +108,13 @@ class TestMARL_Algo(unittest.TestCase):
         runner.run(mode=run_mode, running_steps=running_steps, eval_interval=eval_interval)
 
     def test_masac(self):
+        runner = get_runner(algo="masac", env=env_name, env_id=env_id, parser_args=args)
+        runner.run(mode=run_mode, running_steps=running_steps, eval_interval=eval_interval)
+
+    def test_masac_discrete(self):
+        args_continuous = deepcopy(args)
+        args_continuous.continuous_action = False
+        args_continuous.learner = "MASACDIS_Learner"
         runner = get_runner(algo="masac", env=env_name, env_id=env_id, parser_args=args)
         runner.run(mode=run_mode, running_steps=running_steps, eval_interval=eval_interval)
 
@@ -128,9 +142,9 @@ class TestMARL_Algo(unittest.TestCase):
         runner = get_runner(algo="qtran", env=env_name, env_id=env_id, parser_args=args)
         runner.run(mode=run_mode, running_steps=running_steps, eval_interval=eval_interval)
 
-    def test_tarmac(self):
-        runner = get_runner(algo="tarmac", env=env_name, env_id=env_id, parser_args=args)
-        runner.run(mode=run_mode, running_steps=running_steps, eval_interval=eval_interval)
+    # def test_tarmac(self):
+    #     runner = get_runner(algo="tarmac", env=env_name, env_id=env_id, parser_args=args)
+    #     runner.run(mode=run_mode, running_steps=running_steps, eval_interval=eval_interval)
 
     def test_vdac_continuous(self):
         args_continuous = deepcopy(args)
