@@ -107,6 +107,10 @@ class SAC_GaussianActorHead(Module):
         log_std = ops.clamp(self.out_log_std(output), -20, 2)
         return mu, log_std
 
+    def distribution(self, mu: Tensor, std: Tensor):
+        self.policy_distribution.set_param(mu=mu, std=std)
+        return self.policy_distribution
+
 
 class DeterministicActorHead(Module):
     def __init__(self,
