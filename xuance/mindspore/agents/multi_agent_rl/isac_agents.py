@@ -10,7 +10,7 @@ from xuance.mindspore.agents import OffPolicyMARLAgents
 from xuance.mindspore.rl_models import (CategoricalActor, SAC_GaussianActor, TwinActionValueCritic,
                                         TwinDiscreteActionValueCritic)
 from xuance.mindspore.rl_models.modules import RNN_State, MARLActionOutput
-from xuance.mindspore.rl_models.architectures import IndependentSoftActorCritic
+from xuance.mindspore.rl_models.architectures import IndependentSoftActorCritic, IndependentSoftActorCriticDiscrete
 
 
 class ISAC_Agents(OffPolicyMARLAgents):
@@ -63,7 +63,7 @@ class ISAC_Agents(OffPolicyMARLAgents):
         elif isinstance(self.action_space[self.agent_keys[0]], gymnasium.spaces.Discrete):
             Actor = CategoricalActor
             Critic = TwinDiscreteActionValueCritic
-            # Architecture = IndependentSoftActorCriticDiscrete
+            Architecture = IndependentSoftActorCriticDiscrete
             self.continuous_control = False
         else:
             raise NotImplementedError

@@ -2,150 +2,186 @@
 Independent Soft Actor-critic (ISAC) with discrete action spaces.
 Implementation: Pytorch
 """
-import torch
-from torch import nn
-from xuance.mindspore.learners import LearnerMAS
-from xuance.common import List
+import math
 from argparse import Namespace
+from xuance.common import AgentGrouping
+
+from xuance.mindspore import ops, Module, Tensor
+from xuance.mindspore.utils import clip_grads, AgentGroupedTensor
+from xuance.mindspore.learners.multi_agent_rl.isac_learner import ISAC_Learner
+from xuance.mindspore.rl_models.modules import OffPolicyMARLBatch
 
 
-class ISACDIS_Learner(LearnerMAS):
+class ISACDIS_Learner(ISAC_Learner):
     def __init__(self,
                  config: Namespace,
-                 model_keys: List[str],
-                 agent_keys: List[str],
-                 policy: nn.Module,
+                 agent_grouping: AgentGrouping,
+                 model: Module,
                  callback):
-        super(ISACDIS_Learner, self).__init__(config, model_keys, agent_keys, policy, callback)
-        self.optimizer = {
-            key: {'actor': torch.optim.Adam(self.policy.parameters_actor[key], self.config.learning_rate_actor, eps=1e-5),
-                  'critic': torch.optim.Adam(self.policy.parameters_critic[key], self.config.learning_rate_critic, eps=1e-5)}
-            for key in self.model_keys}
-        self.scheduler = {
-            key: {'actor': torch.optim.lr_scheduler.LinearLR(self.optimizer[key]['actor'],
-                                                             start_factor=1.0,
-                                                             end_factor=self.end_factor_lr_decay,
-                                                             total_iters=self.total_iters),
-                  'critic': torch.optim.lr_scheduler.LinearLR(self.optimizer[key]['critic'],
-                                                              start_factor=1.0,
-                                                              end_factor=self.end_factor_lr_decay,
-                                                              total_iters=self.total_iters)}
-            for key in self.model_keys}
-        self.gamma = config.gamma
-        self.tau = config.tau
-        self.alpha = {key: config.alpha for key in self.model_keys}
-        self.mse_loss = nn.MSELoss()
-        self.use_automatic_entropy_tuning = config.use_automatic_entropy_tuning
-        if self.use_automatic_entropy_tuning:
-            self.target_entropy = {key: -float(policy.action_space[key].n) for key in self.model_keys}
-            self.log_alpha = {key: nn.Parameter(torch.zeros(1, requires_grad=True, device=self.device))
-                              for key in self.model_keys}
-            self.alpha = {key: self.log_alpha[key].exp() for key in self.model_keys}
-            self.alpha_optimizer = {key: torch.optim.Adam([self.log_alpha[key]], lr=config.learning_rate_actor)
-                                    for key in self.model_keys}
+        super(ISACDIS_Learner, self).__init__(config, agent_grouping, model, callback)
+
+    def get_target_entropy(self):
+        ratio = getattr(self.config, "target_entropy_ratio", 0.8)
+        return {
+            key: ratio * math.log(self.model.actors[key].action_dim)
+            for key in self.group_keys
+        }
+
+    def forward_fn_alpha(self, *args):
+        batch, action_probs, log_action_probs, group_key = args
+        n_agents = self.n_group_agents[group_key]
+        mask_values = batch.valid_mask(group_key, n_agents).reshape(-1)
+
+        entropy = -(action_probs * log_action_probs).sum(dim=-1).reshape(-1)
+        entropy_error = entropy - self.target_entropy[group_key]
+        entropy_error = ops.stop_gradient(entropy_error)
+        alpha_loss = (self.log_alpha[group_key] * entropy_error * mask_values).sum() / mask_values.sum()
+        return alpha_loss, self.log_alpha[group_key]
+
+    def forward_fn_actor(self, batch: OffPolicyMARLBatch, *args, **kwargs):
+        observations_t, avail_actions_t, agent_indices_t, rnn_states_actor, rnn_states_critic_1, rnn_states_critic_2, group_key = args
+
+        n_agents = self.n_group_agents[group_key]
+        mask_values = batch.valid_mask(group_key, n_agents).reshape(-1)
+
+        action_probs, log_action_probs, policy_q = self.model.Qpolicy(
+            observations=observations_t,
+            agent_indices=agent_indices_t,
+            avail_actions=avail_actions_t,
+            group_key=group_key,
+            rnn_states_actor=rnn_states_actor,
+            rnn_states_critic_1=rnn_states_critic_1,
+            rnn_states_critic_2=rnn_states_critic_2
+        )
+        action_probs_i = action_probs.group(group_key)
+        log_action_probs_i = log_action_probs.group(group_key)
+        policy_q_i = policy_q.group(group_key)
+
+        loss_a = self.alpha[group_key] * (action_probs_i * log_action_probs_i).sum(dim=-1)
+        loss_a = loss_a - policy_q_i
+        loss_a = (loss_a * mask_values).sum() / mask_values.sum()
+        return loss_a, action_probs_i, log_action_probs_i, policy_q_i
+
+    def forward_fn_critic(self, batch: OffPolicyMARLBatch, *args, **kwargs):
+        observations_t, agent_indices_t, rnn_states_actor, rnn_states_critic_1, rnn_states_critic_2, group_key = args
+
+        action_q_1, action_q_2 = self.model.Qvalues(observations=observations_t,
+                                                    agent_indices=agent_indices_t,
+                                                    group_key=group_key,
+                                                    rnn_states_critic_1=rnn_states_critic_1,
+                                                    rnn_states_critic_2=rnn_states_critic_2)
+
+        if self.use_rnn:
+            action_prob_next, log_pi_next, q_next = self.model.Qtarget(next_observations=batch.observations,
+                                                                       agent_indices=batch.agent_indices,
+                                                                       group_key=group_key,
+                                                                       rnn_states_critic_1=rnn_states_critic_1,
+                                                                       rnn_states_critic_2=rnn_states_critic_2)
+            action_prob_next.grouped_tensor = {k: v[:, :, 1:] for k, v in action_prob_next.grouped_tensor.items()}
+            log_pi_next.grouped_tensor = {k: v[:, :, 1:] for k, v in log_pi_next.grouped_tensor.items()}
+            q_next.grouped_tensor = {k: v[:, :, 1:] for k, v in q_next.grouped_tensor.items()}
+        else:
+            action_prob_next, log_pi_next, q_next = self.model.Qtarget(next_observations=batch.next_observations,
+                                                                       agent_indices=batch.agent_indices,
+                                                                       group_key=group_key)
+
+        n_agents = self.n_group_agents[group_key]
+        mask_values = batch.valid_mask(group_key, n_agents).reshape(-1)
+
+        # update critic
+        action_q_1_a = action_q_1.packed(group_key).gather(-1, batch.actions.packed(group_key).long().unsqueeze(-1))
+        action_q_1_a = action_q_1_a.reshape(-1)
+        action_q_2_a = action_q_2.packed(group_key).gather(-1, batch.actions.packed(group_key).long().unsqueeze(-1))
+        action_q_2_a = action_q_2_a.reshape(-1)
+        target_value = (action_prob_next.group(group_key) * self.alpha[group_key] * log_pi_next.group(group_key))
+        target_value = q_next.group(group_key) - target_value.sum(dim=-1)
+        target_value = target_value.reshape(-1)
+        backup = batch.rewards.packed(group_key) + (1 - batch.terminals.packed(group_key)) * self.gamma * target_value
+        backup = ops.stop_gradient(backup)
+        td_error_1 = action_q_1_a - backup
+        td_error_1 *= mask_values
+        td_error_2 = action_q_2_a - backup
+        td_error_2 *= mask_values
+        loss_c = ((td_error_1 ** 2).sum() + (td_error_2 ** 2).sum()) / mask_values.sum()
+
+        return loss_c, action_q_1_a, action_q_2_a, td_error_1, td_error_2
 
     def update(self, sample):
         self.iterations += 1
 
         # Prepare training data.
-        sample_Tensor = self.build_training_data(sample,
-                                                 use_parameter_sharing=self.use_parameter_sharing,
-                                                 use_actions_mask=False)
-        batch_size = sample_Tensor['batch_size']
-        obs = sample_Tensor['obs']
-        actions = sample_Tensor['actions']
-        obs_next = sample_Tensor['obs_next']
-        rewards = sample_Tensor['rewards']
-        terminals = sample_Tensor['terminals']
-        agent_mask = sample_Tensor['agent_mask']
-        IDs = sample_Tensor['agent_ids']
-        if self.use_parameter_sharing:
-            key = self.model_keys[0]
-            bs = batch_size * self.n_agents
-            rewards[key] = rewards[key].reshape(batch_size * self.n_agents)
-            terminals[key] = terminals[key].reshape(batch_size * self.n_agents)
+        batch = self.build_training_data(
+            sample,
+            use_actions_mask=False
+        )
+
+        info = self.callback.on_update_start(self.iterations, model=self.model, batch=batch)
+
+        if self.use_rnn:
+            observations_t = AgentGroupedTensor(
+                {k: v[:, :, :-1] for k, v in batch.observations.grouped_tensor.items()}, self.agent_grouping
+            )
+            agent_indices_t = AgentGroupedTensor(
+                {k: v[:, :, :-1] for k, v in batch.agent_indices.grouped_tensor.items()}, self.agent_grouping
+            )
+            avail_actions_t = AgentGroupedTensor(
+                {k: v[:, :, :-1] for k, v in batch.avail_actions.grouped_tensor.items()}, self.agent_grouping
+            )
         else:
-            bs = batch_size
+            observations_t = batch.observations
+            agent_indices_t = batch.agent_indices
+            avail_actions_t = batch.avail_actions
 
-        info = self.callback.on_update_start(self.iterations, method="update",
-                                             policy=self.policy, sample_Tensor=sample_Tensor, bs=bs)
+        # initial hidden states for rnn
+        rnn_states_actor = self.model.init_actor_rnn_states(batch.batch_size)
+        rnn_states_critic_1, rnn_states_critic_2 = self.model.init_critic_rnn_states(batch.batch_size)
 
-        # feedforward
-        _, _, action_q_1, action_q_2 = self.policy.Qaction(observation=obs, agent_ids=IDs)
-        _, _, _, action_prob_next, log_pi_next, next_q = self.policy.Qtarget(next_observation=obs_next, agent_ids=IDs)
-
-        for key in self.model_keys:
-            mask_values = agent_mask[key]
+        for group_key in self.group_keys:
             # update critic
-            action_q_1_a = action_q_1[key].gather(dim=-1, index=actions[key].long().unsqueeze(-1)).reshape(bs)
-            action_q_2_a = action_q_2[key].gather(dim=-1, index=actions[key].long().unsqueeze(-1)).reshape(bs)
-            target_value = action_prob_next[key] * (next_q[key] - self.alpha[key] * log_pi_next[key])
-            target_value = target_value.sum(dim=1).reshape(bs)
-            backup = rewards[key] + (1 - terminals[key]) * self.gamma * target_value
-            td_error_1, td_error_2 = action_q_1_a - backup.detach(), action_q_2_a - backup.detach()
-            td_error_1 *= mask_values
-            td_error_2 *= mask_values
-            loss_c = ((td_error_1 ** 2).sum() + (td_error_2 ** 2).sum()) / mask_values.sum()
-            self.optimizer[key]['critic'].zero_grad()
-            loss_c.backward()
+            (loss_c, action_q_1_i, action_q_2_i, td_error_1, td_error_2), grads_critic = self.grad_fn_critic[group_key](
+                batch, observations_t, agent_indices_t, rnn_states_actor, rnn_states_critic_1, rnn_states_critic_2,
+                group_key)
             if self.use_grad_clip:
-                torch.nn.utils.clip_grad_norm_(self.policy.parameters_critic[key], self.grad_clip_norm)
-            self.optimizer[key]['critic'].step()
-            if self.scheduler[key]['critic'] is not None:
-                self.scheduler[key]['critic'].step()
+                grads_critic = clip_grads(grads_critic, Tensor(-self.grad_clip_norm), Tensor(self.grad_clip_norm))
+            self.optimizer[group_key]['critic'](grads_critic)
 
             # update actor
-            _, _, _, action_prob, log_pi, policy_q_1, policy_q_2 = self.policy.Qpolicy(observation=obs,
-                                                                                       agent_ids=IDs, agent_key=key)
-            policy_q = torch.min(policy_q_1[key], policy_q_2[key])
-            loss_a = (action_prob[key] * (self.alpha[key] * log_pi[key] - policy_q)).sum(dim=1)
-            loss_a = (loss_a * mask_values).sum() / mask_values.sum()
-            self.optimizer[key]['actor'].zero_grad()
-            loss_a.backward()
+            (loss_a, action_probs, log_action_probs, policy_q), grads_actor = self.grad_fn_actor[group_key](
+                batch, observations_t, avail_actions_t, agent_indices_t,
+                rnn_states_actor, rnn_states_critic_1, rnn_states_critic_2, group_key)
             if self.use_grad_clip:
-                torch.nn.utils.clip_grad_norm_(self.policy.parameters_actor[key], self.grad_clip_norm)
-            self.optimizer[key]['actor'].step()
-            if self.scheduler[key]['actor'] is not None:
-                self.scheduler[key]['actor'].step()
+                grads_actor = clip_grads(grads_actor, Tensor(-self.grad_clip_norm), Tensor(self.grad_clip_norm))
+            self.optimizer[group_key]['actor'](grads_actor)
 
             # automatic entropy tuning
             if self.use_automatic_entropy_tuning:
-                alpha_loss = -(self.log_alpha[key] * (log_pi[key] + self.target_entropy[key]).detach()).mean()
-                self.alpha_optimizer[key].zero_grad()
-                alpha_loss.backward()
-                self.alpha_optimizer[key].step()
-                self.alpha[key] = self.log_alpha[key].exp()
+                (alpha_loss, _), grads_alpha = self.grad_fn_alpha[group_key](
+                    batch, action_probs, log_action_probs, group_key)
+                self.alpha_optimizer[group_key](grads_alpha)
+                self.alpha[group_key] = ops.exp(self.log_alpha[group_key])
             else:
                 alpha_loss = 0
 
-            learning_rate_actor = self.optimizer[key]['actor'].state_dict()['param_groups'][0]['lr']
-            learning_rate_critic = self.optimizer[key]['critic'].state_dict()['param_groups'][0]['lr']
+            learning_rate_actor = self.scheduler[group_key]['actor'].get_last_lr()[0]
+            learning_rate_critic = self.scheduler[group_key]['critic'].get_last_lr()[0]
 
             info.update({
-                f"{key}/learning_rate_actor": learning_rate_actor,
-                f"{key}/learning_rate_critic": learning_rate_critic,
-                f"{key}/loss_actor": loss_a.item(),
-                f"{key}/loss_critic": loss_c.item(),
-                f"{key}/predictQ": policy_q.mean().item(),
+                f"{group_key}/learning_rate_actor": learning_rate_actor.asnumpy(),
+                f"{group_key}/learning_rate_critic": learning_rate_critic.asnumpy(),
+                f"{group_key}/loss_actor": loss_a.asnumpy(),
+                f"{group_key}/loss_critic": loss_c.asnumpy(),
+                f"{group_key}/predictQ": policy_q.mean().asnumpy(),
+                f"{group_key}/alpha_loss": alpha_loss.asnumpy(),
+                f"{group_key}/alpha": self.alpha[group_key].asnumpy(),
             })
-            if self.use_automatic_entropy_tuning:
-                info.update({f"{key}/alpha_loss": alpha_loss.item(),
-                             f"{key}/alpha": self.alpha[key].item()})
 
-            info.update(self.callback.on_update_agent_wise(self.iterations, key, info=info, method="update",
-                                                           mask_values=mask_values,
-                                                           action_q_1_a=action_q_1_a, action_q_2_a=action_q_2_a,
-                                                           target_value=target_value, backup=backup,
+            info.update(self.callback.on_update_agent_wise(self.iterations, group_key, info=info,
+                                                           action_q_1_i=action_q_1_i, action_q_2_i=action_q_2_i,
                                                            td_error_1=td_error_1, td_error_2=td_error_2,
-                                                           action_prob=action_prob, log_pi=log_pi,
-                                                           policy_q_1=policy_q_1, policy_q_2=policy_q_2,
-                                                           policy_q=policy_q))
+                                                           policy_q=policy_q,
+                                                           action_probs=action_probs,
+                                                           log_action_probs=log_action_probs))
 
-        self.policy.soft_update(self.tau)
-        info.update(self.callback.on_update_end(self.iterations, method="update", policy=self.policy, info=info))
-        return info
-
-    def update_rnn(self, sample):
-        self.iterations += 1
-        info = {}
+        self.model.soft_update(self.tau)
+        info.update(self.callback.on_update_end(self.iterations, model=self.model, info=info))
         return info

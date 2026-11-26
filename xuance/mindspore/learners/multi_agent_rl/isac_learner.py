@@ -23,7 +23,7 @@ class ISAC_Learner(OffPolicyMultiAgentLearner):
         self._ones = ops.Ones()
         self.use_automatic_entropy_tuning = config.use_automatic_entropy_tuning
         if self.use_automatic_entropy_tuning:
-            self.target_entropy = {key: -model.actors[key].action_space.shape[-1] for key in self.group_keys}
+            self.target_entropy = self.get_target_entropy()
             self.log_alpha = {key: ms.Parameter(self._ones(1, ms.float32)) for key in self.group_keys}
             self.alpha = {key: ops.exp(self.log_alpha[key]) for key in self.group_keys}
             self.alpha_optimizer = {key: optim.Adam(params=[self.log_alpha[key]], lr=config.learning_rate_actor)
@@ -39,6 +39,9 @@ class ISAC_Learner(OffPolicyMultiAgentLearner):
         self.grad_fn_critic = {key: ms.value_and_grad(self.forward_fn_critic, None,
                                                       self.optimizer[key]['critic'].parameters, has_aux=True)
                                for key in self.group_keys}
+
+    def get_target_entropy(self):
+        return {key: -self.model.actors[key].action_space.shape[-1] for key in self.group_keys}
 
     def build_optimizer(self):
         self.optimizer = {

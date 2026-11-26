@@ -23,6 +23,7 @@ from .critics import (
     CentralizedStateValueCritic,
     CentralizedActionValueCritic,
     TwinCentralizedActionValueCritic,
+    TwinDiscreteCentralizedActionValueCritic,
     CounterfactualCentralizedCritic
 )
 

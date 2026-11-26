@@ -30,6 +30,7 @@ from xuance.mindspore.rl_models.architectures.multi_agent import (
     IndependentDeterministicActorCritic,
     MultiAgentDeterministicActorCritic,
     IndependentSoftActorCritic,
+    IndependentSoftActorCriticDiscrete,
     MultiAgentSoftActorCritic,
     IndependentTwinDelayedActorCritic,
     MultiAgentTwinDelayedActorCritic,

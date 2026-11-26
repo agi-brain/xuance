@@ -803,7 +803,6 @@ class IndependentSoftActorCriticDiscrete(IndependentSoftActorCritic):
         group_list = self.group_keys if group_key is None else [group_key]
 
         for group in group_list:
-            n_agent = self.n_group_agents[group]
 
             actor_kwargs = {
                 "agent_indices": agent_indices.packed(group)
@@ -934,7 +933,6 @@ class MultiAgentSoftActorCritic(IndependentSoftActorCritic):
         group_list = self.group_keys if group_key is None else [group_key]
 
         for group in group_list:
-            group_agents = self.groups[group]
             n_agent = self.n_group_agents[group]
             bs = batch_size * n_agent
             batch_shape = (batch_size, n_agent, seq_len) if self.use_rnn else (batch_size, n_agent)
@@ -978,7 +976,6 @@ class MultiAgentSoftActorCritic(IndependentSoftActorCritic):
         group_list = self.group_keys if group_key is None else [group_key]
 
         for group in group_list:
-            group_agents = self.groups[group]
             n_agent = self.n_group_agents[group]
             bs = batch_size * n_agent
             batch_shape = (batch_size, n_agent, seq_len) if self.use_rnn else (batch_size, n_agent)
@@ -1004,6 +1001,213 @@ class MultiAgentSoftActorCritic(IndependentSoftActorCritic):
             q_target[group] = torch.min(group_values_1, group_values_2).reshape(*batch_shape, -1)
 
         return AgentGroupedTensor(q_target, self.grouping)
+
+
+class MultiAgentSoftActorCriticDiscrete(IndependentSoftActorCriticDiscrete):
+    def forward(
+            self,
+            observations: AgentGroupedTensor,
+            agent_indices: AgentGroupedTensor,
+            avail_actions: AgentGroupedTensor = None,
+            group_key: Optional[str] = None,
+            rnn_states: Dict[str, RNN_State | dict] = None,
+            **kwargs
+    ) -> MultiAgentModelOutput:
+        rnn_states_new, pi_dists, actions, log_probs = {}, {}, {}, {}
+        input_shape = observations.grouped_tensor[self.group_keys[0]].shape
+        batch_size = input_shape[0]
+        seq_len = input_shape[2] if self.use_rnn else 1
+
+        group_list = self.group_keys if group_key is None else [group_key]
+
+        for group in group_list:
+            n_agent = self.n_group_agents[group]
+            batch_shape = (batch_size, n_agent, seq_len) if self.use_rnn else (batch_size, n_agent)
+
+            actor_kwargs = {
+                "agent_indices": agent_indices.packed(group)
+            }
+            if avail_actions is not None:
+                actor_kwargs["avail_actions"] = avail_actions.packed(group)
+            if self.use_rnn:
+                actor_kwargs["rnn_states"] = rnn_states[group]
+
+            actor_out = self.actors[group](observations.packed(group), **actor_kwargs)
+            policy_dist = actor_out.distributions
+            group_actions = policy_dist.stochastic_sample()
+
+            actions[group] = group_actions.reshape(*batch_shape, -1)
+            log_probs[group] = policy_dist.log_prob(group_actions).reshape(*batch_shape, -1)
+            pi_dists[group] = policy_dist
+            rnn_states_new[group] = actor_out.representations.rnn_states
+
+        return MultiAgentModelOutput(
+            actions=AgentGroupedTensor(actions, self.grouping),
+            log_probs=AgentGroupedTensor(log_probs, self.grouping),
+            distributions=pi_dists,
+            actor_rnn_states=rnn_states_new
+        )
+
+    def Qpolicy(
+            self,
+            observations: AgentGroupedTensor,
+            joint_observations: Tensor,
+            joint_actions: Tensor = None,
+            agent_indices: AgentGroupedTensor = None,
+            avail_actions: AgentGroupedTensor = None,
+            group_key: Optional[str] = None,
+            rnn_states_actor: Dict[str, RNN_State | dict] = None,
+            rnn_states_critic_1: Dict[str, RNN_State | dict] = None,
+            rnn_states_critic_2: Dict[str, RNN_State | dict] = None,
+            **kwargs
+    ) -> Tuple[AgentGroupedTensor, ...]:
+        action_probs, log_action_probs, q_eval = {}, {}, {}
+        input_shape = joint_observations.shape
+        batch_size = input_shape[0]
+        seq_len = input_shape[1] if self.use_rnn else 1
+
+        group_list = self.group_keys if group_key is None else [group_key]
+
+        for group in group_list:
+            n_agent = self.n_group_agents[group]
+            bs = batch_size * n_agent
+
+            actor_kwargs = {
+                "agent_indices": agent_indices.packed(group)
+            }
+            critic_kwargs = {
+                "agent_indices": agent_indices.packed(group)
+            }
+
+            if avail_actions is not None:
+                actor_kwargs["avail_actions"] = avail_actions.packed(group)
+            if self.use_rnn:
+                expand_joint_obs = joint_observations.unsqueeze(1).expand(-1, n_agent, -1, -1).reshape(bs, seq_len, -1)
+                expand_joint_act = joint_actions.unsqueeze(1).expand(-1, n_agent, -1, -1).reshape(bs, seq_len, -1)
+                actor_kwargs["rnn_states"] = rnn_states_actor[group]
+                critic_kwargs["rnn_states_1"] = rnn_states_critic_1[group]
+                critic_kwargs["rnn_states_2"] = rnn_states_critic_2[group]
+            else:
+                expand_joint_obs = joint_observations.unsqueeze(1).expand(-1, n_agent, -1).reshape(bs, -1)
+                expand_joint_act = joint_actions.unsqueeze(1).expand(-1, n_agent, -1).reshape(bs, -1)
+
+            actor_out = self.actors[group](observations.packed(group), **actor_kwargs)
+            policy_dist = actor_out.distributions
+            action_probs[group] = policy_dist.probs
+            z = action_probs[group] <= 1e-20
+            z = z.float() * 1e-8
+            log_action_probs[group] = torch.log(action_probs[group] + z)
+
+            critic_out = self.critics[group](expand_joint_obs, expand_joint_act, **critic_kwargs)
+            values = torch.min(critic_out.values_1, critic_out.values_2)
+            q_eval[group] = (action_probs[group] * values).sum(dim=-1)
+
+        return (AgentGroupedTensor(action_probs, self.grouping),
+                AgentGroupedTensor(log_action_probs, self.grouping),
+                AgentGroupedTensor(q_eval, self.grouping))
+
+    def Qtarget(
+            self,
+            observations: AgentGroupedTensor,
+            joint_observations: Tensor,
+            joint_actions: Tensor = None,
+            agent_indices: AgentGroupedTensor = None,
+            avail_actions: AgentGroupedTensor = None,
+            group_key: Optional[str] = None,
+            rnn_states_actor: Dict[str, RNN_State | dict] = None,
+            rnn_states_critic_1: Dict[str, RNN_State | dict] = None,
+            rnn_states_critic_2: Dict[str, RNN_State | dict] = None,
+            **kwargs
+    ) -> Tuple[AgentGroupedTensor, ...]:
+        action_probs, log_action_probs, target_q = {}, {}, {}
+        input_shape = joint_observations.shape
+        batch_size = input_shape[0]
+        seq_len = input_shape[1] if self.use_rnn else 1
+
+        group_list = self.group_keys if group_key is None else [group_key]
+
+        for group in group_list:
+            n_agent = self.n_group_agents[group]
+            bs = batch_size * n_agent
+
+            actor_kwargs = {
+                "agent_indices": agent_indices.packed(group)
+            }
+
+            critic_kwargs = {
+                "agent_indices": agent_indices.packed(group)
+            }
+
+            if avail_actions is not None:
+                actor_kwargs["avail_actions"] = avail_actions.packed(group)
+            if self.use_rnn:
+                expand_joint_obs = joint_observations.unsqueeze(1).expand(-1, n_agent, -1, -1).reshape(bs, seq_len, -1)
+                expand_joint_act = joint_actions.unsqueeze(1).expand(-1, n_agent, -1, -1).reshape(bs, seq_len, -1)
+                actor_kwargs["rnn_states"] = rnn_states_actor[group]
+                critic_kwargs["rnn_states_1"] = rnn_states_critic_1[group]
+                critic_kwargs["rnn_states_2"] = rnn_states_critic_2[group]
+            else:
+                expand_joint_obs = joint_observations.unsqueeze(1).expand(-1, n_agent, -1).reshape(bs, -1)
+                expand_joint_act = joint_actions.unsqueeze(1).expand(-1, n_agent, -1).reshape(bs, -1)
+
+            actor_out = self.actors[group](observations.packed(group), **actor_kwargs)
+            policy_dist = actor_out.distributions
+            action_probs[group] = policy_dist.probs
+            z = action_probs[group] <= 1e-20
+            z = z.float() * 1e-8
+            log_action_probs[group] = torch.log(action_probs[group] + z)
+
+            target_critic_out = self.target_critics[group](expand_joint_obs, expand_joint_act, **critic_kwargs)
+
+            values_next = torch.min(target_critic_out.values_1, target_critic_out.values_2)
+            target_q[group] = (action_probs[group] * values_next).sum(dim=-1)
+
+        return (AgentGroupedTensor(action_probs, self.grouping),
+                AgentGroupedTensor(log_action_probs, self.grouping),
+                AgentGroupedTensor(target_q, self.grouping))
+
+    def Qvalues(
+            self,
+            joint_observations: Tensor,
+            joint_actions: Tensor,
+            agent_indices: AgentGroupedTensor = None,
+            group_key: Optional[str] = None,
+            rnn_states_1: Dict[str, RNN_State | dict] = None,
+            rnn_states_2: Dict[str, RNN_State | dict] = None,
+            **kwargs
+    ) -> Tuple[AgentGroupedTensor, ...]:
+        q_eval_1, q_eval_2 = {}, {}
+        input_shape = joint_observations.shape
+        batch_size = input_shape[0]
+        seq_len = input_shape[1] if self.use_rnn else 1
+
+        group_list = self.group_keys if group_key is None else [group_key]
+
+        for group in group_list:
+            n_agent = self.n_group_agents[group]
+            bs = batch_size * n_agent
+            batch_shape = (batch_size, n_agent, seq_len) if self.use_rnn else (batch_size, n_agent)
+
+            if self.use_rnn:
+                expand_joint_obs = joint_observations.unsqueeze(1).expand(-1, n_agent, -1, -1).reshape(bs, seq_len, -1)
+                expand_joint_act = joint_actions.unsqueeze(1).expand(-1, n_agent, -1, -1).reshape(bs, seq_len, -1)
+            else:
+                expand_joint_obs = joint_observations.unsqueeze(1).expand(-1, n_agent, -1).reshape(bs, -1)
+                expand_joint_act = joint_actions.unsqueeze(1).expand(-1, n_agent, -1).reshape(bs, -1)
+
+            critic_kwargs = {
+                "agent_indices": agent_indices.packed(group)
+            }
+            if self.use_rnn:
+                critic_kwargs["rnn_states_1"] = rnn_states_1[group]
+                critic_kwargs["rnn_states_2"] = rnn_states_2[group]
+
+            critic_out = self.critics[group](expand_joint_obs, expand_joint_act, **critic_kwargs)
+
+            q_eval_1[group] = critic_out.values_1.reshape(*batch_shape, -1)
+            q_eval_2[group] = critic_out.values_2.reshape(*batch_shape, -1)
+
+        return AgentGroupedTensor(q_eval_1, self.grouping), AgentGroupedTensor(q_eval_2, self.grouping)
 
 
 class IndependentTwinDelayedActorCritic(IndependentDeterministicActorCritic):

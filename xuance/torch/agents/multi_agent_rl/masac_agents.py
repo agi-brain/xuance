@@ -6,8 +6,9 @@ from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
 from xuance.torch import Module, ModuleDict
 from xuance.torch.utils import ActivationFunctions
 from xuance.torch.agents.multi_agent_rl.isac_agents import ISAC_Agents
-from xuance.torch.rl_models import CategoricalActor, SAC_GaussianActor, TwinCentralizedActionValueCritic
-from xuance.torch.rl_models.architectures import MultiAgentSoftActorCritic
+from xuance.torch.rl_models import (CategoricalActor, SAC_GaussianActor,
+                                    TwinCentralizedActionValueCritic, TwinDiscreteCentralizedActionValueCritic)
+from xuance.torch.rl_models.architectures import MultiAgentSoftActorCritic, MultiAgentSoftActorCriticDiscrete
 
 
 class MASAC_Agents(ISAC_Agents):
@@ -48,13 +49,24 @@ class MASAC_Agents(ISAC_Agents):
             activation=self.activation,
             device=self.device
         )
+        critic_input = dict(
+            critic_hidden_size=self.config.critic_hidden_size,
+            normalizer=self.normalize_fn,
+            initializer=self.initializer,
+            activation=self.activation,
+            device=self.device
+        )
         if isinstance(self.action_space[self.agent_keys[0]], gymnasium.spaces.Box):
             Actor = SAC_GaussianActor
+            Critic = TwinCentralizedActionValueCritic
             actor_input['activation_action'] = ActivationFunctions[self.config.activation_action]
             self.continuous_control = True
+            Architecture = MultiAgentSoftActorCritic
         elif isinstance(self.action_space[self.agent_keys[0]], gymnasium.spaces.Discrete):
             Actor = CategoricalActor
+            Critic = TwinDiscreteCentralizedActionValueCritic
             self.continuous_control = False
+            Architecture = MultiAgentSoftActorCriticDiscrete
         else:
             raise NotImplementedError
 
@@ -79,19 +91,15 @@ class MASAC_Agents(ISAC_Agents):
                 group_agents=group_agents,
                 input_space=joint_obs_space
             )
+            critic_input['representation'] = critic_feature_encoder
+            critic_input['action_space'] = self.action_space
+            if not self.continuous_control:
+                critic_input['action_space_key'] = reference_agent
             # build inner-group shared critic-network
-            critic_networks[group_key] = TwinCentralizedActionValueCritic(
-                representation=critic_feature_encoder,
-                action_space=self.action_space,
-                critic_hidden_size=self.config.critic_hidden_size,
-                normalizer=self.normalize_fn,
-                initializer=self.initializer,
-                activation=self.activation,
-                device=self.device
-            )
+            critic_networks[group_key] = Critic(**critic_input)
 
         # build the RL model
-        model = MultiAgentSoftActorCritic(
+        model = Architecture(
             grouping=self.agent_grouping,
             actors=actor_networks,
             critics=critic_networks,

@@ -199,6 +199,67 @@ class TwinCentralizedActionValueCritic(Module):
         )
 
 
+class TwinDiscreteCentralizedActionValueCritic(Module):
+    """
+    Q^1(o^1, ..., o^N, a^1, ..., a^N), Q^2(o^1, ..., o^N, a^1, ..., a^N).
+    Typically, for MASAC-like algorithm with discrete action space.
+    """
+
+    def __init__(self,
+                 representation: Module,
+                 action_space: Dict[str, Discrete] | Any,
+                 critic_hidden_size: Sequence[int],
+                 normalizer: Optional[Type[Module]] = None,
+                 initializer: Optional[Callable[..., Tensor]] = None,
+                 activation: Optional[Type[Module]] = None,
+                 device: Optional[Union[str, int, torch.device]] = None,
+                 **kwargs):
+        super().__init__()
+        action_space_key = kwargs['action_space_key']
+        kwargs.pop("action_space_key")
+        self.action_space = action_space[action_space_key]
+        self.n_actions = self.action_space.n
+        self.representation_1 = representation
+        self.representation_2 = deepcopy(representation)
+
+        self.joint_action_dim = sum([v.n for v in action_space.values()])
+
+        self.representation_info_shape = representation.output_shapes
+        self.feature_dim = self.representation_info_shape['state'][0] + self.joint_action_dim
+        value_head_input = dict(
+            feature_dim=self.feature_dim,
+            hidden_size=critic_hidden_size,
+            n_actions=self.n_actions,
+            normalizer=normalizer,
+            initializer=initializer,
+            activation=activation,
+            device=device,
+            **kwargs,
+        )
+
+        self.critic_head_1 = QValueHead(**value_head_input)
+        self.critic_head_2 = QValueHead(**value_head_input)
+
+    def forward(self,
+                joint_observations: Union[Tensor, dict],
+                joint_actions: Union[Tensor, dict],
+                rnn_states_1: Dict[str, RNN_State | dict] = None,
+                rnn_states_2: Dict[str, RNN_State | dict] = None,
+                **kwargs) -> TwinCriticOutput:
+        if rnn_states_1 is not None:
+            kwargs["rnn_states"] = rnn_states_1
+        rep_out_1 = self.representation_1(joint_observations, **kwargs)
+        if rnn_states_1 is not None:
+            kwargs["rnn_states"] = rnn_states_2
+        rep_out_2 = self.representation_2(joint_observations, **kwargs)
+        return TwinCriticOutput(
+            representations_1=rep_out_1,
+            representations_2=rep_out_2,
+            values_1=self.critic_head_1(torch.concat([rep_out_1.embeddings, joint_actions], dim=-1), **kwargs),
+            values_2=self.critic_head_2(torch.concat([rep_out_2.embeddings, joint_actions], dim=-1), **kwargs)
+        )
+
+
 class CounterfactualCentralizedCritic(Module):
     """Q(s, o^i, {a^1, ..., a^N}\a^i). Typically, for COMA's centralized critic,"""
 

@@ -14,6 +14,7 @@ from .centralized_critics import (
     CentralizedStateValueCritic,
     CentralizedActionValueCritic,
     TwinCentralizedActionValueCritic,
+    TwinDiscreteCentralizedActionValueCritic,
     CounterfactualCentralizedCritic
 )
 
@@ -31,5 +32,6 @@ __all__ = [
     "CentralizedStateValueCritic",
     "CentralizedActionValueCritic",
     "TwinCentralizedActionValueCritic",
+    "TwinDiscreteCentralizedActionValueCritic",
     "CounterfactualCentralizedCritic"
 ]
