@@ -53,8 +53,7 @@ class IAC_Agents(OnPolicyMARLAgents):
             actor_hidden_size=self.config.actor_hidden_size,
             normalizer=self.normalize_fn,
             initializer=self.initializer,
-            activation=self.activation,
-            device=self.device
+            activation=self.activation
         )
         if isinstance(self.action_space[self.agent_keys[0]], gymnasium.spaces.Box):
             Actor = GaussianActor
@@ -92,8 +91,7 @@ class IAC_Agents(OnPolicyMARLAgents):
                 critic_hidden_size=self.config.critic_hidden_size,
                 normalizer=self.normalize_fn,
                 initializer=self.initializer,
-                activation=self.activation,
-                device=self.device
+                activation=self.activation
             )
 
         # build the RL model
@@ -102,8 +100,8 @@ class IAC_Agents(OnPolicyMARLAgents):
             actors=actor_networks,
             critics=critic_networks,
             use_rnn=self.use_rnn,
-            device=self.device,
-            use_distributed_training=self.distributed_training
+            use_distributed_training=self.distributed_training,
+            continuous_control=self.continuous_control
         )
 
         return model
@@ -187,12 +185,12 @@ class IAC_Agents(OnPolicyMARLAgents):
         actions = model_output.actions
 
         if self.continuous_control:
-            actions.grouped_tensor = {k: actions.grouped_tensor[k].reshape(batch_size, n, -1).cpu().numpy()
+            actions.grouped_tensor = {k: actions.grouped_tensor[k].reshape(batch_size, n, -1).asnumpy()
                                       for k, n in self.n_group_agents.items()}
             actions_list = [{k: actions.agent_wise[k][e].reshape([-1]) for k in self.agent_keys}
                             for e in range(batch_size)]
         else:
-            actions.grouped_tensor = {k: actions.grouped_tensor[k].reshape(batch_size, n).cpu().numpy()
+            actions.grouped_tensor = {k: actions.grouped_tensor[k].reshape(batch_size, n).asnumpy()
                                       for k, n in self.n_group_agents.items()}
             actions_list = [{k: actions.agent_wise[k][e].reshape([]) for k in self.agent_keys}
                             for e in range(batch_size)]
@@ -203,7 +201,7 @@ class IAC_Agents(OnPolicyMARLAgents):
                                                         rnn_states=rnn_states_critic)
             rnn_states_critic_new = values_model_output.critic_rnn_states
             values = values_model_output.values
-            values.grouped_tensor = {k: v.cpu().numpy() for k, v in values.grouped_tensor.items()}
+            values.grouped_tensor = {k: v.asnumpy() for k, v in values.grouped_tensor.items()}
             values_dict = {k: v.reshape(batch_size) for k, v in values.agent_wise.items()}
 
         return MARLActionOutput(

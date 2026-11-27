@@ -391,14 +391,14 @@ class OnPolicyMARLAgents(MARLAgents):
                     self.log_infos(update_info, self.current_step)
                     train_info.update(update_info)
 
-                    self.callback.on_train_epochs_end(self.current_step, policy=self.model, memory=self.memory,
+                    self.callback.on_train_epochs_end(self.current_step, model=self.model, memory=self.memory,
                                                       current_episode=self.current_episode, train_steps=train_steps,
                                                       update_info=update_info)
 
                     process_bar.update((self.current_step - step_last) // self.n_envs)
                     step_last = deepcopy(self.current_step)
                 process_bar.update(train_steps - process_bar.last_print_n)
-                self.callback.on_train_step_end(self.current_step, envs=self.train_envs, policy=self.model,
+                self.callback.on_train_step_end(self.current_step, envs=self.train_envs, model=self.model,
                                                 train_steps=train_steps, train_info=train_info)
             return train_info
 
@@ -415,7 +415,7 @@ class OnPolicyMARLAgents(MARLAgents):
             next_state = self.train_envs.buf_state if self.use_global_state else None
             next_avail_actions = self.train_envs.buf_avail_actions if self.use_actions_mask else None
 
-            self.callback.on_train_step(self.current_step, envs=self.train_envs, policy=self.model,
+            self.callback.on_train_step(self.current_step, envs=self.train_envs, model=self.model,
                                         obs=obs_list, policy_out=policy_out, acts=actions_list, next_obs=next_obs_list,
                                         rewards=rewards_list, state=state, next_state=next_state,
                                         avail_actions=avail_actions, next_avail_actions=next_avail_actions,
@@ -470,14 +470,14 @@ class OnPolicyMARLAgents(MARLAgents):
                         }
                     self.log_infos(episode_info, self.current_step)
                     train_info.update(episode_info)
-                    self.callback.on_train_episode_info(envs=self.train_envs, policy=self.model, env_id=i,
+                    self.callback.on_train_episode_info(envs=self.train_envs, model=self.model, env_id=i,
                                                         infos=info, rank=self.rank, use_wandb=self.use_wandb,
                                                         current_step=self.current_step,
                                                         current_episode=self.current_episode,
                                                         train_steps=train_steps)
 
             self.current_step += self.n_envs
-            self.callback.on_train_step_end(self.current_step, envs=self.train_envs, policy=self.model,
+            self.callback.on_train_step_end(self.current_step, envs=self.train_envs, model=self.model,
                                             train_steps=train_steps, train_info=train_info)
         return train_info
 
@@ -547,7 +547,7 @@ class OnPolicyMARLAgents(MARLAgents):
                 self.store_experience(obs_list, avail_actions, actions_list, log_pi_a_dict, rewards_list, values_dict,
                                       terminated_list, info, **{'state': state})
 
-            self.callback.on_test_step(envs=envs, policy=self.model, images=images, test_mode=test_mode,
+            self.callback.on_test_step(envs=envs, model=self.model, images=images, test_mode=test_mode,
                                        obs=obs_list, policy_out=policy_out, acts=actions_list,
                                        next_obs=next_obs_list, rewards=rewards_list,
                                        terminals=terminated_list, truncations=truncated, infos=info,
@@ -595,7 +595,7 @@ class OnPolicyMARLAgents(MARLAgents):
                             }
                         self.current_step += info[i]["episode_step"]
                         self.log_infos(episode_info, self.current_step)
-                        self.callback.on_train_episode_info(envs=envs, policy=self.model, env_id=i,
+                        self.callback.on_train_episode_info(envs=envs, model=self.model, env_id=i,
                                                             infos=info, rank=self.rank, use_wandb=self.use_wandb,
                                                             current_step=self.current_step,
                                                             current_episode=self.current_episode,
@@ -620,7 +620,7 @@ class OnPolicyMARLAgents(MARLAgents):
             }
             self.log_infos(test_info, self.current_step)
 
-            self.callback.on_test_end(envs=envs, policy=self.model,
+            self.callback.on_test_end(envs=envs, model=self.model,
                                       current_train_step=self.current_step,
                                       current_step=_current_step, current_episode=_current_episode,
                                       scores=scores, best_score=best_score)
@@ -654,7 +654,7 @@ class OnPolicyMARLAgents(MARLAgents):
                     sample_idx = indexes[start:end]
                     sample = self.memory.sample(sample_idx)
                     info_train = self.learner.update(sample)
-            self.callback.on_train_epochs_end(self.current_step, policy=self.model, memory=self.memory,
+            self.callback.on_train_epochs_end(self.current_step, model=self.model, memory=self.memory,
                                               current_episode=self.current_episode, n_epochs=n_epochs,
                                               buffer_size=self.buffer_size, update_info=info_train)
             self.memory.clear()

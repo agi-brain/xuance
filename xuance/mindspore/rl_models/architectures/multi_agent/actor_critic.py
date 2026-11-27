@@ -25,19 +25,13 @@ class IndependentActorCritic(Module):
         self.n_agents = len(self.agent_keys)
         self.n_group_agents = {k: len(self.groups[k]) for k in self.group_keys}
         self.use_rnn = use_rnn
+        self.continuous_control = kwargs['continuous_control']
 
         self.actors = actors
         self.critics = critics
 
         # Prepare DDP module.
         self.distributed_training = use_distributed_training
-
-    @property
-    def parameters_model(self):
-        return {
-            group: list(self.actors[group].parameters()) + list(self.critics[group].parameters())
-            for group in self.group_keys
-        }
 
     def construct(
             self,
@@ -67,18 +61,20 @@ class IndependentActorCritic(Module):
             if self.use_rnn:
                 actor_kwargs["rnn_states"] = rnn_states[group]
 
-            actor_out = self.actors[group](observations.packed(group),
-                                           **actor_kwargs)
+            if self.continuous_control:
+                mu, log_std, rnn_states_new[group] = self.actors[group](observations.packed(group), **actor_kwargs)
+                policy_dist = self.actors[group].actor_head.distribution(mu, ops.exp(log_std))
+            else:
+                logits, rnn_states_new[group] = self.actors[group](observations.packed(group), **actor_kwargs)
+                policy_dist = self.actors[group].actor_head.distribution(logits)
 
-            policy_dist = actor_out.distributions
             if deterministic:
                 sampled_actions = policy_dist.deterministic_sample()
             else:
                 sampled_actions = policy_dist.stochastic_sample()
             actions[group] = sampled_actions.reshape(*batch_shape, -1)
 
-            rnn_states_new[group] = actor_out.representations.rnn_states
-            pi_dists[group] = actor_out.distributions
+            pi_dists[group] = policy_dist
 
         return MultiAgentModelOutput(
             actions=AgentGroupedTensor(actions, self.grouping),
@@ -112,12 +108,8 @@ class IndependentActorCritic(Module):
             if self.use_rnn:
                 critic_kwargs["rnn_states"] = rnn_states[group]
 
-            critic_out = self.critics[group](observations.packed(group),
-                                             **critic_kwargs)
-
-            values[group] = critic_out.values.reshape(*batch_shape, 1)
-
-            rnn_states_new[group] = critic_out.representations.rnn_states
+            critic_out, rnn_states_new[group] = self.critics[group](observations.packed(group), **critic_kwargs)
+            values[group] = critic_out.reshape(*batch_shape, 1)
 
         return MultiAgentModelOutput(
             values=AgentGroupedTensor(values, self.grouping),

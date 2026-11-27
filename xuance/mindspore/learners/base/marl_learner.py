@@ -120,11 +120,18 @@ class OnPolicyMultiAgentLearner(LearnerMAS):
 
         self.mse_loss = nn.MSELoss()
         self.huber_loss = nn.HuberLoss(reduction="none", delta=self.huber_delta)
+        self.softmax = nn.Softmax(axis=-1)
 
         if self.use_value_norm:
             self.value_normalizer = {key: ValueNorm(1) for key in self.group_keys}
         else:
             self.value_normalizer = None
+
+        self.grad_fn = ms.value_and_grad(self.forward_fn, None, self.optimizer.parameters, has_aux=True)
+        self.model.set_train()
+
+    def forward_fn(self, *args, **kwargs):
+        return
 
     def estimate_total_iterations(self):
         """Estimated total number of training iterations"""
@@ -207,7 +214,8 @@ class OnPolicyMultiAgentLearner(LearnerMAS):
 
         agent_indices = {}
         for group, n_agents in self.n_group_agents.items():
-            agent_indices[group] = self.agent_indices[group].repeat(batch_size, 1).reshape(batch_size, n_agents, 1)
+            agent_indices[group] = ops.repeat_elements(self.agent_indices[group],
+                                                       rep=batch_size, axis=0).reshape(batch_size, n_agents, 1)
             if self.use_rnn:
                 agent_indices[group] = agent_indices[group].unsqueeze(2).expand(-1, -1, seq_length, -1)
 
