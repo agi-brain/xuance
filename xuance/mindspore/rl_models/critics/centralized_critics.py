@@ -74,12 +74,10 @@ class CentralizedStateValueCritic(Module):
             if self.use_rnn:
                 input_kwargs["rnn_states"] = rnn_states[group]
 
-            representation_output = self.representations[group](observations.packed(group),
-                                                                **input_kwargs)
-            rep_out[group] = representation_output
-            rnn_states_new[group] = representation_output.rnn_states
+            rep_embeddings, rnn_states_new[group] = self.representations[group](observations.packed(group),
+                                                                           **input_kwargs)
             # Features shape: batch_size * n_agent * seq_len * feature_dim
-            group_obs_features = representation_output.embeddings.reshape(*batch_shape, -1)
+            group_obs_features = rep_embeddings.reshape(*batch_shape, -1)
 
             for i, agent_key in enumerate(group_agents):
                 obs_features[agent_key] = group_obs_features[:, i]
@@ -92,7 +90,6 @@ class CentralizedStateValueCritic(Module):
         return MultiAgentModelOutput(
             values=values,
             critic_rnn_states=rnn_states_new,
-            critic_rep_out=rep_out
         )
 
 
