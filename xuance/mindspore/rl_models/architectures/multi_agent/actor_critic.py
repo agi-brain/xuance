@@ -259,16 +259,14 @@ class CounterfactualMultiAgentActorCritic(IndependentActorCritic):
             if self.use_rnn:
                 actor_kwargs["rnn_states"] = rnn_states[group]
 
-            actor_out = self.actors[group](observations.packed(group),
-                                           **actor_kwargs)
-
-            group_probs = actor_out.distributions.probs
+            logits, rnn_states_new[group] = self.actors[group](observations.packed(group), **actor_kwargs)
+            policy_dist = self.actors[group].actor_head.distribution(logits)
+            group_probs = policy_dist.probs
 
             if not test_mode:
                 group_probs = (1 - epsilon) * group_probs + epsilon * 1 / self.actors[group].action_dim
 
-            self.actors[group].actor_head.policy_distribution.set_param(probs=group_probs)
-            policy_dist = self.actors[group].actor_head.policy_distribution
+            policy_dist.set_param(probs=group_probs)
 
             if deterministic:
                 sampled_actions = policy_dist.deterministic_sample()
@@ -277,7 +275,6 @@ class CounterfactualMultiAgentActorCritic(IndependentActorCritic):
 
             actions[group] = sampled_actions.reshape(*batch_shape, -1)
 
-            rnn_states_new[group] = actor_out.representations.rnn_states
             pi_dists[group] = policy_dist
 
         return MultiAgentModelOutput(
@@ -325,8 +322,8 @@ class CounterfactualMultiAgentActorCritic(IndependentActorCritic):
         return rnn_states
 
     def copy_target(self):
-        for ep, tp in zip(self.critics.parameters(), self.target_critics.parameters()):
-            tp.data.copy_(ep)
+        for ep, tp in zip(self.critics.trainable_params(), self.target_critics.trainable_params()):
+            tp.assign_value(ep)
 
 
 class ValueDecompositionActorCritic(IndependentActorCritic):

@@ -245,7 +245,8 @@ class CounterfactualCentralizedCritic(Module):
             n_agent = self.n_group_agents[group]
             batch_shape = (batch_size, n_agent, seq_len) if self.use_rnn else (batch_size, n_agent)
 
-            agent_mask = agent_mask_base.repeat(1, 1, self.critic_head.n_actions).reshape(n_agent, -1).unsqueeze(0)
+            agent_mask = ops.repeat_elements(agent_mask_base, self.critic_head.n_actions,
+                                             axis=2).reshape(n_agent, -1).unsqueeze(0)
 
             input_kwargs = {
                 "agent_indices": agent_indices.packed(group)
@@ -254,17 +255,16 @@ class CounterfactualCentralizedCritic(Module):
                 input_kwargs["rnn_states"] = rnn_states[group]
                 agent_mask = agent_mask.unsqueeze(2)
                 expanded_states = states.unsqueeze(1).repeat(1, n_agent, 1, 1)  # batch * T * N * dim_S
-                expanded_joint_actions = joint_actions.unsqueeze(1).repeat(1, n_agent, 1, 1)
+                expanded_joint_actions = ops.repeat_elements(joint_actions.unsqueeze(1), n_agent, axis=1)
             else:
-                expanded_states = states.unsqueeze(1).repeat(1, n_agent, 1)  # batch * N * dim_S
-                expanded_joint_actions = joint_actions.unsqueeze(1).repeat(1, n_agent, 1)
+                expanded_states = ops.repeat_elements(states.unsqueeze(1), n_agent, axis=1)  # batch * N * dim_S
+                expanded_joint_actions = ops.repeat_elements(joint_actions.unsqueeze(1), n_agent, axis=1)
 
-            representation_output = self.representations[group](observations.packed(group), **input_kwargs)
+            group_obs_features, rnn_states_new[group] = self.representations[group](observations.packed(group),
+                                                                                    **input_kwargs)
 
-            rnn_states_new[group] = representation_output.rnn_states
-            rep_out[group] = representation_output
             # Features shape: batch_size * n_agent * seq_len * feature_dim or batch_size * n_agent * feature_dim
-            group_obs_features = representation_output.embeddings.reshape(*batch_shape, -1)
+            group_obs_features = group_obs_features.reshape(*batch_shape, -1)
 
             masked_joint_actions = expanded_joint_actions * agent_mask
             critic_input = ops.concat([expanded_states, group_obs_features, masked_joint_actions], axis=-1)
@@ -273,5 +273,4 @@ class CounterfactualCentralizedCritic(Module):
         return MultiAgentModelOutput(
             values=AgentGroupedTensor(evalQ, self.grouping),
             critic_rnn_states=rnn_states_new,
-            critic_rep_out=rep_out
         )

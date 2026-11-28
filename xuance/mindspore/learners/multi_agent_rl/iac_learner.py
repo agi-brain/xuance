@@ -11,7 +11,8 @@ from xuance.mindspore.utils import clip_grads
 
 class IAC_Learner(OnPolicyMultiAgentLearner):
 
-    def forward_fn(self, batch: OnPolicyMARLBatch, rnn_states_actor, rnn_states_critic):
+    def forward_fn(self, batch: OnPolicyMARLBatch, *args, **kwargs):
+        rnn_states_actor, rnn_states_critic = args
         info_train = {}
 
         # feedforward

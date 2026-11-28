@@ -1,15 +1,14 @@
 import gymnasium
-import torch
 import numpy as np
 from tqdm import tqdm
 from copy import deepcopy
 from argparse import Namespace
 from operator import itemgetter
-from torch.nn.functional import one_hot
 from gymnasium.spaces import Space
 from xuance.common import List, Optional, MultiAgentBaseCallback
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
-from xuance.mindspore import Module, ModuleDict
+
+from xuance.mindspore import ops, Tensor, Module, ModuleDict
 from xuance.mindspore.utils import AgentGroupedTensor
 from xuance.mindspore.agents import OnPolicyMARLAgents
 from xuance.mindspore.rl_models import CategoricalActor
@@ -57,8 +56,7 @@ class COMA_Agents(OnPolicyMARLAgents):
             actor_hidden_size=self.config.actor_hidden_size,
             normalizer=self.normalize_fn,
             initializer=self.initializer,
-            activation=self.activation,
-            device=self.device
+            activation=self.activation
         )
         if isinstance(self.action_space[self.agent_keys[0]], gymnasium.spaces.Discrete):
             Actor = CategoricalActor
@@ -98,8 +96,7 @@ class COMA_Agents(OnPolicyMARLAgents):
             normalizer=self.normalize_fn,
             initializer=self.initializer,
             activation=self.activation,
-            use_rnn=self.use_rnn,
-            device=self.device
+            use_rnn=self.use_rnn
         )
 
         # build the RL model
@@ -108,8 +105,8 @@ class COMA_Agents(OnPolicyMARLAgents):
             actors=actor_networks,
             critics=critic_network,
             use_rnn=self.use_rnn,
-            device=self.device,
-            use_distributed_training=self.distributed_training
+            use_distributed_training=self.distributed_training,
+            continuous_control=self.continuous_control
         )
 
         return model
@@ -172,7 +169,6 @@ class COMA_Agents(OnPolicyMARLAgents):
                                                 for k in self.agent_keys}
         self.memory.store(**experience_data)
 
-    @torch.no_grad()
     def get_actions(
             self,
             obs_list: List[dict],
@@ -236,14 +232,14 @@ class COMA_Agents(OnPolicyMARLAgents):
 
         if not test_mode:  # calculate target values
             if self.use_rnn:
-                state = torch.as_tensor(np.array(state), device=self.device).reshape(batch_size, 1, -1)
-                joint_actions = torch.concat(
-                    [one_hot(v, self.action_space[k].n) for k, v in actions.agent_wise.items()], dim=1
+                state = Tensor(np.array(state), device=self.device).reshape(batch_size, 1, -1)
+                joint_actions = ops.concat(
+                    [ops.one_hot(v, self.action_space[k].n) for k, v in actions.agent_wise.items()], axis=1
                 ).reshape([batch_size, 1, -1])
             else:
-                state = torch.as_tensor(np.array(state), device=self.device).reshape(batch_size, -1)
-                joint_actions = torch.concat(
-                    [one_hot(v, self.action_space[k].n) for k, v in actions.agent_wise.items()], dim=1
+                state = Tensor(np.array(state), device=self.device).reshape(batch_size, -1)
+                joint_actions = ops.concat(
+                    [ops.one_hot(v, self.action_space[k].n) for k, v in actions.agent_wise.items()], axis=1
                 ).reshape([batch_size, -1])
 
             values_model_output = self.model.get_values(states=state,
@@ -255,13 +251,13 @@ class COMA_Agents(OnPolicyMARLAgents):
             rnn_states_critic_new = values_model_output.critic_rnn_states
             values = values_model_output.values
             values.grouped_tensor = {
-                k: values.group(k).gather(-1, actions.group(k)).reshape([batch_size, -1]).cpu().numpy()
+                k: values.group(k).gather(-1, actions.group(k)).reshape([batch_size, -1]).asnumpy()
                 for k in self.group_keys
             }
             values_dict = values.agent_wise
 
         actions.grouped_tensor = {
-            k: actions.grouped_tensor[k].reshape(batch_size, n).cpu().numpy() for k, n in self.n_group_agents.items()
+            k: actions.grouped_tensor[k].reshape(batch_size, n).asnumpy() for k, n in self.n_group_agents.items()
         }
         actions_list = [{k: actions.agent_wise[k][e].reshape([]) for k in self.agent_keys} for e in range(batch_size)]
 
@@ -272,7 +268,6 @@ class COMA_Agents(OnPolicyMARLAgents):
             rnn_states_critic=rnn_states_critic_new
         )
 
-    @torch.no_grad()
     def values_next(self,
                     i_env: int,
                     obs_dict: dict,
@@ -312,19 +307,19 @@ class COMA_Agents(OnPolicyMARLAgents):
 
         obs_input, agent_indices, _ = self._build_inputs([obs_dict])
         if self.use_rnn:
-            actions_agent_wise = {k: torch.as_tensor(v, device=self.device).reshape(1, 1, -1) for k, v in
+            actions_agent_wise = {k: Tensor(v, device=self.device).reshape(1, 1, -1) for k, v in
                                   actions_n.items()}
             actions_grouped = AgentGroupedTensor.from_agent_wise(actions_agent_wise, self.agent_grouping)
-            state = torch.as_tensor(np.array(state), device=self.device).reshape(1, 1, -1)
-            joint_actions = torch.stack([one_hot(v, self.action_space[k].n)
-                                         for k, v in actions_agent_wise.items()], dim=0).reshape([1, 1, -1])
+            state = Tensor(np.array(state), device=self.device).reshape(1, 1, -1)
+            joint_actions = ops.stack([ops.one_hot(v, self.action_space[k].n)
+                                       for k, v in actions_agent_wise.items()], axis=0).reshape([1, 1, -1])
         else:
-            actions_agent_wise = {k: torch.as_tensor(v, device=self.device).reshape(1, -1) for k, v in
+            actions_agent_wise = {k: Tensor(v, device=self.device).reshape(1, -1) for k, v in
                                   actions_n.items()}
             actions_grouped = AgentGroupedTensor.from_agent_wise(actions_agent_wise, self.agent_grouping)
-            state = torch.as_tensor(np.array(state), device=self.device).reshape(1, -1)
-            joint_actions = torch.stack([one_hot(v, self.action_space[k].n)
-                                         for k, v in actions_agent_wise.items()], dim=0).reshape([1, -1])
+            state = Tensor(np.array(state), device=self.device).reshape(1, -1)
+            joint_actions = ops.stack([ops.one_hot(v, self.action_space[k].n)
+                                       for k, v in actions_agent_wise.items()], axis=0).reshape([1, -1])
         values_model_output = self.model.get_values(states=state,
                                                     observations=obs_input,
                                                     joint_actions=joint_actions,
@@ -334,7 +329,7 @@ class COMA_Agents(OnPolicyMARLAgents):
         rnn_states_critic_new_i = values_model_output.critic_rnn_states
         values = values_model_output.values
         values.grouped_tensor = {
-            k: v.gather(-1, actions_grouped.group(k)).cpu().numpy() for k, v in values.grouped_tensor.items()
+            k: v.gather(-1, actions_grouped.group(k)).asnumpy() for k, v in values.grouped_tensor.items()
         }
         values_dict = {k: v.reshape([]) for k, v in values.agent_wise.items()}
 
