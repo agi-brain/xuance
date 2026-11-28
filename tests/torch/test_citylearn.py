@@ -9,7 +9,6 @@ from unittest.mock import patch
 
 import gymnasium
 import numpy as np
-import pandas as pd
 
 from xuance import get_runner
 from xuance.environment import DummyVecEnv, DummyVecMultiAgentEnv, make_envs
@@ -27,6 +26,18 @@ def _temp_workdir():
             yield tmpdir
         finally:
             os.chdir(orig_cwd)
+
+
+class _FakeDataFrame:
+    """Minimal DataFrame stub providing ``columns`` and ``iterrows()`` without requiring pandas."""
+
+    def __init__(self, rows):
+        self._rows = list(rows)
+        self.columns = tuple(self._rows[0].keys()) if self._rows else ()
+
+    def iterrows(self):
+        for idx, row in enumerate(self._rows):
+            yield idx, row
 
 
 class _FakeCityLearnEnv:
@@ -150,7 +161,7 @@ class _FakeCityLearnEnv:
         return self._current_obs(), rewards, terminated, False, {}
 
     def evaluate(self):
-        return pd.DataFrame(
+        return _FakeDataFrame(
             [
                 {"cost_function": "cost_total", "value": 0.91, "name": "District", "level": "district"},
                 {"cost_function": "carbon_emissions_total", "value": 0.88, "name": "District", "level": "district"},
