@@ -1,12 +1,12 @@
 import gymnasium
-import torch
 import numpy as np
 from argparse import Namespace
 from gymnasium.spaces import Space
 from typing import List, Optional, Dict
 from xuance.common import MultiAgentBaseCallback
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
-from xuance.mindspore import Module, ModuleDict
+
+from xuance.mindspore import ms, Tensor, Module, ModuleDict
 from xuance.mindspore.utils import ActivationFunctions
 from xuance.mindspore.agents import OnPolicyMARLAgents
 from xuance.mindspore.rl_models import CategoricalActor, GaussianActor
@@ -57,8 +57,7 @@ class VDAC_Agents(OnPolicyMARLAgents):
             actor_hidden_size=self.config.actor_hidden_size,
             normalizer=self.normalize_fn,
             initializer=self.initializer,
-            activation=self.activation,
-            device=self.device
+            activation=self.activation
         )
         if isinstance(self.action_space[self.agent_keys[0]], gymnasium.spaces.Box):
             Actor = GaussianActor
@@ -96,8 +95,7 @@ class VDAC_Agents(OnPolicyMARLAgents):
                 critic_hidden_size=self.config.critic_hidden_size,
                 normalizer=self.normalize_fn,
                 initializer=self.initializer,
-                activation=self.activation,
-                device=self.device
+                activation=self.activation
             )
 
         if self.mixer == "VDN":
@@ -105,7 +103,7 @@ class VDAC_Agents(OnPolicyMARLAgents):
         elif self.mixer == "QMIX":
             dim_state = self.state_space.shape[-1]
             mixer = QMIX_Mixer(dim_state, self.config.hidden_dim_mixing_net, self.config.hidden_dim_hyper_net,
-                               self.n_agents, self.device)
+                               self.n_agents)
             self.use_global_state = True
         else:
             raise NotImplementedError
@@ -117,8 +115,8 @@ class VDAC_Agents(OnPolicyMARLAgents):
             critics=critic_networks,
             mixer=mixer,
             use_rnn=self.use_rnn,
-            device=self.device,
-            use_distributed_training=self.distributed_training
+            use_distributed_training=self.distributed_training,
+            continuous_control=self.continuous_control
         )
 
         return model
@@ -158,7 +156,6 @@ class VDAC_Agents(OnPolicyMARLAgents):
                                                 for k in self.agent_keys}
         self.memory.store(**experience_data)
 
-    @torch.no_grad()
     def get_actions(
             self,
             obs_list: List[dict],
@@ -202,7 +199,7 @@ class VDAC_Agents(OnPolicyMARLAgents):
         rnn_states_actor_new = model_output.actor_rnn_states
         actions = model_output.actions
 
-        actions.grouped_tensor = {k: actions.grouped_tensor[k].reshape(batch_size, n).cpu().numpy()
+        actions.grouped_tensor = {k: actions.grouped_tensor[k].reshape(batch_size, n).asnumpy()
                                   for k, n in self.n_group_agents.items()}
         if self.continuous_control:
             actions_list = [{k: actions.agent_wise[k][e].reshape([-1]) for k in self.agent_keys}
@@ -218,8 +215,8 @@ class VDAC_Agents(OnPolicyMARLAgents):
             rnn_states_critic_new = values_model_output.critic_rnn_states
             values_individual = values_model_output.values.agent_wise
             if state is not None:
-                state = torch.as_tensor(state, device=self.device)
-            values_tot = self.model.values_tot(values_individual, state).cpu().numpy().reshape(batch_size)
+                state = Tensor(state, dtype=ms.float32)
+            values_tot = self.model.values_tot(values_individual, state).asnumpy().reshape(batch_size)
             values_dict = {k: values_tot for k in self.agent_keys}
 
         return MARLActionOutput(
@@ -229,7 +226,6 @@ class VDAC_Agents(OnPolicyMARLAgents):
             rnn_states_critic=rnn_states_critic_new
         )
 
-    @torch.no_grad()
     def values_next(self,
                     i_env: int,
                     obs_dict: dict,
@@ -265,7 +261,7 @@ class VDAC_Agents(OnPolicyMARLAgents):
                                                     rnn_states=rnn_states_critic_i)
         rnn_states_critic_new_i = values_model_output.critic_rnn_states
         values_individual = values_model_output.values.agent_wise
-        values_tot = self.model.values_tot(values_individual, state).cpu().numpy().reshape([])
+        values_tot = self.model.values_tot(values_individual, state).asnumpy().reshape([])
         values_dict = {k: values_tot for k in self.agent_keys}
 
         return rnn_states_critic_new_i, values_dict

@@ -1,4 +1,3 @@
-import torch
 import gymnasium
 import numpy as np
 from argparse import Namespace
@@ -141,7 +140,6 @@ class IAC_Agents(OnPolicyMARLAgents):
                                                 for k in self.agent_keys}
         self.memory.store(**experience_data)
 
-    @torch.no_grad()
     def get_actions(
             self,
             obs_list: List[dict],
