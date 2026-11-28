@@ -1,0 +1,48 @@
+agent: "TRPO"
+env_name: "Classic Control"
+env_id: "Acrobot-v1"
+env_seed: 1  # The random seed of the environment.
+vectorize: "DummyVecEnv"
+representation: "Basic_MLP"
+policy: "Categorical_AC"
+learner: "TRPO_Learner"
+runner: "DRL"
+
+representation_hidden_size: [64,]
+actor_hidden_size: [64,]
+critic_hidden_size: [64,]
+activation: "tanh"
+
+seed: 1
+parallels: 8
+running_steps: 300000
+horizon_size: 256  # buffer_size = horizon_size * parallels.
+n_epochs: 10  # number of critic update epochs per rollout.
+n_minibatch: 8  # number of critic mini-batches per epoch.
+learning_rate: 0.001  # critic Adam learning rate.
+
+target_kl: 0.01
+cg_max_steps: 10
+cg_damping: 0.1
+line_search_max_iter: 10
+line_search_shrinking_factor: 0.8
+sub_sampling_factor: 1
+ent_coef: 0.0
+
+gamma: 0.99
+use_gae: True
+gae_lambda: 0.95
+use_advnorm: True
+
+use_grad_clip: True
+grad_clip_norm: 0.5
+use_actions_mask: False
+use_obsnorm: True
+use_rewnorm: False
+obsnorm_range: 5
+rewnorm_range: 5
+
+eval_interval: 50000
+test_episode: 5
+log_dir: "logs/trpo/"
+model_dir: "models/trpo/"

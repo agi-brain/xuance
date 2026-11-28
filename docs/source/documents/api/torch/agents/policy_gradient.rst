@@ -96,3 +96,11 @@ td3_agent
     :members:
     :undoc-members:
     :show-inheritance:
+
+trpo_agent
+-----------------------------
+
+.. automodule:: xuance.torch.agents.policy_gradient.trpo_agent
+    :members:
+    :undoc-members:
+    :show-inheritance:

@@ -104,6 +104,15 @@ class TestPolicyBaseAlgo(unittest.TestCase):
         runner = get_runner(algo="td3", env=env_name, env_id=env_id_continuous, parser_args=args)
         runner.run(mode=run_mode, running_steps=running_steps, eval_interval=eval_interval)
 
+    """TRPO"""
+    def test_trpo_continuous(self):
+        runner = get_runner(algo="trpo", env=env_name, env_id=env_id_continuous, parser_args=args)
+        runner.run(mode=run_mode, running_steps=running_steps, eval_interval=eval_interval)
+
+    def test_trpo_discrete(self):
+        runner = get_runner(algo="trpo", env=env_name, env_id=env_id_discrete, parser_args=args)
+        runner.run(mode=run_mode, running_steps=running_steps, eval_interval=eval_interval)
+
 
 if __name__ == "__main__":
     unittest.main()
