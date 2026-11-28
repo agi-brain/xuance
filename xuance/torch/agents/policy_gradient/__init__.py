@@ -10,3 +10,4 @@ from .ddpg_agent import DDPG_Agent
 from .sac_agent import SAC_Agent
 from .td3_agent import TD3_Agent
 from .npg_agent import NPG_Agent
+from .trpo_agent import TRPO_Agent

@@ -3,7 +3,7 @@ from .base.marl_learner import LearnerMAS, OnPolicyMultiAgentLearner, OffPolicyM
 
 from .policy_gradient import (
     # On-policy
-    PG_Learner, A2C_Learner, PPO_Learner, PPOKL_Learner, PPG_Learner, NPG_Learner,
+    PG_Learner, A2C_Learner, PPO_Learner, PPOKL_Learner, PPG_Learner, NPG_Learner, TRPO_Learner,
 
     # Off-policy
     DDPG_Learner, TD3_Learner, SAC_Learner, SACDIS_Learner, PDQN_Learner, MPDQN_Learner, SPDQN_Learner,
@@ -54,6 +54,7 @@ REGISTRY_Learners = {
     "MPDQN_Learner": MPDQN_Learner,
     "SPDQN_Learner": SPDQN_Learner,
     "NPG_Learner": NPG_Learner,
+    "TRPO_Learner": TRPO_Learner,
 
     "DQN_Learner": DQN_Learner,
     "DuelDQN_Learner": DuelDQN_Learner,
@@ -102,7 +103,7 @@ __all__ = [
     "REGISTRY_Learners", "Learner", "LearnerMAS", "OnPolicyMultiAgentLearner", "OffPolicyMultiAgentLearner",
 
     "PG_Learner", "A2C_Learner", "PPO_Learner", "PPOKL_Learner", "PPG_Learner", "DDPG_Learner", "TD3_Learner",
-    "SAC_Learner", "SACDIS_Learner", "PDQN_Learner", "MPDQN_Learner", "SPDQN_Learner", "NPG_Learner",
+    "SAC_Learner", "SACDIS_Learner", "PDQN_Learner", "MPDQN_Learner", "SPDQN_Learner", "NPG_Learner", "TRPO_Learner",
 
     "DQN_Learner", "DuelDQN_Learner", "DDQN_Learner", "PerDQN_Learner", "C51_Learner", "QRDQN_Learner", "DRQN_Learner",
 

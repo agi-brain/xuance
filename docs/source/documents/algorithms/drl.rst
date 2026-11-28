@@ -16,6 +16,7 @@ Deep Reinforcement Learning
     DRQN <drl/drqn>
     PG <drl/pg>
     NPG <drl/npg>
+    TRPO <drl/trpo>
     A2C <drl/a2c>
     PPO <drl/ppo>
     PPO-KL <drl/ppokl>
@@ -42,6 +43,7 @@ Deep Reinforcement Learning
 
 * :class:`PG` : :doc:`Policy Gradient (PG) <drl/pg>`.
 * :class:`NPG` : :doc:`Natural Policy Gradient (NPG) <drl/npg>`.
+* :class:`TRPO` : :doc:`Trust Region Policy Optimization (TRPO) <drl/trpo>`.
 * :class:`A2C` : :doc:`Advantage Actor Critic (A2C) <drl/a2c>`.
 * :class:`PPO` : :doc:`Proximal Policy Optimization (PPO) <drl/ppo>`.
 * :class:`PPOKL` : :doc:`Proximal Policy Optimization with KL Divergence (PPO-KL) <drl/ppokl>`.

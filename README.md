@@ -80,6 +80,7 @@ and hope it can really become a zoo full of DRL algorithms.
 - **C51**: Distributional Reinforcement Learning [[Paper](http://proceedings.mlr.press/v70/bellemare17a/bellemare17a.pdf)]
 - **PG**: Vanilla Policy Gradient [[Paper](https://proceedings.neurips.cc/paper_files/paper/1999/file/464d828b85b0bed98e80ade0a5c43b0f-Paper.pdf)]
 - **NPG**: Natural Policy Gradient [[Paper](https://proceedings.neurips.cc/paper_files/paper/2001/file/4b86abe48d358ecf194c56c69108433e-Paper.pdf)]
+- **TRPO**: Trust Region Policy Optimization [[Paper](https://proceedings.mlr.press/v37/schulman15.pdf)]
 - **PPG**: Phasic Policy Gradient [[Paper](http://proceedings.mlr.press/v139/cobbe21a/cobbe21a.pdf)] [[Code](https://github.com/openai/phasic-policy-gradient)]
 - **A2C**: Advantage Actor Critic [[Paper](http://proceedings.mlr.press/v48/mniha16.pdf)] [[Code](https://github.com/openai/baselines/tree/master/baselines/a2c)]
 - **SAC**: Soft Actor-Critic [[Paper](http://proceedings.mlr.press/v80/haarnoja18b/haarnoja18b.pdf)] [[Code](http://github.com/haarnoja/sac)]

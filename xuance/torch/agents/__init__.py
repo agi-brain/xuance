@@ -10,6 +10,7 @@ from .policy_gradient import (
     PPOKL_Agent,
     PPG_Agent,
     NPG_Agent,
+    TRPO_Agent,
     # off-policy
     DDPG_Agent,
     TD3_Agent,
@@ -93,6 +94,7 @@ REGISTRY_Agents = {
     "SPDQN": SPDQN_Agent,
     "DRQN": DRQN_Agent,
     "NPG": NPG_Agent,
+    "TRPO": TRPO_Agent,
 
     "DreamerV2": DreamerV2Agent,
     "DreamerV3": DreamerV3Agent,
@@ -164,6 +166,7 @@ __all__ = [
     "PerDQN_Agent",
     "DRQN_Agent",
     "NPG_Agent",
+    "TRPO_Agent",
 
     "DreamerV2Agent",
     "DreamerV3Agent",

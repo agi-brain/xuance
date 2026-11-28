@@ -104,3 +104,11 @@ td3_learner
     :members:
     :undoc-members:
     :show-inheritance:
+
+trpo_learner
+-----------------------------
+
+.. automodule:: xuance.torch.learners.policy_gradient.trpo_learner
+    :members:
+    :undoc-members:
+    :show-inheritance:

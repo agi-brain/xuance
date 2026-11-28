@@ -74,6 +74,7 @@
 - **C51**: Distributional Reinforcement Learning [[论文](http://proceedings.mlr.press/v70/bellemare17a/bellemare17a.pdf)]
 - **PG**: Vanilla Policy Gradient [[论文](https://proceedings.neurips.cc/paper_files/paper/1999/file/464d828b85b0bed98e80ade0a5c43b0f-Paper.pdf)]
 - **NPG**: Natural Policy Gradient [[论文](https://proceedings.neurips.cc/paper_files/paper/2001/file/4b86abe48d358ecf194c56c69108433e-Paper.pdf)]
+- **TRPO**: Trust Region Policy Optimization [[论文](https://proceedings.mlr.press/v37/schulman15.pdf)]
 - **PPG**: Phasic Policy Gradient [[论文](http://proceedings.mlr.press/v139/cobbe21a/cobbe21a.pdf)] [[源码](https://github.com/openai/phasic-policy-gradient)]
 - **A2C**: Advantage Actor Critic [[论文](http://proceedings.mlr.press/v48/mniha16.pdf)] [[源码](https://github.com/openai/baselines/tree/master/baselines/a2c)]
 - **SAC**: Soft Actor-Critic [[论文](http://proceedings.mlr.press/v80/haarnoja18b/haarnoja18b.pdf)] [[源码](http://github.com/haarnoja/sac)]
